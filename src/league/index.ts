@@ -1,0 +1,1 @@
+export { useLeagueDetail } from "./hooks";

@@ -1,0 +1,1 @@
+export { usePlayerDetail } from "./hooks";

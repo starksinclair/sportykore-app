@@ -1,0 +1,1 @@
+export { useMatchDetail } from "./hooks";
