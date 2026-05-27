@@ -1,83 +1,94 @@
-# Welcome to your Expo app 👋
+# SportyKore (Expo / React Native)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Prerequisites
 
-## Get started
+- **Node.js**: use an LTS version (recommended).
+- **npm**: comes with Node.
+- **Expo CLI**: run via `npx expo ...` (no global install required).
 
-1. Install dependencies
+### iOS (Mac)
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+- **Xcode** (from the App Store)
+- **Xcode Command Line Tools**
 
 ```bash
-npm run reset-project
+xcode-select --install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Android (optional)
 
-## Learn more
+- **Android Studio** + an Android emulator (AVD)
 
-To learn more about developing your project with Expo, look at the following resources:
+## Install
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm install
+```
 
-## Join the community
+## Environment variables
 
-Join our community of developers creating universal apps.
+Create a `.env` (or set in your shell) for the API base URL:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+EXPO_PUBLIC_API_URL="http://127.0.0.1:3333"
+```
 
-## TODO
+Notes:
+- On a **physical device**, `127.0.0.1` points to the device. Use your computer’s LAN IP (e.g. `http://192.168.0.x:3333`).
+- Keep client env vars prefixed with **`EXPO_PUBLIC_`**.
 
-- Put all the querykeys in the hook file for each feature, instead of creating a new queryKey file for each features
-  so for the manage screen, check if the user is logged in first, if not display a message to log in to view your leagues, and then if authenticated, first display a list of the user's leagues, and then the click on one, we will be using the users native password, biometries, face id, to grant them access to manage that resource, if they don't have passwords set up on their phone let them access the manage page,
+## Running the app
 
-then on the manage/[id] page, there will be three tabs for now:
+SportyKore uses a **development build (dev client)** because it includes native modules (e.g. local authentication, screen orientation). Expo Go may not work for everything.
 
-Game: Three sections: Live Now, Upcoming, Results.
+### Start Metro
 
-AddGameForm to schedule new games.
+```bash
+npx expo start --dev-client
+```
 
-Live games: Open Match Center launches LiveMatchCenter — full-screen, busy-admin-friendly:
+### iOS Simulator (recommended)
 
-Big scoreboard with Auto vs Manual scoring toggle.
+1. Open Xcode once (accept licenses if prompted).
+2. Build and install the dev client into the simulator:
 
-In Auto: tap player → pick event (Goal, Assist, Own Goal, Yellow, Red); goals & own goals auto-update the score.
+```bash
+npm run ios
+```
 
-In Manual: +/- buttons on each side.
+3. With Metro running, press `i` (or open the installed dev client in the simulator and connect).
 
-Start Match, End Match, Undo last event, per-event delete.
+### Android emulator
 
-Recent events feed with team labels.
+1. Start an emulator in Android Studio.
+2. Build and install the dev client:
 
-Upcoming: Start button (sets status live and opens Match Center).
+```bash
+npm run android
+```
 
-Completed: edit score inline, Reopen match, Delete.
+3. With Metro running, press `a`.
 
-Players tab: coming soon
+## When you must rebuild the dev client
 
-Settings tab: Edit league info (name, season, description).
+If you add or change **native dependencies** (anything that requires native code), you must rebuild:
 
-Add new season.
+```bash
+npm run ios
+# or
+npm run android
+```
+
+Symptoms of an out-of-date dev client include errors like:
+- `Cannot find native module 'ExpoLocalAuthentication'`
+- `Cannot find native module 'ExpoScreenOrientation'`
+
+## Project structure (quick)
+
+- `app/`: Expo Router route files (thin wrappers only)
+- `src/`: features, UI components, API layer, hooks
+
+## Docs
+
+- `documentations/ROUTES.md`: backend route shapes
+- `documentations/MANAGE_LEAGUE.md`: manage flow + API calls
