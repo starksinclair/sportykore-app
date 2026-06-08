@@ -45,20 +45,22 @@ export default function ManageScreen() {
         />
 
         <View className="px-5 pb-4 pt-2">
-          <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="pt-3 text-[26px] text-white"
-          >
-            Manage
-          </Text>
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="pt-1 text-sm text-white/60"
-          >
-            Leagues you own — schedule games, run live scores, and manage
-            rosters.
-          </Text>
+          <View className="mx-auto w-full max-w-[760px]">
+            <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="pt-3 text-[26px] text-white"
+            >
+              Manage
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="pt-1 text-sm text-white/60"
+            >
+              Leagues you own — schedule games, run live scores, and manage
+              rosters.
+            </Text>
+          </View>
         </View>
 
         {!hydrated ? (
@@ -73,12 +75,14 @@ export default function ManageScreen() {
           </View>
         ) : query.isError ? (
           <View className="flex-1 px-5">
-            <ErrorState onRetry={() => query.refetch()} />
+            <View className="mx-auto w-full max-w-[760px]">
+              <ErrorState onRetry={() => query.refetch()} />
+            </View>
           </View>
         ) : (
           <ScrollView
-            className="flex-1 px-5"
-            contentContainerClassName="gap-3 pb-10"
+            className="flex-1"
+            contentContainerClassName="px-5 pb-10"
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -88,31 +92,33 @@ export default function ManageScreen() {
             }
             showsVerticalScrollIndicator={false}
           >
-            {!query.data?.length ? (
-              <View className="items-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-center text-lg text-white"
-                >
-                  No leagues yet
-                </Text>
-                <Text
-                  style={{ fontFamily: fonts.body }}
-                  className="pt-2 text-center text-sm leading-6 text-white/55"
-                >
-                  Create a league from the Create tab, then return here to run
-                  match day operations.
-                </Text>
-              </View>
-            ) : (
-              query.data.map((league) => (
-                <ManageLeagueRow
-                  key={league.id}
-                  league={league}
-                  onPress={() => handleOpenLeague(league.id)}
-                />
-              ))
-            )}
+            <View className="mx-auto w-full max-w-[760px] gap-3">
+              {!query.data?.length ? (
+                <View className="items-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
+                  <Text
+                    style={{ fontFamily: fonts.bodyBold }}
+                    className="text-center text-lg text-white"
+                  >
+                    No leagues yet
+                  </Text>
+                  <Text
+                    style={{ fontFamily: fonts.body }}
+                    className="pt-2 text-center text-sm leading-6 text-white/55"
+                  >
+                    Create a league from the Create tab, then return here to run
+                    match day operations.
+                  </Text>
+                </View>
+              ) : (
+                query.data.map((league) => (
+                  <ManageLeagueRow
+                    key={league.id}
+                    league={league}
+                    onPress={() => handleOpenLeague(league.id)}
+                  />
+                ))
+              )}
+            </View>
           </ScrollView>
         )}
       </SafeAreaView>

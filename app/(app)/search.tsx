@@ -85,63 +85,67 @@ export default function SearchScreen() {
     <View className="flex-1 bg-white">
       <StatusBar style="dark" />
       <SafeAreaView className="flex-1" edges={["top"]}>
-        <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityLabel="Close search"
-            className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
-          >
-            <Ionicons name="chevron-back" size={20} color="#111827" />
-          </Pressable>
+        <View className="px-5 pb-3 pt-2">
+          <View className="mx-auto w-full max-w-[680px] flex-row items-center gap-3">
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityLabel="Close search"
+              className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+            >
+              <Ionicons name="chevron-back" size={20} color="#111827" />
+            </Pressable>
 
-          <View className="flex-1 flex-row items-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3">
-            <Ionicons name="search-outline" size={18} color="#6B7280" />
-            <TextInput
-              autoFocus
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={handleSubmit}
-              placeholder="Players, countries, leagues, teams"
-              placeholderTextColor="#9CA3AF"
-              returnKeyType="search"
-              className="flex-1 p-0 text-sm text-neutral-900"
-              style={{ fontFamily: fonts.body }}
-            />
-            {query.length > 0 ? (
-              <Pressable
-                onPress={() => setQuery("")}
-                accessibilityLabel="Clear search"
-                hitSlop={8}
-              >
-                <Ionicons name="close-circle" size={18} color="#9CA3AF" />
-              </Pressable>
-            ) : null}
+            <View className="flex-1 flex-row items-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3">
+              <Ionicons name="search-outline" size={18} color="#6B7280" />
+              <TextInput
+                autoFocus
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={handleSubmit}
+                placeholder="Players, countries, leagues, teams"
+                placeholderTextColor="#9CA3AF"
+                returnKeyType="search"
+                className="flex-1 p-0 text-sm text-neutral-900"
+                style={{ fontFamily: fonts.body }}
+              />
+              {query.length > 0 ? (
+                <Pressable
+                  onPress={() => setQuery("")}
+                  accessibilityLabel="Clear search"
+                  hitSlop={8}
+                >
+                  <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                </Pressable>
+              ) : null}
+            </View>
           </View>
         </View>
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-6 px-5 pb-12 pt-2"
+          contentContainerClassName="px-5 pb-12 pt-2"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {trimmed.length === 0 ? (
-            <RecentsBlock
-              recents={recents}
-              onPick={handlePickRecent}
-              onRemove={handleRemoveRecent}
-            />
-          ) : searchQuery.isError ? (
-            <SearchErrorState onRetry={() => searchQuery.refetch()} />
-          ) : searchQuery.isLoading && !searchQuery.data ? (
-            <View className="items-center pt-12">
-              <ActivityIndicator color={colors.brand} />
-            </View>
-          ) : (searchQuery.data?.results ?? []).length === 0 ? (
-            <EmptyResults query={trimmed} />
-          ) : (
-            <ResultsBlock grouped={grouped} onPick={handleResult} />
-          )}
+          <View className="mx-auto w-full max-w-[680px] gap-6">
+            {trimmed.length === 0 ? (
+              <RecentsBlock
+                recents={recents}
+                onPick={handlePickRecent}
+                onRemove={handleRemoveRecent}
+              />
+            ) : searchQuery.isError ? (
+              <SearchErrorState onRetry={() => searchQuery.refetch()} />
+            ) : searchQuery.isLoading && !searchQuery.data ? (
+              <View className="items-center pt-12">
+                <ActivityIndicator color={colors.brand} />
+              </View>
+            ) : (searchQuery.data?.results ?? []).length === 0 ? (
+              <EmptyResults query={trimmed} />
+            ) : (
+              <ResultsBlock grouped={grouped} onPick={handleResult} />
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>

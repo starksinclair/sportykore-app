@@ -302,181 +302,185 @@ export function ManageMatchCenterScreen({
         stripeColor="rgba(230, 168, 23, 0.06)"
       />
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <View className="flex-row items-center justify-between px-5 pb-2 pt-1">
-          <Pressable
-            onPress={() => router.back()}
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
-          >
-            <Ionicons name="chevron-back" size={22} color="#fff" />
-          </Pressable>
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-xs uppercase tracking-[2px] text-white/50"
-          >
-            Live match center
-          </Text>
-          <View className="w-11" />
+        <View className="px-5 pb-2 pt-1">
+          <View className="mx-auto w-full max-w-[760px] flex-row items-center justify-between">
+            <Pressable
+              onPress={() => router.back()}
+              className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
+            >
+              <Ionicons name="chevron-back" size={22} color="#fff" />
+            </Pressable>
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-xs uppercase tracking-[2px] text-white/50"
+            >
+              Live match center
+            </Text>
+            <View className="w-11" />
+          </View>
         </View>
 
         <ScrollView
-          className="flex-1 px-5"
-          contentContainerClassName="gap-5 pb-10"
+          className="flex-1"
+          contentContainerClassName="px-5 pb-10"
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center gap-2 rounded-[28px] border border-white/10 bg-white/5 px-4 py-6">
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="text-xs uppercase tracking-wide text-white/45"
-            >
-              {phaseLabel(game.status, game.currentMinute)}
-            </Text>
-            <View className="w-full flex-row items-center justify-between gap-4">
-              <TeamScore
-                name={game.homeTeam?.name ?? "Home"}
-                score={game.homeScore}
-              />
+          <View className="mx-auto w-full max-w-[760px] gap-5">
+            <View className="items-center gap-2 rounded-[28px] border border-white/10 bg-white/5 px-4 py-6">
               <Text
-                style={{ fontFamily: fonts.displayBold }}
-                className="text-2xl text-white/30"
+                style={{ fontFamily: fonts.body }}
+                className="text-xs uppercase tracking-wide text-white/45"
               >
-                –
+                {phaseLabel(game.status, game.currentMinute)}
               </Text>
-              <TeamScore
-                name={game.awayTeam?.name ?? "Away"}
-                score={game.awayScore}
-                align="right"
-              />
-            </View>
-          </View>
-
-          <View className="flex-row rounded-full bg-white/10 p-1">
-            {(["auto", "manual"] as const).map((m) => (
-              <Pressable
-                key={m}
-                onPress={() => setMode(m)}
-                className={`flex-1 rounded-full py-2.5 ${
-                  mode === m ? "bg-brand-500" : ""
-                }`}
-              >
+              <View className="w-full flex-row items-center justify-between gap-4">
+                <TeamScore
+                  name={game.homeTeam?.name ?? "Home"}
+                  score={game.homeScore}
+                />
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className={`text-center text-sm capitalize ${
-                    mode === m ? "text-white" : "text-white/55"
+                  style={{ fontFamily: fonts.displayBold }}
+                  className="text-2xl text-white/30"
+                >
+                  –
+                </Text>
+                <TeamScore
+                  name={game.awayTeam?.name ?? "Away"}
+                  score={game.awayScore}
+                  align="right"
+                />
+              </View>
+            </View>
+
+            <View className="flex-row rounded-full bg-white/10 p-1">
+              {(["auto", "manual"] as const).map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => setMode(m)}
+                  className={`flex-1 rounded-full py-2.5 ${
+                    mode === m ? "bg-brand-500" : ""
                   }`}
                 >
-                  {m}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {mode === "manual" ? (
-            <View className="gap-4 rounded-[24px] bg-white/6 px-4 py-4">
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-sm text-white"
-              >
-                Manual score
-              </Text>
-              <View className="flex-row justify-between gap-6">
-                <ManualSide
-                  label={game.homeTeam?.name ?? "Home"}
-                  onMinus={() => void adjustScore("home", -1)}
-                  onPlus={() => void adjustScore("home", 1)}
-                />
-                <ManualSide
-                  label={game.awayTeam?.name ?? "Away"}
-                  onMinus={() => void adjustScore("away", -1)}
-                  onPlus={() => void adjustScore("away", 1)}
-                />
-              </View>
-            </View>
-          ) : (
-            <View className="gap-3">
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-xs uppercase tracking-wide text-white/45"
-              >
-                Record event
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {EVENT_KEYS.map((key) => (
-                  <Pressable
-                    key={key}
-                    onPress={() => onPickSideForEvent(key)}
-                    className="rounded-xl bg-white/10 px-4 py-3 active:bg-white/15"
+                  <Text
+                    style={{ fontFamily: fonts.bodySemibold }}
+                    className={`text-center text-sm capitalize ${
+                      mode === m ? "text-white" : "text-white/55"
+                    }`}
                   >
-                    <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
-                      className="text-sm text-white"
-                    >
-                      {key === "OwnGoal" ? "Own goal" : key}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+                    {m}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-          )}
 
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between">
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-xs uppercase tracking-wide text-white/45"
-              >
-                Recent events
-              </Text>
-              <Pressable onPress={() => void handleUndoLast()}>
+            {mode === "manual" ? (
+              <View className="gap-4 rounded-[24px] bg-white/6 px-4 py-4">
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-xs text-accent-400"
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-sm text-white"
                 >
-                  Undo last
+                  Manual score
                 </Text>
-              </Pressable>
-            </View>
-            {sortedStats.length === 0 ? (
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-                No events yet.
-              </Text>
+                <View className="flex-row justify-between gap-6">
+                  <ManualSide
+                    label={game.homeTeam?.name ?? "Home"}
+                    onMinus={() => void adjustScore("home", -1)}
+                    onPlus={() => void adjustScore("home", 1)}
+                  />
+                  <ManualSide
+                    label={game.awayTeam?.name ?? "Away"}
+                    onMinus={() => void adjustScore("away", -1)}
+                    onPlus={() => void adjustScore("away", 1)}
+                  />
+                </View>
+              </View>
             ) : (
-              sortedStats.map((stat) => (
-                <StatRow
-                  key={stat.id}
-                  stat={stat}
-                  onDelete={() => {
-                    Alert.alert("Delete event", "Remove this stat?", [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            await deleteStatMutation.mutateAsync({
-                              statId: stat.id,
-                              gameId,
-                            });
-                            await detailQuery.refetch();
-                          } catch (err) {
-                            showThrownAsToast(err);
-                          }
-                        },
-                      },
-                    ]);
-                  }}
-                />
-              ))
+              <View className="gap-3">
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-xs uppercase tracking-wide text-white/45"
+                >
+                  Record event
+                </Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {EVENT_KEYS.map((key) => (
+                    <Pressable
+                      key={key}
+                      onPress={() => onPickSideForEvent(key)}
+                      className="rounded-xl bg-white/10 px-4 py-3 active:bg-white/15"
+                    >
+                      <Text
+                        style={{ fontFamily: fonts.bodySemibold }}
+                        className="text-sm text-white"
+                      >
+                        {key === "OwnGoal" ? "Own goal" : key}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             )}
-          </View>
 
-          {isLive ? (
-            <Button
-              variant="secondary"
-              label="End match"
-              onPress={handleEndMatch}
-              loading={updateGameMutation.isPending}
-            />
-          ) : null}
+            <View className="gap-3">
+              <View className="flex-row items-center justify-between">
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-xs uppercase tracking-wide text-white/45"
+                >
+                  Recent events
+                </Text>
+                <Pressable onPress={() => void handleUndoLast()}>
+                  <Text
+                    style={{ fontFamily: fonts.bodySemibold }}
+                    className="text-xs text-accent-400"
+                  >
+                    Undo last
+                  </Text>
+                </Pressable>
+              </View>
+              {sortedStats.length === 0 ? (
+                <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+                  No events yet.
+                </Text>
+              ) : (
+                sortedStats.map((stat) => (
+                  <StatRow
+                    key={stat.id}
+                    stat={stat}
+                    onDelete={() => {
+                      Alert.alert("Delete event", "Remove this stat?", [
+                        { text: "Cancel", style: "cancel" },
+                        {
+                          text: "Delete",
+                          style: "destructive",
+                          onPress: async () => {
+                            try {
+                              await deleteStatMutation.mutateAsync({
+                                statId: stat.id,
+                                gameId,
+                              });
+                              await detailQuery.refetch();
+                            } catch (err) {
+                              showThrownAsToast(err);
+                            }
+                          },
+                        },
+                      ]);
+                    }}
+                  />
+                ))
+              )}
+            </View>
+
+            {isLive ? (
+              <Button
+                variant="secondary"
+                label="End match"
+                onPress={handleEndMatch}
+                loading={updateGameMutation.isPending}
+              />
+            ) : null}
+          </View>
         </ScrollView>
       </SafeAreaView>
 

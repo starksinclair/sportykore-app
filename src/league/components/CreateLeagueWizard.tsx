@@ -192,7 +192,7 @@ export function CreateLeagueWizard() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-6">
+          <View className="mx-auto w-full max-w-[680px] gap-6">
             <View className="gap-2">
               <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
               <Text

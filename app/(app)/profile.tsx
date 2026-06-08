@@ -51,25 +51,25 @@ export default function ProfileScreen() {
           stripeColor={scoreboardPattern().stripeColor}
         />
         <SafeAreaView edges={["top"]}>
-          <View className="flex-row items-center justify-between pb-4 pt-1">
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityLabel="Back"
-              accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
-            >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
-            </Pressable>
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-base uppercase tracking-[2px] text-white/85"
-            >
-              Profile
-            </Text>
-            <View className="h-11 w-11" />
-          </View>
+          <View className="mx-auto w-full max-w-[680px]">
+            <View className="flex-row items-center justify-between pb-4 pt-1">
+              <Pressable
+                onPress={() => router.back()}
+                accessibilityLabel="Back"
+                accessibilityRole="button"
+                className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              >
+                <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              </Pressable>
+              <Text
+                style={{ fontFamily: fonts.bodyBold }}
+                className="text-base uppercase tracking-[2px] text-white/85"
+              >
+                Profile
+              </Text>
+              <View className="h-11 w-11" />
+            </View>
 
-          <View className="gap-5">
             <View className="bg-white/8 px-4 py-4">
               <View className="flex-row items-center gap-4">
                 <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
@@ -97,74 +97,76 @@ export default function ProfileScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-6 px-5 pb-10 pt-5"
+        contentContainerClassName="px-5 pb-10 pt-5"
         showsVerticalScrollIndicator={false}
       >
-        <Section title="Notifications">
-          <SettingsRowSwitch
-            icon="notifications-outline"
-            title="Match & score alerts"
-            subtitle="Kickoff reminders and live scores"
-            value={matchAlerts}
-            onValueChange={setMatchAlerts}
-          />
-        </Section>
+        <View className="mx-auto w-full max-w-[680px] gap-6">
+          <Section title="Notifications">
+            <SettingsRowSwitch
+              icon="notifications-outline"
+              title="Match & score alerts"
+              subtitle="Kickoff reminders and live scores"
+              value={matchAlerts}
+              onValueChange={setMatchAlerts}
+            />
+          </Section>
 
-        <Section title="Preferences">
-          <SettingsRowChevron
-            icon="moon-outline"
-            title="Appearance"
-            subtitle="Theme follows device for now"
-            onPress={() => handleComingSoon("Appearance")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="language-outline"
-            title="Language & region"
-            subtitle="English • device region"
-            onPress={() => handleComingSoon("Language")}
-          />
-        </Section>
+          <Section title="Preferences">
+            <SettingsRowChevron
+              icon="moon-outline"
+              title="Appearance"
+              subtitle="Theme follows device for now"
+              onPress={() => handleComingSoon("Appearance")}
+            />
+            <Divider />
+            <SettingsRowChevron
+              icon="language-outline"
+              title="Language & region"
+              subtitle="English • device region"
+              onPress={() => handleComingSoon("Language")}
+            />
+          </Section>
 
-        <Section title="Support">
-          <SettingsRowChevron
-            icon="document-text-outline"
-            title="Terms & privacy"
-            subtitle="Policies and how we use data"
-            onPress={() => handleComingSoon("Terms & privacy")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="help-circle-outline"
-            title="Help centre"
-            subtitle="FAQs and contact"
-            onPress={() => handleComingSoon("Help")}
-          />
-        </Section>
+          <Section title="Support">
+            <SettingsRowChevron
+              icon="document-text-outline"
+              title="Terms & privacy"
+              subtitle="Policies and how we use data"
+              onPress={() => handleComingSoon("Terms & privacy")}
+            />
+            <Divider />
+            <SettingsRowChevron
+              icon="help-circle-outline"
+              title="Help centre"
+              subtitle="FAQs and contact"
+              onPress={() => handleComingSoon("Help")}
+            />
+          </Section>
 
-        <Pressable
-          onPress={handleSignOut}
-          className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
-          accessibilityRole="button"
-          accessibilityLabel="Log out"
-        >
-          <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
-            Log out
+          <Pressable
+            onPress={handleSignOut}
+            className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
+            accessibilityRole="button"
+            accessibilityLabel="Log out"
+          >
+            <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
+              Log out
+            </Text>
+          </Pressable>
+          <Pressable onPress={() => deleteOnboardingCompleted()}>
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
+              Delete onboarding completed
+            </Text>
+          </Pressable>
+
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="pb-8 text-center text-xs leading-5 text-slate-500"
+          >
+            Gbako — local football, clearer for everyone on the continent.
           </Text>
-        </Pressable>
-        <Pressable onPress={() => deleteOnboardingCompleted()}>
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
-            Delete onboarding completed
-          </Text>
-        </Pressable>
-
-        <Text
-          style={{ fontFamily: fonts.body }}
-          className="pb-8 text-center text-xs leading-5 text-slate-500"
-        >
-          Gbako — local football, clearer for everyone on the continent.
-        </Text>
+        </View>
       </ScrollView>
     </View>
   );

@@ -116,7 +116,7 @@ export default function HomeScreen() {
             stripeColor={scoreboardPattern().stripeColor}
           />
 
-          <Animated.View entering={FadeInDown.duration(350)} className="gap-6">
+          <Animated.View entering={FadeInDown.duration(350)} className="mx-auto w-full max-w-[760px] gap-6">
             <View className="flex-row items-center gap-3">
               <View className="shrink-0">
                 <Logo variant="full" color={colors.accent} fontSize={18} lineHeight={25} />
@@ -156,7 +156,7 @@ export default function HomeScreen() {
 
         <ScrollView
           className="flex-1 bg-white"
-          contentContainerClassName="gap-5 px-5 pb-32 pt-5"
+          contentContainerClassName="px-5 pb-32 pt-5"
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -167,133 +167,135 @@ export default function HomeScreen() {
             />
           }
         >
-          <Animated.View entering={FadeInDown.delay(80).duration(350)}>
-            <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
-              <View className="flex-row gap-2">
-                <SegmentButton
-                  label="Matches"
-                  active={activeTab === "matches"}
-                  onPress={() => setActiveTab("matches")}
-                />
-                <SegmentButton
-                  label="Leagues"
-                  active={activeTab === "leagues"}
-                  onPress={() => setActiveTab("leagues")}
-                />
+          <View className="mx-auto w-full max-w-[760px] gap-5">
+            <Animated.View entering={FadeInDown.delay(80).duration(350)}>
+              <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
+                <View className="flex-row gap-2">
+                  <SegmentButton
+                    label="Matches"
+                    active={activeTab === "matches"}
+                    onPress={() => setActiveTab("matches")}
+                  />
+                  <SegmentButton
+                    label="Leagues"
+                    active={activeTab === "leagues"}
+                    onPress={() => setActiveTab("leagues")}
+                  />
+                </View>
               </View>
-            </View>
-          </Animated.View>
+            </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(140).duration(350)}>
-            <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
-              <View className="flex-row items-center gap-2">
-                <Pressable
-                  onPress={() => setFiltersOpen(true)}
-                  className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
-                >
-                  <Ionicons name="options-outline" size={18} color={colors.brand} />
-                  <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className="text-sm text-neutral-900"
-                  >
-                    {selectedCountry ? selectedCountry.name : "Filters"}
-                  </Text>
-                </Pressable>
-
-                {activeTab === "matches" ? (
+            <Animated.View entering={FadeInDown.delay(140).duration(350)}>
+              <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
+                <View className="flex-row items-center gap-2">
                   <Pressable
-                    onPress={() => setLiveOnly((v) => !v)}
-                    className={[
-                      "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
-                      liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
-                    ].join(" ")}
+                    onPress={() => setFiltersOpen(true)}
+                    className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
                   >
-                    <PulsingDot size={6} color="#ba0c2f" />
+                    <Ionicons name="options-outline" size={18} color={colors.brand} />
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
-                      className="text-sm text-[#ba0c2f]"
+                      style={{ fontFamily: fonts.bodySemibold }}
+                      className="text-sm text-neutral-900"
                     >
-                      Live
+                      {selectedCountry ? selectedCountry.name : "Filters"}
                     </Text>
                   </Pressable>
-                ) : null}
 
-                {activeTab === "matches" ? (
-                  <View
-                    style={styles.dateControl}
-                    className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
-                  >
+                  {activeTab === "matches" ? (
                     <Pressable
-                      onPress={() => cycleDate(-1)}
-                      className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                      onPress={() => setLiveOnly((v) => !v)}
+                      className={[
+                        "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
+                        liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
+                      ].join(" ")}
                     >
-                      <Ionicons name="chevron-back" size={18} color={colors.brand} />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        setCalendarMonth(startOfMonth(selectedDate.date));
-                        setCalendarOpen(true);
-                      }}
-                      className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
-                    >
+                      <PulsingDot size={6} color="#ba0c2f" />
                       <Text
                         style={{ fontFamily: fonts.bodyBold }}
-                        className="text-sm text-neutral-950"
+                        className="text-sm text-[#ba0c2f]"
                       >
-                        {selectedDate.displayLabel}
+                        Live
                       </Text>
                     </Pressable>
-                    <Pressable
-                      onPress={() => cycleDate(1)}
-                      className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
-                    >
-                      <Ionicons name="chevron-forward" size={18} color={colors.brand} />
-                    </Pressable>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          </Animated.View>
+                  ) : null}
 
-          {activeTab === "matches" ? (
-            <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
-              {leagueResponseError ? (
-                <ErrorState onRetry={() => refetchLeagueResponse()} />
-              ) : leagueResponseLoading && (matches ?? []).length === 0 ? (
-                <View className="items-center py-10">
-                  <ActivityIndicator color={colors.brand} />
+                  {activeTab === "matches" ? (
+                    <View
+                      style={styles.dateControl}
+                      className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
+                    >
+                      <Pressable
+                        onPress={() => cycleDate(-1)}
+                        className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                      >
+                        <Ionicons name="chevron-back" size={18} color={colors.brand} />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          setCalendarMonth(startOfMonth(selectedDate.date));
+                          setCalendarOpen(true);
+                        }}
+                        className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
+                      >
+                        <Text
+                          style={{ fontFamily: fonts.bodyBold }}
+                          className="text-sm text-neutral-950"
+                        >
+                          {selectedDate.displayLabel}
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => cycleDate(1)}
+                        className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                      >
+                        <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
-              ) : (matches ?? []).length > 0? (
-                (matches ?? []).map((entry, index) => (
-                  <CountryAccordion key={entry.id} entry={entry} defaultOpen={index === 0} params={leagueParams} />
-                ))
-              ) : (
-                <EmptyState
-                  title="No fixtures match this filter"
-                  body="Try another country, move the date, or switch off live-only."
-                />
-              )}
+              </View>
             </Animated.View>
-          ) : (
-            <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
-              {leagueResponseError ? (
-                <ErrorState onRetry={() => refetchLeagueResponse()} />
-              ) : leagueResponseLoading && (leagues ?? []).length === 0 ? (
-                <View className="items-center py-10">
-                  <ActivityIndicator color={colors.brand} />
-                </View>
-              ) : (leagues ?? []).length ? (
-                (leagues ?? []).map((entry, index) => (
-                  <LeagueDirectoryRow key={entry.id} entry={entry} defaultOpen={index === 0} />
-                ))
-              ) : (
-                <EmptyState
-                  title="No leagues yet"
-                  body="Try clearing the country filter to see the full directory."
-                />
-              )}
-            </Animated.View>
-          )}
+
+            {activeTab === "matches" ? (
+              <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
+                {leagueResponseError ? (
+                  <ErrorState onRetry={() => refetchLeagueResponse()} />
+                ) : leagueResponseLoading && (matches ?? []).length === 0 ? (
+                  <View className="items-center py-10">
+                    <ActivityIndicator color={colors.brand} />
+                  </View>
+                ) : (matches ?? []).length > 0? (
+                  (matches ?? []).map((entry, index) => (
+                    <CountryAccordion key={entry.id} entry={entry} defaultOpen={index === 0} params={leagueParams} />
+                  ))
+                ) : (
+                  <EmptyState
+                    title="No fixtures match this filter"
+                    body="Try another country, move the date, or switch off live-only."
+                  />
+                )}
+              </Animated.View>
+            ) : (
+              <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
+                {leagueResponseError ? (
+                  <ErrorState onRetry={() => refetchLeagueResponse()} />
+                ) : leagueResponseLoading && (leagues ?? []).length === 0 ? (
+                  <View className="items-center py-10">
+                    <ActivityIndicator color={colors.brand} />
+                  </View>
+                ) : (leagues ?? []).length ? (
+                  (leagues ?? []).map((entry, index) => (
+                    <LeagueDirectoryRow key={entry.id} entry={entry} defaultOpen={index === 0} />
+                  ))
+                ) : (
+                  <EmptyState
+                    title="No leagues yet"
+                    body="Try clearing the country filter to see the full directory."
+                  />
+                )}
+              </Animated.View>
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
 

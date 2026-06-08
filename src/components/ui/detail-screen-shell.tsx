@@ -35,56 +35,60 @@ export function DetailScreenShell({
           stripeColor="rgba(230, 168, 23, 0.06)"
         />
 
-        <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
-          >
-            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
-          </Pressable>
-
-          <View className="flex-1 px-3">
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              numberOfLines={1}
-              className="text-center text-[18px] text-white"
+        <View className="px-5 pb-3 pt-1">
+          <View className="mx-auto w-full max-w-[760px] flex-row items-center justify-between">
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
             >
-              {title}
-            </Text>
-            {subtitle ? (
-              <View className="items-center pt-1">
-                {typeof subtitle === "string" ? (
-                  <Text
-                    style={{ fontFamily: fonts.body }}
-                    numberOfLines={1}
-                    className="text-center text-xs text-white/55"
-                  >
-                    {subtitle}
-                  </Text>
-                ) : (
-                  subtitle
-                )}
-              </View>
-            ) : null}
-          </View>
+              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+            </Pressable>
 
-          <View className="min-w-[44px] items-end">
-            {rightAccessory ?? <View className="h-11 w-11" />}
+            <View className="flex-1 px-3">
+              <Text
+                style={{ fontFamily: fonts.bodyBold }}
+                numberOfLines={1}
+                className="text-center text-[18px] text-white"
+              >
+                {title}
+              </Text>
+              {subtitle ? (
+                <View className="items-center pt-1">
+                  {typeof subtitle === "string" ? (
+                    <Text
+                      style={{ fontFamily: fonts.body }}
+                      numberOfLines={1}
+                      className="text-center text-xs text-white/55"
+                    >
+                      {subtitle}
+                    </Text>
+                  ) : (
+                    subtitle
+                  )}
+                </View>
+              ) : null}
+            </View>
+
+            <View className="min-w-[44px] items-end">
+              {rightAccessory ?? <View className="h-11 w-11" />}
+            </View>
           </View>
         </View>
 
         {headerContent ? (
-          <View className="gap-3 px-5 pb-2 pt-1">{headerContent}</View>
+          <View className="px-5 pb-2 pt-1">
+            <View className="mx-auto w-full max-w-[760px] gap-3">{headerContent}</View>
+          </View>
         ) : null}
 
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-6 px-5 pb-12 pt-3"
+          contentContainerClassName="px-5 pb-12 pt-3"
           showsVerticalScrollIndicator={false}
         >
-          {children}
+          <View className="mx-auto w-full max-w-[760px] gap-6">{children}</View>
         </ScrollView>
       </SafeAreaView>
     </View>
