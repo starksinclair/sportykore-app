@@ -1,14 +1,14 @@
 import { fonts } from "@/theme/fonts";
 import { Pressable, Text, View } from "react-native";
 
-export function ErrorState({ onRetry }: { onRetry: () => void }) {
+export function ErrorState({ onRetry, message }: { onRetry?: () => void, message?: string }) {
     return (
       <View className="items-center gap-4 py-10">
         <Text
           style={{ fontFamily: fonts.bodySemibold }}
           className="text-sm text-neutral-500"
         >
-          Something went wrong. Check your connection and try again.
+            {message ||  "Something went wrong. Check your connection and try again."}
         </Text>
         <Pressable
           onPress={onRetry}

@@ -5,11 +5,11 @@ import { Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
 import { formatPlayedAt } from "@/lib/datetime";
-import { phaseLabel } from "@/lib/general-utils";
+import { GamePhaseLabel } from "@/components/ui";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
-import { useDeleteGame, useUpdateGame } from "../../hooks";
+import { useDeleteGame, useGameTimeActions, useUpdateGame } from "../../hooks";
 import { EditScoreSheet } from "./EditScoreSheet";
 
 type RowVariant = "live" | "upcoming" | "results";
@@ -25,6 +25,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const router = useRouter();
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const deleteMutation = useDeleteGame(leagueId, seasonId);
+  const gameTimeActions = useGameTimeActions(game.id, leagueId, seasonId);
   const [editScoreOpen, setEditScoreOpen] = useState(false);
 
   const showScore =
@@ -41,10 +42,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
 
   const handleStart = async () => {
     try {
-      await updateMutation.mutateAsync({
-        gameId: game.id,
-        payload: { status: "live" },
-      });
+      await gameTimeActions.startFirstHalf.mutateAsync();
       openMatchCenter();
     } catch (err) {
       showThrownAsToast(err, "Could not start match");
@@ -54,16 +52,13 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const handleEditScore = () => setEditScoreOpen(true);
 
   const handleReopen = () => {
-    Alert.alert("Reopen match", "Set status to live or scheduled?", [
+    Alert.alert("Reopen match", "Start first half again or reset to scheduled?", [
       { text: "Cancel", style: "cancel" },
       {
-        text: "Live",
+        text: "Start first half",
         onPress: async () => {
           try {
-            await updateMutation.mutateAsync({
-              gameId: game.id,
-              payload: { status: "live" },
-            });
+            await gameTimeActions.startFirstHalf.mutateAsync();
             openMatchCenter();
           } catch (err) {
             showThrownAsToast(err);
@@ -156,12 +151,18 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         ) : null}
       </View>
 
-      <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-3 text-xs uppercase tracking-[1.5px] text-white/45"
-      >
-        {formatPlayedAt(game.playedAt)} · {phaseLabel(game.status, game.currentMinute)}
-      </Text>
+      <View className="flex-row flex-wrap items-center pt-3">
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-xs uppercase tracking-[1.5px] text-white/45"
+        >
+          {formatPlayedAt(game.playedAt)} ·{" "}
+        </Text>
+        <GamePhaseLabel
+          game={game}
+          textClassName="text-xs uppercase tracking-[1.5px] text-white/45"
+        />
+      </View>
 
       <View className="mt-3 flex-row flex-wrap gap-2">
         {variant === "live" ? (
@@ -178,7 +179,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
             icon="play"
             onPress={() => void handleStart()}
             accent
-            loading={updateMutation.isPending}
+            loading={gameTimeActions.startFirstHalf.isPending}
           />
         ) : null}
         {variant === "results" ? (

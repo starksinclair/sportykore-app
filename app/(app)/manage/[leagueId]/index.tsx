@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import { NotFound } from "@/components/not-found";
@@ -13,8 +13,9 @@ import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import {
   ManageGamesTab,
-  ManagePlayersTabPlaceholder,
+  ManagePlayersTab,
   ManageSettingsTab,
+  useLeagueTeams,
   useManageLeagueDetail,
 } from "@/manage";
 
@@ -34,6 +35,14 @@ export default function ManageLeagueRoute() {
   const [activeTab, setActiveTab] = useState<TabKey>("games");
 
   const query = useManageLeagueDetail(isValidId ? leagueId : 0, seasonId);
+  const teamsQuery = useLeagueTeams(leagueId, isValidId);
+
+  // Keep query key aligned with the resolved season so invalidations refetch this query.
+  useEffect(() => {
+    if (query.data?.season.id != null && seasonId === null) {
+      setSeasonId(query.data.season.id);
+    }
+  }, [query.data?.season.id, seasonId]);
 
   if (!isValidId) {
     return (
@@ -97,7 +106,14 @@ export default function ManageLeagueRoute() {
           statTypes={statTypes}
         />
       ) : null}
-      {activeTab === "players" ? <ManagePlayersTabPlaceholder /> : null}
+      {activeTab === "players" ? (
+        <ManagePlayersTab
+          leagueId={leagueId}
+          leagueName={season.league.name}
+          seasonId={activeSeasonId}
+          teams={teamsQuery.data ?? []}
+        />
+      ) : null}
       {activeTab === "settings" ? (
         <ManageSettingsTab
           leagueId={leagueId}

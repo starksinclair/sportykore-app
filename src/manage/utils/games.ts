@@ -8,9 +8,17 @@ export type PartitionedGames = {
   results: ApiGame[];
 };
 
-const LIVE_STATUSES = new Set(["live", "break"]);
+const LIVE_STATUSES = new Set([
+  "first_half",
+  "half_time",
+  "second_half",
+  "extra_time",
+  "paused",
+  "live",
+  "break",
+]);
 const UPCOMING_STATUSES = new Set(["scheduled", "postponed"]);
-const RESULTS_STATUSES = new Set(["completed", "cancelled"]);
+const RESULTS_STATUSES = new Set(["full_time", "completed", "cancelled"]);
 
 export function partitionGames(games: ApiGame[]): PartitionedGames {
   const live: ApiGame[] = [];

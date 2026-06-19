@@ -5,6 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import type { ApiSeasonDetail } from "@/api/entities";
 import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
+import { isLiveGameStatus } from "@/lib/general-utils";
 import { isGoalsStat } from "@/lib/stat-types";
 import { fonts } from "@/theme/fonts";
 
@@ -120,8 +121,7 @@ function deriveCounts(season: ApiSeasonDetail) {
   return {
     teams: teamIds.size,
     matches: season.games.length,
-    live: season.games.filter((g) => g.status === "live" || g.status === "break")
-      .length,
+    live: season.games.filter((g) => isLiveGameStatus(g.status)).length,
   };
 }
 

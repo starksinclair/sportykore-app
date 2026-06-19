@@ -39,6 +39,8 @@ export type CreateGamePayload = {
   status?: ApiGameStatus;
   homeScore?: number | null;
   awayScore?: number | null;
+  firstHalfDuration?: number;
+  secondHalfDuration?: number;
 };
 
 export type UpdateGamePayload = {
@@ -82,11 +84,20 @@ export type CreatedSeason = ApiSeason & {
 
 export const GameStatus = {
   Scheduled: "scheduled",
-  Live: "live",
-  Break: "break",
-  Completed: "completed",
+  FirstHalf: "first_half",
+  HalfTime: "half_time",
+  SecondHalf: "second_half",
+  ExtraTime: "extra_time",
+  FullTime: "full_time",
+  Paused: "paused",
   Postponed: "postponed",
   Cancelled: "cancelled",
+  /** @deprecated */
+  Live: "live",
+  /** @deprecated */
+  Break: "break",
+  /** @deprecated */
+  Completed: "completed",
 } as const;
 
 export const SeasonStatusEnum = {
@@ -109,6 +120,7 @@ export const MatchEventStatName = {
   OwnGoal: "own_goal",
   Yellow: "yellow_card",
   Red: "red_card",
+  Save: "saves",
 } as const;
 
 export type MatchEventKey = keyof typeof MatchEventStatName;

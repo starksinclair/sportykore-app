@@ -12,33 +12,32 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useAuth } from "@/auth/use-auth";
-import { AuthTextField } from "@/components/ui/auth-text-field";
+import { useRecoverAccount } from "@/auth";
 import { Button } from "@/components/ui/Button";
-import { showErrorToast, showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
+import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
+import { showErrorToast, showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
-export default function ForgotPasswordScreen() {
-  const { forgotPassword } = useAuth();
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState(false);
+export default function RecoverAccountScreen() {
+  const recoverMutation = useRecoverAccount();
+  const [recoveryEmail, setRecoveryEmail] = useState("");
 
   const onSubmit = async () => {
-    const trimmed = email.trim();
+    const trimmed = recoveryEmail.trim();
     if (!trimmed) {
-      showErrorToast("Forgot password", "Enter your email.");
+      showErrorToast("Recovery email required", "Enter the recovery email on your account.");
       return;
     }
-    setBusy(true);
     try {
-      await forgotPassword(trimmed);
-      showInfoToast("Check your inbox", "If an account exists, we emailed reset instructions.");
-      router.back();
+      await recoverMutation.mutateAsync(trimmed);
+      showInfoToast(
+        "Check your primary email",
+        "We sent a sign-in code to your account's primary email address.",
+      );
+      router.push({ pathname: "/otp", params: { recovery: "1" } });
     } catch (e) {
-      showThrownAsToast(e, "Could not send reset email");
-    } finally {
-      setBusy(false);
+      showThrownAsToast(e, "Could not recover account");
     }
   };
 
@@ -65,26 +64,32 @@ export default function ForgotPasswordScreen() {
 
           <View className="gap-2">
             <Text style={{ fontFamily: fonts.bodyBold }} className="text-2xl text-neutral-950">
-              Forgot password
+              Recover account
             </Text>
             <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
-              We will email you a reset link when this account exists with Gbako.
+              Enter the recovery email you set on your account. We will send a sign-in code to your
+              primary email address.
             </Text>
           </View>
 
           <AuthTextField
-            label="Email address"
-            placeholder="you@pitch.com"
+            label="Recovery email"
+            placeholder="recovery@pitch.com"
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
             textContentType="emailAddress"
-            value={email}
-            onChangeText={setEmail}
+            value={recoveryEmail}
+            onChangeText={setRecoveryEmail}
             leftIcon={<Ionicons name="mail-outline" size={20} color={colors.authPurple} />}
           />
 
-          <Button variant="primary" label="Send reset email" loading={busy} onPress={onSubmit} />
+          <Button
+            variant="primary"
+            label="Send recovery code"
+            loading={recoverMutation.isPending}
+            onPress={onSubmit}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

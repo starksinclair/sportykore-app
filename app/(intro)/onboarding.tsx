@@ -17,6 +17,7 @@ import { Button, Logo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
 import { colors } from "@/constants";
+import { router } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 const HEADER_HEIGHT = height * 0.49;
@@ -103,7 +104,8 @@ export default function OnboardingScreen() {
 
   const goNext = () => {
     if (index === slides.length - 1) {
-      completeOnboarding();
+      void completeOnboarding();
+      router.replace("/login");
       return;
     }
     listRef.current?.scrollToIndex({ index: index + 1, animated: true });
@@ -132,7 +134,7 @@ export default function OnboardingScreen() {
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
         <View className="px-6 pt-5 pb-5 flex-row items-center justify-between">
           <Logo variant="full" color={colors.accent} fontSize={24} lineHeight={44} />
-          <Pressable hitSlop={10} onPress={completeOnboarding}>
+          <Pressable hitSlop={10} onPress={() => void completeOnboarding()}>
             <Text className="text-base text-[#D1D5DB] font-medium">Skip</Text>
           </Pressable>
         </View>
@@ -176,7 +178,7 @@ export default function OnboardingScreen() {
             className="border border-[#D1D5DB]"
           />
           <Button
-            label={isLast ? "Create Account" : "Continue"}
+            label={isLast ? "Get Started" : "Continue"}
             icon={
               <Ionicons
                 name={isLast ? "person-add-outline" : "arrow-forward"}

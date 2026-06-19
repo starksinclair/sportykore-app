@@ -1,13 +1,22 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiGame, ApiStatType } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
+import { DetailTabs, type DetailTab } from "@/components/ui/detail-tabs";
 import { fonts } from "@/theme/fonts";
 
 import { partitionGames } from "../../utils/games";
 import { AddGameSheet } from "../games/AddGameSheet";
 import { GamesSection } from "../games/GamesSection";
+
+type GameFilter = "live" | "upcoming" | "results";
+
+const GAME_TABS: readonly DetailTab<GameFilter>[] = [
+  { key: "live", label: "Live" },
+  { key: "upcoming", label: "Upcoming" },
+  { key: "results", label: "Results" },
+];
 
 type Props = {
   leagueId: number;
@@ -18,7 +27,31 @@ type Props = {
 
 export function ManageGamesTab({ leagueId, seasonId, games }: Props) {
   const [addOpen, setAddOpen] = useState(false);
-  const { live, upcoming, results } = partitionGames(games);
+  const { live, upcoming, results } = useMemo(
+    () => partitionGames(games),
+    [games],
+  );
+
+  const defaultFilter: GameFilter = live.length > 0 ? "live" : "upcoming";
+  const [activeFilter, setActiveFilter] = useState<GameFilter>(defaultFilter);
+
+  useEffect(() => {
+    setActiveFilter(live.length > 0 ? "live" : "upcoming");
+  }, [seasonId]);
+
+  const activeGames =
+    activeFilter === "live"
+      ? live
+      : activeFilter === "upcoming"
+        ? upcoming
+        : results;
+
+  const emptyMessage =
+    activeFilter === "live"
+      ? "No live matches right now."
+      : activeFilter === "upcoming"
+        ? "No scheduled fixtures. Tap Add game to create one."
+        : "Completed and cancelled games appear here.";
 
   return (
     <View className="gap-6 pb-8">
@@ -34,32 +67,19 @@ export function ManageGamesTab({ leagueId, seasonId, games }: Props) {
         />
       </View>
 
-      <GamesSection
-        title="Live now"
-        games={live}
-        leagueId={leagueId}
-        seasonId={seasonId}
-        variant="live"
-        showLiveDot={live.length > 0}
-        emptyMessage="No live matches right now."
+      <DetailTabs
+        tabs={GAME_TABS}
+        activeTab={activeFilter}
+        onTabChange={setActiveFilter}
+        scrollable
       />
 
       <GamesSection
-        title="Upcoming"
-        games={upcoming}
+        games={activeGames}
         leagueId={leagueId}
         seasonId={seasonId}
-        variant="upcoming"
-        emptyMessage="No scheduled fixtures. Tap Add game to create one."
-      />
-
-      <GamesSection
-        title="Results"
-        games={results}
-        leagueId={leagueId}
-        seasonId={seasonId}
-        variant="results"
-        emptyMessage="Completed and cancelled games appear here."
+        variant={activeFilter}
+        emptyMessage={emptyMessage}
       />
 
       <AddGameSheet

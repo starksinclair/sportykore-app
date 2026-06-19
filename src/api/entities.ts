@@ -46,6 +46,8 @@ export type ApiStat = {
   minute: number | null;
   isStoppageTime: boolean | null;
   numericValue: number | null;
+  /** True when a goal stat has no accredited player yet. */
+  isUnaccredited?: boolean;
   type?: ApiStatType;
   team?: ApiTeam;
   player?: ApiPlayer;
@@ -73,11 +75,27 @@ export type ApiStanding = {
 
 export type GameStatus =
   | "scheduled"
-  | "live"
-  | "break"
-  | "completed"
+  | "first_half"
+  | "half_time"
+  | "second_half"
+  | "extra_time"
+  | "full_time"
+  | "paused"
   | "postponed"
-  | "cancelled";
+  | "cancelled"
+  /** @deprecated Use `first_half` / `second_half` / `extra_time` */
+  | "live"
+  /** @deprecated Use `half_time` */
+  | "break"
+  /** @deprecated Use `full_time` */
+  | "completed";
+
+/** Period status stored when a match is paused. */
+export type PausedFromStatus =
+  | "first_half"
+  | "second_half"
+  | "extra_time"
+  | "live";
 
 export type ApiGame = {
   id: number;
@@ -87,6 +105,14 @@ export type ApiGame = {
   awayScore: number | null;
   venueName: string | null;
   currentMinute: number;
+  firstHalfDuration?: number;
+  secondHalfDuration?: number;
+  extraTimeDuration?: number | null;
+  firstHalfStartedAt?: string | null;
+  secondHalfStartedAt?: string | null;
+  extraTimeStartedAt?: string | null;
+  pausedAt?: string | null;
+  pausedFromStatus?: PausedFromStatus | null;
   homeTeam?: ApiTeam;
   awayTeam?: ApiTeam;
 };

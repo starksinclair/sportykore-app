@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { fonts } from "@/theme/fonts";
+import { ThemedView } from "./themed-view";
 
 type DetailScreenShellProps = {
   title: string;
@@ -27,7 +28,7 @@ export function DetailScreenShell({
   const router = useRouter();
 
   return (
-    <View className="flex-1 bg-[#0F0F10]">
+    <ThemedView type="background" className="flex-1">
       <StatusBar style="light" />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
@@ -87,6 +88,6 @@ export function DetailScreenShell({
           {children}
         </ScrollView>
       </SafeAreaView>
-    </View>
+    </ThemedView>
   );
 }

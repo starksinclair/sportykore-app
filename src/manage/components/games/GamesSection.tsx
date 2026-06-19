@@ -7,7 +7,7 @@ import { fonts } from "@/theme/fonts";
 import { ManageGameRow } from "./ManageGameRow";
 
 type Props = {
-  title: string;
+  title?: string;
   games: ApiGame[];
   leagueId: number;
   seasonId: number;
@@ -27,15 +27,17 @@ export function GamesSection({
 }: Props) {
   return (
     <View className="gap-3">
-      <View className="flex-row items-center gap-2">
-        {showLiveDot ? <PulsingDot color="#E6A817" size={8} /> : null}
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-xs uppercase tracking-[2px] text-white/45"
-        >
-          {title}
-        </Text>
-      </View>
+      {title ? (
+        <View className="flex-row items-center gap-2">
+          {showLiveDot ? <PulsingDot color="#E6A817" size={8} /> : null}
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-xs uppercase tracking-[2px] text-white/45"
+          >
+            {title}
+          </Text>
+        </View>
+      ) : null}
       {games.length === 0 ? (
         <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
           {emptyMessage}

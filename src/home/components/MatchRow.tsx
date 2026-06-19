@@ -3,8 +3,9 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { GamePhaseLabel } from "@/components/ui";
 import { formatPlayedAtTime } from "@/lib/datetime";
-import { phaseLabel } from "@/lib/general-utils";
+import { isActivePlayStatus, isLiveGameStatus } from "@/lib/general-utils";
 import { fonts } from "@/theme/fonts";
 
 import type { ApiGame } from "../types";
@@ -17,10 +18,12 @@ type Props = {
 export function MatchRow({ game }: Props) {
   const router = useRouter();
   const [tvOpen, setTvOpen] = useState(false);
-  const isLive = game.status === "live" || game.status === "break";
+  const isLive = isLiveGameStatus(game.status);
   const showScore =
-    game.status === "live" ||
+    isActivePlayStatus(game.status) ||
+    game.status === "half_time" ||
     game.status === "break" ||
+    game.status === "full_time" ||
     game.status === "completed";
 
   return (
@@ -36,16 +39,14 @@ export function MatchRow({ game }: Props) {
           >
             {formatPlayedAtTime(game.playedAt)}
           </Text>
-          <Text
-            style={{ fontFamily: fonts.bodySemibold }}
-            className={
+          <GamePhaseLabel
+            game={game}
+            textClassName={
               isLive
                 ? "text-[10px] uppercase tracking-[1px] text-[#ba0c2f]"
                 : "text-[10px] uppercase tracking-[1px] text-neutral-500"
             }
-          >
-            {phaseLabel(game.status, game.currentMinute)}
-          </Text>
+          />
         </View>
 
         <View className="flex-1 gap-1.5">
@@ -71,13 +72,13 @@ export function MatchRow({ game }: Props) {
               style={[styles.score, { fontFamily: fonts.bodyBold }]}
               className="text-[15px] text-[#ba0c2f]"
             >
-              {game.homeScore ?? "-"}
+              {game.homeScore ?? "0"}
             </Text>
             <Text
               style={[styles.score, { fontFamily: fonts.bodyBold }]}
               className="text-[15px] text-[#ba0c2f]"
             >
-              {game.awayScore ?? "-"}
+              {game.awayScore ?? "0"}
             </Text>
           </View>
         ) : null}

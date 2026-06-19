@@ -18,6 +18,7 @@ type BottomSheetModalProps = {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  variant?: "light" | "dark";
 };
 
 export function BottomSheetModal({
@@ -26,7 +27,9 @@ export function BottomSheetModal({
   title,
   subtitle,
   children,
+  variant = "light",
 }: BottomSheetModalProps) {
+  const isDark = variant === "dark";
   return (
     <Modal
       transparent
@@ -38,15 +41,27 @@ export function BottomSheetModal({
       <View style={styles.root}>
         <Pressable style={styles.scrim} onPress={onClose} />
         <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
+          <View style={[styles.sheet, isDark && styles.sheetDark]}>
+            <View style={[styles.handle, isDark && styles.handleDark]} />
             <View style={styles.header}>
               <View style={styles.headerCopy}>
-                <Text style={[styles.title, { fontFamily: fonts.bodyBold }]}>
+                <Text
+                  style={[
+                    styles.title,
+                    isDark && styles.titleDark,
+                    { fontFamily: fonts.bodyBold },
+                  ]}
+                >
                   {title}
                 </Text>
                 {subtitle ? (
-                  <Text style={[styles.subtitle, { fontFamily: fonts.body }]}>
+                  <Text
+                    style={[
+                      styles.subtitle,
+                      isDark && styles.subtitleDark,
+                      { fontFamily: fonts.body },
+                    ]}
+                  >
                     {subtitle}
                   </Text>
                 ) : null}
@@ -55,9 +70,9 @@ export function BottomSheetModal({
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel="Close modal"
-                style={styles.closeButton}
+                style={[styles.closeButton, isDark && styles.closeButtonDark]}
               >
-                <Ionicons name="close" size={20} color="#111827" />
+                <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
               </Pressable>
             </View>
             <ScrollView
@@ -133,5 +148,22 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: 18,
     gap: 10,
+  },
+  sheetDark: {
+    backgroundColor: "#121212",
+    borderTopWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  handleDark: {
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  titleDark: {
+    color: "#FFFFFF",
+  },
+  subtitleDark: {
+    color: "rgba(255,255,255,0.55)",
+  },
+  closeButtonDark: {
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
 });

@@ -7,7 +7,9 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
+import { InviteResumeHandler } from "@/invite/components/InviteResumeHandler";
 import { persister, queryClient } from "@/lib/query-client";
+import { TransmitProvider } from "@/lib/transmit";
 import {
   OpenSans_400Regular,
   OpenSans_600SemiBold,
@@ -23,6 +25,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { useFonts } from "expo-font";
 import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
@@ -49,6 +52,9 @@ function RootStack() {
       <Stack.Protected guard={!hasOnboarded}>
         <Stack.Screen name="(intro)" />
       </Stack.Protected>
+      <Stack.Protected guard={hasOnboarded}>
+        <Stack.Screen name="join" />
+      </Stack.Protected>
       <Stack.Protected guard={hasOnboarded && !user}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
@@ -63,19 +69,24 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <PersistQueryClientProvider persistOptions={{ persister }} client={queryClient}>
-        <SafeAreaProvider>
-          <AuthProvider>
-            <AuthGateProvider>
-              <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
-                <StatusBar style="auto" />
-                <RootStack />
-                <Toast />
-              </ThemeProvider>
-            </AuthGateProvider>
-          </AuthProvider>
-        </SafeAreaProvider>
-      </PersistQueryClientProvider>
+      <KeyboardProvider>
+        <PersistQueryClientProvider persistOptions={{ persister }} client={queryClient}>
+          <TransmitProvider>
+            <SafeAreaProvider>
+              <AuthProvider>
+                <AuthGateProvider>
+                  <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
+                    <StatusBar style="auto" />
+                    <RootStack />
+                    <InviteResumeHandler />
+                    <Toast />
+                  </ThemeProvider>
+                </AuthGateProvider>
+              </AuthProvider>
+            </SafeAreaProvider>
+          </TransmitProvider>
+        </PersistQueryClientProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

@@ -1,6 +1,6 @@
 # API Routes
 
-Scope: JSON API under `/api/v1` from `start/routes.ts`. Mobile auth lives in `MOBILE_AUTH_ROUTES.md`.
+Scope: JSON API under `/api/v1` from `start/routes.ts`. Mobile authentication (OTP) lives under `/api/v1/auth` — see [Authentication](#authentication-otp) below. Legacy email/password routes are [deprecated](#deprecated-emailpassword--google-oauth).
 
 ## Response wrapping
 
@@ -13,30 +13,34 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 
 ### Primitives
 
-| Shape                          | Fields                                                                                                                                                                                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Country**                    | `id` (number), `name` (string), `code` (string)                                                                                                                                                                                                 |
-| **League**                     | `id`, `name`, `logoUrl` (string \| null), optional `games` → **Game[]**                                                                                                                                                                         |
-| **Team**                       | `id`, `name`, `logoUrl` (string \| null)                                                                                                                                                                                                        |
-| **Team (with games)**          | **Team** + `homeGames`, `awayGames` → **Game[]**                                                                                                                                                                                                |
-| **Player**                     | `id`, `name`, `avatarUrl` (string \| null)                                                                                                                                                                                                      |
-| **Player (with stats)**        | **Player** + `stats` → **Stat[]**                                                                                                                                                                                                               |
-| **StatType**                   | `id`, `name`, `displayName`, `iconName` (string \| null), `category` (string \| null)                                                                                                                                                           |
-| **Stat**                       | `id`, `minute` (number \| null), `isStoppageTime` (boolean \| null), `numericValue` (number \| null), `type` → **StatType** \| omitted, `team` → **Team** \| omitted, `player` → **Player** \| omitted, `relatedPlayer` → **Player** \| omitted |
-| **Standing**                   | `id`, `position`, `played`, `wins`, `draws`, `losses`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form` (string \| null), `team` → **Team** \| omitted                                                                            |
-| **Game**                       | `id`, `status`, `playedAt`, `homeScore`, `awayScore`, `venueName`, `currentMinute`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted                                                                                          |
-| **Game (detail)**              | **Game** + `league` → **League** \| omitted, `stats` → **Stat[]**                                                                                                                                                                               |
-| **Season**                     | `id`, `name`, `status`, optional nested: `league`, `games`, `standings`, `stats`                                                                                                                                                                |
-| **SearchHit**                  | `id` (string), `type` (`country` \| `league` \| `team` \| `player`), `label`, optional `sublabel`, optional `countryCode`                                                                                                                       |
-| **LeaguePlayer**               | `id`, `status`, `position`, `jerseyNumber`, `isCaptain`                                                                                                                                                                                         |
-| **LeaguePlayer (with league)** | **LeaguePlayer** + `league` → **League**, `team` → **Team**                                                                                                                                                                                     |
-| **LeaguePlayer (with player)** | **LeaguePlayer** + `player` → **Player**, `team` → **Team**                                                                                                                                                                                     |
-| **OwnedLeague**                | `id`, `name`, `logoUrl`, `countryId`, `activeSeason` → **Season** \| null                                                                                                                                                                       |
-| **User**                       | `id`, `email`, `fullName`                                                                                                                                                                                                                       |
+| Shape                          | Fields                                                                                                                                                                                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Country**                    | `id` (number), `name` (string), `code` (string)                                                                                                                                                                                                                             |
+| **League**                     | `id`, `name`, `logoUrl` (string \| null), optional `games` → **Game[]**                                                                                                                                                                                                     |
+| **Team**                       | `id`, `name`, `logoUrl` (string \| null)                                                                                                                                                                                                                                    |
+| **Team (with games)**          | **Team** + `homeGames`, `awayGames` → **Game[]**                                                                                                                                                                                                                            |
+| **Player**                     | `id`, `name`, `avatarUrl` (string \| null)                                                                                                                                                                                                                                  |
+| **Player (with stats)**        | **Player** + `stats` → **Stat[]**                                                                                                                                                                                                                                           |
+| **StatType**                   | `id`, `name`, `displayName`, `iconName` (string \| null), `category` (string \| null)                                                                                                                                                                                       |
+| **Stat**                       | `id`, `minute` (number \| null), `isStoppageTime` (boolean \| null), `numericValue` (number \| null), `isUnaccredited` (boolean), `type` → **StatType** \| omitted, `team` → **Team** \| omitted, `player` → **Player** \| omitted, `relatedPlayer` → **Player** \| omitted |
+| **Standing**                   | `id`, `position`, `played`, `wins`, `draws`, `losses`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form` (string \| null), `team` → **Team** \| omitted                                                                                                        |
+| **Game**                       | `id`, `status`, `playedAt`, `homeScore`, `awayScore`, `venueName`, `currentMinute`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted                                                                                                                      |
+| **Game (detail)**              | **Game** + `league` → **League** \| omitted, `stats` → **Stat[]**                                                                                                                                                                                                           |
+| **Season**                     | `id`, `name`, `status`, optional nested: `league`, `games`, `standings`, `stats`                                                                                                                                                                                            |
+| **SearchHit**                  | `id` (string), `type` (`country` \| `league` \| `team` \| `player`), `label`, optional `sublabel`, optional `countryCode`                                                                                                                                                   |
+| **LeaguePlayer**               | `id`, `status`, `position`, `jerseyNumber`, `isCaptain`                                                                                                                                                                                                                     |
+| **LeaguePlayer (with league)** | **LeaguePlayer** + `league` → **League**, `team` → **Team**                                                                                                                                                                                                                 |
+| **LeaguePlayer (with player)** | **LeaguePlayer** + `player` → **Player**, `team` → **Team**                                                                                                                                                                                                                 |
+| **OwnedLeague**                | `id`, `name`, `logoUrl`, `countryId`, `activeSeason` → **Season** \| null                                                                                                                                                                                                   |
+| **User**                       | `id`, `email`, `fullName`                                                                                                                                                                                                                                                   |
+| **AuthSession**                | `auth.user` → **User**; `auth.token` → `{ type: 'bearer', value, expiresAt, abilities }`                                                                                                                                                                                    |
 
 ### Game `status` values
 
-`scheduled` \| `live` \| `break` \| `completed` \| `postponed` \| `cancelled`
+`scheduled` \| `first_half` \| `half_time` \| `second_half` \| `extra_time` \| `full_time` \| `cancelled` \| `postponed` \| `paused`
+
+- **`currentMinute`** in API responses is **computed** from period start timestamps (`firstHalfStartedAt`, etc.) — not polled/stored every minute. See [docs/CHANGE_GAME.md](docs/CHANGE_GAME.md).
+- Query param **`gameStatus=live`** on `GET /api/v1/leagues` matches any in-play status (`first_half`, `second_half`, `extra_time`, `paused`).
 
 ### Season `status` values
 
@@ -53,6 +57,69 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 ### Stat type `name` values (seeded)
 
 Includes `goals`, `own_goal`, `assists`, `yellow_card`, `red_card`, `saves`, `shots_on_target`, `fouls_conceded`, `substitution_on`, `substitution_off`.
+
+---
+
+## Authentication (OTP)
+
+Mobile sign-in and sign-up use **one-time passwords** emailed to the user. There is no password field. Controller: `app/controllers/auth_controller.ts`; service: `app/services/otp_service.ts`.
+
+### Flow
+
+1. **`POST /api/v1/auth/request-otp`** — send a 6-digit code to `email` (valid 10 minutes).
+2. **`POST /api/v1/auth/verify-otp`** — submit `email`, `code`, and `name`; receive a Bearer token. Creates a `users` row on first verify; `name` becomes `fullName` (falls back to the email local-part if omitted).
+3. Use **`Authorization: Bearer <token>`** on protected routes (`apiAuth` guard). Token name `mobile`, **`expiresIn: 30d`**.
+
+Account recovery: if the user set a `recovery_email`, **`POST /api/v1/auth/recover`** looks up the account and sends an OTP to the **primary** email.
+
+### Auth routes
+
+| Method | Path                       | Auth      | Input                                                                                 | Success response                                         | Errors / notes                                                                                         |
+| ------ | -------------------------- | --------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `POST` | `/api/v1/auth/request-otp` | none      | **Body:** `email` (string)                                                            | `{ message: "OTP sent" }` (not wrapped in `data`)        | Rate limit: 5 requests / 10 min per email, 30 min block; `429` when exceeded                           |
+| `POST` | `/api/v1/auth/verify-otp`  | none      | **Body:** `email`, `code` (6-digit string), `name?` (string — required for new users) | **`{ data: { auth: AuthSession } }`**                    | Invalid/expired code → error; rate limit: 5 attempts / 10 min per email; welcome email on first signup |
+| `POST` | `/api/v1/auth/recover`     | none      | **Body:** `recoveryEmail` (string — must match `users.recovery_email`)                | `{ message: "Recovery OTP sent to your primary email" }` | `404` if no user with that recovery email                                                              |
+| `POST` | `/api/v1/auth/logout`      | `apiAuth` | Bearer token                                                                          | `204 No Content`                                         | Invalidates current API token; `401` without token                                                     |
+
+### `verify-otp` success payload
+
+```json
+{
+  "data": {
+    "auth": {
+      "user": {
+        "id": 1,
+        "email": "player@example.com",
+        "fullName": "Ada Player"
+      },
+      "token": {
+        "type": "bearer",
+        "value": "kpk_…",
+        "expiresAt": "2026-07-14T12:00:00.000Z",
+        "abilities": ["*"]
+      }
+    }
+  }
+}
+```
+
+---
+
+## Deprecated: email/password & Google OAuth
+
+> **Deprecated** — routes are **commented out** in `start/routes.ts` and are **not registered**. Kept for reference and migration from older clients. Use [OTP authentication](#authentication-otp) instead.
+
+Implementation (inactive): `app/controllers/users_controller.ts`. Former detail also in `MOBILE_AUTH_ROUTES.md`.
+
+| Method | Path                           | Input                                                    | Former success response                                              | Notes                                                             |
+| ------ | ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `POST` | `/api/v1/auth/signup`          | `fullName?`, `email`, `password`, `passwordConfirmation` | `201` → `{ data: { auth: AuthSession } }`                            | Password hashed on user row                                       |
+| `POST` | `/api/v1/auth/login`           | `email`, `password`                                      | `200` → `{ data: { auth: AuthSession } }`                            | `401` invalid credentials                                         |
+| `POST` | `/api/v1/auth/forgot-password` | `email`                                                  | `204 No Content`                                                     | Emailed reset token                                               |
+| `POST` | `/api/v1/auth/reset-password`  | `token`, `password`, `passwordConfirmation`              | `204 No Content`                                                     | `400` invalid/expired token                                       |
+| `GET`  | `/api/v1/auth/google/redirect` | none                                                     | Redirect to Google OAuth                                             | Ally                                                              |
+| `GET`  | `/api/v1/auth/google/callback` | Google callback query                                    | `302` to `MOBILE_OAUTH_DEEP_LINK` or `200` with `{ data: { auth } }` | Token name `google-mobile`, 30d                                   |
+| `POST` | `/api/v1/auth/logout`          | Bearer                                                   | `204`                                                                | Replaced by OTP `AuthController.logout` (same path, still active) |
 
 ---
 
@@ -74,12 +141,12 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 | Method   | Path                                                 | Auth                                        | Input                                                                                                                                                                                                                                                                                 | Success response                                                                                                               | Errors / notes                                                                             |
 | -------- | ---------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | `GET`    | `/api/v1/countries`                                  | none                                        | none                                                                                                                                                                                                                                                                                  | **`{ data: CountryRef[] }`** — `id`, `name`, `code` only                                                                       | Always `200`                                                                               |
-| `GET`    | `/api/v1/countries/:idOrCode`                        | none                                        | **Params:** numeric `id` (e.g. `1`) or ISO country `code` (e.g. `ng`)                                                                                                                                                                                                                 | **`{ data: CountryDetail }`** — see [Country detail](#get-apiv1countriesidorcode--data-countrydetail)                          | `404` country not found                                                                    |
+| `GET`    | `/api/v1/countries/:idOrCode`                        | none                                        | **Params:** numeric `id` (e.g. `1`) or ISO country `code` (e.g. `ng`)                                                                                                                                                                                                                 | **`{ data: CountryDetail }`** — see below                                                                                      | `404` country not found                                                                    |
 | `GET`    | `/api/v1/leagues`                                    | none                                        | **Query:** `countryId?`, `gameStatus?`, `gameDate?` (`YYYY-MM-DD`, default today), `timeZone?` (IANA, e.g. `Africa/Lagos`; default `UTC`). `matches` filters `played_at` to that **local calendar day** converted to UTC. See [docs/TIME_AND_TIMEZONE.md](docs/TIME_AND_TIMEZONE.md). | **`{ data: { leagues, matches } }`** — `leagues` unfiltered list; `matches` game feed                                          | `400` invalid `gameDate` / `timeZone`; empty `matches` if no games that day                |
 | `GET`    | `/api/v1/leagues/:leagueId`                          | none                                        | **Params:** `leagueId`. **Query:** `seasonId?` (positive integer; defaults to the league's `active` season, else the newest)                                                                                                                                                          | **`{ data: { seasons, season, statTypes } }`** — see below                                                                     | `400` invalid `leagueId` or `seasonId`; `404` league/season not found                      |
 | `POST`   | `/api/v1/leagues`                                    | `apiAuth`                                   | **Body:** `createLeagueWithSeasonValidator` — see below                                                                                                                                                                                                                               | **`201`** `{ inviteUrl: string }` (not wrapped in `data`)                                                                      | Validation `422`; creates league + active season + optional teams                          |
-| `POST`   | `/api/v1/leagues/:leagueId/favorite`                 | `apiAuth`                                   | **Params:** `leagueId` (number). No body.                                                                                                                                                                                                                                             | `{ message: "League added to favorites" }`                                                                                     | `401` unauthorized; duplicate favourite may error (unique `user_id` + `league_id`)         |
-| `DELETE` | `/api/v1/leagues/:leagueId/favorite`                 | `apiAuth`                                   | **Params:** `leagueId` (number). No body.                                                                                                                                                                                                                                             | `{ message: "League removed from favorites" }`                                                                                 | `401` unauthorized; idempotent if not favourited                                           |
+| `POST`   | `/api/v1/leagues/:leagueId/favorite`                 | `apiAuth`                                   | **Params:** `leagueId` (positive integer; must exist in `leagues`). No body.                                                                                                                                                                                                          | `{ message: "League added to favorites" }`                                                                                     | `401` unauthorized; `409` already favourited; `422` invalid or missing league              |
+| `DELETE` | `/api/v1/leagues/:leagueId/favorite`                 | `apiAuth`                                   | **Params:** `leagueId` (positive integer; must exist in `leagues`). No body.                                                                                                                                                                                                          | `{ message: "League removed from favorites" }`                                                                                 | `401` unauthorized; `422` invalid or missing league; idempotent if not favourited          |
 | `PUT`    | `/api/v1/leagues/:leagueId`                          | `apiAuth` + `leagueOwner`                   | **Params:** `leagueId`. **Body:** `updateLeagueValidator`                                                                                                                                                                                                                             | `{ message: "League updated successfully" }`                                                                                   | `400` invalid id; `403` not owner; `404` league                                            |
 | `GET`    | `/api/v1/search`                                     | none                                        | **Query:** `q` (string, trimmed; empty → no search), `limit?` (number 1–100, default 24)                                                                                                                                                                                              | **`{ data: { query: string, results: SearchHit[] } }`**                                                                        | Always `200`; empty `q` → `results: []`                                                    |
 | `GET`    | `/api/v1/games/:id`                                  | none                                        | **Params:** `id` (game id)                                                                                                                                                                                                                                                            | **`{ data: GameDetail }`**                                                                                                     | `404` if game missing                                                                      |
@@ -87,7 +154,7 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 | `GET`    | `/api/v1/players/:id`                                | none                                        | **Params:** `id` (player id)                                                                                                                                                                                                                                                          | **`{ data: { player, leagues, statTypes } }`** — see below                                                                     | `404` if player missing                                                                    |
 | `GET`    | `/api/v1/invites/generate`                           | `apiAuth` + `leagueOwner`                   | **Query:** `leagueId`, `seasonId`, `teamId`, `invitedUserId?`                                                                                                                                                                                                                         | `{ inviteLink: string }` (not wrapped in `data`)                                                                               | See [docs/PLAYER_INVITE.md](docs/PLAYER_INVITE.md)                                         |
 | `GET`    | `/api/v1/invites/accept/:token`                      | session/API user required (`getUserOrFail`) | **Params:** `token`                                                                                                                                                                                                                                                                   | If no player profile: `{ requiresProfile: true, token: string }`. Else: `{ requiresProfile: false, leagueId: number \| null }` | `403` wrong user; `409` already on roster; `404` invalid/expired invite                    |
-| `POST`   | `/api/v1/invites/complete-profile-and-accept/:token` | `apiAuth`                                   | **Params:** `token`. **Body:** `name` (string, required), `bio?` (string, optional) — no Vine validator yet                                                                                                                                                                           | `{ leagueId: number \| null }`                                                                                                 | `409` if player profile already exists                                                     |
+| `POST`   | `/api/v1/invites/complete-profile-and-accept/:token` | `apiAuth`                                   | **Params:** `token`. **Body:** `multipart/form-data` or JSON — `name` (string, required), `countryId` (required FK to `countries`), `bio?` (string, optional), `avatar?` (image file, max 2 MB, jpg/jpeg/png/webp)                                                                    | `{ leagueId: number \| null }`                                                                                                 | `409` if player profile already exists; `422` validation                                   |
 | `GET`    | `/api/v1/leagues/league-player-requests`             | `apiAuth`                                   | none                                                                                                                                                                                                                                                                                  | **LeaguePlayerWithLeague[]** (not wrapped in `data`)                                                                           | Lists `league_players` where `player_id = auth user id` and `status = pending`             |
 | `POST`   | `/api/v1/leagues/accept-league-player-request`       | `apiAuth`                                   | **Body:** `acceptLeaguePlayerRequestValidator`                                                                                                                                                                                                                                        | `{ message: "League player request accepted successfully" }`                                                                   | `404` row missing; `409` already active                                                    |
 | `POST`   | `/api/v1/leagues/:leagueId/seasons`                  | `apiAuth` + `leagueOwner`                   | **Params:** `leagueId`. **Body:** `createSeasonValidator`                                                                                                                                                                                                                             | **`201`** raw season row: `{ id, leagueId, name, status, createdAt, updatedAt }`                                               | Validation `422`                                                                           |
@@ -104,9 +171,104 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 | `PUT`    | `/api/v1/leagues/stats/:id`                          | `apiAuth` + `leagueOwner`                   | **Params:** `id` (stat id). **Body:** `updateStatValidator`                                                                                                                                                                                                                           | `{ message: "Stat updated successfully" }`                                                                                     | `404` stat                                                                                 |
 | `DELETE` | `/api/v1/leagues/stats/:id`                          | `apiAuth` + `leagueOwner`                   | **Params:** `id` (stat id)                                                                                                                                                                                                                                                            | `{ message: "Stat deleted successfully" }`                                                                                     | Recalculates standings / broadcasts game update                                            |
 
+### Live game time (`apiAuth` + `teamOwner`)
+
+League owner **or** home/away team owner (`teams.added_by`) may control match clock. Each action broadcasts SSE `status_changed` on channel `games/{gameId}`. See [docs/CHANGE_GAME.md](docs/CHANGE_GAME.md).
+
+| Method | Path                                      | Body                                  | Success                              | Notes                                                                                     |
+| ------ | ----------------------------------------- | ------------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `POST` | `/api/v1/games/:gameId/start-first-half`  | none                                  | `{ message: "First half started" }`  | From `scheduled` or `postponed`; sets `firstHalfStartedAt`                                |
+| `POST` | `/api/v1/games/:gameId/half-time`         | none                                  | `{ message: "Half time" }`           | From `first_half`                                                                         |
+| `POST` | `/api/v1/games/:gameId/start-second-half` | none                                  | `{ message: "Second half started" }` | From `half_time`; sets `secondHalfStartedAt`                                              |
+| `POST` | `/api/v1/games/:gameId/extra-time`        | none                                  | `{ message: "Extra time started" }`  | From `second_half`; sets `extraTimeStartedAt`                                             |
+| `POST` | `/api/v1/games/:gameId/pause`             | none                                  | `{ message: "Game paused" }`         | From `first_half`, `second_half`, or `extra_time`; stores `pausedAt` + `pausedFromStatus` |
+| `POST` | `/api/v1/games/:gameId/resume`            | none                                  | `{ message: "Game resumed" }`        | From `paused`; shifts period start timestamp by pause duration                            |
+| `POST` | `/api/v1/games/:gameId/full-time`         | `{ homeScore, awayScore }` (required) | `{ message: "Full time" }`           | From `second_half` or `extra_time`; fires `GameUpdated` → standings                       |
+
+### Hybrid scoring (`apiAuth` + `teamOwner`)
+
+Live match score +/- with unaccredited goal placeholders. See [docs/hybrid-scoring-prompt.md](docs/hybrid-scoring-prompt.md).
+
+| Method  | Path                                           | Body                                                             | Success                                     | Notes                                                                                                                                                  |
+| ------- | ---------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `POST`  | `/api/v1/games/:gameId/score`                  | `{ team: "home" \| "away", action: "increment" \| "decrement" }` | `{ message, homeScore, awayScore, statId }` | `increment` creates unaccredited goal stat (`playerId: null`); `statId` returned for accredit flow; SSE `score_updated`; `GameUpdated` reason `result` |
+| `PATCH` | `/api/v1/games/:gameId/stats/:statId/accredit` | `{ playerId, assistPlayerId?, isOwnGoal, minute }`               | `{ message: "Goal accredited", statId }`    | Updates placeholder; optional assist stat; SSE `stat_accredited`; `GameUpdated` reason `stat`                                                          |
+
+**SSE on `games/{gameId}`:**
+
+| `type`            | Payload                    |
+| ----------------- | -------------------------- |
+| `score_updated`   | `{ homeScore, awayScore }` |
+| `stat_accredited` | `{ statId }`               |
+
 ---
 
 ## Response payloads (serialized routes)
+
+### `GET /api/v1/countries/:idOrCode` → `CountryDetail`
+
+```json
+{
+  "data": {
+    "country": { "id": 1, "name": "Nigeria", "code": "ng" },
+    "stats": {
+      "leagues": 8,
+      "teams": 96,
+      "players": 1320,
+      "liveMatches": 3
+    },
+    "leagues": [
+      {
+        "id": "10",
+        "name": "Sunday Riverside League",
+        "country": { "code": "ng", "name": "Nigeria" }
+      }
+    ],
+    "teams": [{ "id": "100", "name": "Lagos Tigers", "logoUrl": null }],
+    "featuredPlayers": [
+      {
+        "player": {
+          "id": "1",
+          "name": "John Doe",
+          "avatarInitials": "JD",
+          "position": "Midfielder",
+          "teamId": "100",
+          "countryCode": "ng"
+        },
+        "goals": 12,
+        "assists": 7,
+        "appearances": 18,
+        "yellowCards": 2,
+        "redCards": 0
+      }
+    ],
+    "recentMatches": [
+      {
+        "id": "900",
+        "homeTeam": { "id": "100", "name": "Lagos Tigers" },
+        "awayTeam": { "id": "101", "name": "Abuja Waves" },
+        "league": {
+          "id": "10",
+          "name": "Sunday Riverside League",
+          "country": { "code": "ng", "name": "Nigeria" }
+        },
+        "country": { "code": "ng", "name": "Nigeria" },
+        "scoreline": "2 - 1",
+        "status": "FT",
+        "kickoffLabel": "Fri, 23 May",
+        "venue": "Riverside Pitch 2",
+        "round": "Matchday 8",
+        "live": false,
+        "isoDate": "2026-05-23"
+      }
+    ]
+  }
+}
+```
+
+- **`stats`** — counts scoped to the country (`players` uses `players.country_id`).
+- **`featuredPlayers`** — top 10 by goals in leagues in this country (stats aggregated across those leagues).
+- **`recentMatches`** — last 10 games in the country’s leagues; `status` is a display label (`FT`, `LIVE`, `NS`, …); `round` is `Matchday N` from season schedule order.
 
 ### `GET /api/v1/leagues` → `{ leagues, matches }`
 
@@ -164,75 +326,7 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 ```
 
 - `leagues` — countries with league list (no game-day filter).
-- `matches` — same country shape, but only countries/leagues with games on `gameDate` in `timeZone`; leagues include `isFavourited` when the user is logged in.
-
-### `GET /api/v1/countries/:idOrCode` → `{ data: CountryDetail }`
-
-**Params:** numeric country `id` (e.g. `1`) or ISO `code` (e.g. `ng`, case-insensitive).
-
-**Response:** aggregated country overview for the country detail screen.
-
-```json
-{
-  "data": {
-    "country": { "id": 1, "name": "Nigeria", "code": "ng" },
-    "stats": {
-      "leagues": 8,
-      "teams": 96,
-      "players": 1320,
-      "liveMatches": 3
-    },
-    "leagues": [
-      {
-        "id": 10,
-        "name": "Sunday Riverside League",
-        "country": { "code": "ng", "name": "Nigeria" }
-      }
-    ],
-    "teams": [{ "id": 100, "name": "Lagos Tigers", "logoUrl": null }],
-    "featuredPlayers": [
-      {
-        "player": {
-          "id": 42,
-          "name": "John Doe",
-          "avatarInitials": "JD",
-          "position": "midfield",
-          "teamId": 100,
-          "countryCode": "ng"
-        },
-        "goals": 12,
-        "assists": 7,
-        "appearances": 18,
-        "yellowCards": 2,
-        "redCards": 0
-      }
-    ],
-    "recentMatches": [
-      {
-        "id": 900,
-        "homeTeam": { "id": 100, "name": "Lagos Tigers" },
-        "awayTeam": { "id": 101, "name": "Abuja Waves" },
-        "league": {
-          "id": 10,
-          "name": "Sunday Riverside League",
-          "country": { "code": "ng", "name": "Nigeria" }
-        },
-        "country": { "code": "ng", "name": "Nigeria" },
-        "scoreline": "2 - 1",
-        "status": "completed",
-        "kickoffLabel": "Fri, 23 May",
-        "playedAt": "2026-05-23T15:00:00.000Z",
-        "venue": "Riverside Pitch 2",
-        "round": "Matchday 8",
-        "live": false,
-        "isoDate": "2026-05-23"
-      }
-    ]
-  }
-}
-```
-
-Mobile client: [`src/country/api.ts`](../src/country/api.ts) (`fetchCountryDetail`).
+- `matches` — same country shape, but only countries/leagues with games on `gameDate` in `timeZone`; leagues include `isFavourited` when the request includes a valid **`Authorization: Bearer`** token (same `api` guard as favourite routes; session cookies are not used).
 
 ### `GET /api/v1/leagues/:leagueId` → `{ seasons, season, statTypes }`
 
@@ -253,13 +347,6 @@ Mobile client: [`src/country/api.ts`](../src/country/api.ts) (`fetchCountryDetai
         "name": "goals",
         "displayName": "Goals",
         "iconName": "soccer-ball",
-        "category": "performance"
-      },
-      {
-        "id": 2,
-        "name": "own_goal",
-        "displayName": "Own Goal",
-        "iconName": "soccer-ball-own",
         "category": "performance"
       }
     ],
@@ -467,9 +554,10 @@ All fields optional: `name`, `description`, `gender`, `logo` (same rules as abov
 | Field      | Rules                                   |
 | ---------- | --------------------------------------- |
 | `leagueId` | required; exists in `leagues`           |
-| `addedBy`  | required; exists in `users`             |
-| `name`     | optional string, 1–255, nullable        |
+| `name`     | required string, 1–255                  |
 | `logo`     | optional image (2mb, jpg/jpeg/png/webp) |
+
+`addedBy` is set server-side from the authenticated user.
 
 ### `updateTeamValidator` — `PUT /api/v1/leagues/:leagueId/teams/:id`
 

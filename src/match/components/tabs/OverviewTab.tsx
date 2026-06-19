@@ -1,10 +1,15 @@
 import { useRouter } from "expo-router";
-import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
+import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAt } from "@/lib/datetime";
-import { fonts } from "@/theme/fonts";
+import {
+  isActivePlayStatus,
+  isLiveGameStatus,
+} from "@/lib/general-utils";
+import { MatchEventsTimeline } from "@/match/components/MatchEventsTimeline";
 import type { MatchDetail } from "@/match/types";
+import { fonts } from "@/theme/fonts";
 
 type Props = {
   detail: MatchDetail;
@@ -12,18 +17,14 @@ type Props = {
 
 export function MatchOverviewTab({ detail }: Props) {
   const router = useRouter();
-  const isLive = detail.status === "live" || detail.status === "break";
-  const phase = phaseLabel(detail.status, detail.currentMinute);
+  const isLive = isLiveGameStatus(detail.status);
+  const phase = useGamePhaseLabel(detail);
   const showScore =
-    detail.status === "live" ||
+    isActivePlayStatus(detail.status) ||
+    detail.status === "half_time" ||
     detail.status === "break" ||
+    detail.status === "full_time" ||
     detail.status === "completed";
-
-  const events = useMemo(
-    () =>
-      [...detail.stats].sort((a, b) => (a.minute ?? 0) - (b.minute ?? 0)),
-    [detail.stats],
-  );
 
   return (
     <View className="gap-6">
@@ -51,7 +52,7 @@ export function MatchOverviewTab({ detail }: Props) {
               className="text-[32px] text-white"
             >
               {showScore
-                ? `${detail.homeScore ?? "-"} - ${detail.awayScore ?? "-"}`
+                ? `${detail.homeScore ?? "0"} - ${detail.awayScore ?? "0"}`
                 : "vs"}
             </Text>
             {phase ? (
@@ -82,85 +83,20 @@ export function MatchOverviewTab({ detail }: Props) {
         <View className="rounded-[24px] bg-white/6 px-4 py-5">
           <FactRow label="Kickoff" value={formatPlayedAt(detail.playedAt)} />
           <FactRow label="Venue" value={detail.venueName ?? "—"} />
-          <FactRow label="Status" value={detail.status} />
+          {/* <FactRow label="Status" value={detail.status} /> */}
         </View>
       </Section>
 
       <Section title="Events">
-        {events.length ? (
-          <View className="overflow-hidden rounded-[20px] bg-white/6">
-            {events.map((stat, index) => (
-              <Pressable
-                key={stat.id}
-                disabled={stat.player?.id == null}
-                onPress={() =>
-                  stat.player?.id != null &&
-                  router.push(`/player/${stat.player.id}`)
-                }
-                className={[
-                  "flex-row items-center gap-3 px-4 py-3",
-                  index !== events.length - 1 ? "border-b border-white/10" : "",
-                ].join(" ")}
-              >
-                <View className="w-10">
-                  <Text
-                    style={{ fontFamily: fonts.bodyBold }}
-                    className="text-sm text-[#E6A817]"
-                  >
-                    {stat.minute != null
-                      ? `${stat.minute}'${stat.isStoppageTime ? "+" : ""}`
-                      : "—"}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text
-                    style={{ fontFamily: fonts.bodyBold }}
-                    className="text-white"
-                  >
-                    {stat.player?.name ?? "Unknown"}
-                  </Text>
-                  <Text
-                    style={{ fontFamily: fonts.body }}
-                    className="pt-0.5 text-xs text-white/55"
-                  >
-                    {stat.type?.displayName ?? stat.type?.name ?? "Event"}
-                    {stat.team ? ` · ${stat.team.name}` : ""}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        ) : (
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="text-sm text-white/55"
-          >
-            No events recorded yet.
-          </Text>
-        )}
+        <MatchEventsTimeline
+          stats={detail.stats}
+          homeTeamId={detail.homeTeam?.id}
+          awayTeamId={detail.awayTeam?.id}
+          onPlayerPress={(id) => router.push(`/player/${id}`)}
+        />
       </Section>
     </View>
   );
-}
-
-function phaseLabel(
-  status: MatchDetail["status"],
-  currentMinute: number,
-): string {
-  switch (status) {
-    case "live":
-      return `${currentMinute}'`;
-    case "break":
-      return "Half time";
-    case "completed":
-      return "Full time";
-    case "postponed":
-      return "Postponed";
-    case "cancelled":
-      return "Cancelled";
-    default:
-      return "";
-  }
 }
 
 function TeamColumn({

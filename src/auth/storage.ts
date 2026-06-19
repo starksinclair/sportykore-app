@@ -8,7 +8,7 @@ const USER_PROFILE_KEY = "auth.profile.v1";
 
 const isWeb = Platform.OS === "web";
 
-/** Serialized profile from last successful `/auth/login` | `/auth/signup` | Google success. */
+/** Serialized profile from last successful OTP verify or session restore. */
 export type PersistedUserProfile = {
   id: string;
   email: string;

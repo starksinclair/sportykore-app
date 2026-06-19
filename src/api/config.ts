@@ -6,4 +6,4 @@ export const API_BASE_URL =
   typeof process.env.EXPO_PUBLIC_API_URL === "string" &&
   process.env.EXPO_PUBLIC_API_URL.length > 0
     ? process.env.EXPO_PUBLIC_API_URL.replace(/\/$/, "")
-    : "http://10.0.0.180:3333";
+    : "http://10.27.77.140:3333";

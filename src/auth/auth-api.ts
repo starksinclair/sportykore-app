@@ -8,34 +8,47 @@ import {
 
 const PREFIX = "/api/v1/auth";
 
-export async function postLogin(
-  email: string,
-  password: string,
-): Promise<AuthPayload> {
-  const body = await apiRequest<WrappedAuthSuccess>(`${PREFIX}/login`, {
+export type OtpSentResponse = {
+  message: string;
+};
+
+export async function postRequestOtp(email: string): Promise<OtpSentResponse> {
+  return apiRequest<OtpSentResponse>(`${PREFIX}/request-otp`, {
     method: "POST",
-    jsonBody: { email: email.trim(), password },
+    jsonBody: { email: email.trim() },
+    auth: false,
+  });
+}
+
+export async function postVerifyOtp(params: {
+  email: string;
+  code: string;
+  name?: string;
+  recoveryEmail?: string;
+}): Promise<AuthPayload> {
+  const body = await apiRequest<WrappedAuthSuccess>(`${PREFIX}/verify-otp`, {
+    method: "POST",
+    jsonBody: {
+      email: params.email.trim(),
+      code: params.code.trim(),
+      ...(params.name?.trim() ? { name: params.name.trim() } : {}),
+      ...(params.recoveryEmail?.trim()
+        ? { recoveryEmail: params.recoveryEmail.trim() }
+        : {}),
+    },
     auth: false,
   });
   return unwrapAuthPayload(body);
 }
 
-export async function postSignup(params: {
-  email: string;
-  password: string;
-  /** Maps to API `fullName` (nullable) */
-  fullName: string | null;
-}): Promise<AuthPayload> {
-  const body = await apiRequest<WrappedAuthSuccess>(`${PREFIX}/signup`, {
+export async function postRecover(
+  recoveryEmail: string,
+): Promise<OtpSentResponse> {
+  return apiRequest<OtpSentResponse>(`${PREFIX}/recover`, {
     method: "POST",
-    jsonBody: {
-      email: params.email.trim(),
-      password: params.password,
-      fullName: params.fullName?.trim?.() ?? null,
-    },
+    jsonBody: { recoveryEmail: recoveryEmail.trim() },
     auth: false,
   });
-  return unwrapAuthPayload(body);
 }
 
 export async function postLogout(): Promise<void> {
@@ -46,21 +59,9 @@ export async function postLogout(): Promise<void> {
   });
 }
 
-export async function postForgotPassword(email: string): Promise<void> {
-  await apiRequest<unknown>(`${PREFIX}/forgot-password`, {
-    method: "POST",
-    jsonBody: { email: email.trim() },
-    auth: false,
-  });
-}
-
-export async function postResetPassword(
-  token: string,
-  password: string,
-): Promise<void> {
-  await apiRequest<unknown>(`${PREFIX}/reset-password`, {
-    method: "POST",
-    jsonBody: { token: token.trim(), password },
-    auth: false,
+export async function deleteAccount(): Promise<void> {
+  await apiRequest<unknown>(`${PREFIX}/account`, {
+    method: "DELETE",
+    auth: true,
   });
 }

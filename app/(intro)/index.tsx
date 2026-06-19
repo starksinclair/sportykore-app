@@ -91,7 +91,6 @@ export default function LandingScreen() {
               accessibilityHint="Opens the sign-in screen"
             >
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-center text-[15px]"
               >
                 <Text style={{ color: "rgba(255,255,255,0.92)" }}>

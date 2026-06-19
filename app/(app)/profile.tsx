@@ -10,13 +10,14 @@ import { useAuth } from "@/auth";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
 import { fonts } from "@/theme/fonts";
+import { openBrowserAsync } from "expo-web-browser";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut, deleteOnboardingCompleted } = useAuth();
+  const { user, signOut, deleteOnboardingCompleted, deleteAccount } = useAuth();
   const [matchAlerts, setMatchAlerts] = useState(true);
 
-  const displayName = user?.name?.trim() || "Gbako supporter";
+  const displayName = user?.name?.trim();
   const email = user?.email ?? "";
 
   const handleComingSoon = (label: string) => {
@@ -41,6 +42,24 @@ export default function ProfileScreen() {
     );
   };
 
+const handleDeleteAccount = () => {
+  Alert.alert(
+    'Delete Account',
+    'This will permanently delete your account, player profile, and all associated data. This action cannot be undone.',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete Account',
+        style: 'destructive',
+        onPress: async () => {
+            await deleteAccount()
+          router.replace('/(auth)/login')
+        },
+      },
+    ]
+  )
+}
+
   return (
     <View className="flex-1 bg-white">
       <StatusBar style="light" />
@@ -50,7 +69,7 @@ export default function ProfileScreen() {
           baseColor={scoreboardPattern().baseColor}
           stripeColor={scoreboardPattern().stripeColor}
         />
-        <SafeAreaView edges={["top"]}>
+        <SafeAreaView edges={["top", "bottom"]}>
           <View className="flex-row items-center justify-between pb-4 pt-1">
             <Pressable
               onPress={() => router.back()}
@@ -61,8 +80,8 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
             </Pressable>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-base uppercase tracking-[2px] text-white/85"
+              style={{ fontFamily: fonts.displayBold }}
+              className="text-base text-center uppercase tracking-[2px] text-white/85"
             >
               Profile
             </Text>
@@ -71,10 +90,10 @@ export default function ProfileScreen() {
 
           <View className="gap-5">
             <View className="bg-white/8 px-4 py-4">
-              <View className="flex-row items-center gap-4">
+             {user ? ( <View className="flex-row items-center gap-4">
                 <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
                   <Text style={{ fontFamily: fonts.bodyBold }} className="text-xl text-white">
-                    {displayName.slice(0, 1).toUpperCase()}
+                    {displayName?.slice(0, 1).toUpperCase()}
                   </Text>
                 </View>
                 <View className="flex-1 gap-1">
@@ -89,7 +108,19 @@ export default function ProfileScreen() {
                     {email}
                   </Text>
                 </View>
-              </View>
+              </View>) : (
+                <Pressable
+                onPress={() => router.push("/login")}
+                className="flex-row items-center justify-center gap-2 rounded-[14px] border-2 border-brand bg-brand-50 py-4 active:opacity-80"
+                accessibilityRole="button"
+                accessibilityLabel="Sign in"
+              >
+                <Ionicons name="log-in-outline" size={22} color={colors.brand} />
+                <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-brand">
+                  Sign in
+                </Text>
+              </Pressable>
+              )}
             </View>
           </View>
         </SafeAreaView>
@@ -110,7 +141,7 @@ export default function ProfileScreen() {
           />
         </Section>
 
-        <Section title="Preferences">
+        {/* <Section title="Preferences">
           <SettingsRowChevron
             icon="moon-outline"
             title="Appearance"
@@ -124,6 +155,15 @@ export default function ProfileScreen() {
             subtitle="English • device region"
             onPress={() => handleComingSoon("Language")}
           />
+        </Section> */}
+        <Section title="Account">
+          <SettingsRowChevron
+            icon="trash-outline"
+            title="Delete account"
+            subtitle="Permanently delete your account"
+            onPress={handleDeleteAccount}
+          />
+
         </Section>
 
         <Section title="Support">
@@ -131,28 +171,25 @@ export default function ProfileScreen() {
             icon="document-text-outline"
             title="Terms & privacy"
             subtitle="Policies and how we use data"
-            onPress={() => handleComingSoon("Terms & privacy")}
+            onPress={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
           />
           <Divider />
-          <SettingsRowChevron
-            icon="help-circle-outline"
-            title="Help centre"
-            subtitle="FAQs and contact"
-            onPress={() => handleComingSoon("Help")}
-          />
+          <SettingsRowChevron icon="help-circle-outline" title="Help centre" subtitle="FAQs and contact" onPress={() => openBrowserAsync("https://waitlist.sportykore.com")} />
         </Section>
 
-        <Pressable
-          onPress={handleSignOut}
-          className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
-          accessibilityRole="button"
-          accessibilityLabel="Log out"
-        >
-          <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
-            Log out
-          </Text>
-        </Pressable>
+       {user && (
+         <Pressable
+         onPress={handleSignOut}
+         className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
+         accessibilityRole="button"
+         accessibilityLabel="Log out"
+       >
+         <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
+         <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
+           Log out
+         </Text>
+       </Pressable>
+       )}
         <Pressable onPress={() => deleteOnboardingCompleted()}>
           <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
             Delete onboarding completed
@@ -163,7 +200,7 @@ export default function ProfileScreen() {
           style={{ fontFamily: fonts.body }}
           className="pb-8 text-center text-xs leading-5 text-slate-500"
         >
-          Gbako — local football, clearer for everyone on the continent.
+          Sportykore — local football, clearer for everyone on the continent.
         </Text>
       </ScrollView>
     </View>

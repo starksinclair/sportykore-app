@@ -16,6 +16,7 @@ export default function AppGroupLayout() {
         options={{
           presentation: "card",
           animation: "slide_from_right",
+          title: "Profile",
         }}
       />
       <Stack.Screen name="country/[id]" options={{ animation: "slide_from_right" }} />

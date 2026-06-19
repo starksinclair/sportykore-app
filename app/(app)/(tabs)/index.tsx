@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -42,6 +41,7 @@ import {
   startOfMonth,
 } from "@/home/utils";
 import { fonts } from "@/theme/fonts";
+import { StatusBar } from "expo-status-bar";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 import useRefresh from "hooks/useRefresh";
 
@@ -94,29 +94,29 @@ export default function HomeScreen() {
     queryClient.prefetchQuery({
       queryKey: homeKeys.leagues(prevParams),
       queryFn: () => fetchLeagues({ ...leagueParams, gameDate: addDays(selectedDate.date, -1) }),
-    });
+    }).then();
     queryClient.prefetchQuery({
       queryKey: homeKeys.leagues(nextParams),
       queryFn: () => fetchLeagues({ ...leagueParams, gameDate: addDays(selectedDate.date, 1) }),
-    });
+    }).catch();
   }, [isOnline, leagueParams, selectedDate.date, queryClient]);
 
   const cycleDate = (direction: -1 | 1) =>
     setSelectedDateOffset((current) => current + direction);
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="light" />
-      <SafeAreaView className="flex-1 bg-white" edges={["top"]}>
+    <View className="flex-1 bg-[#121212]">
+       <StatusBar style="light" />
+      <SafeAreaView className="flex-1" edges={["top"]}>
         <OfflineBanner />
 
-        <View className="relative overflow-hidden bg-[#121212] px-5 pb-8 pt-4">
+        {/*<View className="relative overflow-hidden bg-[#121212] px-5 pb-8 pt-4">*/}
           <BlackPatternBackground
             baseColor={scoreboardPattern().baseColor}
             stripeColor={scoreboardPattern().stripeColor}
           />
 
-          <Animated.View entering={FadeInDown.duration(350)} className="gap-6">
+          <Animated.View entering={FadeInDown.duration(350)} className="gap-6  px-5 pb-8 pt-4">
             <View className="flex-row items-center gap-3">
               <View className="shrink-0">
                 <Logo variant="full" color={colors.accent} fontSize={18} lineHeight={25} />
@@ -143,16 +143,16 @@ export default function HomeScreen() {
                 >
                   <Ionicons name="person-outline" size={20} color="#FFFFFF" />
                 </Pressable>
-                <Text
+                {/* <Text
                   style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs uppercase tracking-[2px] text-white/45"
                 >
                   {selectedDate.shortDate}
-                </Text>
+                </Text> */}
               </View>
             </View>
           </Animated.View>
-        </View>
+        {/*</View>*/}
 
         <ScrollView
           className="flex-1 bg-white"

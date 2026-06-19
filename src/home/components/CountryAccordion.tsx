@@ -25,7 +25,7 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
   const { mutate: favouriteLeague } = useFavouriteLeague(params);
   const { mutate: unfavouriteLeague } = useUnfavouriteLeague(params);
   const { requireAuth } = useAuthGate();
-  console.log("entry isFavourited", entry.leagues[0].isFavourited);
+
   return (
     <View
       className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white"
@@ -75,7 +75,6 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
                <Pressable
                  onPress={() =>
                    requireAuth({ action: "favourite this league" }, () => {
-                    console.log("league.isFavourited", league.isFavourited);
                      if (league.isFavourited) {
                        unfavouriteLeague(league.id);
                      } else {

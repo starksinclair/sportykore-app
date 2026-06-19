@@ -9,11 +9,15 @@ export type AuthContextValue = {
   user: AuthUser | null;
   hasOnboarded: boolean;
   hydrated: boolean;
-  signIn: (input: { email: string; password: string }) => Promise<void>;
-  signUp: (input: { email: string; password: string; name?: string }) => Promise<void>;
+  completeOtpVerification: (input: {
+    email: string;
+    code: string;
+    name?: string;
+    recoveryEmail?: string;
+  }) => Promise<void>;
+  recoverAccount: (recoveryEmail: string) => Promise<void>;
   signOut: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
   deleteOnboardingCompleted: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<void>;
-  resetPassword: (input: { token: string; password: string }) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };

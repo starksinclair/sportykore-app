@@ -32,6 +32,7 @@ export async function fetchLeagues(
 
   const res = await apiRequest<{ data: LeagueResponse }>(
     `/api/v1/leagues?${query}`,
+    { auth: true },
   );
   return res.data;
 }
@@ -44,7 +45,7 @@ export async function favoriteLeague(leagueId: number) {
 }
 
 export async function unfavoriteLeague(leagueId: number) {
-  await apiRequest<void>(`/api/v1/leagues/${leagueId}/unfavorite`, {
+  await apiRequest<void>(`/api/v1/leagues/${leagueId}/favorite`, {
     method: "DELETE",
     auth: true,
   });

@@ -12,13 +12,8 @@ import { showErrorToast } from "@/lib/show-error-toast";
 
 import { fetchLeagues, resolveLeaguesParams } from "@/home/api/leagues";
 import { homeKeys } from "@/home/hooks";
-import {
-  postForgotPassword,
-  postLogin,
-  postLogout,
-  postResetPassword,
-  postSignup,
-} from "./auth-api";
+import { startOfDay } from "@/home/utils";
+import { postLogout, postRecover, postVerifyOtp } from "./auth-api";
 import { AuthContext } from "./auth-context";
 import type { BackendAuthUser } from "./auth-contract";
 import {
@@ -33,7 +28,6 @@ import {
 } from "./storage";
 import type { AuthContextValue, AuthUser } from "./types";
 import { setUnauthorizedHandler } from "./unauthorized-bus";
-import { startOfDay } from "@/home/utils";
 
 function mapPersisted(profile: PersistedUserProfile): AuthUser {
   return {
@@ -122,21 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signIn = useCallback<AuthContextValue["signIn"]>(async ({ email, password }) => {
-    const payload = await postLogin(email, password);
+  const completeOtpVerification = useCallback<
+    AuthContextValue["completeOtpVerification"]
+  >(async ({ email, code, name, recoveryEmail }) => {
+    const payload = await postVerifyOtp({ email, code, name, recoveryEmail });
     const mapped = await persistSessionFromPayload(payload.user, payload.token.value);
     setUser(mapped);
   }, []);
 
-  const signUp = useCallback<AuthContextValue["signUp"]>(
-    async ({ email, password, name }) => {
-      const payload = await postSignup({
-        email,
-        password,
-        fullName: name?.trim()?.length ? name.trim() : null,
-      });
-      const mapped = await persistSessionFromPayload(payload.user, payload.token.value);
-      setUser(mapped);
+  const recoverAccount = useCallback<AuthContextValue["recoverAccount"]>(
+    async (recoveryEmail) => {
+      await postRecover(recoveryEmail);
     },
     [],
   );
@@ -153,9 +143,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const deleteAccount = useCallback<AuthContextValue["deleteAccount"]>(async () => {
+    try {
+      await deleteAccount();
+    } catch {
+      /* token may already be invalid */
+    }
+    await clearSessionCredentials();
+    queryClient.clear();
+    setUser(null);
+  }, []);
+
   const completeOnboarding = useCallback<AuthContextValue["completeOnboarding"]>(async () => {
     await setOnboarded(true);
     setHasOnboarded(true);
+    router.replace("/login?new=1");
   }, []);
 
   const deleteOnboardingCompleted = useCallback<
@@ -165,41 +167,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setHasOnboarded(false);
   }, []);
 
-  const forgotPassword = useCallback<AuthContextValue["forgotPassword"]>(async (email) => {
-    await postForgotPassword(email);
-  }, []);
-
-  const resetPassword = useCallback<AuthContextValue["resetPassword"]>(
-    async ({ token: resetToken, password }) => {
-      await postResetPassword(resetToken, password);
-    },
-    [],
-  );
-
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       hasOnboarded,
       hydrated,
-      signIn,
-      signUp,
+      completeOtpVerification,
+      recoverAccount,
       signOut,
       completeOnboarding,
       deleteOnboardingCompleted,
-      forgotPassword,
-      resetPassword,
+      deleteAccount,
     }),
     [
       user,
       hasOnboarded,
       hydrated,
-      signIn,
-      signUp,
+      completeOtpVerification,
+      recoverAccount,
       signOut,
       completeOnboarding,
       deleteOnboardingCompleted,
-      forgotPassword,
-      resetPassword,
+      deleteAccount,
     ],
   );
 

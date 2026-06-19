@@ -2,8 +2,8 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import {
   ActivityIndicator,
+  FlatList,
   RefreshControl,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -76,9 +76,19 @@ export default function ManageScreen() {
             <ErrorState onRetry={() => query.refetch()} />
           </View>
         ) : (
-          <ScrollView
+          <FlatList
             className="flex-1 px-5"
-            contentContainerClassName="gap-3 pb-10"
+            data={query.data ?? []}
+            keyExtractor={(league) => String(league.id)}
+            renderItem={({ item: league }) => (
+              <ManageLeagueRow
+                league={league}
+                onPress={() => handleOpenLeague(league.id)}
+              />
+            )}
+            ItemSeparatorComponent={() => <View className="h-3" />}
+            ListEmptyComponent={ManageEmptyLeagues}
+            contentContainerClassName="pb-[10rem] grow"
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -87,35 +97,29 @@ export default function ManageScreen() {
               />
             }
             showsVerticalScrollIndicator={false}
-          >
-            {!query.data?.length ? (
-              <View className="items-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-center text-lg text-white"
-                >
-                  No leagues yet
-                </Text>
-                <Text
-                  style={{ fontFamily: fonts.body }}
-                  className="pt-2 text-center text-sm leading-6 text-white/55"
-                >
-                  Create a league from the Create tab, then return here to run
-                  match day operations.
-                </Text>
-              </View>
-            ) : (
-              query.data.map((league) => (
-                <ManageLeagueRow
-                  key={league.id}
-                  league={league}
-                  onPress={() => handleOpenLeague(league.id)}
-                />
-              ))
-            )}
-          </ScrollView>
+          />
         )}
       </SafeAreaView>
+    </View>
+  );
+}
+
+function ManageEmptyLeagues() {
+  return (
+    <View className="items-center rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-center text-lg text-white"
+      >
+        No leagues yet
+      </Text>
+      <Text
+        style={{ fontFamily: fonts.body }}
+        className="pt-2 text-center text-sm leading-6 text-white/55"
+      >
+        Create a league from the Create tab, then return here to run match day
+        operations.
+      </Text>
     </View>
   );
 }

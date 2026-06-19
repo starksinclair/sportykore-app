@@ -88,6 +88,8 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
   const [dateStr, setDateStr] = useState(defaultDate);
   const [timeStr, setTimeStr] = useState("15:00");
   const [venueName, setVenueName] = useState("");
+  const [firstHalfMinutes, setFirstHalfMinutes] = useState("45");
+  const [secondHalfMinutes, setSecondHalfMinutes] = useState("45");
 
   const teams = teamsQuery.data ?? [];
   const canSubmit =
@@ -103,7 +105,18 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
     setDateStr(toCalendarDateParam(new Date()));
     setTimeStr("15:00");
     setVenueName("");
+    setFirstHalfMinutes("45");
+    setSecondHalfMinutes("45");
     onClose();
+  };
+
+  const parseHalfMinutes = (value: string, label: string): number | null => {
+    const n = Number(value.trim());
+    if (!Number.isInteger(n) || n < 1 || n > 120) {
+      showInfoToast("Invalid duration", `${label} must be a whole number between 1 and 120.`);
+      return null;
+    }
+    return n;
   };
 
   const handleSubmit = async () => {
@@ -112,6 +125,11 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
       showInfoToast("Missing fields", "Pick both teams and a valid date.");
       return;
     }
+    const firstHalfDuration = parseHalfMinutes(firstHalfMinutes, "First half");
+    if (firstHalfDuration == null) return;
+    const secondHalfDuration = parseHalfMinutes(secondHalfMinutes, "Second half");
+    if (secondHalfDuration == null) return;
+
     try {
       await createMutation.mutateAsync({
         leagueId,
@@ -121,6 +139,8 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
         playedAt,
         venueName: venueName.trim() || undefined,
         status: "scheduled",
+        firstHalfDuration,
+        secondHalfDuration,
       });
       showInfoToast("Game scheduled", "The fixture was added to upcoming.");
       resetAndClose();
@@ -178,6 +198,26 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
             onChangeText={setVenueName}
             placeholder="Riverside Pitch 2"
           />
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <AuthTextField
+                label="First half (min)"
+                value={firstHalfMinutes}
+                onChangeText={setFirstHalfMinutes}
+                keyboardType="number-pad"
+                placeholder="45"
+              />
+            </View>
+            <View className="flex-1">
+              <AuthTextField
+                label="Second half (min)"
+                value={secondHalfMinutes}
+                onChangeText={setSecondHalfMinutes}
+                keyboardType="number-pad"
+                placeholder="45"
+              />
+            </View>
+          </View>
           <Button
             variant="authPurple"
             label={createMutation.isPending ? "Scheduling…" : "Schedule game"}

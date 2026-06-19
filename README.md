@@ -6,15 +6,15 @@ SportyKore is a soccer league management mobile app. The frontend is **Expo SDK 
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Expo 54 / React Native 0.81.5 / React 19 |
-| Routing | Expo Router 6 (file-based) |
-| Styling | NativeWind 4 (Tailwind CSS for RN) |
-| Data fetching | TanStack React Query 5 |
-| Auth | Custom `AuthProvider` + AsyncStorage |
-| Language | TypeScript 5.9 (strict mode) |
-| State | React Context + React Query (no Redux/Zustand) |
+| Layer         | Technology                                     |
+| ------------- | ---------------------------------------------- |
+| Framework     | Expo 54 / React Native 0.81.5 / React 19       |
+| Routing       | Expo Router 6 (file-based)                     |
+| Styling       | NativeWind 4 (Tailwind CSS for RN)             |
+| Data fetching | TanStack React Query 5                         |
+| Auth          | Custom `AuthProvider` + AsyncStorage           |
+| Language      | TypeScript 5.9 (strict mode)                   |
+| State         | React Context + React Query (no Redux/Zustand) |
 
 Expo experiments enabled in `app.json`: `typedRoutes`, `reactCompiler`.
 
@@ -49,11 +49,11 @@ Create a `.env` file at the project root:
 EXPO_PUBLIC_API_URL="http://127.0.0.1:3333"
 ```
 
-| Target | URL to use |
-|---|---|
-| iOS Simulator | `http://127.0.0.1:3333` (points to your Mac) |
+| Target           | URL to use                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------- |
+| iOS Simulator    | `http://127.0.0.1:3333` (points to your Mac)                                       |
 | Android emulator | `http://10.0.2.2:3333` or run `adb reverse tcp:3333 tcp:3333` then use `127.0.0.1` |
-| Physical device | Your machine's LAN IP, e.g. `http://192.168.0.x:3333` |
+| Physical device  | Your machine's LAN IP, e.g. `http://192.168.0.x:3333`                              |
 
 Only variables prefixed with `EXPO_PUBLIC_` are available in app code.
 
@@ -161,11 +161,11 @@ sportykore-app/
 
 Guards live in `app/_layout.tsx` using `<Stack.Protected guard={...}>`.
 
-| Group | Shown when | Guard |
-|---|---|---|
-| `(intro)` | First launch (not onboarded) | `!hasOnboarded` |
-| `(auth)` | Onboarded, not logged in | `hasOnboarded && !user` |
-| `(app)` | Logged in | `hasOnboarded && !!user` |
+| Group     | Shown when                   | Guard                    |
+| --------- | ---------------------------- | ------------------------ |
+| `(intro)` | First launch (not onboarded) | `!hasOnboarded`          |
+| `(auth)`  | Onboarded, not logged in     | `hasOnboarded && !user`  |
+| `(app)`   | Logged in                    | `hasOnboarded && !!user` |
 
 Page files are **thin wrappers** — extract params, render a `src/` screen component, nothing else:
 
@@ -233,8 +233,8 @@ const data = await apiRequest<{ data: MyType[] }>("/api/v1/things");
 // POST with JSON body, authenticated
 const result = await apiRequest<ResponseType>("/api/v1/things", {
   method: "POST",
-  auth: true,           // attaches Bearer token automatically
-  jsonBody: { name },   // serialised to JSON; use FormData for file uploads
+  auth: true, // attaches Bearer token automatically
+  jsonBody: { name }, // serialised to JSON; use FormData for file uploads
 });
 ```
 
@@ -246,12 +246,12 @@ const result = await apiRequest<ResponseType>("/api/v1/things", {
 
 ### Query client defaults (`src/lib/query-client.ts`)
 
-| Setting | Value |
-|---|---|
-| `staleTime` | 5 minutes |
-| `gcTime` | 24 hours (persisted to AsyncStorage for offline use) |
-| Retry | up to 2×, skipped for 403/404 |
-| Persistence key | `SOCCER_APP_CACHE` |
+| Setting         | Value                                                |
+| --------------- | ---------------------------------------------------- |
+| `staleTime`     | 5 minutes                                            |
+| `gcTime`        | 24 hours (persisted to AsyncStorage for offline use) |
+| Retry           | up to 2×, skipped for 403/404                        |
+| Persistence key | `SOCCER_APP_CACHE`                                   |
 
 ### Standard hook pattern
 
@@ -349,12 +349,12 @@ Usage: `className="bg-brand-500 text-accent-400"`.
 ```ts
 import { fonts } from "@/theme/fonts";
 
-fonts.brand          // Pacifico_400Regular       — logo / display
-fonts.body           // OpenSans_400Regular        — body copy
-fonts.bodySemibold   // OpenSans_600SemiBold
-fonts.bodyBold       // OpenSans_700Bold
-fonts.display        // PlayfairDisplay_400Regular
-fonts.displayBold    // PlayfairDisplay_700Bold
+fonts.brand; // Pacifico_400Regular       — logo / display
+fonts.body; // OpenSans_400Regular        — body copy
+fonts.bodySemibold; // OpenSans_600SemiBold
+fonts.bodyBold; // OpenSans_700Bold
+fonts.display; // PlayfairDisplay_400Regular
+fonts.displayBold; // PlayfairDisplay_700Bold
 ```
 
 Always use `style={{ fontFamily: fonts.bodyBold }}` alongside `className` for text weight/style.
@@ -363,22 +363,22 @@ Always use `style={{ fontFamily: fonts.bodyBold }}` alongside `className` for te
 
 ## Shared UI Components (`src/components/ui/`)
 
-| Component | Purpose |
-|---|---|
-| `Button` | Primary/secondary/ghost/accent variants; `loading` prop shows spinner |
-| `Input` / `AuthTextField` / `TextField` | Text inputs with label |
-| `Screen` | Safe-area wrapper |
-| `DetailScreenShell` | Shell for detail screens (league, player, etc.) |
-| `DetailTabs` | Horizontal tab bar for detail screens |
-| `SeasonPicker` | Native wheel picker for season selection |
-| `OfflineBanner` | Fixed banner shown when `isOnline` is false |
-| `ErrorState` | Full-screen error with retry button |
-| `BottomSheetModal` | Slide-up modal sheet |
-| `PulsingDot` | Animated live indicator |
-| `Logo` | App wordmark |
-| `CountryFlag` / `CountryLabel` | Flag image + country name |
-| `BlackPatternBackground` | Decorative striped background |
-| `Collapsible` | Expandable/collapsible section |
+| Component                               | Purpose                                                               |
+| --------------------------------------- | --------------------------------------------------------------------- |
+| `Button`                                | Primary/secondary/ghost/accent variants; `loading` prop shows spinner |
+| `Input` / `AuthTextField` / `TextField` | Text inputs with label                                                |
+| `Screen`                                | Safe-area wrapper                                                     |
+| `DetailScreenShell`                     | Shell for detail screens (league, player, etc.)                       |
+| `DetailTabs`                            | Horizontal tab bar for detail screens                                 |
+| `SeasonPicker`                          | Native wheel picker for season selection                              |
+| `OfflineBanner`                         | Fixed banner shown when `isOnline` is false                           |
+| `ErrorState`                            | Full-screen error with retry button                                   |
+| `BottomSheetModal`                      | Slide-up modal sheet                                                  |
+| `PulsingDot`                            | Animated live indicator                                               |
+| `Logo`                                  | App wordmark                                                          |
+| `CountryFlag` / `CountryLabel`          | Flag image + country name                                             |
+| `BlackPatternBackground`                | Decorative striped background                                         |
+| `Collapsible`                           | Expandable/collapsible section                                        |
 
 Import from the barrel: `import { Button, OfflineBanner } from "@/components/ui"`.
 
@@ -386,10 +386,10 @@ Import from the barrel: `import { Button, OfflineBanner } from "@/components/ui"
 
 ## Global Hooks (`hooks/`)
 
-| Hook | Purpose |
-|---|---|
-| `useNetworkStatus()` | Returns `{ isOnline: boolean }` |
-| `useRefresh()` | Returns `{ refreshing, onRefresh }` for `RefreshControl` |
+| Hook                 | Purpose                                                  |
+| -------------------- | -------------------------------------------------------- |
+| `useNetworkStatus()` | Returns `{ isOnline: boolean }`                          |
+| `useRefresh()`       | Returns `{ refreshing, onRefresh }` for `RefreshControl` |
 
 Every screen with a `FlatList` should wire up `RefreshControl`:
 
@@ -408,7 +408,7 @@ const { refreshing, onRefresh } = useRefresh(refetch);
       colors={[colors.brand]}
     />
   }
-/>
+/>;
 ```
 
 ---
@@ -455,10 +455,10 @@ const classes: Record<Variant, string> = { primary: "bg-brand-500", secondary: "
 
 Documented in `documentations/ROUTES.md`. Two patterns:
 
-| Pattern | When |
-|---|---|
-| `{ data: T }` | `GET` routes that call `ctx.serialize(...)` |
-| Plain JSON | `POST`/`PUT`/`DELETE` mutations returning `{ message: "..." }` or a raw object |
+| Pattern       | When                                                                           |
+| ------------- | ------------------------------------------------------------------------------ |
+| `{ data: T }` | `GET` routes that call `ctx.serialize(...)`                                    |
+| Plain JSON    | `POST`/`PUT`/`DELETE` mutations returning `{ message: "..." }` or a raw object |
 
 All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`, `ApiPlayer`, `ApiSeason`, etc.). Derive feature-specific types from these — do not duplicate or invent fields.
 
@@ -466,33 +466,33 @@ All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`,
 
 ## Screens Built
 
-| Screen | Route | Status |
-|---|---|---|
-| Home / match feed | `(tabs)/index` | Live (React Query, offline-first) |
-| Create league wizard | `(tabs)/create` | Live (3-step, submits to API) |
-| Manage leagues list | `(tabs)/manage` | Live (biometric gate) |
-| Manage league detail | `manage/[leagueId]` | Live (games, players, settings tabs) |
-| League detail | `league/[id]` | Live (standings, fixtures, stats, season picker) |
-| Match detail | `match/[id]` | Live |
-| Team detail | `team/[id]` | Live |
-| Player detail | `player/[id]` | Live |
-| Country detail | `country/[id]` | Live |
-| Search | `search` | Live |
-| Login / Register / Forgot | `(auth)/*` | Live |
-| Onboarding | `(intro)/*` | Live |
+| Screen                    | Route               | Status                                           |
+| ------------------------- | ------------------- | ------------------------------------------------ |
+| Home / match feed         | `(tabs)/index`      | Live (React Query, offline-first)                |
+| Create league wizard      | `(tabs)/create`     | Live (3-step, submits to API)                    |
+| Manage leagues list       | `(tabs)/manage`     | Live (biometric gate)                            |
+| Manage league detail      | `manage/[leagueId]` | Live (games, players, settings tabs)             |
+| League detail             | `league/[id]`       | Live (standings, fixtures, stats, season picker) |
+| Match detail              | `match/[id]`        | Live                                             |
+| Team detail               | `team/[id]`         | Live                                             |
+| Player detail             | `player/[id]`       | Live                                             |
+| Country detail            | `country/[id]`      | Live                                             |
+| Search                    | `search`            | Live                                             |
+| Login / Register / Forgot | `(auth)/*`          | Live                                             |
+| Onboarding                | `(intro)/*`         | Live                                             |
 
 ---
 
 ## Documentation
 
-| File | Contents |
-|---|---|
-| `documentations/ROUTES.md` | All backend API routes, request/response shapes, validators |
-| `documentations/MOBILE_AUTH_ROUTES.md` | Auth endpoints (login, signup, token refresh, me) |
-| `documentations/MANAGE_LEAGUE.md` | Manage flow: league list, biometric gate, games/players/settings tabs |
-| `documentations/TIME_AND_TIMEZONE.md` | How match-day filtering works with timezones |
-| `documentations/DETAIL_SCREENS_API_GAPS.md` | Known API gaps and workarounds for detail screens |
-| `AGENTS.md` | Canonical conventions reference for code style, patterns, do's/don'ts |
+| File                                        | Contents                                                              |
+| ------------------------------------------- | --------------------------------------------------------------------- |
+| `documentations/ROUTES.md`                  | All backend API routes, request/response shapes, validators           |
+| `documentations/MOBILE_AUTH_ROUTES.md`      | Auth endpoints (login, signup, token refresh, me)                     |
+| `documentations/MANAGE_LEAGUE.md`           | Manage flow: league list, biometric gate, games/players/settings tabs |
+| `documentations/TIME_AND_TIMEZONE.md`       | How match-day filtering works with timezones                          |
+| `documentations/DETAIL_SCREENS_API_GAPS.md` | Known API gaps and workarounds for detail screens                     |
+| `AGENTS.md`                                 | Canonical conventions reference for code style, patterns, do's/don'ts |
 
 ---
 
@@ -500,17 +500,18 @@ All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`,
 
 `eas.json` defines three profiles:
 
-| Profile | Purpose |
-|---|---|
-| `development` | Dev client, internal distribution |
-| `preview` | Internal distribution (TestFlight / Play internal) |
-| `production` | Store submission |
+| Profile       | Purpose                                            |
+| ------------- | -------------------------------------------------- |
+| `development` | Dev client, internal distribution                  |
+| `preview`     | Internal distribution (TestFlight / Play internal) |
+| `production`  | Store submission                                   |
 
 ---
 
 ## Do's and Don'ts
 
 **Do:**
+
 - Keep `app/` files as thin param-extractors; all logic belongs in `src/`.
 - Import from module barrels (`@/league`), never from deep internal paths.
 - Use `className` NativeWind strings for all layout, spacing, and color.
@@ -521,6 +522,7 @@ All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`,
 - Handle all query states in every screen: loading, error, empty, success.
 
 **Don't:**
+
 - Import from `app/` inside `src/`.
 - Use default exports in component or hook files.
 - Hardcode hex colors or font name strings in component files.
