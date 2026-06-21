@@ -12,10 +12,24 @@ export type OtpSentResponse = {
   message: string;
 };
 
-export async function postRequestOtp(email: string): Promise<OtpSentResponse> {
+export type RequestOtpInput = {
+  email: string;
+  name?: string;
+  recoveryEmail?: string;
+};
+
+export async function postRequestOtp(
+  params: RequestOtpInput,
+): Promise<OtpSentResponse> {
   return apiRequest<OtpSentResponse>(`${PREFIX}/request-otp`, {
     method: "POST",
-    jsonBody: { email: email.trim() },
+    jsonBody: {
+      email: params.email.trim(),
+      ...(params.name?.trim() ? { name: params.name.trim() } : {}),
+      ...(params.recoveryEmail?.trim()
+        ? { recoveryEmail: params.recoveryEmail.trim() }
+        : {}),
+    },
     auth: false,
   });
 }
@@ -23,18 +37,12 @@ export async function postRequestOtp(email: string): Promise<OtpSentResponse> {
 export async function postVerifyOtp(params: {
   email: string;
   code: string;
-  name?: string;
-  recoveryEmail?: string;
 }): Promise<AuthPayload> {
   const body = await apiRequest<WrappedAuthSuccess>(`${PREFIX}/verify-otp`, {
     method: "POST",
     jsonBody: {
       email: params.email.trim(),
       code: params.code.trim(),
-      ...(params.name?.trim() ? { name: params.name.trim() } : {}),
-      ...(params.recoveryEmail?.trim()
-        ? { recoveryEmail: params.recoveryEmail.trim() }
-        : {}),
     },
     auth: false,
   });

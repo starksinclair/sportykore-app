@@ -53,13 +53,13 @@ function RootStack() {
         <Stack.Screen name="(intro)" />
       </Stack.Protected>
       <Stack.Protected guard={hasOnboarded}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+      <Stack.Protected guard={hasOnboarded}>
         <Stack.Screen name="join" />
       </Stack.Protected>
       <Stack.Protected guard={hasOnboarded && !user}>
         <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-      <Stack.Protected guard={hasOnboarded}>
-        <Stack.Screen name="(app)" />
       </Stack.Protected>
     </Stack>
   );

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Link, router, useLocalSearchParams } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
 import {
   Dimensions,
@@ -15,6 +15,7 @@ import {
 } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { isRequiresSignupError, messageFromBackendBody } from "@/api/errors";
 import { useRequestOtp } from "@/auth";
 import { Button } from "@/components/ui/Button";
 import {
@@ -33,12 +34,19 @@ const heroHeight = Math.min(height * 0.5, width * 1.05);
 const KEYBOARD_TOOLBAR_OFFSET = 62;
 
 function LoginCard() {
-  const params = useLocalSearchParams<{ new?: string }>();
-  const showNameField = params.new === "1";
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [requiresSignup, setRequiresSignup] = useState(false);
+  const [signupHint, setSignupHint] = useState<string | null>(null);
   const requestMutation = useRequestOtp();
+
+  const goToOtp = (trimmedEmail: string) => {
+    router.push({
+      pathname: "/otp",
+      params: { email: trimmedEmail },
+    });
+  };
 
   const onSubmit = async () => {
     const trimmedEmail = email.trim();
@@ -46,17 +54,35 @@ function LoginCard() {
       showErrorToast("Email required", "Enter your email address to continue.");
       return;
     }
-    try {
-      await requestMutation.mutateAsync(trimmedEmail);
-      router.push({
-        pathname: "/otp",
-        params: {
+
+    if (requiresSignup) {
+      const trimmedName = name.trim();
+      if (!trimmedName) {
+        showErrorToast("Name required", "Enter your full name to create an account.");
+        return;
+      }
+      try {
+        await requestMutation.mutateAsync({
           email: trimmedEmail,
-          ...(showNameField && name.trim() ? { name: name.trim() } : {}),
+          name: trimmedName,
           ...(recoveryEmail.trim() ? { recoveryEmail: recoveryEmail.trim() } : {}),
-        },
-      });
+        });
+        goToOtp(trimmedEmail);
+      } catch (e) {
+        showThrownAsToast(e, "Could not send code");
+      }
+      return;
+    }
+
+    try {
+      await requestMutation.mutateAsync({ email: trimmedEmail });
+      goToOtp(trimmedEmail);
     } catch (e) {
+      if (isRequiresSignupError(e)) {
+        setRequiresSignup(true);
+        setSignupHint(messageFromBackendBody(e.body));
+        return;
+      }
       showThrownAsToast(e, "Could not send code");
     }
   };
@@ -64,7 +90,26 @@ function LoginCard() {
   return (
     <View style={styles.card}>
       <View className="gap-5 px-5 pb-8 pt-8">
-        {showNameField ? (
+        {requiresSignup ? (
+          <View className="gap-1">
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-base text-neutral-900"
+            >
+              Create your account
+            </Text>
+            {signupHint ? (
+              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+                {signupHint}
+              </Text>
+            ) : (
+              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+                We need a few more details before we send your code.
+              </Text>
+            )}
+          </View>
+        ) : null}
+        {requiresSignup ? (
           <AuthTextField
             label="Full name"
             placeholder="Jay Jay Okocha"
@@ -85,14 +130,17 @@ function LoginCard() {
           textContentType="emailAddress"
           value={email}
           onChangeText={setEmail}
+          editable={!requiresSignup}
           leftIcon={<Ionicons name="mail-outline" size={20} color={colors.authPurple} />}
           labelAccessory={
-            <Link href="/forgot" asChild>
-              <AuthAccessoryLink label="Can't access account?" />
-            </Link>
+            !requiresSignup ? (
+              <Link href="/forgot" asChild>
+                <AuthAccessoryLink label="Can't access account?" />
+              </Link>
+            ) : undefined
           }
         />
-        {showNameField ? (
+        {requiresSignup ? (
           <AuthTextField
             label="Recovery email address (optional)"
             placeholder="recovery@sportykore.com"
@@ -174,13 +222,13 @@ export default function LoginScreen() {
               style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-3xl text-white"
             >
-              Get Started
+              Sign in
             </Text>
             <Text
               style={{ fontFamily: fonts.body }}
               className="text-center text-base text-slate-400"
             >
-              Enter your email and we will send you a code
+              Enter your email to continue
             </Text>
           </View>
         </View>
@@ -209,60 +257,8 @@ export default function LoginScreen() {
             .
           </Text>
         </View>
-
-        <LoginFooter />
       </KeyboardAwareScrollView>
       <KeyboardToolbar />
-    </View>
-  );
-}
-
-function LoginFooter() {
-  const params = useLocalSearchParams<{ new?: string }>();
-  const isNew = params.new === "1";
-
-  return (
-    <View className="relative flex-row flex-wrap items-center justify-center gap-1 overflow-hidden px-6 pb-12 pt-8">
-      <BlackPatternBackground />
-      {isNew ? (
-        <>
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="text-[15px] text-slate-400"
-          >
-            Already have an account?{" "}
-          </Text>
-          <Link href="/login" replace accessibilityRole="link" asChild>
-            <Pressable hitSlop={8}>
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-[15px] text-[#F2A900]"
-              >
-                Login
-              </Text>
-            </Pressable>
-          </Link>
-        </>
-      ) : (
-        <>
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="text-[15px] text-slate-400"
-          >
-            New to the patch?{" "}
-          </Text>
-          <Link href="/login?new=1" replace accessibilityRole="link" asChild>
-            <Pressable hitSlop={8}>
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-[15px] text-[#F2A900]"
-              >
-                Create Account
-              </Text>
-            </Pressable>
-          </Link>
-        </>
-      )}
     </View>
   );
 }

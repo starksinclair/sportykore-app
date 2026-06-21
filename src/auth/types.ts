@@ -12,8 +12,6 @@ export type AuthContextValue = {
   completeOtpVerification: (input: {
     email: string;
     code: string;
-    name?: string;
-    recoveryEmail?: string;
   }) => Promise<void>;
   recoverAccount: (recoveryEmail: string) => Promise<void>;
   signOut: () => Promise<void>;

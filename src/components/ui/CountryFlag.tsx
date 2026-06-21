@@ -4,7 +4,6 @@ import { Text, View, type StyleProp, type TextStyle, type ViewStyle } from "reac
 import { SvgXml } from "react-native-svg";
 
 import { getCountryFlagSvg } from "@/lib/country-flag";
-import { fonts } from "@/theme/fonts";
 
 export type CountryFlagProps = {
   code: string;
@@ -71,7 +70,7 @@ export function CountryLabel({
   return (
     <View className={["flex-row items-center gap-1.5", className].filter(Boolean).join(" ")}>
       <CountryFlag code={code} width={flagWidth} />
-      <Text style={[{ fontFamily: fonts.body }, textStyle]} className={textClassName}>
+      <Text style={[textStyle]} className={textClassName}>
         {name}
       </Text>
     </View>

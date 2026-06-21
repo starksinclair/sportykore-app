@@ -11,13 +11,11 @@ import { OtpInputField } from "./OtpInputField";
 
 type Props = {
   email: string;
-  name?: string;
-  recoveryEmail?: string;
   recoveryMode?: boolean;
   onSuccess: () => void | Promise<void>;
 };
 
-export function OtpScreen({ email: initialEmail, name, recoveryEmail, recoveryMode, onSuccess }: Props) {
+export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Props) {
   const [primaryEmail, setPrimaryEmail] = useState(initialEmail);
   const [resendCooldown, setResendCooldown] = useState(60);
   const otpKeyRef = useRef(0);
@@ -40,8 +38,6 @@ export function OtpScreen({ email: initialEmail, name, recoveryEmail, recoveryMo
       await verifyMutation.mutateAsync({
         email,
         code: otpCode,
-        name: name?.trim() || undefined,
-        recoveryEmail: recoveryEmail?.trim() || undefined,
       });
       await onSuccess();
     } catch {
@@ -52,7 +48,7 @@ export function OtpScreen({ email: initialEmail, name, recoveryEmail, recoveryMo
   const handleResend = async () => {
     if (!email) return;
     try {
-      await requestMutation.mutateAsync(email);
+      await requestMutation.mutateAsync({ email });
       setResendCooldown(60);
       otpKeyRef.current += 1;
       verifyMutation.reset();

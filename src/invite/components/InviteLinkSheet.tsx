@@ -11,7 +11,8 @@ import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
-import { buildInviteUrl, useGenerateInvite } from "@/invite";
+import { buildInviteUrl } from "@/invite/build-invite-url";
+import { useGenerateInvite } from "@/invite/hooks";
 
 type Props = {
   visible: boolean;

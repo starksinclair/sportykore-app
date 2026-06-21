@@ -26,32 +26,21 @@ export type CreateLeaguePayload = {
 };
 
 export type CreateLeagueResult = {
-  inviteUrl: string;
+  message: string;
 };
 
-function readInviteUrl(body: unknown): string | null {
-  if (typeof body === "string" && body.trim().length > 0) {
-    return body.trim();
-  }
+function readCreateLeagueMessage(body: unknown): string {
   if (!body || typeof body !== "object") {
-    return null;
+    return "League created successfully.";
   }
 
   const record = body as Record<string, unknown>;
-  const candidates = [record.inviteUrl, record.inviteLink];
-
-  if (record.data && typeof record.data === "object") {
-    const data = record.data as Record<string, unknown>;
-    candidates.push(data.inviteUrl, data.inviteLink);
+  const message = record.message;
+  if (typeof message === "string" && message.trim().length > 0) {
+    return message.trim();
   }
 
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate.trim();
-    }
-  }
-
-  return null;
+  return "League created successfully.";
 }
 
 export async function createLeague(
@@ -63,10 +52,5 @@ export async function createLeague(
     jsonBody: payload,
   });
 
-  const inviteUrl = readInviteUrl(res);
-  if (!inviteUrl) {
-    throw new Error("Create league succeeded but no invite link was returned.");
-  }
-
-  return { inviteUrl };
+  return { message: readCreateLeagueMessage(res) };
 }

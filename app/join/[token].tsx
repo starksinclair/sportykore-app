@@ -55,11 +55,6 @@ export default function JoinInvitePage() {
           label="Continue with email"
           onPress={() => router.push("/login")}
         />
-        <Button
-          variant="secondary"
-          label="Create account"
-          onPress={() => router.push("/login?new=1")}
-        />
       </View>
     </InviteScreenShell>
   );

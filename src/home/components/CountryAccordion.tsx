@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-nativ
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { useAuthGate } from "@/auth";
-import { CountryFlag } from "@/components/ui/CountryFlag";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -31,21 +31,20 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
       className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white"
       style={styles.card}
     >
-      <View
+      <Pressable
+      onPress={() => setOpen((current) => !current)}
         className={[
           "flex-row items-center justify-between gap-3 bg-white px-4 py-4 active:bg-neutral-50",
           open ? "border-b border-neutral-200" : "",
         ].join(" ")}
       >
-        <View className="flex-row items-center gap-3">
-          <CountryFlag code={entry.code} width={28} />
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[16px] text-neutral-950"
-          >
-            {entry.name}
-          </Text>
-        </View>
+         <CountryLabel
+          code={entry.code}
+          name={entry.name}
+          className="gap-3"
+          flagWidth={26}
+          textClassName="text-[16px] text-neutral-950 font-bold"
+        />
 
        <Pressable onPress={() => setOpen((current) => !current)}>
        <Ionicons
@@ -54,7 +53,7 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
           color="#6B7280"
         />
        </Pressable>
-      </View>
+      </Pressable>
 
       {open ? (
         <Animated.View entering={FadeIn.duration(180)} className="bg-white px-3 pb-3 pt-1">
@@ -63,7 +62,8 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
               <View
                 className="flex-row items-center justify-between gap-3 bg-white px-4 py-3 active:bg-neutral-50"
               >
-               <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
+              <View className="flex-1">
+              <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
                <Text
                   style={{ fontFamily: fonts.bodyBold }}
                   className="flex-1 text-[13px] text-neutral-950"
@@ -72,6 +72,15 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
                   {league.name}
                 </Text>
                </TouchableOpacity>
+              
+                <CountryLabel
+                  code={entry.code}
+                  name={entry.name}
+                  flagWidth={14}
+                  textClassName="text-[9px] text-neutral-500"
+                />
+               
+              </View>
                <Pressable
                  onPress={() =>
                    requireAuth({ action: "favourite this league" }, () => {

@@ -18,14 +18,10 @@ function readParam(value: string | string[] | undefined): string | undefined {
 export default function OtpPage() {
   const params = useLocalSearchParams<{
     email?: string | string[];
-    name?: string | string[];
-    recoveryEmail?: string | string[];
     recoveryMode?: string | string[];
   }>();
 
   const email = readParam(params.email) ?? "";
-  const name = readParam(params.name);
-  const recoveryEmail = readParam(params.recoveryEmail);
   const recoveryMode = readParam(params.recoveryMode) === "1";
 
   const back = () => {
@@ -61,8 +57,6 @@ export default function OtpPage() {
 
       <OtpScreen
         email={email}
-        name={name}
-        recoveryEmail={recoveryEmail}
         recoveryMode={recoveryMode}
         onSuccess={onSuccess}
       />

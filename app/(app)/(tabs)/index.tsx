@@ -7,6 +7,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   View,
@@ -26,10 +27,16 @@ import { fetchLeagues, resolveLeaguesParams } from "@/home/api/leagues";
 import {
   CountryAccordion,
   EmptyState,
-  LeagueDirectoryRow
+  FavoriteLeagueCard,
+  LeagueDirectoryRow,
 } from "@/home/components";
 import { SegmentButton } from "@/home/components/SegmentButton";
 import { homeKeys, useLeaguesByCountry } from "@/home/hooks";
+import {
+  partitionMatchesFeed,
+  type FavoriteLeagueEntry,
+} from "@/home/partitionMatchesFeed";
+import type { ApiCountryWithLeagues } from "@/home/types";
 import {
   addDays,
   addMonths,
@@ -47,6 +54,18 @@ import useRefresh from "hooks/useRefresh";
 
 type FeedTab = "matches" | "leagues";
 type CountryOption = { id: number; name: string; code: string };
+
+type MatchFeedSection = {
+  key: "favourites" | "others";
+  title: string;
+  data: MatchFeedItem[];
+};
+
+type MatchFeedItem = FavoriteLeagueEntry | ApiCountryWithLeagues;
+
+function isFavoriteLeagueEntry(item: MatchFeedItem): item is FavoriteLeagueEntry {
+  return "league" in item && "country" in item;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -78,6 +97,24 @@ export default function HomeScreen() {
   const matches = leagueResponse?.matches ?? [];
   const leagues = leagueResponse?.leagues ?? [];
 
+  const { favourites, others } = useMemo(
+    () => partitionMatchesFeed(matches),
+    [matches],
+  );
+
+  const matchSections = useMemo<MatchFeedSection[]>(
+    () => [
+      { key: "favourites", title: "Favourites", data: favourites },
+      { key: "others", title: "Others", data: others },
+    ],
+    [favourites, others],
+  );
+
+  const showMatchFeedList =
+    !leagueResponseError &&
+    !(leagueResponseLoading && matches.length === 0) &&
+    matches.length > 0;
+
   const [refreshing, onRefresh] = useRefresh([
     refetchLeagueResponse,
   ]);
@@ -103,6 +140,120 @@ export default function HomeScreen() {
 
   const cycleDate = (direction: -1 | 1) =>
     setSelectedDateOffset((current) => current + direction);
+
+  const feedControls = (
+    <>
+      <Animated.View entering={FadeInDown.delay(80).duration(350)}>
+        <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
+          <View className="flex-row gap-2">
+            <SegmentButton
+              label="Matches"
+              active={activeTab === "matches"}
+              onPress={() => setActiveTab("matches")}
+            />
+            <SegmentButton
+              label="Leagues"
+              active={activeTab === "leagues"}
+              onPress={() => setActiveTab("leagues")}
+            />
+          </View>
+        </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(140).duration(350)}>
+        <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              onPress={() => setFiltersOpen(true)}
+              className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
+            >
+              <Ionicons name="options-outline" size={18} color={colors.brand} />
+              <Text
+                style={{ fontFamily: fonts.bodySemibold }}
+                className="text-sm text-neutral-900"
+              >
+                {selectedCountry ? selectedCountry.name : "Filters"}
+              </Text>
+            </Pressable>
+
+            {activeTab === "matches" ? (
+              <Pressable
+                onPress={() => setLiveOnly((v) => !v)}
+                className={[
+                  "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
+                  liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
+                ].join(" ")}
+              >
+                <PulsingDot size={6} color="#ba0c2f" />
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-sm text-[#ba0c2f]"
+                >
+                  Live
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {activeTab === "matches" ? (
+              <View
+                style={styles.dateControl}
+                className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
+              >
+                <Pressable
+                  onPress={() => cycleDate(-1)}
+                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                >
+                  <Ionicons name="chevron-back" size={18} color={colors.brand} />
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    setCalendarMonth(startOfMonth(selectedDate.date));
+                    setCalendarOpen(true);
+                  }}
+                  className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
+                >
+                  <Text
+                    style={{ fontFamily: fonts.bodyBold }}
+                    className="text-sm text-neutral-950"
+                  >
+                    {selectedDate.displayLabel}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => cycleDate(1)}
+                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                >
+                  <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </Animated.View>
+    </>
+  );
+
+  const matchListEmpty = () => {
+    if (leagueResponseError) {
+      return <ErrorState onRetry={() => refetchLeagueResponse()} />;
+    }
+    if (leagueResponseLoading && matches.length === 0) {
+      return (
+        <View className="items-center py-10">
+          <ActivityIndicator color={colors.brand} />
+        </View>
+      );
+    }
+    if (matches.length === 0) {
+      return (
+        <EmptyState
+          title="No fixtures match this filter"
+          body="Try another country, move the date, or switch off live-only."
+        />
+      );
+    }
+    return null;
+  };
 
   return (
     <View className="flex-1 bg-[#121212]">
@@ -154,6 +305,66 @@ export default function HomeScreen() {
           </Animated.View>
         {/*</View>*/}
 
+        {activeTab === "matches" ? (
+          <SectionList<MatchFeedItem, MatchFeedSection>
+            className="flex-1 bg-white"
+            contentContainerClassName="px-5 pb-32 pt-5"
+            showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={false}
+            sections={showMatchFeedList ? matchSections : []}
+            keyExtractor={(item, index) =>
+              isFavoriteLeagueEntry(item) ? item.key : String(item.id ?? index)
+            }
+            renderSectionHeader={({ section }) => (
+              <View className="pb-2 pt-4">
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-xs uppercase tracking-[1.5px] text-slate-500"
+                >
+                  {section.title}
+                </Text>
+              </View>
+            )}
+            renderSectionFooter={({ section }) => {
+              if (section.key !== "favourites" || section.data.length > 0) {
+                return null;
+              }
+              return (
+                <View className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                  <Text
+                    style={{ fontFamily: fonts.body }}
+                    className="text-sm leading-5 text-slate-600"
+                  >
+                    No favourite leagues yet — tap the heart on a league to pin it here.
+                  </Text>
+                </View>
+              );
+            }}
+            renderItem={({ item, section }) => {
+              if (section.key === "favourites" && isFavoriteLeagueEntry(item)) {
+                return <FavoriteLeagueCard entry={item} params={leagueParams} />;
+              }
+              return (
+                <CountryAccordion
+                  entry={item as ApiCountryWithLeagues}
+                  defaultOpen={false}
+                  params={leagueParams}
+                />
+              );
+            }}
+            ItemSeparatorComponent={() => <View className="h-4" />}
+            ListHeaderComponent={<View className="gap-5">{feedControls}</View>}
+            ListEmptyComponent={matchListEmpty}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.brand}
+                colors={[colors.brand]}
+              />
+            }
+          />
+        ) : (
         <ScrollView
           className="flex-1 bg-white"
           contentContainerClassName="gap-5 px-5 pb-32 pt-5"
@@ -167,115 +378,9 @@ export default function HomeScreen() {
             />
           }
         >
-          <Animated.View entering={FadeInDown.delay(80).duration(350)}>
-            <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
-              <View className="flex-row gap-2">
-                <SegmentButton
-                  label="Matches"
-                  active={activeTab === "matches"}
-                  onPress={() => setActiveTab("matches")}
-                />
-                <SegmentButton
-                  label="Leagues"
-                  active={activeTab === "leagues"}
-                  onPress={() => setActiveTab("leagues")}
-                />
-              </View>
-            </View>
-          </Animated.View>
+          {feedControls}
 
-          <Animated.View entering={FadeInDown.delay(140).duration(350)}>
-            <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
-              <View className="flex-row items-center gap-2">
-                <Pressable
-                  onPress={() => setFiltersOpen(true)}
-                  className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
-                >
-                  <Ionicons name="options-outline" size={18} color={colors.brand} />
-                  <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className="text-sm text-neutral-900"
-                  >
-                    {selectedCountry ? selectedCountry.name : "Filters"}
-                  </Text>
-                </Pressable>
-
-                {activeTab === "matches" ? (
-                  <Pressable
-                    onPress={() => setLiveOnly((v) => !v)}
-                    className={[
-                      "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
-                      liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
-                    ].join(" ")}
-                  >
-                    <PulsingDot size={6} color="#ba0c2f" />
-                    <Text
-                      style={{ fontFamily: fonts.bodyBold }}
-                      className="text-sm text-[#ba0c2f]"
-                    >
-                      Live
-                    </Text>
-                  </Pressable>
-                ) : null}
-
-                {activeTab === "matches" ? (
-                  <View
-                    style={styles.dateControl}
-                    className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
-                  >
-                    <Pressable
-                      onPress={() => cycleDate(-1)}
-                      className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
-                    >
-                      <Ionicons name="chevron-back" size={18} color={colors.brand} />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => {
-                        setCalendarMonth(startOfMonth(selectedDate.date));
-                        setCalendarOpen(true);
-                      }}
-                      className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
-                    >
-                      <Text
-                        style={{ fontFamily: fonts.bodyBold }}
-                        className="text-sm text-neutral-950"
-                      >
-                        {selectedDate.displayLabel}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => cycleDate(1)}
-                      className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
-                    >
-                      <Ionicons name="chevron-forward" size={18} color={colors.brand} />
-                    </Pressable>
-                  </View>
-                ) : null}
-              </View>
-            </View>
-          </Animated.View>
-
-          {activeTab === "matches" ? (
-            <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
-              {leagueResponseError ? (
-                <ErrorState onRetry={() => refetchLeagueResponse()} />
-              ) : leagueResponseLoading && (matches ?? []).length === 0 ? (
-                <View className="items-center py-10">
-                  <ActivityIndicator color={colors.brand} />
-                </View>
-              ) : (matches ?? []).length > 0? (
-                (matches ?? []).map((entry, index) => (
-                  <CountryAccordion key={entry.id} entry={entry} defaultOpen={index === 0} params={leagueParams} />
-                ))
-              ) : (
-                <EmptyState
-                  title="No fixtures match this filter"
-                  body="Try another country, move the date, or switch off live-only."
-                />
-              )}
-            </Animated.View>
-          ) : (
-            <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
+          <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
               {leagueResponseError ? (
                 <ErrorState onRetry={() => refetchLeagueResponse()} />
               ) : leagueResponseLoading && (leagues ?? []).length === 0 ? (
@@ -293,8 +398,8 @@ export default function HomeScreen() {
                 />
               )}
             </Animated.View>
-          )}
         </ScrollView>
+        )}
       </SafeAreaView>
 
       <BottomSheetModal

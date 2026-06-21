@@ -118,8 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const completeOtpVerification = useCallback<
     AuthContextValue["completeOtpVerification"]
-  >(async ({ email, code, name, recoveryEmail }) => {
-    const payload = await postVerifyOtp({ email, code, name, recoveryEmail });
+  >(async ({ email, code }) => {
+    const payload = await postVerifyOtp({ email, code });
     const mapped = await persistSessionFromPayload(payload.user, payload.token.value);
     setUser(mapped);
   }, []);
@@ -157,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const completeOnboarding = useCallback<AuthContextValue["completeOnboarding"]>(async () => {
     await setOnboarded(true);
     setHasOnboarded(true);
-    router.replace("/login?new=1");
+    router.replace("/login");
   }, []);
 
   const deleteOnboardingCompleted = useCallback<

@@ -35,7 +35,7 @@ export default function RecoverAccountScreen() {
         "Check your primary email",
         "We sent a sign-in code to your account's primary email address.",
       );
-      router.push({ pathname: "/otp", params: { recovery: "1" } });
+      router.push({ pathname: "/otp", params: { recoveryMode: "1" } });
     } catch (e) {
       showThrownAsToast(e, "Could not recover account");
     }

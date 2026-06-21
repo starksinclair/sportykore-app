@@ -1,10 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-import { CountryFlag } from "@/components/ui/CountryFlag";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -24,26 +24,28 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
       className="overflow-hidden rounded-[20px] border border-neutral-200 bg-white"
       style={styles.card}
     >
-      <Pressable
-        onPress={() => setOpen((current) => !current)}
+      <View
         className="flex-row items-center justify-between gap-3 px-4 py-4 active:bg-neutral-50"
       >
-        <View className="flex-row items-center gap-3">
-          <CountryFlag code={entry.code} width={26} />
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[15px] text-neutral-950"
-          >
-            {entry.name}
-          </Text>
-        </View>
+        <TouchableOpacity onPress={() => router.push(`/country/${entry.id}`)}>
+        <CountryLabel
+          code={entry.code}
+          name={entry.name}
+          className="gap-3"
+          flagWidth={26}
+          textClassName="text-[16px] text-neutral-950 font-bold"
+        />
+        </TouchableOpacity>
 
+        <Pressable onPress={() => setOpen((current) => !current)}>
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
           color="#6B7280"
         />
-      </Pressable>
+        </Pressable>
+        
+      </View>
 
       {open ? (
         <Animated.View entering={FadeIn.duration(160)} className="gap-2 px-4 pb-4">

@@ -65,3 +65,9 @@ function readString(v: unknown): string | null {
 export function isApiError(e: unknown): e is ApiError {
   return e instanceof ApiError;
 }
+
+export function isRequiresSignupError(e: unknown): e is ApiError {
+  if (!isApiError(e) || e.status !== 428) return false;
+  if (!e.body || typeof e.body !== "object" || Array.isArray(e.body)) return false;
+  return (e.body as Record<string, unknown>).requiresSignup === true;
+}

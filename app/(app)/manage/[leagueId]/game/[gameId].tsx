@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 import type { ApiGameDetail, ApiStat } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
@@ -24,23 +24,9 @@ import { useMatchDetail } from "@/match";
 import { fonts } from "@/theme/fonts";
 
 import {
-  useAccreditStat,
-  useCreateStat,
-  useDeleteStat,
-  useManageLeagueDetail,
-  useSeasonRoster,
-  useUpdateGameScore,
-} from "@/manage/hooks";
-import {
   useTransmitGameListener,
   type GameSSEPayload,
 } from "@/lib/transmit";
-import type { LeagueRosterRow, MatchEventKey } from "@/manage/types";
-import { resolveStatTypeId } from "@/manage/utils/games";
-import {
-  findLatestUnaccreditedGoal,
-  partitionGoalStats,
-} from "@/manage/utils/stats";
 import { GameControls } from "@/manage/components/GameControls";
 import {
   HybridScoringPanel,
@@ -48,6 +34,20 @@ import {
   MatchCenterLineupTab,
   MatchCenterStatsTab,
 } from "@/manage/components/hybrid-scoring";
+import {
+  useAccreditStat,
+  useCreateStat,
+  useDeleteStat,
+  useManageLeagueDetail,
+  useSeasonRoster,
+  useUpdateGameScore,
+} from "@/manage/hooks";
+import type { LeagueRosterRow, MatchEventKey } from "@/manage/types";
+import { resolveStatTypeId } from "@/manage/utils/games";
+import {
+  findLatestUnaccreditedGoal,
+  partitionGoalStats,
+} from "@/manage/utils/stats";
 
 type CenterTab = "score" | "goals" | "stats" | "lineup";
 
@@ -344,12 +344,13 @@ export default function ManageMatchCenterPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0F0F10]" edges={["top", "bottom"]}>
+    <SafeAreaProvider>
+      <SafeAreaView className="flex-1 bg-[#0F0F10]" edges={["top", "bottom"]}>
       <BlackPatternBackground
         baseColor="#0F0F10"
         stripeColor="rgba(230, 168, 23, 0.06)"
       />
-      <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+      {/* <SafeAreaView className="flex-1" edges={["top", "bottom"]}> */}
         <View className="flex-row items-center justify-between px-5 pb-2 pt-1">
           <Pressable
             onPress={() => router.back()}
@@ -478,8 +479,9 @@ export default function ManageMatchCenterPage() {
             />
           ) : null}
         </ScrollView>
-      </SafeAreaView>
+      {/* </SafeAreaView> */}
     </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

@@ -53,6 +53,7 @@ export default function CreateScreen() {
   ]);
 
   const [stepError, setStepError] = useState<string | null>(null);
+  const [created, setCreated] = useState(false);
 
   const createLeagueMutation = useCreateLeague();
   const { requireAuth } = useAuthGate();
@@ -63,7 +64,7 @@ export default function CreateScreen() {
   const trimmedTeams = teams.map((t) => t.name.trim()).filter(Boolean);
   const step2Valid = trimmedTeams.length >= 2;
 
-  const goNext = async () => {
+  const goNext = () => {
     setStepError(null);
     if (step === 1) {
       if (!step1Valid) {
@@ -78,27 +79,31 @@ export default function CreateScreen() {
         setStepError("Add at least two teams with names.");
         return;
       }
-      if (!requireAuth({ action: "create a league" })) {
-        return;
-      }
-      try {
-        await createLeagueMutation.mutateAsync({
-          name: name.trim(),
-          seasonName: season.trim(),
-          countryId: selectedCountry!.id,
-          description: description.trim() || undefined,
-          gender: divisionId !== "open" ? divisionId : undefined,
-          teams: trimmedTeams.map((n) => ({ name: n })),
-        });
-        setStep(3);
-      } catch (err) {
-        console.error("Failed to create league", err);
-        if (err instanceof ApiError && err.status === 401) {
-          setStepError("Please create an account first to create a league.");
-        } else {
-          setStepError(err instanceof Error ? err.message : "Failed to create league. Try again.");
-        }
-        
+      setStep(3);
+    }
+  };
+
+  const handleCreate = async () => {
+    setStepError(null);
+    if (!requireAuth({ action: "create a league" })) {
+      return;
+    }
+    try {
+      await createLeagueMutation.mutateAsync({
+        name: name.trim(),
+        seasonName: season.trim(),
+        countryId: selectedCountry!.id,
+        description: description.trim() || undefined,
+        gender: divisionId !== "open" ? divisionId : undefined,
+        teams: trimmedTeams.map((n) => ({ name: n })),
+      });
+      setCreated(true);
+    } catch (err) {
+      console.error("Failed to create league", err);
+      if (err instanceof ApiError && err.status === 401) {
+        setStepError("Please create an account first to create a league.");
+      } else {
+        setStepError(err instanceof Error ? err.message : "Failed to create league. Try again.");
       }
     }
   };
@@ -135,6 +140,7 @@ export default function CreateScreen() {
       { id: "t2", name: "" },
     ]);
     setStepError(null);
+    setCreated(false);
     createLeagueMutation.reset();
   };
 
@@ -246,12 +252,13 @@ export default function CreateScreen() {
                   city={city}
                   divisionId={divisionId}
                   teams={trimmedTeams}
+                  created={created}
                 />
               ) : null}
             </View>
 
             <View className="gap-3">
-              {step < 3 ? (
+              {step < 3 || !created ? (
                 <View className="flex-row gap-3">
                   {step > 1 ? (
                     <Button
@@ -264,9 +271,9 @@ export default function CreateScreen() {
                   ) : null}
                   <Button
                     variant="primary"
-                    label={step === 2 ? "Create League" : "Continue"}
+                    label={step === 3 ? "Create League" : "Continue"}
                     className="flex-1"
-                    onPress={goNext}
+                    onPress={step === 3 ? handleCreate : goNext}
                     loading={createLeagueMutation.isPending}
                   />
                 </View>
@@ -494,6 +501,7 @@ function StepReview({
   city,
   divisionId,
   teams,
+  created,
 }: {
   name: string;
   season: string;
@@ -502,6 +510,7 @@ function StepReview({
   city: string;
   divisionId: string;
   teams: string[];
+  created: boolean;
 }) {
   const divisionLabel =
     DIVISION_OPTIONS.find((d) => d.id === divisionId)?.label ?? divisionId;
@@ -561,12 +570,23 @@ function StepReview({
         </View>
       </View>
 
-      <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-        <Ionicons name="warning-outline" size={22} color={colors.liveRed} style={{ marginTop: 2 }} />
-        <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-amber-950">
-         Go over to the manage tab to start managing your teams and adding players.
-        </Text>
-      </View>
+      {created ? (
+        <View className="flex-row gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+          <Ionicons name="checkmark-circle-outline" size={22} color="#15803d" style={{ marginTop: 2 }} />
+          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-green-950">
+            Your league is live. Head to the Manage tab to schedule games, invite players, and
+            generate team invite links.
+          </Text>
+        </View>
+      ) : (
+        <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <Ionicons name="information-circle-outline" size={22} color={colors.brand} style={{ marginTop: 2 }} />
+          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-amber-950">
+            After creating your league, open Manage to generate invite links per team and add
+            players to the roster.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
