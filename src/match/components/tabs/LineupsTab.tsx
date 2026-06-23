@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiPlayer, ApiStat, ApiTeam } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { groupPlayersByPosition, shortForPosition } from "@/lib/positions";
 import { fonts } from "@/theme/fonts";
 
@@ -88,9 +89,17 @@ function TeamLineup({
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
-          {team.name}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          <EntityLogo
+            logoUrl={team.logoUrl}
+            variant="team"
+            size="xs"
+            tone="dark"
+          />
+          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            {team.name}
+          </Text>
+        </View>
         <Text
           style={{ fontFamily: fonts.body }}
           className="text-[11px] uppercase tracking-[1.5px] text-white/45"

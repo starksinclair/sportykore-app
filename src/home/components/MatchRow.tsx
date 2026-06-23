@@ -3,7 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { GamePhaseLabel } from "@/components/ui";
+import { GamePhaseLabel, EntityLogo } from "@/components/ui";
 import { formatPlayedAtTime } from "@/lib/datetime";
 import { isActivePlayStatus, isLiveGameStatus } from "@/lib/general-utils";
 import { fonts } from "@/theme/fonts";
@@ -50,20 +50,36 @@ export function MatchRow({ game }: Props) {
         </View>
 
         <View className="flex-1 gap-1.5">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            numberOfLines={1}
-            className="text-[14px] text-neutral-950"
-          >
-            {game.homeTeam?.name ?? "TBD"}
-          </Text>
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            numberOfLines={1}
-            className="text-[14px] text-neutral-950"
-          >
-            {game.awayTeam?.name ?? "TBD"}
-          </Text>
+          <View className="flex-row items-center gap-1.5">
+            <EntityLogo
+              logoUrl={game.homeTeam?.logoUrl}
+              variant="team"
+              size="xs"
+              tone="light"
+            />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              numberOfLines={1}
+              className="flex-1 text-[14px] text-neutral-950"
+            >
+              {game.homeTeam?.name ?? "TBD"}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-1.5">
+            <EntityLogo
+              logoUrl={game.awayTeam?.logoUrl}
+              variant="team"
+              size="xs"
+              tone="light"
+            />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              numberOfLines={1}
+              className="flex-1 text-[14px] text-neutral-950"
+            >
+              {game.awayTeam?.name ?? "TBD"}
+            </Text>
+          </View>
         </View>
 
         {showScore ? (

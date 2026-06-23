@@ -15,14 +15,16 @@ import {
   ManageGamesTab,
   ManagePlayersTab,
   ManageSettingsTab,
+  ManageTeamsTab,
   useLeagueTeams,
   useManageLeagueDetail,
 } from "@/manage";
 
-type TabKey = "games" | "players" | "settings";
+type TabKey = "games" | "teams" | "players" | "settings";
 
 const TABS: readonly DetailTab<TabKey>[] = [
   { key: "games", label: "Games" },
+  { key: "teams", label: "Teams" },
   { key: "players", label: "Players" },
   { key: "settings", label: "Settings" },
 ];
@@ -104,6 +106,14 @@ export default function ManageLeagueRoute() {
           seasonId={activeSeasonId}
           games={season.games ?? []}
           statTypes={statTypes}
+        />
+      ) : null}
+      {activeTab === "teams" ? (
+        <ManageTeamsTab
+          leagueId={leagueId}
+          seasonId={activeSeasonId}
+          teams={teamsQuery.data ?? []}
+          isLoading={teamsQuery.isLoading}
         />
       ) : null}
       {activeTab === "players" ? (

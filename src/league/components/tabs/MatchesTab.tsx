@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
-import { GamePhaseLabel } from "@/components/ui";
+import { EntityLogo, GamePhaseLabel } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
 import { fonts } from "@/theme/fonts";
 
@@ -50,19 +50,29 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
       className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
     >
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-white"
-          >
-            {game.homeTeam?.name ?? "TBD"}
-          </Text>
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="pt-1 text-white"
-          >
-            {game.awayTeam?.name ?? "TBD"}
-          </Text>
+        <View className="flex-1 gap-2">
+          <View className="flex-row items-center gap-2">
+            <EntityLogo
+              logoUrl={game.homeTeam?.logoUrl}
+              variant="team"
+              size="xs"
+              tone="dark"
+            />
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              {game.homeTeam?.name ?? "TBD"}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <EntityLogo
+              logoUrl={game.awayTeam?.logoUrl}
+              variant="team"
+              size="xs"
+              tone="dark"
+            />
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              {game.awayTeam?.name ?? "TBD"}
+            </Text>
+          </View>
         </View>
         <View className="items-end gap-1">
           <Text

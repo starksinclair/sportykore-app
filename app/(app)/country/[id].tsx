@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { DetailTabs, type DetailTab } from "@/components/ui";
+import { EntityLogo } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import type { CountryMatchSummary, CountryPlayerHighlight } from "@/country";
@@ -89,9 +90,12 @@ export default function CountryRoute() {
                 className="flex-row items-center justify-between rounded-[18px] bg-white/6 px-4 py-3 active:bg-white/10"
               >
                 <View className="flex-row items-center gap-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-2xl bg-[#4A148C]">
-                    <Ionicons name="trophy-outline" size={16} color="#FFFFFF" />
-                  </View>
+                  <EntityLogo
+                    logoUrl={league.logoUrl}
+                    variant="league"
+                    size="sm"
+                    tone="brand"
+                  />
                   <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
                     {league.name}
                   </Text>
@@ -131,9 +135,17 @@ function TeamsTab({ teams }: { teams: TeamRef[] }) {
           onPress={() => router.push(`/team/${team.id}`)}
           className="flex-row items-center justify-between rounded-[18px] bg-white/6 px-4 py-4 active:bg-white/10"
         >
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
-            {team.name}
-          </Text>
+          <View className="flex-row items-center gap-3">
+            <EntityLogo
+              logoUrl={team.logoUrl}
+              variant="team"
+              size="sm"
+              tone="dark"
+            />
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              {team.name}
+            </Text>
+          </View>
           <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
         </Pressable>
       ))}

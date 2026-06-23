@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { colors } from "@/constants";
+import { EntityLogo } from "@/components/ui";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAtTime } from "@/lib/datetime";
 import {
@@ -134,6 +135,7 @@ function ScoreboardBody({
         <View style={styles.body}>
           <TeamColumn
             name={merged.homeTeam?.name ?? "Home"}
+            logoUrl={merged.homeTeam?.logoUrl}
             score={merged.homeScore}
             showScore={showScore}
             metrics={metrics}
@@ -156,6 +158,7 @@ function ScoreboardBody({
           </View>
           <TeamColumn
             name={merged.awayTeam?.name ?? "Away"}
+            logoUrl={merged.awayTeam?.logoUrl}
             score={merged.awayScore}
             showScore={showScore}
             metrics={metrics}
@@ -197,12 +200,14 @@ function scaleMetrics(width: number, height: number): LayoutMetrics {
 
 function TeamColumn({
   name,
+  logoUrl,
   score,
   showScore,
   metrics,
   align,
 }: {
   name: string;
+  logoUrl?: string | null;
   score: number | null;
   showScore: boolean;
   metrics: LayoutMetrics;
@@ -215,6 +220,12 @@ function TeamColumn({
         align === "end" ? styles.teamColumnEnd : styles.teamColumnStart,
       ]}
     >
+      <EntityLogo
+        logoUrl={logoUrl}
+        variant="team"
+        size="lg"
+        tone="dark"
+      />
       <Text
         style={[
           styles.teamName,

@@ -89,7 +89,7 @@ export default function ManageMatchCenterPage() {
   const [scorerId, setScorerId] = useState<number | null>(null);
   const [assistId, setAssistId] = useState<number | null>(null);
   const [isOwnGoal, setIsOwnGoal] = useState(false);
-  const [minute, setMinute] = useState("0");
+  const [minute, setMinute] = useState("1");
   const [ssePatch, setSsePatch] = useState<Partial<ApiGameDetail>>({});
   const [statMinute, setStatMinute] = useState("0");
   const [recording, setRecording] = useState<{
@@ -240,7 +240,7 @@ export default function ManageMatchCenterPage() {
         awayScore: res.awayScore ?? prev.awayScore ?? game.awayScore,
       }));
       setPendingTeam(team);
-      setMinute(String(liveMinute > 0 ? liveMinute : 0));
+      setMinute(String(Math.max(1, liveMinute)));
       setScorerId(null);
       setAssistId(null);
       setIsOwnGoal(false);
@@ -273,8 +273,8 @@ export default function ManageMatchCenterPage() {
   const handleLogGoal = async () => {
     if (!pendingStatId || scorerId == null) return;
     const parsedMinute = Number(minute);
-    if (!Number.isFinite(parsedMinute) || parsedMinute < 0) {
-      showInfoToast("Invalid minute", "Enter a valid match minute.");
+    if (!Number.isFinite(parsedMinute) || parsedMinute < 1) {
+      showInfoToast("Invalid minute", "Enter a match minute of 1 or later.");
       return;
     }
     try {
@@ -297,7 +297,7 @@ export default function ManageMatchCenterPage() {
     setActiveTab("score");
     setPendingTeam(team);
     setPendingStatId(stat.id);
-    setMinute(String(stat.minute ?? liveMinute));
+    setMinute(String(Math.max(1, stat.minute ?? liveMinute)));
     setScorerId(null);
     setAssistId(null);
     setIsOwnGoal(false);

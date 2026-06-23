@@ -4,11 +4,9 @@ export type AcceptInviteResult =
   | { requiresProfile: true; token: string }
   | { requiresProfile: false; leagueId: number | null };
 
-export type PickedImageFile = {
-  uri: string;
-  name: string;
-  type: string;
-};
+import type { PickedImageFile } from "@/lib/picked-image";
+
+export type { PickedImageFile };
 
 export type CompleteProfilePayload = {
   name: string;

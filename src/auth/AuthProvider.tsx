@@ -10,10 +10,12 @@ import {
 import { queryClient } from "@/lib/query-client";
 import { showErrorToast } from "@/lib/show-error-toast";
 
+import { isApiError } from "@/api/errors";
+
 import { fetchLeagues, resolveLeaguesParams } from "@/home/api/leagues";
 import { homeKeys } from "@/home/hooks";
 import { startOfDay } from "@/home/utils";
-import { postLogout, postRecover, postVerifyOtp } from "./auth-api";
+import { postLogout, postRecover, postVerifyOtp, deleteAccount as deleteAccountApi } from "./auth-api";
 import { AuthContext } from "./auth-context";
 import type { BackendAuthUser } from "./auth-contract";
 import {
@@ -145,9 +147,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = useCallback<AuthContextValue["deleteAccount"]>(async () => {
     try {
-      await deleteAccount();
-    } catch {
-      /* token may already be invalid */
+      await deleteAccountApi();
+    } catch (err) {
+      if (isApiError(err) && err.status === 401) {
+        /* token may already be invalid */
+      } else {
+        throw err;
+      }
     }
     await clearSessionCredentials();
     queryClient.clear();

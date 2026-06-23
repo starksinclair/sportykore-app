@@ -18,6 +18,7 @@ export type LeagueRef = {
   id: string;
   name: string;
   country: CountryRef;
+  logoUrl?: string | null;
 };
 
 export type TeamRef = {
@@ -56,6 +57,7 @@ export type SearchResult = {
   label: string;
   sublabel?: string;
   countryCode?: string;
+  logoUrl?: string | null;
 };
 
 export type SearchParams = {

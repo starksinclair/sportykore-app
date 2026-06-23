@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
-import { InviteResumeHandler } from "@/invite/components/InviteResumeHandler";
+import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
 import { TransmitProvider } from "@/lib/transmit";
 import {
@@ -78,7 +78,7 @@ export default function RootLayout() {
                   <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
                     <StatusBar style="auto" />
                     <RootStack />
-                    <InviteResumeHandler />
+                    <InviteLinkCapture />
                     <Toast />
                   </ThemeProvider>
                 </AuthGateProvider>

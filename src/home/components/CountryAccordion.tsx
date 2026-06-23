@@ -6,6 +6,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 
 import { useAuthGate } from "@/auth";
 import { CountryLabel } from "@/components/ui/CountryFlag";
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -62,6 +63,13 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
               <View
                 className="flex-row items-center justify-between gap-3 bg-white px-4 py-3 active:bg-neutral-50"
               >
+              <EntityLogo
+                logoUrl={league.logoUrl}
+                variant="league"
+                size="sm"
+                tone="accent"
+                accessibilityLabel={`${league.name} logo`}
+              />
               <View className="flex-1">
               <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
                <Text

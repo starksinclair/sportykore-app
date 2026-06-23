@@ -24,7 +24,7 @@ import { clearPendingInviteToken, getPendingInviteToken } from "@/invite/storage
 import type { PickedImageFile } from "@/invite/types";
 import { CountryOption } from "@/league/league-create-constants";
 import { pickProfileImage } from "@/lib/pick-profile-image";
-import { showThrownAsToast } from "@/lib/show-error-toast";
+import { showSuccessToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 export default function CreatePlayerProfileRoute() {
@@ -42,11 +42,8 @@ export default function CreatePlayerProfileRoute() {
       const pending = await getPendingInviteToken();
       setToken(pending);
       setLoadingToken(false);
-      if (!pending) {
-        router.replace("/");
-      }
     })();
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePickAvatar = async () => {
     setPickingAvatar(true);
@@ -77,24 +74,53 @@ export default function CreatePlayerProfileRoute() {
         },
       });
       await clearPendingInviteToken();
-   
-        router.replace("/");
-      
+      showSuccessToast("Profile created", "You've joined the league.");
+      router.replace("/profile");
     } catch (error) {
-    if ((error as any)?.status === 409) {
-        await clearPendingInviteToken()
-        router.replace('/')
-        return
-    }
+      if ((error as { status?: number })?.status === 409) {
+        await clearPendingInviteToken();
+        router.replace("/");
+        return;
+      }
       showThrownAsToast(error, "Could not create profile");
     }
   };
 
-  if (loadingToken || !token) {
+  if (loadingToken) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator color={colors.brand} />
       </View>
+    );
+  }
+
+  if (!token) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#121212]" edges={["top", "bottom"]}>
+        <BlackPatternBackground
+          baseColor={scoreboardPattern().baseColor}
+          stripeColor={scoreboardPattern().stripeColor}
+        />
+        <View className="flex-1 items-center justify-center gap-6 px-6">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-center text-xl text-white"
+          >
+            No invite found
+          </Text>
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="text-center text-sm leading-6 text-slate-300"
+          >
+            Open your invite link or paste your invite code on the join league screen.
+          </Text>
+          <Button
+            variant="signInYellow"
+            label="Go to join league"
+            onPress={() => router.replace("/join-league")}
+          />
+        </View>
+      </SafeAreaView>
     );
   }
 

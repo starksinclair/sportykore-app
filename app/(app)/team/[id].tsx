@@ -6,6 +6,7 @@ import { NotFound } from "@/components/not-found";
 import {
   DetailTabs,
   SeasonPicker,
+  EntityLogo,
   type DetailTab,
   type SeasonOption,
 } from "@/components/ui";
@@ -103,6 +104,14 @@ export default function TeamRoute() {
     <DetailScreenShell
       title={team.name}
       subtitle={selectedLeague?.name}
+      rightAccessory={
+        <EntityLogo
+          logoUrl={team.logoUrl}
+          variant="team"
+          size="sm"
+          tone="dark"
+        />
+      }
       headerContent={
         <>
           {leagueOptions.length > 1 ? (

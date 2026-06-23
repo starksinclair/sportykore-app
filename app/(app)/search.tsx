@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CountryFlag } from "@/components/ui/CountryFlag";
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { useSearch } from "@/home/hooks";
 import {
@@ -323,8 +324,15 @@ function ResultsBlock({
                   ].join(" ")}
                 >
                   <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F3E8FF]">
-                    {result.countryCode ? (
+                    {result.type === "country" && result.countryCode ? (
                       <CountryFlag code={result.countryCode} width={20} />
+                    ) : result.type === "league" || result.type === "team" ? (
+                      <EntityLogo
+                        logoUrl={result.logoUrl}
+                        variant={result.type}
+                        size="xs"
+                        tone="accent"
+                      />
                     ) : (
                       <Ionicons name={ENTITY_ICONS[type]} size={16} color={colors.brand} />
                     )}

@@ -27,7 +27,7 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 | **Game** | `id`, `status`, `playedAt`, `homeScore`, `awayScore`, `venueName`, `currentMinute`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted |
 | **Game (detail)** | **Game** + `league` → **League** \| omitted, `stats` → **Stat[]** |
 | **Season** | `id`, `name`, `status`, optional nested: `league`, `games`, `standings`, `stats` |
-| **SearchHit** | `id` (string), `type` (`country` \| `league` \| `team` \| `player`), `label`, optional `sublabel`, optional `countryCode` |
+| **SearchHit** | `id` (string), `type` (`country` \| `league` \| `team` \| `player`), `label`, optional `sublabel`, optional `countryCode`, optional `logoUrl` (string \| null; set for `league` and `team` hits from `leagues.logo_url` / `teams.logo_url`, `null` for `country` and `player`) |
 | **LeaguePlayer** | `id`, `status`, `position`, `jerseyNumber`, `isCaptain` |
 | **LeaguePlayer (with league)** | **LeaguePlayer** + `league` → **League**, `team` → **Team** |
 | **LeaguePlayer (with player)** | **LeaguePlayer** + `player` → **Player**, `team` → **Team** |
@@ -85,9 +85,10 @@ Account recovery: if the user set a `recovery_email`, **`POST /api/v1/auth/recov
 | Method | Path | Auth | Input | Success response | Errors / notes |
 | --- | --- | --- | --- | --- | --- |
 | `POST` | `/api/v1/auth/request-otp` | none | **Body:** `requestOtpValidator` — `email`, `name?`, `recoveryEmail?` | `200` → `{ message: "OTP sent" }` (not wrapped in `data`) | `428` new user missing `name` → `{ message, requiresSignup: true }`; `422` validation (e.g. duplicate `recoveryEmail`); rate limit: 5 / 10 min per email, 30 min block; `429` when exceeded |
-| `POST` | `/api/v1/auth/verify-otp` | none | **Body:** `verifyOtpValidator` — `email`, `code` (exactly 6 chars) | **`{ data: { auth: AuthSession } }`** | `422` validation; invalid/expired code → error; rate limit: 5 attempts / 10 min per email; welcome email on first signup |
-| `POST` | `/api/v1/auth/recover` | none | **Body:** `recoveryEmail` (string — must match `users.recovery_email`) | `{ message: "Recovery OTP sent to your primary email" }` | `404` if no user with that recovery email |
+| `POST` | `/api/v1/auth/verify-otp` | none | **Body:** `verifyOtpValidator` — `email`, `code` (exactly 6 chars) | **`{ data: { auth: AuthSession } }`** | `422` validation; invalid/expired code → `401`; rate limit: 5 attempts / 10 min per email; welcome email on first signup |
+| `POST` | `/api/v1/auth/recover` | none | **Body:** `requestRecoveryValidator` — `recoveryEmail` (must exist in `users.recovery_email`) | `{ message: "Recovery OTP sent to your primary email" }` | `404` if no user with that recovery email; same rate limit as `request-otp` |
 | `POST` | `/api/v1/auth/logout` | `apiAuth` | Bearer token | `204 No Content` | Invalidates current API token; `401` without token |
+| `DELETE` | `/api/v1/auth/account` | `apiAuth` | Bearer token | `{ message: "Account deleted successfully" }` | Deletes player profile, OTP codes, tokens, and user row; `401` without token |
 
 ### `verify-otp` success payload
 
@@ -156,14 +157,16 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 | `GET` | `/api/v1/games/:id` | none | **Params:** `id` (game id) | **`{ data: GameDetail }`** | `404` if game missing |
 | `GET` | `/api/v1/teams/:id` | none | **Params:** `id` (team id) | **`{ data: { team, leagues, statTypes } }`** — see below | `404` if team missing |
 | `GET` | `/api/v1/players/:id` | none | **Params:** `id` (player id) | **`{ data: { player, leagues, statTypes } }`** — see below | `404` if player missing |
+| `GET` | `/api/v1/players/does-user-have-player-profile` | `apiAuth` | none | `{ hasPlayerProfile: boolean }` (not wrapped in `data`) | `401` without Bearer token; checks whether the authenticated user has a `players` row |
 | `GET` | `/api/v1/invites/generate` | `apiAuth` + `leagueOwner` | **Query:** `leagueId`, `seasonId`, `teamId`, `invitedUserId?` | `{ inviteLink: string }` (not wrapped in `data`) | See [docs/PLAYER_INVITE.md](docs/PLAYER_INVITE.md) |
-| `GET` | `/api/v1/invites/accept/:token` | session/API user required (`getUserOrFail`) | **Params:** `token` | If no player profile: `{ requiresProfile: true, token: string }`. Else: `{ requiresProfile: false, leagueId: number \| null }` | `403` wrong user; `409` already on roster; `404` invalid/expired invite |
+| `GET` | `/api/v1/invites/accept/:token` | `apiAuth` | **Params:** `token` | If no player profile: `{ requiresProfile: true, token: string }`. Else: `{ requiresProfile: false, leagueId: number \| null }` | `401` without Bearer token; `403` wrong user; `409` already on roster; `404` invalid/expired invite |
 | `POST` | `/api/v1/invites/complete-profile-and-accept/:token` | `apiAuth` | **Params:** `token`. **Body:** `multipart/form-data` or JSON — `name` (string, required), `countryId` (required FK to `countries`), `bio?` (string, optional), `avatar?` (image file, max 2 MB, jpg/jpeg/png/webp) | `{ leagueId: number \| null }` | `409` if player profile already exists; `422` validation |
 | `GET` | `/api/v1/leagues/league-player-requests` | `apiAuth` | none | **LeaguePlayerWithLeague[]** (not wrapped in `data`) | Lists `league_players` where `player_id = auth user id` and `status = pending` |
 | `POST` | `/api/v1/leagues/accept-league-player-request` | `apiAuth` | **Body:** `acceptLeaguePlayerRequestValidator` | `{ message: "League player request accepted successfully" }` | `404` row missing; `409` already active |
 | `POST` | `/api/v1/leagues/:leagueId/seasons` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`. **Body:** `createSeasonValidator` | **`201`** raw season row: `{ id, leagueId, name, status, createdAt, updatedAt }` | Validation `422` |
 | `POST` | `/api/v1/leagues/:leagueId/teams` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`. **Body:** `createTeamValidator` | **`201`** `{ message: "Team created successfully" }` | Logo uploaded to drive when provided |
 | `PUT` | `/api/v1/leagues/:leagueId/teams/:id` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`, `id` (team id). **Body:** `updateTeamValidator` | `{ message: "Team updated successfully" }` | `404` team |
+| `DELETE` | `/api/v1/leagues/:leagueId/teams/:id` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`, `id` (team id) | `{ message: "Team deleted successfully" }` | `404` if team missing or not in league; cascades related games, standings, roster rows, stats, invites |
 | `POST` | `/api/v1/leagues/assign-team` | `apiAuth` + `leagueOwner` | **Body:** `createLeaguePlayerValidator` | `{ message: "Player assigned to team successfully" }` or `"...Invited to join team successfully"` if `status` ≠ `active` | Upserts `league_players` by player + league + season |
 | `GET` | `/api/v1/leagues/:leagueId/seasons/:seasonId/roster` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`, `seasonId` | **`{ data: LeaguePlayerWithPlayer[] }`** | Season roster for manage Players tab |
 | `PUT` | `/api/v1/leagues/league-players/:id` | `apiAuth` + `leagueOwner` | **Params:** `id`. **Body:** `updateLeaguePlayerValidator` | `{ message: "League player updated successfully" }` | |
@@ -318,6 +321,7 @@ Live match score +/- with unaccredited goal placeholders. See [docs/hybrid-scori
 
 - **`seasons`** — all seasons for the league (`id`, `name`, `status`), ordered active → completed → inactive, then newest first within each group. Use for the season picker.
 - **`season`** — full detail for the selected season (from `seasonId` query, or default active/newest): league, games (home/away teams), standings (with team), stats (type, player, team, relatedPlayer).
+- **`season.standings`** — one row per **team in the league** for that season (not only teams that have played). Teams with no finished matches appear with zeroed stats (`played`, `points`, etc.). Ordered by `position` ascending.
 - **`statTypes`** — global catalog of stat types (`id`, `name`, `displayName`, `iconName`, `category`), ordered by `category` then `displayName`. Use to group or label stats in the UI.
 
 ```json
@@ -377,7 +381,7 @@ Live match score +/- with unaccredited goal placeholders. See [docs/hybrid-scori
 Each league entry's season includes:
 
 - **`games`** — matches where this team is home or away (merged; not split into home/away arrays).
-- **`standings`** — full league table for that season (all teams), ordered by points then goal difference.
+- **`standings`** — full league table for that season (all teams in the league), ordered by `position` ascending.
 - **`players`** — roster for that season via `league_players`, with stats scoped to that season.
 
 ```json
@@ -407,6 +411,16 @@ Each league entry's season includes:
   }
 }
 ```
+
+### `GET /api/v1/players/does-user-have-player-profile`
+
+Checks whether the **authenticated user** (`apiAuth` Bearer token) has a linked player profile (`players.user_id`).
+
+```json
+{ "hasPlayerProfile": true }
+```
+
+Use before invite accept / profile creation to decide whether to show the player onboarding form.
 
 ### `GET /api/v1/players/:id` → `{ player, leagues, statTypes }`
 
@@ -463,11 +477,20 @@ Each league entry:
     "query": "river",
     "results": [
       {
-        "id": "league:10",
+        "id": "10",
         "type": "league",
         "label": "Sunday Riverside League",
         "sublabel": "Nigeria",
-        "countryCode": "ng"
+        "countryCode": "ng",
+        "logoUrl": "http://localhost:3333/uploads/leagues/abc.jpg"
+      },
+      {
+        "id": "1",
+        "type": "team",
+        "label": "Riverside United",
+        "sublabel": "Sunday Riverside League",
+        "countryCode": "ng",
+        "logoUrl": null
       }
     ]
   }
@@ -514,6 +537,12 @@ Server logic: existing user → send OTP (`200`); new user without `name` → `4
 
 User must already exist (created on signup `request-otp` or from a prior login).
 
+### `requestRecoveryValidator` — `POST /api/v1/auth/recover`
+
+| Field | Rules |
+| --- | --- |
+| `recoveryEmail` | required string, valid email format; must **exist** in `users.recovery_email` |
+
 ### `createLeagueWithSeasonValidator` — `POST /api/v1/leagues`
 
 | Field | Rules |
@@ -524,11 +553,11 @@ User must already exist (created on signup `request-otp` or from a prior login).
 | `logo` | optional image file: max 2mb; extensions jpg, jpeg, png, webp |
 | `countryId` | required; must exist in `countries` |
 | `seasonName` | string, 1–120 chars, trimmed |
-| `teams` | optional array of `{ name: string (1–255), logo?: image file }` |
+| `teams` | optional array of `{ name: string (1–255), logo?: image file }` — each team `logo` is uploaded to Drive and stored as `logoUrl` on the team row (same as `POST /leagues/:leagueId/teams`) |
 
 ### `updateLeagueValidator` — `PUT /api/v1/leagues/:leagueId`
 
-All fields optional: `name`, `description`, `gender`, `logo` (same rules as above).
+All fields optional: `name`, `description`, `gender`, `logo` (image file; stored as `logoUrl` via Drive upload).
 
 ### `createSeasonValidator` — `POST /api/v1/leagues/:leagueId/seasons`
 
@@ -550,7 +579,7 @@ All fields optional: `name`, `description`, `gender`, `logo` (same rules as abov
 
 ### `updateTeamValidator` — `PUT /api/v1/leagues/:leagueId/teams/:id`
 
-Optional: `name`, `logo`.
+Optional: `name`, `logo` (image file; stored as `logoUrl` via Drive upload).
 
 ### `createLeaguePlayerValidator` — `POST /api/v1/leagues/assign-team`
 

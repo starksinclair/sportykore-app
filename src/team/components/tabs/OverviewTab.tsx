@@ -1,4 +1,3 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -8,6 +7,7 @@ import type {
   ApiTeamLeague,
   ApiTeamSeason,
 } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
 import { fonts } from "@/theme/fonts";
@@ -69,9 +69,13 @@ export function TeamOverviewTab({ team, league, season }: Props) {
     <View className="gap-6">
       <View className="rounded-[28px] bg-white/6 px-5 py-6">
         <View className="flex-row items-center gap-4">
-          <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-[#4A148C]">
-            <Ionicons name="shield-outline" size={26} color="#FFFFFF" />
-          </View>
+          <EntityLogo
+            logoUrl={team.logoUrl}
+            variant="team"
+            size="lg"
+            tone="brand"
+            accessibilityLabel={`${team.name} logo`}
+          />
           <View className="flex-1">
             <Text
               style={{ fontFamily: fonts.bodyBold }}

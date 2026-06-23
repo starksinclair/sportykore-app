@@ -49,9 +49,14 @@ export async function apiRequest<T = unknown>(
   let tokenValue: string | null = null;
   if (auth) {
     tokenValue = await getToken();
-    if (tokenValue) {
-      headers.set("Authorization", `Bearer ${tokenValue}`);
+    if (!tokenValue) {
+      throw new ApiError("Not authenticated.", {
+        status: 401,
+        url: buildUrl(path),
+        body: null,
+      });
     }
+    headers.set("Authorization", `Bearer ${tokenValue}`);
   }
 
   let res: Response;

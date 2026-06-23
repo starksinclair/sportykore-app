@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-nativ
 
 import { useAuthGate } from "@/auth";
 import { CountryLabel } from "@/components/ui/CountryFlag";
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -30,6 +31,13 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
       style={styles.card}
     >
       <View className="flex-row items-center justify-between gap-3 bg-white px-4 py-3">
+        <EntityLogo
+          logoUrl={league.logoUrl}
+          variant="league"
+          size="sm"
+          tone="accent"
+          accessibilityLabel={`${league.name} logo`}
+        />
         <View className="min-w-0 flex-1">
           <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
             <Text

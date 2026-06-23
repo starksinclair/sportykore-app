@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStanding } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { fonts } from "@/theme/fonts";
 
 type Props = {
@@ -66,15 +67,24 @@ export function LeagueStandingsTab({ standings, highlightTeamId }: Props) {
             <Pressable
               disabled={!row.team}
               onPress={() => row.team && router.push(`/team/${row.team.id}`)}
-              className="flex-1"
+              className="flex-1 flex-row items-center gap-2"
             >
+              {row.team ? (
+                <EntityLogo
+                  logoUrl={row.team.logoUrl}
+                  variant="team"
+                  size="xs"
+                  tone="dark"
+                />
+              ) : null}
               <Text
                 style={{ fontFamily: fonts.bodyBold }}
                 className={
                   isHighlighted
-                    ? "text-[11px] text-[#E6A817]"
-                    : "text-[11px] text-white"
+                    ? "flex-1 text-[11px] text-[#E6A817]"
+                    : "flex-1 text-[11px] text-white"
                 }
+                numberOfLines={1}
               >
                 {row.team?.name ?? "—"}
               </Text>

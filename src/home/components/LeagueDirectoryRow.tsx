@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-nativ
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { CountryLabel } from "@/components/ui/CountryFlag";
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -53,8 +54,15 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
             <Pressable
               key={league.id}
               onPress={() => router.push(`/league/${league.id}`)}
-              className="flex-row items-center justify-between rounded-[14px] bg-[#F8F8FA] px-4 py-3 active:bg-neutral-100"
+              className="flex-row items-center gap-3 rounded-[14px] bg-[#F8F8FA] px-4 py-3 active:bg-neutral-100"
             >
+              <EntityLogo
+                logoUrl={league.logoUrl}
+                variant="league"
+                size="sm"
+                tone="accent"
+                accessibilityLabel={`${league.name} logo`}
+              />
               <Text
                 style={{ fontFamily: fonts.bodyBold }}
                 className="flex-1 text-[14px] text-neutral-950"

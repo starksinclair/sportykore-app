@@ -58,6 +58,7 @@ export type ApiCountryDetail = {
   leagues: {
     id: number | string;
     name: string;
+    logoUrl?: string | null;
     country?: CountryRef;
   }[];
   teams: {

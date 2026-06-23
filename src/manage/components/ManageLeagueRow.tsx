@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
 
@@ -20,9 +21,13 @@ export function ManageLeagueRow({ league, onPress }: Props) {
       className="flex-row items-center gap-4 rounded-[20px] border border-neutral-200 bg-white px-4 py-4 active:bg-neutral-50"
       style={styles.card}
     >
-      <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#4A148C]">
-        <Ionicons name="trophy-outline" size={22} color="#FFFFFF" />
-      </View>
+      <EntityLogo
+        logoUrl={league.logoUrl}
+        variant="league"
+        size="md"
+        tone="brand"
+        accessibilityLabel={`${league.name} logo`}
+      />
       <View className="min-w-0 flex-1 gap-1">
         <Text
           style={{ fontFamily: fonts.bodyBold }}

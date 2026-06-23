@@ -67,8 +67,12 @@ export async function postLogout(): Promise<void> {
   });
 }
 
-export async function deleteAccount(): Promise<void> {
-  await apiRequest<unknown>(`${PREFIX}/account`, {
+export type DeleteAccountResponse = {
+  message: string;
+};
+
+export async function deleteAccount(): Promise<DeleteAccountResponse> {
+  return apiRequest<DeleteAccountResponse>(`${PREFIX}/account`, {
     method: "DELETE",
     auth: true,
   });

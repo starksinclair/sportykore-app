@@ -1,8 +1,13 @@
 import { ApiError, ApiParsedErrorPayload } from "@/api/errors";
 
 import { acceptInvite } from "../api";
-import { processInviteAccept } from "../process-invite";
-import { clearPendingInviteToken } from "../storage";
+import {
+  buildInviteUrl,
+  parseInviteToken,
+  persistInviteFromUrl,
+  processInviteAccept,
+} from "../invite-utils";
+import { clearPendingInviteToken, setPendingInviteToken } from "../storage";
 
 jest.mock("../api", () => ({
   acceptInvite: jest.fn(),
@@ -10,10 +15,14 @@ jest.mock("../api", () => ({
 
 jest.mock("../storage", () => ({
   clearPendingInviteToken: jest.fn(),
+  setPendingInviteToken: jest.fn(),
 }));
 
 const mockedAcceptInvite = jest.mocked(acceptInvite);
 const mockedClearToken = jest.mocked(clearPendingInviteToken);
+const mockedSetPendingInviteToken = jest.mocked(setPendingInviteToken);
+
+const TOKEN = "550e8400-e29b-41d4-a716-446655440000";
 
 function apiError(status: number, message = "Error", body: unknown = null) {
   return new ApiError(message, {
@@ -22,6 +31,97 @@ function apiError(status: number, message = "Error", body: unknown = null) {
     body: body as ApiParsedErrorPayload,
   });
 }
+
+describe("parseInviteToken", () => {
+  it("returns the raw token when given a UUID", () => {
+    expect(parseInviteToken(TOKEN)).toBe(TOKEN);
+  });
+
+  it("extracts token from a custom-scheme URL", () => {
+    expect(parseInviteToken(`sportykore://join/${TOKEN}`)).toBe(TOKEN);
+  });
+
+  it("extracts token from a URL with query params", () => {
+    expect(
+      parseInviteToken(
+        `sportykore://join/${TOKEN}?leagueName=Sunday%20League&teamName=FC`,
+      ),
+    ).toBe(TOKEN);
+  });
+
+  it("extracts token from a path-only link", () => {
+    expect(parseInviteToken(`/join/${TOKEN}`)).toBe(TOKEN);
+  });
+
+  it("extracts token from a join-league share URL", () => {
+    expect(
+      parseInviteToken(`sportykore://join-league?token=${TOKEN}&leagueName=Sunday%20League`),
+    ).toBe(TOKEN);
+  });
+
+  it("returns null for empty input", () => {
+    expect(parseInviteToken("")).toBeNull();
+    expect(parseInviteToken("   ")).toBeNull();
+  });
+
+  it("returns null when join path has no token segment", () => {
+    expect(parseInviteToken("sportykore://join/")).toBeNull();
+    expect(parseInviteToken("/join/")).toBeNull();
+  });
+});
+
+describe("buildInviteUrl", () => {
+  it("builds a join-league URL from a backend invite path", () => {
+    expect(buildInviteUrl(`/join/${TOKEN}`)).toBe(
+      `sportykore://join-league?token=${TOKEN}`,
+    );
+  });
+
+  it("includes optional league and team context as query params", () => {
+    const url = buildInviteUrl(`/join/${TOKEN}`, {
+      leagueName: "Sunday League",
+      teamName: "Mainland FC",
+    });
+
+    expect(url).toContain("sportykore://join-league?");
+    expect(url).toContain(`token=${TOKEN}`);
+    expect(url).toContain("leagueName=Sunday+League");
+    expect(url).toContain("teamName=Mainland+FC");
+  });
+
+  it("throws when the invite path has no token", () => {
+    expect(() => buildInviteUrl("/join/")).toThrow("Invite link is missing a token.");
+  });
+});
+
+describe("persistInviteFromUrl", () => {
+  beforeEach(() => {
+    mockedSetPendingInviteToken.mockResolvedValue();
+  });
+
+  it("persists token and context from a join-league URL", async () => {
+    await expect(
+      persistInviteFromUrl(
+        `sportykore://join-league?token=${TOKEN}&leagueName=Sunday%20League&teamName=Mainland%20FC`,
+      ),
+    ).resolves.toBe(true);
+
+    expect(mockedSetPendingInviteToken).toHaveBeenCalledWith(TOKEN, {
+      leagueName: "Sunday League",
+      teamName: "Mainland FC",
+    });
+  });
+
+  it("returns false without persisting unrelated URLs", async () => {
+    await expect(persistInviteFromUrl("sportykore://home")).resolves.toBe(false);
+    expect(mockedSetPendingInviteToken).not.toHaveBeenCalled();
+  });
+
+  it("returns false for legacy join URLs", async () => {
+    await expect(persistInviteFromUrl(`sportykore://join/${TOKEN}`)).resolves.toBe(false);
+    expect(mockedSetPendingInviteToken).not.toHaveBeenCalled();
+  });
+});
 
 describe("processInviteAccept", () => {
   beforeEach(() => {

@@ -24,6 +24,15 @@ export function showInfoToast(title: string, message?: string) {
   });
 }
 
+export function showSuccessToast(title: string, message?: string) {
+  Toast.show({
+    type: "success",
+    text1: title,
+    ...(message ? { text2: message } : {}),
+    visibilityTime: 3800,
+  });
+}
+
 /** Maps thrown values (especially `ApiError`) to a readable toast */
 export function showThrownAsToast(error: unknown, fallbackTitle?: string): void {
   if (typeof error === "string" && error.trim()) {

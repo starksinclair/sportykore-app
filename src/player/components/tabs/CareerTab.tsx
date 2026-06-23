@@ -8,6 +8,7 @@ import type {
   ApiPlayerSeason,
   ApiStatType,
 } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
 import { fonts } from "@/theme/fonts";
 
@@ -56,8 +57,14 @@ export function PlayerCareerTab({ leagues, statTypes }: Props) {
               <Pressable
                 key={team.id}
                 onPress={() => router.push(`/team/${team.id}`)}
-                className="rounded-full border border-white/10 bg-white/6 px-3 py-2 active:bg-white/10"
+                className="flex-row items-center gap-2 rounded-full border border-white/10 bg-white/6 py-2 pl-2 pr-3 active:bg-white/10"
               >
+                <EntityLogo
+                  logoUrl={team.logoUrl}
+                  variant="team"
+                  size="xs"
+                  tone="dark"
+                />
                 <Text
                   style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs text-white"
@@ -101,9 +108,12 @@ function LeagueBlock({
         className="flex-row items-center justify-between rounded-[20px] bg-white/6 px-4 py-3 active:bg-white/10"
       >
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-[#4A148C]">
-            <Ionicons name="trophy-outline" size={16} color="#FFFFFF" />
-          </View>
+          <EntityLogo
+            logoUrl={league.logoUrl}
+            variant="league"
+            size="sm"
+            tone="brand"
+          />
           <View>
             <Text
               style={{ fontFamily: fonts.bodyBold }}
@@ -158,20 +168,28 @@ function SeasonRow({
       className="rounded-[18px] bg-white/6 px-4 py-3 active:bg-white/10"
     >
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-white"
-          >
-            {season.name}
-          </Text>
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="pt-0.5 text-xs text-white/55"
-          >
-            {season.team.name} · {season.status} · {gameCount} fixture
-            {gameCount === 1 ? "" : "s"}
-          </Text>
+        <View className="flex-1 flex-row items-center gap-2">
+          <EntityLogo
+            logoUrl={season.team.logoUrl}
+            variant="team"
+            size="xs"
+            tone="dark"
+          />
+          <View className="flex-1">
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-white"
+            >
+              {season.name}
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="pt-0.5 text-xs text-white/55"
+            >
+              {season.team.name} · {season.status} · {gameCount} fixture
+              {gameCount === 1 ? "" : "s"}
+            </Text>
+          </View>
         </View>
       </View>
 

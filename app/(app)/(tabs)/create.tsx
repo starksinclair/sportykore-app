@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -21,6 +22,7 @@ import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { Logo } from "@/components/ui/logo";
+import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
 import { useCreateLeague } from "@/league/hooks";
@@ -28,13 +30,19 @@ import {
   DIVISION_OPTIONS,
   type CountryOption,
 } from "@/league/league-create-constants";
+import type { PickedImageFile } from "@/lib/picked-image";
 import { fonts } from "@/theme/fonts";
 
 const TOTAL_STEPS = 3;
 
+type TeamRow = {
+  id: string;
+  name: string;
+  logo: PickedImageFile | null;
+};
 
-function newTeamRow() {
-  return { id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: "" };
+function newTeamRow(): TeamRow {
+  return { id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: "", logo: null };
 }
 
 export default function CreateScreen() {
@@ -43,13 +51,14 @@ export default function CreateScreen() {
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
   const [description, setDescription] = useState("");
+  const [leagueLogo, setLeagueLogo] = useState<PickedImageFile | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [city, setCity] = useState("");
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
 
-  const [teams, setTeams] = useState(() => [
-    { id: "t1", name: "" },
-    { id: "t2", name: "" },
+  const [teams, setTeams] = useState<TeamRow[]>(() => [
+    { id: "t1", name: "", logo: null },
+    { id: "t2", name: "", logo: null },
   ]);
 
   const [stepError, setStepError] = useState<string | null>(null);
@@ -61,8 +70,8 @@ export default function CreateScreen() {
   const step1Valid =
     name.trim().length > 0 && season.trim().length > 0 && selectedCountry !== null;
 
-  const trimmedTeams = teams.map((t) => t.name.trim()).filter(Boolean);
-  const step2Valid = trimmedTeams.length >= 2;
+  const namedTeams = teams.filter((t) => t.name.trim().length > 0);
+  const step2Valid = namedTeams.length >= 2;
 
   const goNext = () => {
     setStepError(null);
@@ -95,7 +104,11 @@ export default function CreateScreen() {
         countryId: selectedCountry!.id,
         description: description.trim() || undefined,
         gender: divisionId !== "open" ? divisionId : undefined,
-        teams: trimmedTeams.map((n) => ({ name: n })),
+        logo: leagueLogo ?? undefined,
+        teams: namedTeams.map((team) => ({
+          name: team.name.trim(),
+          logo: team.logo ?? undefined,
+        })),
       });
       setCreated(true);
     } catch (err) {
@@ -127,17 +140,24 @@ export default function CreateScreen() {
     );
   };
 
+  const updateTeamLogo = (id: string, logo: PickedImageFile | null) => {
+    setTeams((rows) =>
+      rows.map((row) => (row.id === id ? { ...row, logo } : row)),
+    );
+  };
+
   const resetWizard = () => {
     setStep(1);
     setName("");
     setSeason("");
     setDescription("");
+    setLeagueLogo(null);
     setSelectedCountry(null);
     setCity("");
     setDivisionId("open");
     setTeams([
-      { id: "t1", name: "" },
-      { id: "t2", name: "" },
+      { id: "t1", name: "", logo: null },
+      { id: "t2", name: "", logo: null },
     ]);
     setStepError(null);
     setCreated(false);
@@ -225,6 +245,8 @@ export default function CreateScreen() {
                   setSeason={setSeason}
                   description={description}
                   setDescription={setDescription}
+                  leagueLogo={leagueLogo}
+                  onLeagueLogoChange={setLeagueLogo}
                   city={city}
                   setCity={setCity}
                   divisionId={divisionId}
@@ -238,6 +260,7 @@ export default function CreateScreen() {
                 <StepTeams
                   teams={teams}
                   onChangeName={updateTeamName}
+                  onChangeLogo={updateTeamLogo}
                   onAdd={addTeam}
                   onRemove={removeTeam}
                 />
@@ -248,10 +271,11 @@ export default function CreateScreen() {
                   name={name}
                   season={season}
                   description={description}
+                  leagueLogo={leagueLogo}
                   country={selectedCountry ?? undefined}
                   city={city}
                   divisionId={divisionId}
-                  teams={trimmedTeams}
+                  teams={namedTeams}
                   created={created}
                 />
               ) : null}
@@ -296,6 +320,8 @@ function StepBasics({
   setSeason,
   description,
   setDescription,
+  leagueLogo,
+  onLeagueLogoChange,
   city,
   setCity,
   divisionId,
@@ -309,6 +335,8 @@ function StepBasics({
   setSeason: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
+  leagueLogo: PickedImageFile | null;
+  onLeagueLogoChange: (file: PickedImageFile | null) => void;
   city: string;
   setCity: (v: string) => void;
   divisionId: (typeof DIVISION_OPTIONS)[number]["id"];
@@ -321,6 +349,14 @@ function StepBasics({
       <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
         Step 1 — League basics
       </Text>
+
+      <LogoImageUpload
+        label="League logo (optional)"
+        value={leagueLogo}
+        onChange={onLeagueLogoChange}
+        size="lg"
+        accessibilityLabel="League logo"
+      />
 
       <AuthTextField
         label="League name"
@@ -436,11 +472,13 @@ function Chip({
 function StepTeams({
   teams,
   onChangeName,
+  onChangeLogo,
   onAdd,
   onRemove,
 }: {
-  teams: { id: string; name: string }[];
+  teams: TeamRow[];
   onChangeName: (id: string, name: string) => void;
+  onChangeLogo: (id: string, logo: PickedImageFile | null) => void;
   onAdd: () => void;
   onRemove: (id: string) => void;
 }) {
@@ -450,12 +488,21 @@ function StepTeams({
         Step 2 — Teams
       </Text>
       <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
-        Add at least two teams. You can invite managers or edit names later from Manage.
+        Add at least two teams. You can add logos now or update them later from Manage.
       </Text>
 
       <View className="gap-3">
         {teams.map((row, index) => (
-          <View key={row.id} className="flex-row items-start gap-2">
+          <View key={row.id} className="flex-row items-center gap-2">
+            <View className="mt-7">
+              <LogoImageUpload
+                value={row.logo}
+                onChange={(logo) => onChangeLogo(row.id, logo)}
+                size="sm"
+                compact
+                accessibilityLabel={`Team ${index + 1} logo`}
+              />
+            </View>
             <View className="flex-1">
               <AuthTextField
                 label={`Team ${index + 1}`}
@@ -497,6 +544,7 @@ function StepReview({
   name,
   season,
   description,
+  leagueLogo,
   country,
   city,
   divisionId,
@@ -506,10 +554,11 @@ function StepReview({
   name: string;
   season: string;
   description: string;
+  leagueLogo: PickedImageFile | null;
   country: CountryOption | undefined;
   city: string;
   divisionId: string;
-  teams: string[];
+  teams: TeamRow[];
   created: boolean;
 }) {
   const divisionLabel =
@@ -523,7 +572,20 @@ function StepReview({
       </Text>
 
       <View className="gap-3 rounded-2xl bg-neutral-50 px-4 py-4">
-        <SummaryLine label="League" value={name} />
+        <SummaryLine label="League">
+          <View className="flex-row items-center gap-3">
+            {leagueLogo ? (
+              <Image
+                source={{ uri: leagueLogo.uri }}
+                style={{ width: 40, height: 40, borderRadius: 12 }}
+                contentFit="cover"
+              />
+            ) : null}
+            <Text style={{ fontFamily: fonts.bodySemibold }} className="text-base text-neutral-950">
+              {name}
+            </Text>
+          </View>
+        </SummaryLine>
         <SummaryLine label="Season" value={season} />
         {country ? (
           <SummaryLine label="Country">
@@ -558,14 +620,24 @@ function StepReview({
           >
             Teams ({teams.length})
           </Text>
-          {teams.map((t, i) => (
-            <Text
-              key={`${i}-${t}`}
-              style={{ fontFamily: fonts.bodySemibold }}
-              className="py-0.5 text-sm text-neutral-900"
-            >
-              • {t}
-            </Text>
+          {teams.map((team) => (
+            <View key={team.id} className="flex-row items-center gap-2 py-0.5">
+              {team.logo ? (
+                <Image
+                  source={{ uri: team.logo.uri }}
+                  style={{ width: 24, height: 24, borderRadius: 8 }}
+                  contentFit="cover"
+                />
+              ) : (
+                <View className="h-6 w-6 rounded-lg bg-neutral-200" />
+              )}
+              <Text
+                style={{ fontFamily: fonts.bodySemibold }}
+                className="text-sm text-neutral-900"
+              >
+                {team.name.trim()}
+              </Text>
+            </View>
           ))}
         </View>
       </View>

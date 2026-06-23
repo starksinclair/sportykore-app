@@ -19,6 +19,14 @@ export default function AppGroupLayout() {
           title: "Profile",
         }}
       />
+      <Stack.Screen
+        name="join-league"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          title: "Join a league",
+        }}
+      />
       <Stack.Screen name="country/[id]" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="league/[id]" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="team/[id]" options={{ animation: "slide_from_right" }} />

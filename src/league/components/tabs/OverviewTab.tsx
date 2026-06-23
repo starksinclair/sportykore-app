@@ -16,6 +16,7 @@ type Props = {
 export function LeagueOverviewTab({ season }: Props) {
   const router = useRouter();
   const counts = useMemo(() => deriveCounts(season), [season]);
+  console.log(counts);
   const topScorer = useMemo(() => deriveTopScorer(season), [season]);
   const recentResults = useMemo(
     () =>
@@ -112,9 +113,11 @@ export function LeagueOverviewTab({ season }: Props) {
 function deriveCounts(season: ApiSeasonDetail) {
   const teamIds = new Set<number>();
   for (const standing of season.standings) {
+    console.log(standing);
     if (standing.team?.id != null) teamIds.add(standing.team.id);
   }
   for (const game of season.games) {
+    console.log(game);
     if (game.homeTeam?.id != null) teamIds.add(game.homeTeam.id);
     if (game.awayTeam?.id != null) teamIds.add(game.awayTeam.id);
   }

@@ -6,6 +6,7 @@ import { NotFound } from "@/components/not-found";
 import {
   DetailTabs,
   type DetailTab,
+  EntityLogo,
   SeasonPicker,
   type SeasonOption,
 } from "@/components/ui";
@@ -71,6 +72,14 @@ export default function LeagueRoute() {
   return (
     <DetailScreenShell
       title={season.league.name}
+      rightAccessory={
+        <EntityLogo
+          logoUrl={season.league.logoUrl}
+          variant="league"
+          size="sm"
+          tone="dark"
+        />
+      }
       headerContent={
         <>
           <SeasonPicker

@@ -75,16 +75,23 @@ export function countAllGames(leagues: ApiPlayerLeague[]): number {
 /** Distinct teams the player has been part of, ordered by most recent season. */
 export function distinctTeams(
   leagues: ApiPlayerLeague[],
-): { id: number; name: string }[] {
-  const seen = new Map<number, string>();
+): { id: number; name: string; logoUrl: string | null }[] {
+  const seen = new Map<number, { name: string; logoUrl: string | null }>();
   for (const league of leagues) {
     for (const season of league.seasons) {
       if (!seen.has(season.team.id)) {
-        seen.set(season.team.id, season.team.name);
+        seen.set(season.team.id, {
+          name: season.team.name,
+          logoUrl: season.team.logoUrl,
+        });
       }
     }
   }
-  return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  return Array.from(seen.entries()).map(([id, team]) => ({
+    id,
+    name: team.name,
+    logoUrl: team.logoUrl,
+  }));
 }
 
 /**

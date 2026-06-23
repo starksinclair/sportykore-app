@@ -1,1 +1,1 @@
-export { usePlayerDetail } from "./hooks";
+export { useDoesUserHavePlayerProfile, usePlayerDetail } from "./hooks";

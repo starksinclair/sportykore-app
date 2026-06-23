@@ -1,5 +1,6 @@
 import type { ApiTeam } from "@/api/entities";
 import { apiRequest } from "@/api/http-client";
+import type { PickedImageFile } from "@/lib/picked-image";
 
 import type { UpdateLeaguePlayerPayload } from "@/invite/types";
 
@@ -13,6 +14,84 @@ import type {
   UpdateGamePayload,
   UpdateLeaguePayload,
 } from "./types";
+
+export type CreateTeamPayload = {
+  name: string;
+  logo?: PickedImageFile;
+};
+
+export type UpdateTeamPayload = {
+  name?: string;
+  logo?: PickedImageFile;
+};
+
+function appendImageFile(form: FormData, key: string, file: PickedImageFile) {
+  form.append(key, {
+    uri: file.uri,
+    name: file.name,
+    type: file.type,
+  } as unknown as Blob);
+}
+
+function buildCreateTeamFormData(payload: CreateTeamPayload): FormData {
+  const form = new FormData();
+  form.append("name", payload.name);
+  if (payload.logo) {
+    appendImageFile(form, "logo", payload.logo);
+  }
+  return form;
+}
+
+function buildUpdateTeamFormData(payload: UpdateTeamPayload): FormData {
+  const form = new FormData();
+  if (payload.name != null) {
+    form.append("name", payload.name);
+  }
+  if (payload.logo) {
+    appendImageFile(form, "logo", payload.logo);
+  }
+  return form;
+}
+
+export async function createTeam(
+  leagueId: number,
+  payload: CreateTeamPayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(`/api/v1/leagues/${leagueId}/teams`, {
+    method: "POST",
+    auth: true,
+    jsonBody: payload.logo
+      ? buildCreateTeamFormData(payload)
+      : { name: payload.name },
+  });
+}
+
+export async function updateTeam(
+  leagueId: number,
+  teamId: number,
+  payload: UpdateTeamPayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/teams/${teamId}`,
+    {
+      method: "PUT",
+      auth: true,
+      jsonBody: payload.logo
+        ? buildUpdateTeamFormData(payload)
+        : payload,
+    },
+  );
+}
+
+export async function deleteTeam(leagueId: number, teamId: number): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/teams/${teamId}`,
+    {
+      method: "DELETE",
+      auth: true,
+    },
+  );
+}
 
 export async function fetchOwnedLeagues(): Promise<OwnedLeague[]> {
   const res = await apiRequest<{ data: OwnedLeague[] }>(

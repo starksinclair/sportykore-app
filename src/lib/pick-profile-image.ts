@@ -1,6 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 
-import type { PickedImageFile } from "@/invite/types";
+import type { PickedImageFile } from "@/lib/picked-image";
 
 const ALLOWED_MIME = new Set([
   "image/jpeg",

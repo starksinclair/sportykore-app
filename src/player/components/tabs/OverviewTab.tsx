@@ -9,6 +9,7 @@ import type {
   ApiPlayerSeason,
   ApiStatType,
 } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { labelForPosition } from "@/lib/positions";
 import { fonts } from "@/theme/fonts";
 
@@ -63,10 +64,19 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
             </View>
           ) : null}
           {season?.team ? (
-            <Pressable onPress={() => router.push(`/team/${season.team.id}`)}>
+            <Pressable
+              onPress={() => router.push(`/team/${season.team.id}`)}
+              className="mt-2 flex-row items-center gap-2"
+            >
+              <EntityLogo
+                logoUrl={season.team.logoUrl}
+                variant="team"
+                size="xs"
+                tone="dark"
+              />
               <Text
                 style={{ fontFamily: fonts.body }}
-                className="pt-2 text-[15px] text-[#10E3B1]"
+                className="text-[15px] text-[#10E3B1]"
               >
                 {season.team.name}
               </Text>

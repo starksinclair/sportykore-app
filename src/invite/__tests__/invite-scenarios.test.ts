@@ -1,13 +1,7 @@
-import type { Router } from "expo-router";
-
 import { ApiError } from "@/api/errors";
 
 import { acceptInvite, completeProfileAndAccept } from "../api";
-import { processInviteAccept } from "../process-invite";
-import {
-  navigateForInviteOutcome,
-  resumeInviteFlow,
-} from "../resume-invite";
+import { processInviteAccept } from "../invite-utils";
 import {
   clearPendingInviteToken,
   getPendingInviteToken,
@@ -22,10 +16,6 @@ jest.mock("../api", () => ({
 const mockedAcceptInvite = jest.mocked(acceptInvite);
 const mockedCompleteProfile = jest.mocked(completeProfileAndAccept);
 
-function createRouter(): Router {
-  return { replace: jest.fn() } as unknown as Router;
-}
-
 describe("invite player routing scenarios", () => {
   beforeEach(async () => {
     await clearPendingInviteToken();
@@ -33,44 +23,24 @@ describe("invite player routing scenarios", () => {
   });
 
   describe("new user opens invite link", () => {
-    it("persists the token so auth can resume the flow after signup", async () => {
+    it("persists the token so the user can join manually after auth", async () => {
       const token = "invite-new-user";
 
       await setPendingInviteToken(token);
       await expect(getPendingInviteToken()).resolves.toBe(token);
     });
 
-    it("after registration, resume sends a new user to create-profile when required", async () => {
-      const router = createRouter();
+    it("accept returns requires_profile for a new user without auto-navigation", async () => {
       const token = "invite-needs-profile";
 
-      await setPendingInviteToken(token);
       mockedAcceptInvite.mockResolvedValue({
         requiresProfile: true,
         token,
       });
 
-      await resumeInviteFlow(router);
-
-      expect(mockedAcceptInvite).toHaveBeenCalledWith(token);
-      expect(router.replace).toHaveBeenCalledWith("/join/create-profile");
-      await expect(getPendingInviteToken()).resolves.toBe(token);
-    });
-
-    it("after registration, resume joins the league when the user already has a profile", async () => {
-      const router = createRouter();
-      const token = "invite-ready-to-join";
-
-      await setPendingInviteToken(token);
-      mockedAcceptInvite.mockResolvedValue({
-        requiresProfile: false,
-        leagueId: 12,
+      await expect(processInviteAccept(token)).resolves.toEqual({
+        kind: "requires_profile",
       });
-
-      await resumeInviteFlow(router);
-
-      expect(router.replace).toHaveBeenCalledWith("/league/12");
-      await expect(getPendingInviteToken()).resolves.toBeNull();
     });
 
     it("profile completion clears the stored token", async () => {
@@ -99,7 +69,6 @@ describe("invite player routing scenarios", () => {
 
   describe("authenticated user opens invite link", () => {
     it("joins immediately when accept returns a league id", async () => {
-      const router = createRouter();
       const token = "invite-existing-user";
 
       mockedAcceptInvite.mockResolvedValue({
@@ -108,15 +77,12 @@ describe("invite player routing scenarios", () => {
       });
 
       const outcome = await processInviteAccept(token);
-      navigateForInviteOutcome(outcome, token, router);
 
       expect(outcome).toEqual({ kind: "joined", leagueId: 3 });
-      expect(router.replace).toHaveBeenCalledWith("/league/3");
       await expect(getPendingInviteToken()).resolves.toBeNull();
     });
 
-    it("routes to create-profile when the account has no player profile yet", async () => {
-      const router = createRouter();
+    it("returns requires_profile when the account has no player profile yet", async () => {
       const token = "invite-auth-no-profile";
 
       mockedAcceptInvite.mockResolvedValue({
@@ -125,14 +91,11 @@ describe("invite player routing scenarios", () => {
       });
 
       const outcome = await processInviteAccept(token);
-      navigateForInviteOutcome(outcome, token, router);
 
       expect(outcome).toEqual({ kind: "requires_profile" });
-      expect(router.replace).toHaveBeenCalledWith("/join/create-profile");
     });
 
-    it("sends the user back to the join screen when the invite is for another account", async () => {
-      const router = createRouter();
+    it("returns wrong_account when the invite is for another account", async () => {
       const token = "invite-wrong-account";
 
       mockedAcceptInvite.mockRejectedValue(
@@ -140,28 +103,24 @@ describe("invite player routing scenarios", () => {
       );
 
       const outcome = await processInviteAccept(token);
-      navigateForInviteOutcome(outcome, token, router);
 
       expect(outcome).toEqual({
         kind: "wrong_account",
         message: "This invite is for another account.",
       });
-      expect(router.replace).toHaveBeenCalledWith(`/join/${token}`);
     });
 
-    it("clears an expired invite and returns to the join screen", async () => {
-      const router = createRouter();
+    it("clears an expired invite token", async () => {
       const token = "invite-expired";
+      await setPendingInviteToken(token);
 
       mockedAcceptInvite.mockRejectedValue(
         new ApiError("Not found", { status: 404, url: "/test", body: null }),
       );
 
       const outcome = await processInviteAccept(token);
-      navigateForInviteOutcome(outcome, token, router);
 
       expect(outcome.kind).toBe("invalid");
-      expect(router.replace).toHaveBeenCalledWith(`/join/${token}`);
       await expect(getPendingInviteToken()).resolves.toBeNull();
     });
   });

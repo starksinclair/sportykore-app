@@ -7,7 +7,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { OtpScreen } from "@/auth/components";
 import { Logo } from "@/components/ui/logo";
 import { colors } from "@/constants";
-import { resumeInviteFlow } from "@/invite";
 
 function readParam(value: string | string[] | undefined): string | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -33,7 +32,7 @@ export default function OtpPage() {
   };
 
   const onSuccess = async () => {
-    await resumeInviteFlow(router);
+    router.replace("/(app)/(tabs)");
   };
 
   return (

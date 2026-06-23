@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame, ApiPlayerSeason } from "@/api/entities";
+import { EntityLogo } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { fonts } from "@/theme/fonts";
@@ -42,7 +43,13 @@ export function PlayerMatchesTab({ season }: Props) {
   return (
     <View className="gap-3">
       {games.map((game) => (
-        <PlayerMatchRow key={game.id} game={game} teamId={teamId} teamName={season.team.name} />
+        <PlayerMatchRow
+          key={game.id}
+          game={game}
+          teamId={teamId}
+          teamName={season.team.name}
+          teamLogoUrl={season.team.logoUrl}
+        />
       ))}
     </View>
   );
@@ -52,10 +59,12 @@ function PlayerMatchRow({
   game,
   teamId,
   teamName,
+  teamLogoUrl,
 }: {
   game: ApiGame;
   teamId: number;
   teamName: string;
+  teamLogoUrl: string | null;
 }) {
   const router = useRouter();
   const phase = useGamePhaseLabel(game);
@@ -69,13 +78,32 @@ function PlayerMatchRow({
       className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
     >
       <View className="flex-row items-center justify-between gap-3">
-        <View className="flex-1">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
-            {teamName} vs {opponent?.name ?? "TBD"}
-          </Text>
+        <View className="flex-1 gap-1.5">
+          <View className="flex-row items-center gap-2">
+            <EntityLogo logoUrl={teamLogoUrl} variant="team" size="xs" tone="dark" />
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              {teamName}
+            </Text>
+            <Text style={{ fontFamily: fonts.body }} className="text-white/45">
+              vs
+            </Text>
+            <EntityLogo
+              logoUrl={opponent?.logoUrl}
+              variant="team"
+              size="xs"
+              tone="dark"
+            />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="flex-1 text-white"
+              numberOfLines={1}
+            >
+              {opponent?.name ?? "TBD"}
+            </Text>
+          </View>
           <Text
             style={{ fontFamily: fonts.body }}
-            className="pt-1 text-xs text-white/55"
+            className="text-xs text-white/55"
           >
             {venue} · {formatPlayedAt(game.playedAt)} · {phase}
           </Text>

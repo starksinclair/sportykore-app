@@ -2,6 +2,7 @@ import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
+import { EntityLogo } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
 import {
   isActivePlayStatus,
@@ -30,16 +31,25 @@ export function MatchOverviewTab({ detail }: Props) {
     <View className="gap-6">
       <View className="rounded-[28px] bg-white/6 px-5 py-6">
         {detail.league?.name ? (
-          <Text
-            style={{ fontFamily: fonts.body }}
-            className="text-center text-xs uppercase tracking-[1.5px] text-white/55"
-          >
-            {detail.league.name}
-          </Text>
+          <View className="items-center gap-2">
+            <EntityLogo
+              logoUrl={detail.league.logoUrl}
+              variant="league"
+              size="sm"
+              tone="dark"
+            />
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-center text-xs uppercase tracking-[1.5px] text-white/55"
+            >
+              {detail.league.name}
+            </Text>
+          </View>
         ) : null}
         <View className="flex-row items-center justify-between gap-4 pt-5">
           <TeamColumn
             name={detail.homeTeam?.name ?? "TBD"}
+            logoUrl={detail.homeTeam?.logoUrl}
             onPress={
               detail.homeTeam
                 ? () => router.push(`/team/${detail.homeTeam?.id}`)
@@ -70,6 +80,7 @@ export function MatchOverviewTab({ detail }: Props) {
           </View>
           <TeamColumn
             name={detail.awayTeam?.name ?? "TBD"}
+            logoUrl={detail.awayTeam?.logoUrl}
             onPress={
               detail.awayTeam
                 ? () => router.push(`/team/${detail.awayTeam?.id}`)
@@ -101,17 +112,20 @@ export function MatchOverviewTab({ detail }: Props) {
 
 function TeamColumn({
   name,
+  logoUrl,
   onPress,
 }: {
   name: string;
+  logoUrl?: string | null;
   onPress?: () => void;
 }) {
   return (
     <Pressable
       disabled={!onPress}
       onPress={onPress}
-      className="max-w-[120px] flex-1 items-center"
+      className="max-w-[120px] flex-1 items-center gap-2"
     >
+      <EntityLogo logoUrl={logoUrl} variant="team" size="md" tone="dark" />
       <Text
         style={{ fontFamily: fonts.bodyBold }}
         className="text-center text-white"

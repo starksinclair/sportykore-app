@@ -5,3 +5,5 @@ export { LiveMinute } from "@/components/ui/live-minute";
 export { ManageGamesTab } from "./tabs/ManageGamesTab";
 export { ManagePlayersTab } from "./tabs/ManagePlayersTab";
 export { ManageSettingsTab } from "./tabs/ManageSettingsTab";
+export { ManageTeamsTab } from "./tabs/ManageTeamsTab";
+export { TeamFormSheet } from "./teams/TeamFormSheet";

@@ -8,8 +8,10 @@ import {
   createGame,
   createSeason,
   createStat,
+  createTeam,
   deleteGame,
   deleteStat,
+  deleteTeam,
   endGameFullTime,
   fetchLeagueTeams,
   fetchOwnedLeagues,
@@ -25,8 +27,9 @@ import {
   updateGameScore,
   updateLeague,
   updateLeaguePlayer,
+  updateTeam,
 } from "./api";
-import type { AccreditStatPayload, GameScorePayload } from "./api";
+import type { AccreditStatPayload, CreateTeamPayload, GameScorePayload, UpdateTeamPayload } from "./api";
 import {
   invalidateGameDetail,
   invalidateManageLeagueData,
@@ -78,6 +81,47 @@ export function useLeagueTeams(leagueId: number, enabled = true) {
     enabled: leagueId > 0 && enabled,
     staleTime: 60 * 1000,
     networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
+
+function useInvalidateTeamsData(leagueId: number, seasonId: number) {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: manageKeys.teams(leagueId) });
+    queryClient.invalidateQueries({
+      queryKey: manageKeys.roster(leagueId, seasonId),
+    });
+    invalidateManageLeagueData(queryClient, leagueId);
+  };
+}
+
+export function useCreateTeam(leagueId: number, seasonId: number) {
+  const invalidate = useInvalidateTeamsData(leagueId, seasonId);
+  return useMutation({
+    mutationFn: (payload: CreateTeamPayload) => createTeam(leagueId, payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateTeam(leagueId: number, seasonId: number) {
+  const invalidate = useInvalidateTeamsData(leagueId, seasonId);
+  return useMutation({
+    mutationFn: ({
+      teamId,
+      payload,
+    }: {
+      teamId: number;
+      payload: UpdateTeamPayload;
+    }) => updateTeam(leagueId, teamId, payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteTeam(leagueId: number, seasonId: number) {
+  const invalidate = useInvalidateTeamsData(leagueId, seasonId);
+  return useMutation({
+    mutationFn: (teamId: number) => deleteTeam(leagueId, teamId),
+    onSuccess: invalidate,
   });
 }
 

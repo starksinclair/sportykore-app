@@ -1,7 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 
-import { fetchPlayerDetail } from "./api";
+import { fetchDoesUserHavePlayerProfile, fetchPlayerDetail } from "./api";
+
+export function useDoesUserHavePlayerProfile(enabled: boolean) {
+  const { isOnline } = useNetworkStatus();
+  return useQuery({
+    queryKey: ["player", "has-profile"],
+    queryFn: () => fetchDoesUserHavePlayerProfile(),
+    enabled,
+    staleTime: 30 * 1000,
+    gcTime: 5 * 60 * 1000,
+    networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
 
 export function usePlayerDetail(playerId: number) {
   const { isOnline } = useNetworkStatus();

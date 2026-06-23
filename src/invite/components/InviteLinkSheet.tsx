@@ -3,16 +3,17 @@ import { Pressable, Share, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 import type { ApiTeam } from "@/api/entities";
-import { Button } from "@/components/ui/Button";
+import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { Button } from "@/components/ui/Button";
 import { scoreboardPattern } from "@/constants";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
-import { buildInviteUrl } from "@/invite/build-invite-url";
 import { useGenerateInvite } from "@/invite/hooks";
+import { buildInviteUrl } from "@/invite/invite-utils";
 
 type Props = {
   visible: boolean;
@@ -222,12 +223,18 @@ function TeamPicker({
               key={team.id}
               onPress={() => onSelect(team.id)}
               className={[
-                "rounded-full border px-4 py-2",
+                "flex-row items-center gap-2 rounded-full border py-2 pl-2 pr-4",
                 active
                   ? "border-accent-500 bg-accent-500/15"
                   : "border-white/10 bg-white/6",
               ].join(" ")}
             >
+              <EntityLogo
+                logoUrl={team.logoUrl}
+                variant="team"
+                size="xs"
+                tone="dark"
+              />
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}
                 className={active ? "text-accent-400" : "text-white/75"}

@@ -33,6 +33,7 @@ function normalizeCountryDetail(data: ApiCountryDetail): CountryDetail {
         id: String(league.id),
         name: league.name,
         country: league.country ?? countryRef,
+        ...(league.logoUrl ? { logoUrl: league.logoUrl } : {}),
       }))
       .sort((a, b) => a.name.localeCompare(b.name)),
     teams: data.teams

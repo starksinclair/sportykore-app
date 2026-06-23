@@ -2,8 +2,10 @@ export {
   createGame,
   createSeason,
   createStat,
+  createTeam,
   deleteGame,
   deleteStat,
+  deleteTeam,
   endGameFullTime,
   fetchLeagueTeams,
   fetchOwnedLeagues,
@@ -19,8 +21,10 @@ export {
   updateGame,
   updateLeague,
   updateLeaguePlayer,
+  updateTeam,
   removeLeaguePlayer,
 } from "./api";
+export type { CreateTeamPayload, UpdateTeamPayload } from "./api";
 export { promptBiometricGate } from "./biometric-gate";
 export {
   ManageGamesTab,
@@ -28,16 +32,20 @@ export {
   ManageLoginPrompt,
   ManagePlayersTab,
   ManageSettingsTab,
+  ManageTeamsTab,
+  TeamFormSheet,
   GameControls,
   LiveMinute,
 } from "./components";
 export {
   useCreateGame,
   useCreateSeason,
+  useCreateTeam,
   useAccreditStat,
   useCreateStat,
   useDeleteGame,
   useDeleteStat,
+  useDeleteTeam,
   useGameTimeActions,
   useUpdateGameScore,
   useLeagueTeams,
@@ -48,6 +56,7 @@ export {
   useUpdateLeaguePlayer,
   useUpdateGame,
   useUpdateLeague,
+  useUpdateTeam,
 } from "./hooks";
 export { useLiveMinute } from "@/hooks/useLiveMinute";
 export { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
