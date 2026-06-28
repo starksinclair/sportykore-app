@@ -64,16 +64,24 @@ export type CreateStatPayload = {
   isStoppageTime?: boolean;
 };
 
+import type { TiebreakerRule } from "@/league/tiebreaker-options";
+
 export type UpdateLeaguePayload = {
   name?: string;
   description?: string | null;
   gender?: string | null;
+  tiebreaker?: TiebreakerRule;
 };
 
 export type CreateSeasonPayload = {
   leagueId: number;
   name: string;
   status: SeasonStatus;
+};
+
+export type UpdateSeasonPayload = {
+  name?: string;
+  status?: SeasonStatus;
 };
 
 export type CreatedSeason = ApiSeason & {

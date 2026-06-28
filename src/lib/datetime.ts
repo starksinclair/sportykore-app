@@ -35,3 +35,11 @@ export function formatPlayedAtDate(playedAtIso: string): string {
     month: "short",
   });
 }
+
+/** Compact date for narrow match rows (e.g. "23 May"). */
+export function formatPlayedAtShortDate(playedAtIso: string): string {
+  return new Date(playedAtIso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+  });
+}

@@ -21,6 +21,7 @@ export {
   updateGame,
   updateLeague,
   updateLeaguePlayer,
+  updateSeason,
   updateTeam,
   removeLeaguePlayer,
 } from "./api";
@@ -56,6 +57,7 @@ export {
   useUpdateLeaguePlayer,
   useUpdateGame,
   useUpdateLeague,
+  useUpdateSeason,
   useUpdateTeam,
 } from "./hooks";
 export { useLiveMinute } from "@/hooks/useLiveMinute";
@@ -72,6 +74,7 @@ export type {
   OwnedLeague,
   UpdateGamePayload,
   UpdateLeaguePayload,
+  UpdateSeasonPayload,
 } from "./types";
 export {
   GameStatus,

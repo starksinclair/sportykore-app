@@ -13,6 +13,7 @@ import type {
   OwnedLeague,
   UpdateGamePayload,
   UpdateLeaguePayload,
+  UpdateSeasonPayload,
 } from "./types";
 
 export type CreateTeamPayload = {
@@ -33,8 +34,12 @@ function appendImageFile(form: FormData, key: string, file: PickedImageFile) {
   } as unknown as Blob);
 }
 
-function buildCreateTeamFormData(payload: CreateTeamPayload): FormData {
+function buildCreateTeamFormData(
+  leagueId: number,
+  payload: CreateTeamPayload,
+): FormData {
   const form = new FormData();
+  form.append("leagueId", String(leagueId));
   form.append("name", payload.name);
   if (payload.logo) {
     appendImageFile(form, "logo", payload.logo);
@@ -61,8 +66,8 @@ export async function createTeam(
     method: "POST",
     auth: true,
     jsonBody: payload.logo
-      ? buildCreateTeamFormData(payload)
-      : { name: payload.name },
+      ? buildCreateTeamFormData(leagueId, payload)
+      : { leagueId, name: payload.name },
   });
 }
 
@@ -205,6 +210,21 @@ export async function createSeason(
     auth: true,
     jsonBody: { ...payload, leagueId },
   });
+}
+
+export async function updateSeason(
+  leagueId: number,
+  seasonId: number,
+  payload: UpdateSeasonPayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/seasons/${seasonId}`,
+    {
+      method: "PUT",
+      auth: true,
+      jsonBody: payload,
+    },
+  );
 }
 
 export async function startFirstHalf(gameId: number): Promise<void> {

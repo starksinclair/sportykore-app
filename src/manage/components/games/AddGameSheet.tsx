@@ -3,10 +3,10 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiTeam } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { toCalendarDateParam } from "@/lib/datetime";
+import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useCreateGame, useLeagueTeams } from "../../hooks";
@@ -186,7 +186,7 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
             autoCapitalize="none"
           />
           <AuthTextField
-            label="Kick-off time (HH:mm)"
+            label="Kick-off time (HH:mm) uses 24-hour format"
             value={timeStr}
             onChangeText={setTimeStr}
             placeholder="15:00"

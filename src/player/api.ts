@@ -4,6 +4,7 @@ import type { PlayerDetail } from "./types";
 
 export type DoesUserHavePlayerProfileResult = {
   hasPlayerProfile: boolean;
+  playerId: number;
 };
 
 export async function fetchDoesUserHavePlayerProfile(): Promise<DoesUserHavePlayerProfileResult> {

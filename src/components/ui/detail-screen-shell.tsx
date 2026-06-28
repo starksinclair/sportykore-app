@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
@@ -13,6 +13,7 @@ type DetailScreenShellProps = {
   title: string;
   subtitle?: ReactNode;
   rightAccessory?: ReactNode;
+  leagueId?: number;
   /** Sticky content rendered between the header bar and the scrollable body (e.g. tabs, season picker). */
   headerContent?: ReactNode;
   children: ReactNode;
@@ -22,6 +23,7 @@ export function DetailScreenShell({
   title,
   subtitle,
   rightAccessory,
+  leagueId,
   headerContent,
   children,
 }: DetailScreenShellProps) {
@@ -46,7 +48,7 @@ export function DetailScreenShell({
             <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
           </Pressable>
 
-          <View className="flex-1 px-3">
+          <TouchableOpacity onPress={() => leagueId && router.push(`/league/${leagueId}`)} className="flex-1 px-3">
             <Text
               style={{ fontFamily: fonts.bodyBold }}
               numberOfLines={1}
@@ -69,7 +71,7 @@ export function DetailScreenShell({
                 )}
               </View>
             ) : null}
-          </View>
+          </TouchableOpacity>
 
           <View className="min-w-[44px] items-end">
             {rightAccessory ?? <View className="h-11 w-11" />}

@@ -1,15 +1,23 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-import type { ApiLeague, ApiSeason } from "@/api/entities";
+import type { ApiLeague, ApiSeason, SeasonStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import { DIVISION_OPTIONS } from "@/league/league-create-constants";
+import {
+  DEFAULT_TIEBREAKER,
+  type TiebreakerRule,
+} from "@/league/tiebreaker-options";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useCreateSeason, useUpdateLeague } from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
+import { EditSeasonSheet } from "../seasons/EditSeasonSheet";
+import { SeasonStatusPicker } from "../seasons/SeasonStatusPicker";
 
 type Props = {
   leagueId: number;
@@ -32,16 +40,21 @@ export function ManageSettingsTab({
   const [name, setName] = useState(league.name);
   const [description, setDescription] = useState(league.description ?? "");
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
+  const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(
+    league.tiebreaker ?? DEFAULT_TIEBREAKER,
+  );
 
-  const [seasonName, setSeasonName] = useState("");
-  const [seasonStatus, setSeasonStatus] = useState<
-    (typeof SeasonStatusEnum)[keyof typeof SeasonStatusEnum]
-  >(SeasonStatusEnum.Inactive);
+  const [editingSeason, setEditingSeason] = useState<ApiSeason | null>(null);
+  const [newSeasonName, setNewSeasonName] = useState("");
+  const [newSeasonStatus, setNewSeasonStatus] = useState<SeasonStatus>(
+    SeasonStatusEnum.Inactive,
+  );
 
   useEffect(() => {
     setName(league.name);
     setDescription(league.description ?? "");
-  }, [league.id, league.name, league.description]);
+    setTiebreakerId(league.tiebreaker ?? DEFAULT_TIEBREAKER);
+  }, [league.id, league.name, league.description, league.tiebreaker]);
 
   const handleSaveLeague = async () => {
     const trimmed = name.trim();
@@ -54,6 +67,7 @@ export function ManageSettingsTab({
         name: trimmed,
         description: description.trim() || null,
         gender: divisionId === "open" ? null : divisionId,
+        tiebreaker: tiebreakerId,
       });
       showInfoToast("League updated", "Your changes were saved.");
     } catch (err) {
@@ -62,7 +76,7 @@ export function ManageSettingsTab({
   };
 
   const handleAddSeason = async () => {
-    const trimmed = seasonName.trim();
+    const trimmed = newSeasonName.trim();
     if (!trimmed) {
       showInfoToast("Season name required", "e.g. 2027 — Spring");
       return;
@@ -70,9 +84,10 @@ export function ManageSettingsTab({
     try {
       const created = await createSeasonMutation.mutateAsync({
         name: trimmed,
-        status: seasonStatus,
+        status: newSeasonStatus,
       });
-      setSeasonName("");
+      setNewSeasonName("");
+      setNewSeasonStatus(SeasonStatusEnum.Inactive);
       onSeasonCreated(created.id);
       showInfoToast("Season created", `"${created.name}" is now available in the picker.`);
     } catch (err) {
@@ -135,6 +150,17 @@ export function ManageSettingsTab({
           </View>
         </View>
 
+        <View className="gap-2">
+          <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-white/45">
+            Changing the tiebreaker re-sorts the active season table immediately.
+          </Text>
+          <TiebreakerPicker
+            value={tiebreakerId}
+            onChange={setTiebreakerId}
+            variant="dark"
+          />
+        </View>
+
         <Button
           variant="authPurple"
           label={updateLeagueMutation.isPending ? "Saving…" : "Save league"}
@@ -145,11 +171,18 @@ export function ManageSettingsTab({
 
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
         <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
-          Add season
+          Seasons
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
-          Existing seasons cannot be renamed via the API. Create a new season when you start a
-          new campaign.
+        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+          Each season has its own fixtures, roster, and standings. Mark a season as{" "}
+          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            Active
+          </Text>{" "}
+          to run it now — any other active season in this league is marked{" "}
+          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            Completed
+          </Text>{" "}
+          automatically. Tap the edit icon to rename a season or change its status.
         </Text>
 
         {seasons.length > 0 ? (
@@ -158,63 +191,63 @@ export function ManageSettingsTab({
               style={{ fontFamily: fonts.bodyBold }}
               className="text-xs uppercase tracking-wide text-white/40"
             >
-              Current seasons
+              All seasons
             </Text>
-            {seasons.map((s) => (
-              <Text
-                key={s.id}
-                style={{ fontFamily: fonts.body }}
-                className="text-sm text-white/75"
-              >
-                {s.name} · {s.status}
-              </Text>
+            {seasons.map((season) => (
+              <View key={season.id} className="flex-row items-center gap-2 py-1">
+                <Text
+                  style={{ fontFamily: fonts.body }}
+                  numberOfLines={1}
+                  className={`flex-1 text-sm ${
+                    season.id === activeSeasonId ? "text-accent-300" : "text-white/75"
+                  }`}
+                >
+                  {season.name} · {season.status}
+                  {season.id === activeSeasonId ? " · selected" : ""}
+                </Text>
+                <Pressable
+                  onPress={() => setEditingSeason(season)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${season.name}`}
+                  className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                >
+                  <Ionicons name="create-outline" size={17} color="#FFFFFF" />
+                </Pressable>
+              </View>
             ))}
           </View>
         ) : null}
+      </View>
+
+      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
+        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+          Add season
+        </Text>
+        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+          Start a new campaign when you begin a fresh table. Use{" "}
+          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            Inactive
+          </Text>{" "}
+          for upcoming seasons, or{" "}
+          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            Active
+          </Text>{" "}
+          to switch straight into the new season.
+        </Text>
 
         <AuthTextField
           label="Season name"
-          value={seasonName}
-          onChangeText={setSeasonName}
+          value={newSeasonName}
+          onChangeText={setNewSeasonName}
           placeholder="2027 — Spring"
           containerClassName="[&_input]:text-neutral-900"
         />
 
-        <View className="gap-2">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-xs uppercase tracking-wide text-white/45"
-          >
-            Initial status
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {(
-              [
-                SeasonStatusEnum.Inactive,
-                SeasonStatusEnum.Active,
-                SeasonStatusEnum.Completed,
-              ] as const
-            ).map((status) => {
-              const active = seasonStatus === status;
-              return (
-                <Pressable
-                  key={status}
-                  onPress={() => setSeasonStatus(status)}
-                  className={`rounded-xl border px-3 py-2 capitalize ${
-                    active ? "border-accent-400 bg-accent-500/20" : "border-white/15 bg-white/5"
-                  }`}
-                >
-                  <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className={active ? "text-accent-300" : "text-white/70"}
-                  >
-                    {status}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+        <SeasonStatusPicker
+          label="Initial status"
+          value={newSeasonStatus}
+          onChange={setNewSeasonStatus}
+        />
 
         <Button
           variant="accent"
@@ -223,6 +256,14 @@ export function ManageSettingsTab({
           onPress={() => void handleAddSeason()}
         />
       </View>
+
+      <EditSeasonSheet
+        visible={editingSeason != null}
+        onClose={() => setEditingSeason(null)}
+        leagueId={leagueId}
+        season={editingSeason}
+        onUpdated={onSeasonCreated}
+      />
     </View>
   );
 }

@@ -1,0 +1,86 @@
+{
+  "defaults": {
+    "footer": "sportykore.com",
+    "wordmark": "SportyKore",
+    "screens_dir": "."
+  },
+  "campaigns": {
+    "1": {
+      "id": "child-stats",
+      "name": "Your child's stats — forever",
+      "audience": "Parents, Sunday league families",
+      "screen": "player-profile.png",
+      "headline": "His goals. His season. Never forgotten.",
+      "subline": "Every local league moment — saved on SportyKore.",
+      "cta": "Join your league today",
+      "vector_prompt": "Flat vector illustration, Nigerian mother on sidelines of dusty local football pitch, young boy in jersey celebrating, mother holding phone (blank screen — you add screenshot in Canva), palm trees and compound buildings, warm sunset, emotional hopeful mood, colors purple #4A148C and gold #E6A817, minimal shapes, no photorealism, space for headline at top, 1080x1920",
+      "whatsapp_caption": "Every goal. Every assist. Every season — saved for your child. SportyKore turns local football into stats your family can keep. Ask your league admin for an invite."
+    },
+    "2": {
+      "id": "scouts",
+      "name": "Scouts see local talent too",
+      "audience": "Talented players, parents, coaches",
+      "screen": "player-profile.png",
+      "headline": "Local league. Real numbers. One profile.",
+      "subline": "Build your SportyKore player card — goals, league, season.",
+      "cta": "Get on the radar",
+      "vector_prompt": "Vector graphic, confident young Nigerian footballer, floating stat badges (goals, assists), gold connection lines to phone silhouette, purple dark background #121212, scout figure subtle in background, aspirational, headline area top, flat design 1080x1920",
+      "whatsapp_caption": "Talent in your area deserves to be seen. One player profile — your stats, your league, your story. SportyKore."
+    },
+    "3": {
+      "id": "standings",
+      "name": "Who's top of your area?",
+      "audience": "Fans, estate leagues, WhatsApp groups",
+      "screen": "league-detail.png",
+      "headline": "Sunday league — but with real standings.",
+      "subline": "Follow scores and tables for leagues near you.",
+      "cta": "See your area on SportyKore",
+      "vector_prompt": "Flat vector, Nigerian neighbourhood football rivalry, two team shields, leaderboard podium 1-2-3, small crowd with phones, festive energy, purple header gold accents, map pin icon, 1080x1920, no real club logos",
+      "whatsapp_caption": "No more arguing in the group chat. Check the table on SportyKore. Share with your league 👇"
+    },
+    "4": {
+      "id": "match-day",
+      "name": "Run match day like the pros",
+      "audience": "League admins, coaches",
+      "screen": "match-center.png",
+      "headline": "Stop the screenshot scores.",
+      "subline": "Live match center for your league — on SportyKore.",
+      "cta": "Create your league free",
+      "vector_prompt": "Vector illustration, Nigerian league admin with whistle and phone, left side chaotic chat bubbles right side clean scoreboard 2-1, gold trophy, purple brand frame, professional warm tone, 1080x1920",
+      "whatsapp_caption": "Tired of disputed results? Run live scores and rosters properly. SportyKore for league organisers."
+    },
+    "5": {
+      "id": "invite",
+      "name": "You got the invite — make it official",
+      "audience": "Players joining via admin invite",
+      "screen": "join-league.png",
+      "headline": "You're on the team. Prove it.",
+      "subline": "Paste your invite on SportyKore — Profile → Join a league.",
+      "cta": "Download SportyKore",
+      "vector_prompt": "Emotional vector, teenager with phone golden glow, teammates lining up in background, jersey name tag filling in, purple and gold, soft sunset Nigerian setting, 1080x1920",
+      "whatsapp_caption": "Got the link from your admin? Open SportyKore → Profile → Join a league. Your name on the sheet starts here."
+    },
+    "6": {
+      "id": "daddy-goals",
+      "name": "Daddy, how many goals did I score?",
+      "audience": "Parents (high share in family groups)",
+      "screen": "player-profile.png",
+      "headline": "7 goals. One season. Forever.",
+      "subline": "SportyKore tracks every local league goal.",
+      "cta": "Join your child's league",
+      "vector_prompt": "Heartwarming flat vector, Nigerian father and daughter on sofa, daughter in kit, father showing phone (blank — add screenshot), football boots by door, warm interior, purple UI accent on phone, 1080x1920",
+      "whatsapp_caption": "\"Daddy, how many goals?\" — Now you'll always know. SportyKore."
+    },
+    "7": {
+      "id": "launch",
+      "name": "Local ball. Live matches.",
+      "audience": "Broad Nigerian football community",
+      "screen": "onboarding.png",
+      "headline": "Where local leagues gather.",
+      "subline": "Live scores. Clear stats. Your community.",
+      "cta": "Download SportyKore",
+      "vector_prompt": "Bold vector hero, diverse Nigerian football fans watching pitch at dusk, gold live dot pulse, purple sky gradient #2C0C54 to #121212, modern flat style, large headline zone, 1080x1920",
+      "whatsapp_caption": "Grassroots football deserves broadcast-level care. SportyKore — local leagues, live matches, real stats."
+    }
+  }
+}

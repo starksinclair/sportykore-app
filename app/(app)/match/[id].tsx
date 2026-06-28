@@ -22,7 +22,6 @@ const TABS: readonly DetailTab<TabKey>[] = [
 export default function MatchRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const gameId = Number(id);
-  console.log("gameId", gameId);
   const isValidId = Number.isFinite(gameId) && gameId > 0;
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
@@ -63,6 +62,7 @@ export default function MatchRoute() {
 
   return (
     <DetailScreenShell
+      leagueId={detail.league?.id ?? 0}
       title={title}
       subtitle={matchup}
       headerContent={

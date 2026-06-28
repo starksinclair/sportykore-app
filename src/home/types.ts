@@ -79,7 +79,13 @@ export interface ApiCountryWithLeagues extends ApiCountry {
   leagues: ApiLeague[];
 }
 
+export type MatchDay = {
+  gameDate: string;
+  timeZone: string;
+};
+
 export type LeagueResponse = {
+  matchDay: MatchDay;
   matches: ApiCountryWithLeagues[];
   leagues: ApiCountryWithLeagues[];
 };

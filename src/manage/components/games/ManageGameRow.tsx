@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
-import { EntityLogo } from "@/components/ui";
+import { EntityLogo, GamePhaseLabel } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
-import { GamePhaseLabel } from "@/components/ui";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useDeleteGame, useGameTimeActions, useUpdateGame } from "../../hooks";
+import { EditGameSheet } from "./EditGameSheet";
 import { EditScoreSheet } from "./EditScoreSheet";
 
 type RowVariant = "live" | "upcoming" | "results";
@@ -28,6 +28,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const deleteMutation = useDeleteGame(leagueId, seasonId);
   const gameTimeActions = useGameTimeActions(game.id, leagueId, seasonId);
   const [editScoreOpen, setEditScoreOpen] = useState(false);
+  const [editGameOpen, setEditGameOpen] = useState(false);
 
   const showScore =
     variant !== "upcoming" ||
@@ -112,6 +113,14 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
     ]);
   };
 
+  const handleUpcomingActions = () => {
+    Alert.alert("Game actions", undefined, [
+      { text: "Edit fixture", onPress: () => setEditGameOpen(true) },
+      { text: "Delete", style: "destructive", onPress: handleDelete },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
+
   return (
     <>
       <EditScoreSheet
@@ -120,6 +129,13 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         leagueId={leagueId}
         seasonId={seasonId}
         onClose={() => setEditScoreOpen(false)}
+      />
+      <EditGameSheet
+        visible={editGameOpen}
+        game={game}
+        leagueId={leagueId}
+        seasonId={seasonId}
+        onClose={() => setEditGameOpen(false)}
       />
       <Pressable
       onPress={variant === "live" ? openMatchCenter : undefined}
@@ -191,13 +207,20 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
           />
         ) : null}
         {variant === "upcoming" ? (
-          <ActionChip
-            label="Start"
-            icon="play"
-            onPress={() => void handleStart()}
-            accent
-            loading={gameTimeActions.startFirstHalf.isPending}
-          />
+          <>
+            <ActionChip
+              label="Start"
+              icon="play"
+              onPress={() => void handleStart()}
+              accent
+              loading={gameTimeActions.startFirstHalf.isPending}
+            />
+            <ActionChip
+              label="Actions"
+              icon="ellipsis-horizontal"
+              onPress={handleUpcomingActions}
+            />
+          </>
         ) : null}
         {variant === "results" ? (
           <>

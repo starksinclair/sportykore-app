@@ -26,10 +26,16 @@ import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
 import { useCreateLeague } from "@/league/hooks";
+import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import {
   DIVISION_OPTIONS,
   type CountryOption,
 } from "@/league/league-create-constants";
+import {
+  DEFAULT_TIEBREAKER,
+  tiebreakerLabel,
+  type TiebreakerRule,
+} from "@/league/tiebreaker-options";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { fonts } from "@/theme/fonts";
 
@@ -55,6 +61,7 @@ export default function CreateScreen() {
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [city, setCity] = useState("");
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
+  const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(DEFAULT_TIEBREAKER);
 
   const [teams, setTeams] = useState<TeamRow[]>(() => [
     { id: "t1", name: "", logo: null },
@@ -104,6 +111,7 @@ export default function CreateScreen() {
         countryId: selectedCountry!.id,
         description: description.trim() || undefined,
         gender: divisionId !== "open" ? divisionId : undefined,
+        tiebreaker: tiebreakerId,
         logo: leagueLogo ?? undefined,
         teams: namedTeams.map((team) => ({
           name: team.name.trim(),
@@ -155,6 +163,7 @@ export default function CreateScreen() {
     setSelectedCountry(null);
     setCity("");
     setDivisionId("open");
+    setTiebreakerId(DEFAULT_TIEBREAKER);
     setTeams([
       { id: "t1", name: "", logo: null },
       { id: "t2", name: "", logo: null },
@@ -251,6 +260,8 @@ export default function CreateScreen() {
                   setCity={setCity}
                   divisionId={divisionId}
                   setDivisionId={setDivisionId}
+                  tiebreakerId={tiebreakerId}
+                  setTiebreakerId={setTiebreakerId}
                   selectedCountry={selectedCountry}
                   onSelectCountry={setSelectedCountry}
                 />
@@ -275,6 +286,7 @@ export default function CreateScreen() {
                   country={selectedCountry ?? undefined}
                   city={city}
                   divisionId={divisionId}
+                  tiebreakerId={tiebreakerId}
                   teams={namedTeams}
                   created={created}
                 />
@@ -326,6 +338,8 @@ function StepBasics({
   setCity,
   divisionId,
   setDivisionId,
+  tiebreakerId,
+  setTiebreakerId,
   selectedCountry,
   onSelectCountry,
 }: {
@@ -341,6 +355,8 @@ function StepBasics({
   setCity: (v: string) => void;
   divisionId: (typeof DIVISION_OPTIONS)[number]["id"];
   setDivisionId: (v: (typeof DIVISION_OPTIONS)[number]["id"]) => void;
+  tiebreakerId: TiebreakerRule;
+  setTiebreakerId: (v: TiebreakerRule) => void;
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
@@ -396,6 +412,12 @@ function StepBasics({
           ))}
         </View>
       </LabelBlock>
+
+      <TiebreakerPicker
+        value={tiebreakerId}
+        onChange={setTiebreakerId}
+        variant="light"
+      />
 
       <View className="gap-1.5">
         <Text
@@ -548,6 +570,7 @@ function StepReview({
   country,
   city,
   divisionId,
+  tiebreakerId,
   teams,
   created,
 }: {
@@ -558,6 +581,7 @@ function StepReview({
   country: CountryOption | undefined;
   city: string;
   divisionId: string;
+  tiebreakerId: TiebreakerRule;
   teams: TeamRow[];
   created: boolean;
 }) {
@@ -600,6 +624,7 @@ function StepReview({
         ) : null}
         {city.trim() ? <SummaryLine label="City / area" value={city.trim()} /> : null}
         <SummaryLine label="Division" value={divisionLabel} />
+        <SummaryLine label="Tiebreaker" value={tiebreakerLabel(tiebreakerId)} />
         {description.trim() ? (
           <View className="gap-1 pt-1">
             <Text

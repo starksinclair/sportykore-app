@@ -56,7 +56,7 @@ export function TeamOverviewTab({ team, league, season }: Props) {
   const recent = useMemo(
     () =>
       [...games]
-        .filter((g) => g.status === "completed")
+        .filter((g) => g.status === "full_time")
         .sort(
           (a, b) =>
             new Date(b.playedAt).valueOf() - new Date(a.playedAt).valueOf(),

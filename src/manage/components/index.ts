@@ -6,4 +6,5 @@ export { ManageGamesTab } from "./tabs/ManageGamesTab";
 export { ManagePlayersTab } from "./tabs/ManagePlayersTab";
 export { ManageSettingsTab } from "./tabs/ManageSettingsTab";
 export { ManageTeamsTab } from "./tabs/ManageTeamsTab";
+export { EditSeasonSheet } from "./seasons/EditSeasonSheet";
 export { TeamFormSheet } from "./teams/TeamFormSheet";

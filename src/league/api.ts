@@ -1,6 +1,7 @@
 import { apiRequest } from "@/api/http-client";
 import type { PickedImageFile } from "@/lib/picked-image";
 
+import type { TiebreakerRule } from "./tiebreaker-options";
 import type { LeagueDetail } from "./types";
 
 export async function fetchLeagueDetail(
@@ -29,6 +30,7 @@ export type CreateLeaguePayload = {
   description?: string;
   gender?: string;
   logo?: PickedImageFile;
+  tiebreaker?: TiebreakerRule;
   teams?: CreateLeagueTeamPayload[];
 };
 
@@ -74,6 +76,9 @@ function buildCreateLeagueFormData(payload: CreateLeaguePayload): FormData {
   }
   if (payload.gender) {
     form.append("gender", payload.gender);
+  }
+  if (payload.tiebreaker) {
+    form.append("tiebreaker", payload.tiebreaker);
   }
   if (payload.logo) {
     appendImageFile(form, "logo", payload.logo);

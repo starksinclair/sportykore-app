@@ -32,7 +32,10 @@ export async function fetchLeagues(
 
   const res = await apiRequest<{ data: LeagueResponse }>(
     `/api/v1/leagues?${query}`,
-    { auth: true },
+    {
+      auth: true,
+      headers: { "Time-Zone": resolved.timeZone },
+    },
   );
   return res.data;
 }

@@ -27,6 +27,7 @@ import {
   updateGameScore,
   updateLeague,
   updateLeaguePlayer,
+  updateSeason,
   updateTeam,
 } from "./api";
 import type { AccreditStatPayload, CreateTeamPayload, GameScorePayload, UpdateTeamPayload } from "./api";
@@ -43,6 +44,7 @@ import type {
   CreateStatPayload,
   UpdateGamePayload,
   UpdateLeaguePayload,
+  UpdateSeasonPayload,
 } from "./types";
 
 export function useOwnedLeagues(enabled: boolean) {
@@ -245,6 +247,18 @@ export function useCreateSeason(leagueId: number, _seasonId: number) {
   return useMutation({
     mutationFn: (payload: Omit<CreateSeasonPayload, "leagueId">) =>
       createSeason(leagueId, payload),
+    onSuccess: () => {
+      invalidateManageLeagueData(queryClient, leagueId);
+      queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
+    },
+  });
+}
+
+export function useUpdateSeason(leagueId: number, seasonId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateSeasonPayload) =>
+      updateSeason(leagueId, seasonId, payload),
     onSuccess: () => {
       invalidateManageLeagueData(queryClient, leagueId);
       queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });

@@ -40,6 +40,7 @@ function patchLeagueFavourited(
     }));
 
   return {
+    matchDay: data.matchDay,
     matches: patchCountries(data.matches),
     leagues: patchCountries(data.leagues),
   };

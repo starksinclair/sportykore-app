@@ -4,6 +4,8 @@
  * source of truth for response types.
  */
 
+import type { TiebreakerRule } from "@/league/tiebreaker-options";
+
 export type ApiCountry = {
   id: number;
   name: string;
@@ -16,6 +18,7 @@ export type ApiLeague = {
   logoUrl: string | null;
   games?: ApiGame[];
   description: string;
+  tiebreaker?: TiebreakerRule | null;
 };
 
 export type ApiTeam = {

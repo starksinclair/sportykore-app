@@ -25,6 +25,7 @@ export default function ProfileScreen() {
 
   const playerProfileQuery = useDoesUserHavePlayerProfile(Boolean(user));
   const hasPlayerProfile = playerProfileQuery.data?.hasPlayerProfile === true;
+  const playerId = playerProfileQuery.data?.playerId;
 
   const handleSignOut = () => {
     Alert.alert(
@@ -70,7 +71,7 @@ export default function ProfileScreen() {
     if (playerProfileQuery.isLoading) return;
 
     if (hasPlayerProfile && user) {
-      router.push(`/player/${user.id}`);
+      router.push(`/player/${playerId}`);
       return;
     }
 

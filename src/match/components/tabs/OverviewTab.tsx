@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
-import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { EntityLogo } from "@/components/ui";
+import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAt } from "@/lib/datetime";
 import {
   isActivePlayStatus,
@@ -30,23 +30,7 @@ export function MatchOverviewTab({ detail }: Props) {
   return (
     <View className="gap-6">
       <View className="rounded-[28px] bg-white/6 px-5 py-6">
-        {detail.league?.name ? (
-          <View className="items-center gap-2">
-            <EntityLogo
-              logoUrl={detail.league.logoUrl}
-              variant="league"
-              size="sm"
-              tone="dark"
-            />
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="text-center text-xs uppercase tracking-[1.5px] text-white/55"
-            >
-              {detail.league.name}
-            </Text>
-          </View>
-        ) : null}
-        <View className="flex-row items-center justify-between gap-4 pt-5">
+        <View className="flex-row items-center justify-between gap-4 ">
           <TeamColumn
             name={detail.homeTeam?.name ?? "TBD"}
             logoUrl={detail.homeTeam?.logoUrl}
