@@ -209,13 +209,12 @@ export default function LoginScreen() {
           <View className="absolute bottom-20 left-0 right-0 items-center gap-2 px-6">
             <View
               style={styles.logoGlow}
-              className="h-[70px] w-[70px] rotate-12 items-center justify-center rounded-2xl bg-[#4A148C]"
+              className="h-[70px] w-[70px] rotate-12 items-center justify-center rounded-2xl bg-white"
             >
               <Logo
-                variant="short"
-                color={colors.signInYellow}
-                fontSize={30}
-                lineHeight={45}
+                variant="image"
+                imageWidth={70}
+                imageHeight={70}
               />
             </View>
             <Text
