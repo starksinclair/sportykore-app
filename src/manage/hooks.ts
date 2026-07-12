@@ -5,6 +5,7 @@ import { fetchLeagueDetail } from "@/league/api";
 
 import {
   accreditStat,
+  assignTeamAdmin,
   createGame,
   createSeason,
   createStat,
@@ -14,10 +15,13 @@ import {
   deleteTeam,
   endGameFullTime,
   fetchLeagueTeams,
+  fetchManagedHub,
   fetchOwnedLeagues,
   fetchSeasonRoster,
   removeLeaguePlayer,
+  removeTeamAdmin,
   pauseGame,
+  recordSubstitutions,
   resumeGame,
   startExtraTime,
   startFirstHalf,
@@ -37,16 +41,31 @@ import {
 } from "./invalidate-queries";
 import { manageKeys } from "./queryKeys";
 import type { UpdateLeaguePlayerPayload } from "@/invite/types";
+import { showSuccessToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import type {
   CreateGamePayload,
   CreateSeasonPayload,
   CreateStatPayload,
+  RecordSubstitutionsPayload,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
 } from "./types";
 
+export function useManagedHub(enabled: boolean) {
+  const { isOnline } = useNetworkStatus();
+  return useQuery({
+    queryKey: manageKeys.managed(),
+    queryFn: fetchManagedHub,
+    enabled,
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
+
+/** @deprecated Prefer `useManagedHub`. */
 export function useOwnedLeagues(enabled: boolean) {
   const { isOnline } = useNetworkStatus();
   return useQuery({
@@ -124,6 +143,46 @@ export function useDeleteTeam(leagueId: number, seasonId: number) {
   return useMutation({
     mutationFn: (teamId: number) => deleteTeam(leagueId, teamId),
     onSuccess: invalidate,
+  });
+}
+
+function useInvalidateTeamAdmins(leagueId: number) {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: manageKeys.teams(leagueId) });
+  };
+}
+
+export function useAssignTeamAdmin(leagueId: number) {
+  const invalidate = useInvalidateTeamAdmins(leagueId);
+  return useMutation({
+    mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
+      assignTeamAdmin(leagueId, teamId, userId),
+    onSuccess: () => {
+      invalidate();
+      showSuccessToast(
+        "Team admin assigned",
+        "They can manage this team's lineups and match day.",
+      );
+    },
+    onError: (error) => {
+      showThrownAsToast(error, "Could not assign admin");
+    },
+  });
+}
+
+export function useRemoveTeamAdmin(leagueId: number) {
+  const invalidate = useInvalidateTeamAdmins(leagueId);
+  return useMutation({
+    mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
+      removeTeamAdmin(leagueId, teamId, userId),
+    onSuccess: () => {
+      invalidate();
+      showSuccessToast("Team admin removed");
+    },
+    onError: (error) => {
+      showThrownAsToast(error, "Could not remove admin");
+    },
   });
 }
 
@@ -220,6 +279,31 @@ export function useCreateStat(leagueId: number, _seasonId: number) {
   });
 }
 
+export function useRecordSubstitutions(
+  leagueId: number,
+  _seasonId: number,
+  gameId: number,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RecordSubstitutionsPayload) =>
+      recordSubstitutions(payload),
+    onSuccess: () => {
+      invalidateGameDetail(queryClient, gameId, leagueId);
+      queryClient.invalidateQueries({
+        queryKey: ["lineup", "game", gameId],
+      });
+      showSuccessToast(
+        "Substitution recorded",
+        "The swap has been added to the match events.",
+      );
+    },
+    onError: (error) => {
+      showThrownAsToast(error, "Could not record substitution");
+    },
+  });
+}
+
 export function useDeleteStat(leagueId: number, _seasonId: number) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -249,6 +333,7 @@ export function useCreateSeason(leagueId: number, _seasonId: number) {
       createSeason(leagueId, payload),
     onSuccess: () => {
       invalidateManageLeagueData(queryClient, leagueId);
+      queryClient.invalidateQueries({ queryKey: manageKeys.managed() });
       queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
     },
   });
@@ -261,6 +346,7 @@ export function useUpdateSeason(leagueId: number, seasonId: number) {
       updateSeason(leagueId, seasonId, payload),
     onSuccess: () => {
       invalidateManageLeagueData(queryClient, leagueId);
+      queryClient.invalidateQueries({ queryKey: manageKeys.managed() });
       queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
     },
   });

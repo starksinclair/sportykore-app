@@ -12,11 +12,11 @@ This document describes the **Manage** flow for league owners: screens, tabs, AP
 
 ## Response conventions
 
-| Pattern       | Meaning                                                                                     |
-| ------------- | ------------------------------------------------------------------------------------------- |
-| `{ data: T }` | Most `GET` routes that use `serialize()`                                                    |
-| Plain JSON    | Many `POST`/`PUT`/`DELETE` mutations return `{ message: "..." }` without a `data` wrapper   |
-| Bearer token  | Send `Authorization: Bearer <token>` on all manage routes (except public reads noted below) |
+| Pattern | Meaning |
+| --- | --- |
+| `{ data: T }` | Most `GET` routes that use `serialize()` |
+| Plain JSON | Many `POST`/`PUT`/`DELETE` mutations return `{ message: "..." }` without a `data` wrapper |
+| Bearer token | Send `Authorization: Bearer <token>` on all manage routes (except public reads noted below) |
 
 Base URL: your API host + `/api/v1`.
 
@@ -29,7 +29,7 @@ flowchart TD
   ManageList[Manage screen]
   LoginGate{Logged in?}
   LoginPrompt[Show login message]
-  LeagueList[GET auth/users/leagues]
+  LeagueList[GET auth/users/managed]
   BioGate{Biometric gate}
   ManageDetail["Manage / [leagueId]"]
   GamesTab[Games tab]
@@ -50,10 +50,10 @@ flowchart TD
 
 **Purpose:** Show leagues the current user **owns** so they can open the admin console.
 
-| Step         | Action                                                                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Auth check   | If no stored Bearer token → show _“Log in to view your leagues”_ and link to login (`POST /api/v1/auth/login`). Optional: `GET /api/v1/auth/users/me` to validate token. |
-| Load leagues | `GET /api/v1/auth/users/leagues`                                                                                                                                         |
+| Step | Action |
+| --- | --- |
+| Auth check | If no stored Bearer token → show *“Log in to view your leagues”* and link to login (`POST /api/v1/auth/login`). Optional: `GET /api/v1/auth/users/me` to validate token. |
+| Load manage hub | `GET /api/v1/auth/users/managed` |
 
 **Response shape:**
 
@@ -77,10 +77,10 @@ flowchart TD
 
 Before entering `manage/[leagueId]`, prompt for **Face ID / Touch ID / device PIN** if available.
 
-| Case                                     | Behavior                                         |
-| ---------------------------------------- | ------------------------------------------------ |
-| Biometrics available and succeed         | Navigate to manage detail                        |
-| User cancels                             | Stay on league list                              |
+| Case | Behavior |
+| --- | --- |
+| Biometrics available and succeed | Navigate to manage detail |
+| User cancels | Stay on league list |
 | No device passcode/biometrics configured | **Allow access** without gate (per product rule) |
 
 No API call for this step.
@@ -89,13 +89,13 @@ No API call for this step.
 
 **Shared state for all tabs:**
 
-| State       | Source         | Notes                                       |
-| ----------- | -------------- | ------------------------------------------- |
-| `leagueId`  | Route param    |                                             |
-| `seasonId`  | Season picker  | From `seasons[]` on league detail load      |
-| `season`    | League detail  | Games, standings, stats for selected season |
-| `statTypes` | League detail  | Event labels for Match Center               |
-| `teams`     | Teams endpoint | For forms and pickers                       |
+| State | Source | Notes |
+| --- | --- | --- |
+| `leagueId` | Route param | |
+| `seasonId` | Season picker | From `seasons[]` on league detail load |
+| `season` | League detail | Games, standings, stats for selected season |
+| `statTypes` | League detail | Event labels for Match Center |
+| `teams` | Teams endpoint | For forms and pickers |
 
 **Initial load (on mount + when season changes):**
 
@@ -121,11 +121,11 @@ Returns `{ data: Team[] }` — `id`, `name`, `logoUrl`. Only works if the user o
 
 Three sections on the Games tab, driven by **`season.games`** from league show. Partition client-side by `game.status`:
 
-| Section      | `status` values                                                  |
-| ------------ | ---------------------------------------------------------------- |
+| Section | `status` values |
+| --- | --- |
 | **Live Now** | `first_half`, `second_half`, `extra_time`, `half_time`, `paused` |
-| **Upcoming** | `scheduled`, `postponed`                                         |
-| **Results**  | `full_time`, `cancelled`                                         |
+| **Upcoming** | `scheduled`, `postponed` |
+| **Results** | `full_time`, `cancelled` |
 
 Sort within each section by `playedAt` ascending (upcoming/live) or descending (results), as you prefer.
 
@@ -139,18 +139,18 @@ Authorization: Bearer …
 Content-Type: application/json
 ```
 
-| Field                                     | Required | Notes                         |
-| ----------------------------------------- | -------- | ----------------------------- |
-| `leagueId`                                | yes      | Current league                |
-| `seasonId`                                | yes      | Selected season               |
-| `homeTeamId`                              | yes      | From teams list               |
-| `awayTeamId`                              | yes      | From teams list               |
-| `playedAt`                                | yes      | ISO 8601 or `YYYY-MM-DD`      |
-| `venueName`                               | no       |                               |
-| `status`                                  | no       | Default `scheduled`           |
-| `firstHalfDuration`, `secondHalfDuration` | no       | Default `45` each             |
-| `extraTimeDuration`                       | no       | Optional                      |
-| `homeScore`, `awayScore`                  | no       | Usually null for new fixtures |
+| Field | Required | Notes |
+| --- | --- | --- |
+| `leagueId` | yes | Current league |
+| `seasonId` | yes | Selected season |
+| `homeTeamId` | yes | From teams list |
+| `awayTeamId` | yes | From teams list |
+| `playedAt` | yes | ISO 8601 or `YYYY-MM-DD` |
+| `venueName` | no | |
+| `status` | no | Default `scheduled` |
+| `firstHalfDuration`, `secondHalfDuration` | no | Default `45` each |
+| `extraTimeDuration` | no | Optional |
+| `homeScore`, `awayScore` | no | Usually null for new fixtures |
 
 After success, refetch `GET /leagues/:leagueId?seasonId=…`.
 
@@ -172,12 +172,12 @@ Returns game + `stats[]` (with `type`, `team`, `player`, `relatedPlayer`) + `lea
 
 Use **`+` / `−`** per side — score and unaccredited goal stat stay in sync. See [hybrid-scoring-prompt.md](hybrid-scoring-prompt.md).
 
-| Action          | API                                                                                                                      |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Action | API |
+| --- | --- |
 | Increment score | `POST /api/v1/games/:gameId/score` `{ "team": "home" \| "away", "action": "increment" }` → returns `statId` for accredit |
-| Decrement score | `POST .../score` `{ "action": "decrement" }` — removes latest unaccredited goal for that team                            |
-| Accredit goal   | `PATCH /api/v1/games/:gameId/stats/:statId/accredit` `{ playerId, assistPlayerId?, isOwnGoal, minute }`                  |
-| Skip accredit   | No API — placeholder already created on increment; reset UI only                                                         |
+| Decrement score | `POST .../score` `{ "action": "decrement" }` — removes latest unaccredited goal for that team |
+| Accredit goal | `PATCH /api/v1/games/:gameId/stats/:statId/accredit` `{ playerId, assistPlayerId?, isOwnGoal, minute }` |
+| Skip accredit | No API — placeholder already created on increment; reset UI only |
 
 **SSE:** `score_updated` (scores), `stat_accredited` (refetch stats).
 
@@ -187,22 +187,22 @@ Legacy manual score: `PUT /api/v1/leagues/games/:id` with `homeScore` / `awaySco
 
 Live match clock uses **period timestamps** (not DB minute polling). See [CHANGE_GAME.md](CHANGE_GAME.md).
 
-| Action                 | API                                                                     |
-| ---------------------- | ----------------------------------------------------------------------- |
-| Start first half       | `POST /api/v1/games/:gameId/start-first-half`                           |
-| Half time              | `POST /api/v1/games/:gameId/half-time`                                  |
-| Start second half      | `POST /api/v1/games/:gameId/start-second-half`                          |
-| Extra time             | `POST /api/v1/games/:gameId/extra-time`                                 |
-| Pause                  | `POST /api/v1/games/:gameId/pause`                                      |
-| Resume                 | `POST /api/v1/games/:gameId/resume`                                     |
+| Action | API |
+| --- | --- |
+| Start first half | `POST /api/v1/games/:gameId/start-first-half` |
+| Half time | `POST /api/v1/games/:gameId/half-time` |
+| Start second half | `POST /api/v1/games/:gameId/start-second-half` |
+| Extra time | `POST /api/v1/games/:gameId/extra-time` |
+| Pause | `POST /api/v1/games/:gameId/pause` |
+| Resume | `POST /api/v1/games/:gameId/resume` |
 | Full time (with score) | `POST /api/v1/games/:gameId/full-time` → `{ "homeScore", "awayScore" }` |
 
-All game-time routes require **`apiAuth` + `teamOwner`** (league owner or either team's `addedBy` user). Each action broadcasts SSE `status_changed` on `games/{gameId}`.
+All game-time routes require **`apiAuth` + `leagueOwner`**. Each action broadcasts SSE `status_changed` on `games/{gameId}`.
 
-| Action              | API                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| Undo last event     | `DELETE /leagues/stats/:id` (delete the most recent stat row; adjust score manually if needed) |
-| Delete single event | `DELETE /leagues/stats/:id`                                                                    |
+| Action | API |
+| --- | --- |
+| Undo last event | `DELETE /leagues/stats/:id` (delete the most recent stat row; adjust score manually if needed) |
+| Delete single event | `DELETE /leagues/stats/:id` |
 
 #### Recording an event (Auto)
 
@@ -210,25 +210,25 @@ All game-time routes require **`apiAuth` + `teamOwner`** (league owner or either
 POST /api/v1/leagues/stats
 ```
 
-| Field                      | Notes                                                       |
-| -------------------------- | ----------------------------------------------------------- |
-| `gameId`                   | Current game                                                |
-| `leagueId`, `seasonId`     | From game / manage context                                  |
-| `teamId`                   | Side the player represents in **this** match (home or away) |
-| `playerId`                 | Scorer / card recipient                                     |
-| `statTypeId`               | From `statTypes` — map UI label → `name` below              |
-| `relatedPlayerId`          | Assists only — assisting player                             |
-| `minute`, `isStoppageTime` | Optional                                                    |
+| Field | Notes |
+| --- | --- |
+| `gameId` | Current game |
+| `leagueId`, `seasonId` | From game / manage context |
+| `teamId` | Side the player represents in **this** match (home or away) |
+| `playerId` | Scorer / card recipient |
+| `statTypeId` | From `statTypes` — map UI label → `name` below |
+| `relatedPlayerId` | Assists only — assisting player |
+| `minute`, `isStoppageTime` | Optional |
 
 **Stat type mapping** (`statTypes[].name` → UI):
 
-| UI label | `name`        | Score impact (client)    |
-| -------- | ------------- | ------------------------ |
-| Goal     | `goals`       | +1 for `teamId` side     |
-| Own Goal | `own_goal`    | +1 for **opposite** side |
-| Assist   | `assists`     | No score change          |
-| Yellow   | `yellow_card` | No score change          |
-| Red      | `red_card`    | No score change          |
+| UI label | `name` | Score impact (client) |
+| --- | --- | --- |
+| Goal | `goals` | +1 for `teamId` side |
+| Own Goal | `own_goal` | +1 for **opposite** side |
+| Assist | `assists` | No score change |
+| Yellow | `yellow_card` | No score change |
+| Red | `red_card` | No score change |
 
 Backend validates: player has **active** roster row for `teamId` in this league/season, and `teamId` is home or away in this game. Returns `422` if not.
 
@@ -238,17 +238,17 @@ Use `GET /games/:id` → `stats[]`. Show `type.displayName`, player name, team n
 
 ### Upcoming
 
-| Action    | API                                                                      |
-| --------- | ------------------------------------------------------------------------ |
+| Action | API |
+| --- | --- |
 | **Start** | `POST /api/v1/games/:gameId/start-first-half` → navigate to Match Center |
 
 ### Results (full time)
 
-| Action            | API                                                                        |
-| ----------------- | -------------------------------------------------------------------------- |
-| Edit score inline | `PUT /leagues/games/:id` `{ "homeScore", "awayScore" }`                    |
-| Reopen match      | `POST /api/v1/games/:gameId/start-first-half` or set `scheduled` via `PUT` |
-| Delete            | `DELETE /leagues/games/:id`                                                |
+| Action | API |
+| --- | --- |
+| Edit score inline | `PUT /leagues/games/:id` `{ "homeScore", "awayScore" }` |
+| Reopen match | `POST /api/v1/games/:gameId/start-first-half` or set `scheduled` via `PUT` |
+| Delete | `DELETE /leagues/games/:id` |
 
 ---
 
@@ -266,14 +266,14 @@ GET /api/v1/leagues/:leagueId/seasons/:seasonId/roster
 
 Each item includes:
 
-| Field                       | Description                                                 |
-| --------------------------- | ----------------------------------------------------------- |
-| `id`                        | `league_players` row id (for update/delete)                 |
-| `status`                    | `active`, `pending`, etc.                                   |
-| `position`                  | `attack` \| `defence` \| `midfield` \| `goalkeeper` \| null |
-| `jerseyNumber`, `isCaptain` |                                                             |
-| `player`                    | `{ id, name, avatarUrl }`                                   |
-| `team`                      | `{ id, name, logoUrl }`                                     |
+| Field | Description |
+| --- | --- |
+| `id` | `league_players` row id (for update/delete) |
+| `status` | `active`, `pending`, etc. |
+| `position` | `attack` \| `defence` \| `midfield` \| `goalkeeper` \| null |
+| `jerseyNumber`, `isCaptain` | |
+| `player` | `{ id, name, avatarUrl }` |
+| `team` | `{ id, name, logoUrl }` |
 
 Refetch when season changes or after invite/roster mutations.
 
@@ -348,11 +348,11 @@ Fields: `name`, `description`, `gender`, `logo` (optional image). See [ROUTES.md
 POST /api/v1/leagues/:leagueId/seasons
 ```
 
-| Field      | Values                                |
-| ---------- | ------------------------------------- |
-| `leagueId` | From URL / body                       |
-| `name`     | e.g. `"2027 — Spring"`                |
-| `status`   | `inactive` \| `active` \| `completed` |
+| Field | Values |
+| --- | --- |
+| `leagueId` | From URL / body |
+| `name` | e.g. `"2027 — Spring"` |
+| `status` | `inactive` \| `active` \| `completed` |
 
 Response `201`: raw season object (not wrapped in `data`). After create, refetch league show and switch picker to the new season if desired.
 
@@ -360,25 +360,25 @@ Response `201`: raw season object (not wrapped in `data`). After create, refetch
 
 ## API quick reference (manage)
 
-| Screen / action              | Method   | Path                                                 |
-| ---------------------------- | -------- | ---------------------------------------------------- |
-| Am I logged in?              | `GET`    | `/api/v1/auth/users/me`                              |
-| My leagues                   | `GET`    | `/api/v1/auth/users/leagues`                         |
-| Teams in league              | `GET`    | `/api/v1/auth/users/leagues/:leagueId/teams`         |
-| League + season detail       | `GET`    | `/api/v1/leagues/:leagueId?seasonId=`                |
-| Game detail (Match Center)   | `GET`    | `/api/v1/games/:id`                                  |
-| Schedule game                | `POST`   | `/api/v1/leagues/games`                              |
-| Update game / score / status | `PUT`    | `/api/v1/leagues/games/:id`                          |
-| Delete game                  | `DELETE` | `/api/v1/leagues/games/:id`                          |
-| Add stat                     | `POST`   | `/api/v1/leagues/stats`                              |
-| Delete stat                  | `DELETE` | `/api/v1/leagues/stats/:id`                          |
-| Roster                       | `GET`    | `/api/v1/leagues/:leagueId/seasons/:seasonId/roster` |
-| Update roster                | `PUT`    | `/api/v1/leagues/league-players/:id`                 |
-| Remove roster                | `DELETE` | `/api/v1/leagues/league-players/:id`                 |
-| Search users (invite A)      | `GET`    | `/api/v1/auth/users/search`                          |
-| Generate invite              | `GET`    | `/api/v1/invites/generate`                           |
-| Update league                | `PUT`    | `/api/v1/leagues/:leagueId`                          |
-| Add season                   | `POST`   | `/api/v1/leagues/:leagueId/seasons`                  |
+| Screen / action | Method | Path |
+| --- | --- | --- |
+| Am I logged in? | `GET` | `/api/v1/auth/users/me` |
+| Manage hub | `GET` | `/api/v1/auth/users/managed` |
+| Teams in league | `GET` | `/api/v1/auth/users/leagues/:leagueId/teams` |
+| League + season detail | `GET` | `/api/v1/leagues/:leagueId?seasonId=` |
+| Game detail (Match Center) | `GET` | `/api/v1/games/:id` |
+| Schedule game | `POST` | `/api/v1/leagues/games` |
+| Update game / score / status | `PUT` | `/api/v1/leagues/games/:id` |
+| Delete game | `DELETE` | `/api/v1/leagues/games/:id` |
+| Add stat | `POST` | `/api/v1/leagues/stats` |
+| Delete stat | `DELETE` | `/api/v1/leagues/stats/:id` |
+| Roster | `GET` | `/api/v1/leagues/:leagueId/seasons/:seasonId/roster` |
+| Update roster | `PUT` | `/api/v1/leagues/league-players/:id` |
+| Remove roster | `DELETE` | `/api/v1/leagues/league-players/:id` |
+| Search users (invite A) | `GET` | `/api/v1/auth/users/search` |
+| Generate invite | `GET` | `/api/v1/invites/generate` |
+| Update league | `PUT` | `/api/v1/leagues/:leagueId` |
+| Add season | `POST` | `/api/v1/leagues/:leagueId/seasons` |
 
 All mutation routes except invite accept require **`apiAuth` + league owner** (user must own the league).
 
@@ -386,19 +386,19 @@ All mutation routes except invite accept require **`apiAuth` + league owner** (u
 
 ## Error handling (RN)
 
-| HTTP  | Typical cause                  | UX                             |
-| ----- | ------------------------------ | ------------------------------ |
-| `401` | Missing/expired token          | Redirect to login              |
-| `403` | Not league owner               | “You can’t manage this league” |
-| `404` | Bad id / expired invite        | Not found message              |
-| `409` | Already on roster / duplicate  | Show server message            |
-| `422` | Validation (stat roster, body) | Show field errors / message    |
+| HTTP | Typical cause | UX |
+| --- | --- | --- |
+| `401` | Missing/expired token | Redirect to login |
+| `403` | Not league owner | “You can’t manage this league” |
+| `404` | Bad id / expired invite | Not found message |
+| `409` | Already on roster / duplicate | Show server message |
+| `422` | Validation (stat roster, body) | Show field errors / message |
 
 ---
 
 ## Suggested screen checklist
 
-- [ ] Manage list: login gate + `GET auth/users/leagues`
+- [ ] Manage list: login gate + `GET auth/users/managed`
 - [ ] Biometric gate before `manage/[id]`
 - [ ] Season picker bound to `seasons[]`
 - [ ] Games: Live / Upcoming / Results sections
@@ -414,36 +414,36 @@ All mutation routes except invite accept require **`apiAuth` + league owner** (u
 
 ```ts
 export const GameStatus = {
-  Scheduled: "scheduled",
-  FirstHalf: "first_half",
-  HalfTime: "half_time",
-  SecondHalf: "second_half",
-  ExtraTime: "extra_time",
-  FullTime: "full_time",
-  Paused: "paused",
-  Postponed: "postponed",
-  Cancelled: "cancelled",
-} as const;
+  Scheduled: 'scheduled',
+  FirstHalf: 'first_half',
+  HalfTime: 'half_time',
+  SecondHalf: 'second_half',
+  ExtraTime: 'extra_time',
+  FullTime: 'full_time',
+  Paused: 'paused',
+  Postponed: 'postponed',
+  Cancelled: 'cancelled',
+} as const
 
 export const SeasonStatus = {
-  Inactive: "inactive",
-  Active: "active",
-  Completed: "completed",
-} as const;
+  Inactive: 'inactive',
+  Active: 'active',
+  Completed: 'completed',
+} as const
 
 export const RosterPosition = {
-  Attack: "attack",
-  Defence: "defence",
-  Midfield: "midfield",
-  Goalkeeper: "goalkeeper",
-} as const;
+  Attack: 'attack',
+  Defence: 'defence',
+  Midfield: 'midfield',
+  Goalkeeper: 'goalkeeper',
+} as const
 
 /** Map statTypes[].name to Match Center actions */
 export const MatchEventStatName = {
-  Goal: "goals",
-  Assist: "assists",
-  OwnGoal: "own_goal",
-  Yellow: "yellow_card",
-  Red: "red_card",
-} as const;
+  Goal: 'goals',
+  Assist: 'assists',
+  OwnGoal: 'own_goal',
+  Yellow: 'yellow_card',
+  Red: 'red_card',
+} as const
 ```

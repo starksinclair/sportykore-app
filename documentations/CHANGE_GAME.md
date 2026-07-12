@@ -1,5 +1,9 @@
 # Live Game Time Implementation Prompt
 
+> **Backend (this repo):** Implemented — migration, `GameTimeService`, `GameTimeController`, `leagueOwner` middleware (resolves `params.gameId`), routes under `/api/v1/games/:gameId/*`, transformer fields, SSE `status_changed` broadcasts. See [ROUTES.md](../ROUTES.md).
+>
+> **Mobile (React Native):** Hooks/components below are for the Expo app — not in this repository.
+
 ## Context
 
 We are building a soccer league management platform using AdonisJS (backend) and React Native Expo (frontend). We already have:
@@ -11,7 +15,7 @@ We are building a soccer league management platform using AdonisJS (backend) and
 | `UpdateStandings` listener | Recalculates standings and broadcasts via SSE                    |
 | Transmit SSE               | Already configured for real-time broadcasting                    |
 | `LeagueOwnerMiddleware`    | Guards league-level routes                                       |
-| `TeamOwnerMiddleware`      | Guards team-level routes — both league owner and team owner pass |
+| `LeagueOwnerMiddleware`    | Guards Match Center clock/score — league owner only (`params.gameId` → league) |
 
 ---
 
@@ -39,32 +43,32 @@ Add the following columns to the existing `games` migration, i will just rerun t
 
 ```ts
 // half durations — set when creating the game
-table.integer("first_half_duration").defaultTo(45); // in minutes
-table.integer("second_half_duration").defaultTo(45); // in minutes
-table.integer("extra_time_duration").nullable(); // only if applicable
+table.integer('first_half_duration').defaultTo(45) // in minutes
+table.integer('second_half_duration').defaultTo(45) // in minutes
+table.integer('extra_time_duration').nullable() // only if applicable
 
 // timestamps set when admin starts each period
-table.timestamp("first_half_started_at").nullable();
-table.timestamp("second_half_started_at").nullable();
-table.timestamp("extra_time_started_at").nullable();
+table.timestamp('first_half_started_at').nullable()
+table.timestamp('second_half_started_at').nullable()
+table.timestamp('extra_time_started_at').nullable()
 ```
 
 Update the existing `status` enum to include all period states:
 
 ```ts
 table
-  .enum("status", [
-    "scheduled",
-    "first_half",
-    "half_time",
-    "second_half",
-    "extra_time",
-    "full_time",
-    "cancelled",
-    "postponed",
-    "paused",
+  .enum('status', [
+    'scheduled',
+    'first_half',
+    'half_time',
+    'second_half',
+    'extra_time',
+    'full_time',
+    'cancelled',
+    'postponed',
+    'paused',
   ])
-  .defaultTo("scheduled");
+  .defaultTo('scheduled')
 ```
 
 ---
@@ -98,50 +102,40 @@ Create `app/controllers/game_time_controller.ts` with these actions:
 | `startHalfTime`   | `POST /games/:gameId/half-time`         | Sets `status = 'half_time'`                                                      |
 | `startSecondHalf` | `POST /games/:gameId/start-second-half` | Sets `status = 'second_half'`, `secondHalfStartedAt = now`                       |
 | `startExtraTime`  | `POST /games/:gameId/extra-time`        | Sets `status = 'extra_time'`, `extraTimeStartedAt = now`                         |
+| `pause`           | `POST /games/:gameId/pause`             | Sets `status = 'paused'`, stores `pausedAt` and `pausedFromStatus`               |
+| `resume`          | `POST /games/:gameId/resume`            | Restores prior period; shifts period start timestamp by pause duration           |
 | `endGame`         | `POST /games/:gameId/full-time`         | Sets `status = 'full_time'`, saves `homeScore` and `awayScore` from request body |
 
 After every status change, broadcast via Transmit SSE to the `games/:gameId` channel:
 
 ```ts
 transmit.broadcast(`games/${game.id}`, {
-  type: "status_changed",
+  type: 'status_changed',
   status: game.status,
   firstHalfStartedAt: game.firstHalfStartedAt,
   secondHalfStartedAt: game.secondHalfStartedAt,
   extraTimeStartedAt: game.extraTimeStartedAt,
   homeScore: game.homeScore,
   awayScore: game.awayScore,
-});
+})
 ```
 
 The `endGame` action must also fire the existing `GameUpdated` event with reason `'result'` so standings recalculate automatically.
 
 ### 3. Routes
 
-Add to `start/routes.ts` under `teamOwner` middleware (both league owner and team owner can control game time):
+Add to `start/routes.ts` under `leagueOwner` middleware (league owner controls game time):
 
 ```ts
 router
   .group(() => {
-    router.post("/games/:gameId/start-first-half", [
-      controllers.GameTime,
-      "startFirstHalf",
-    ]);
-    router.post("/games/:gameId/half-time", [
-      controllers.GameTime,
-      "startHalfTime",
-    ]);
-    router.post("/games/:gameId/start-second-half", [
-      controllers.GameTime,
-      "startSecondHalf",
-    ]);
-    router.post("/games/:gameId/extra-time", [
-      controllers.GameTime,
-      "startExtraTime",
-    ]);
-    router.post("/games/:gameId/full-time", [controllers.GameTime, "endGame"]);
+    router.post('/games/:gameId/start-first-half', [controllers.GameTime, 'startFirstHalf'])
+    router.post('/games/:gameId/half-time', [controllers.GameTime, 'startHalfTime'])
+    router.post('/games/:gameId/start-second-half', [controllers.GameTime, 'startSecondHalf'])
+    router.post('/games/:gameId/extra-time', [controllers.GameTime, 'startExtraTime'])
+    router.post('/games/:gameId/full-time', [controllers.GameTime, 'endGame'])
   })
-  .middleware([middleware.auth(), middleware.teamOwner()]);
+  .middleware([middleware.apiAuth(), middleware.leagueOwner()])
 ```
 
 ### 4. Game Transformer
@@ -150,20 +144,20 @@ Update `GameTransformer.toObject()` to include the new timestamp fields so the f
 
 ```ts
 this.pick(this.resource, [
-  "id",
-  "status",
-  "homeScore",
-  "awayScore",
-  "firstHalfDuration",
-  "secondHalfDuration",
-  "extraTimeDuration",
-  "firstHalfStartedAt",
-  "secondHalfStartedAt",
-  "extraTimeStartedAt",
-  "playedAt",
-  "venueName",
-  "currentMinute",
-]);
+  'id',
+  'status',
+  'homeScore',
+  'awayScore',
+  'firstHalfDuration',
+  'secondHalfDuration',
+  'extraTimeDuration',
+  'firstHalfStartedAt',
+  'secondHalfStartedAt',
+  'extraTimeStartedAt',
+  'playedAt',
+  'venueName',
+  'currentMinute',
+])
 ```
 
 ---
@@ -184,20 +178,17 @@ Create `hooks/useLiveMinute.ts`:
 Minute logic to implement:
 
 ```ts
-if (status === "first_half" && firstHalfStartedAt) {
-  minute = differenceInMinutes(now, new Date(firstHalfStartedAt));
+if (status === 'first_half' && firstHalfStartedAt) {
+  minute = differenceInMinutes(now, new Date(firstHalfStartedAt))
 }
 
-if (status === "second_half" && secondHalfStartedAt) {
-  minute =
-    firstHalfDuration + differenceInMinutes(now, new Date(secondHalfStartedAt));
+if (status === 'second_half' && secondHalfStartedAt) {
+  minute = firstHalfDuration + differenceInMinutes(now, new Date(secondHalfStartedAt))
 }
 
-if (status === "extra_time" && extraTimeStartedAt) {
+if (status === 'extra_time' && extraTimeStartedAt) {
   minute =
-    firstHalfDuration +
-    secondHalfDuration +
-    differenceInMinutes(now, new Date(extraTimeStartedAt));
+    firstHalfDuration + secondHalfDuration + differenceInMinutes(now, new Date(extraTimeStartedAt))
 }
 ```
 

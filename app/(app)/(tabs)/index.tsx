@@ -47,6 +47,7 @@ import {
   startOfDay,
   startOfMonth,
 } from "@/home/utils";
+import { messageFromThrown } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 import { StatusBar } from "expo-status-bar";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
@@ -93,9 +94,45 @@ export default function HomeScreen() {
     [selectedDate.date, selectedCountry?.id, liveOnly],
   );
 
-  const { data: leagueResponse, isLoading: leagueResponseLoading, isError: leagueResponseError, refetch: refetchLeagueResponse } = useLeaguesByCountry(leagueParams);
+  const {
+    data: leagueResponse,
+    isLoading: leagueResponseLoading,
+    isError: leagueResponseError,
+    error: leagueResponseErr,
+    refetch: refetchLeagueResponse,
+  } = useLeaguesByCountry(leagueParams);
   const matches = leagueResponse?.matches ?? [];
   const leagues = leagueResponse?.leagues ?? [];
+  const feedErrorMessage = leagueResponseError
+    ? messageFromThrown(leagueResponseErr)
+    : undefined;
+
+  const matchesEmptyCopy = useMemo(() => {
+    if (liveOnly) {
+      return {
+        title: "No live games",
+        body: selectedCountry
+          ? `Nothing is live in ${selectedCountry.name} right now. Turn off live-only or pick another country.`
+          : "Nothing is live right now. Turn off live-only or try another date.",
+      };
+    }
+    if (selectedCountry) {
+      return {
+        title: `No games in ${selectedCountry.name}`,
+        body: `No fixtures for ${selectedDate.displayLabel}. Try another date or clear the country filter.`,
+      };
+    }
+    if (selectedDateOffset === 0) {
+      return {
+        title: "No games today",
+        body: "There are no fixtures scheduled for today. Swipe the date or open the calendar to look ahead.",
+      };
+    }
+    return {
+      title: `No games ${selectedDate.displayLabel}`,
+      body: "Try another date, or open Filters if you want to narrow by country.",
+    };
+  }, [liveOnly, selectedCountry, selectedDate.displayLabel, selectedDateOffset]);
 
   const { favourites, others } = useMemo(
     () => partitionMatchesFeed(matches),
@@ -235,7 +272,12 @@ export default function HomeScreen() {
 
   const matchListEmpty = () => {
     if (leagueResponseError) {
-      return <ErrorState onRetry={() => refetchLeagueResponse()} />;
+      return (
+        <ErrorState
+          message={feedErrorMessage}
+          onRetry={() => refetchLeagueResponse()}
+        />
+      );
     }
     if (leagueResponseLoading && matches.length === 0) {
       return (
@@ -247,8 +289,8 @@ export default function HomeScreen() {
     if (matches.length === 0) {
       return (
         <EmptyState
-          title="No fixtures match this filter"
-          body="Try another country, move the date, or switch off live-only."
+          title={matchesEmptyCopy.title}
+          body={matchesEmptyCopy.body}
         />
       );
     }
@@ -382,7 +424,10 @@ export default function HomeScreen() {
 
           <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
               {leagueResponseError ? (
-                <ErrorState onRetry={() => refetchLeagueResponse()} />
+                <ErrorState
+                  message={feedErrorMessage}
+                  onRetry={() => refetchLeagueResponse()}
+                />
               ) : leagueResponseLoading && (leagues ?? []).length === 0 ? (
                 <View className="items-center py-10">
                   <ActivityIndicator color={colors.brand} />
@@ -393,8 +438,16 @@ export default function HomeScreen() {
                 ))
               ) : (
                 <EmptyState
-                  title="No leagues yet"
-                  body="Try clearing the country filter to see the full directory."
+                  title={
+                    selectedCountry
+                      ? `No leagues in ${selectedCountry.name}`
+                      : "No leagues yet"
+                  }
+                  body={
+                    selectedCountry
+                      ? "Clear the country filter to see the full directory."
+                      : "Leagues will show up here once they are available."
+                  }
                 />
               )}
             </Animated.View>

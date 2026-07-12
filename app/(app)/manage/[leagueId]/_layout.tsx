@@ -4,6 +4,8 @@ export default function ManageLeagueLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="team/[teamId]/index" />
+      <Stack.Screen name="team/[teamId]/lineup/[gameId]" />
       <Stack.Screen
         name="game/[gameId]"
         options={{

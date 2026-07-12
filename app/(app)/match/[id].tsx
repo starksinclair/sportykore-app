@@ -6,6 +6,7 @@ import { NotFound } from "@/components/not-found";
 import { DetailTabs, type DetailTab } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { useGameLineups } from "@/lineup";
 import { useMatchDetail } from "@/match";
 import { MatchLineupsTab } from "@/match/components/tabs/LineupsTab";
 import { MatchOverviewTab } from "@/match/components/tabs/OverviewTab";
@@ -26,6 +27,10 @@ export default function MatchRoute() {
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
 
   const query = useMatchDetail(isValidId ? gameId : 0);
+  const lineupsQuery = useGameLineups(
+    gameId,
+    isValidId && activeTab === "lineups",
+  );
 
   if (!isValidId) {
     return (
@@ -60,6 +65,11 @@ export default function MatchRoute() {
       ? `${detail.homeTeam.name} vs ${detail.awayTeam.name}`
       : undefined;
 
+  const lineups =
+    detail.lineups && detail.lineups.length > 0
+      ? detail.lineups
+      : (lineupsQuery.data ?? []);
+
   return (
     <DetailScreenShell
       leagueId={detail.league?.id ?? 0}
@@ -75,11 +85,18 @@ export default function MatchRoute() {
     >
       {activeTab === "overview" ? <MatchOverviewTab detail={detail} /> : null}
       {activeTab === "lineups" ? (
-        <MatchLineupsTab
-          homeTeam={detail.homeTeam}
-          awayTeam={detail.awayTeam}
-          stats={detail.stats}
-        />
+        lineupsQuery.isLoading && lineups.length === 0 ? (
+          <View className="items-center py-16">
+            <ActivityIndicator color={colors.accent} />
+          </View>
+        ) : (
+          <MatchLineupsTab
+            homeTeam={detail.homeTeam}
+            awayTeam={detail.awayTeam}
+            lineups={lineups}
+            stats={detail.stats}
+          />
+        )
       ) : null}
       {activeTab === "stats" ? (
         <MatchStatsTab

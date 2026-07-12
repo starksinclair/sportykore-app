@@ -1,34 +1,36 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
-import type { ApiTeam } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { EntityLogo } from "@/components/ui";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
+import type { ManagedTeam } from "../../types";
 import { useDeleteTeam } from "../../hooks";
 import { TeamFormSheet } from "../teams/TeamFormSheet";
 
 type Props = {
   leagueId: number;
   seasonId: number;
-  teams: ApiTeam[];
+  teams: ManagedTeam[];
   isLoading: boolean;
 };
 
 export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) {
+  const router = useRouter();
   const deleteMutation = useDeleteTeam(leagueId, seasonId);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<ApiTeam | null>(null);
+  const [editingTeam, setEditingTeam] = useState<ManagedTeam | null>(null);
 
   const openAdd = () => {
     setEditingTeam(null);
     setFormOpen(true);
   };
 
-  const openEdit = (team: ApiTeam) => {
+  const openEdit = (team: ManagedTeam) => {
     setEditingTeam(team);
     setFormOpen(true);
   };
@@ -38,7 +40,7 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
     setEditingTeam(null);
   };
 
-  const handleDelete = (team: ApiTeam) => {
+  const handleDelete = (team: ManagedTeam) => {
     const fewTeamsWarning =
       teams.length <= 2
         ? "\n\nYou need at least two teams to schedule new games."
@@ -116,6 +118,17 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
               >
                 {team.name}
               </Text>
+              <Pressable
+                onPress={() =>
+                  router.push(
+                    `/manage/${leagueId}/team/${team.id}?seasonId=${seasonId}`,
+                  )
+                }
+                accessibilityLabel={`Lineups for ${team.name}`}
+                className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+              >
+                <Ionicons name="grid-outline" size={18} color="#E6A817" />
+              </Pressable>
               <Pressable
                 onPress={() => openEdit(team)}
                 accessibilityLabel={`Edit ${team.name}`}

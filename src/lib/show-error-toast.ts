@@ -33,6 +33,22 @@ export function showSuccessToast(title: string, message?: string) {
   });
 }
 
+/** Best-effort readable message from a thrown value (for ErrorState, empty copy, etc.). */
+export function messageFromThrown(error: unknown): string {
+  if (typeof error === "string" && error.trim()) return error.trim();
+
+  if (isApiError(error)) {
+    const fromBody = messageFromBackendBody(error.body);
+    if (fromBody) return fromBody;
+    if (error.message.trim()) return error.message.trim();
+    return defaultDetailFor(error) ?? DEFAULT_GENERIC;
+  }
+
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
+
+  return DEFAULT_GENERIC;
+}
+
 /** Maps thrown values (especially `ApiError`) to a readable toast */
 export function showThrownAsToast(error: unknown, fallbackTitle?: string): void {
   if (typeof error === "string" && error.trim()) {
@@ -41,11 +57,9 @@ export function showThrownAsToast(error: unknown, fallbackTitle?: string): void 
   }
 
   if (isApiError(error)) {
-    let detail = messageFromBackendBody(error.body);
-    if (!detail && error.message) detail = error.message;
     showErrorToast(
       fallbackTitle ?? titleFromStatus(error.status, error.kind),
-      detail ?? defaultDetailFor(error),
+      messageFromThrown(error),
     );
     return;
   }

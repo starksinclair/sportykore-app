@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
-import type { ApiTeam } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
@@ -11,6 +10,8 @@ import type { PickedImageFile } from "@/lib/picked-image";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
+import type { ManagedTeam } from "../../types";
+import { TeamAdminsSection } from "./TeamAdminsSection";
 import { useCreateTeam, useUpdateTeam } from "../../hooks";
 
 type Props = {
@@ -18,7 +19,7 @@ type Props = {
   onClose: () => void;
   leagueId: number;
   seasonId: number;
-  team?: ApiTeam | null;
+  team?: ManagedTeam | null;
 };
 
 export function TeamFormSheet({
@@ -81,7 +82,7 @@ export function TeamFormSheet({
       title={isEdit ? "Edit team" : "Add team"}
       subtitle={
         isEdit
-          ? "Update the team name or replace its logo."
+          ? "Update the team name, logo, or assign team admins."
           : "Teams are shared across all seasons in this league."
       }
       variant="dark"
@@ -116,6 +117,10 @@ export function TeamFormSheet({
           autoCapitalize="words"
           containerClassName="[&_input]:text-neutral-900"
         />
+
+        {isEdit && team ? (
+          <TeamAdminsSection leagueId={leagueId} teamId={team.id} />
+        ) : null}
 
         <Button
           variant="authPurple"

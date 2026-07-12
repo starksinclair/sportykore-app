@@ -1,4 +1,5 @@
 export {
+  assignTeamAdmin,
   createGame,
   createSeason,
   createStat,
@@ -8,9 +9,11 @@ export {
   deleteTeam,
   endGameFullTime,
   fetchLeagueTeams,
+  fetchManagedHub,
   fetchOwnedLeagues,
   fetchSeasonRoster,
   pauseGame,
+  recordSubstitutions,
   resumeGame,
   accreditStat,
   updateGameScore,
@@ -24,12 +27,14 @@ export {
   updateSeason,
   updateTeam,
   removeLeaguePlayer,
+  removeTeamAdmin,
 } from "./api";
 export type { CreateTeamPayload, UpdateTeamPayload } from "./api";
 export { promptBiometricGate } from "./biometric-gate";
 export {
   ManageGamesTab,
   ManageLeagueRow,
+  ManageAdminTeamRow,
   ManageLoginPrompt,
   ManagePlayersTab,
   ManageSettingsTab,
@@ -39,6 +44,7 @@ export {
   LiveMinute,
 } from "./components";
 export {
+  useAssignTeamAdmin,
   useCreateGame,
   useCreateSeason,
   useCreateTeam,
@@ -51,9 +57,12 @@ export {
   useUpdateGameScore,
   useLeagueTeams,
   useManageLeagueDetail,
+  useManagedHub,
   useOwnedLeagues,
   useSeasonRoster,
+  useRecordSubstitutions,
   useRemoveLeaguePlayer,
+  useRemoveTeamAdmin,
   useUpdateLeaguePlayer,
   useUpdateGame,
   useUpdateLeague,
@@ -71,7 +80,15 @@ export type {
   CreateStatPayload,
   CreatedSeason,
   LeagueRosterRow,
+  ManagedHub,
+  ManagedTeam,
+  AdminTeamManaged,
   OwnedLeague,
+  RecordSubstitutionItem,
+  RecordSubstitutionsPayload,
+  RecordSubstitutionsResult,
+  TeamAdmin,
+  TeamAdminUser,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
@@ -91,9 +108,13 @@ export {
 export {
   findLatestUnaccreditedGoal,
   isGoalStat,
+  isSubstitutionOffStat,
+  isSubstitutionOnStat,
   isUnaccreditedGoal,
+  pairSubstitutionEvents,
   partitionGoalStats,
 } from "./utils/stats";
+export type { PairedSubstitution } from "./utils/stats";
 export {
   calculateCurrentMinute,
   formatLiveMinuteLabel,

@@ -5,7 +5,7 @@ import { View } from "react-native";
 
 import { colors } from "@/constants";
 
-export type EntityLogoVariant = "league" | "team";
+export type EntityLogoVariant = "league" | "team" | "player";
 export type EntityLogoSize = "xs" | "sm" | "md" | "lg";
 export type EntityLogoTone = "brand" | "light" | "dark" | "accent";
 
@@ -33,6 +33,7 @@ const RADIUS: Record<EntityLogoSize, number> = {
 const FALLBACK_ICON: Record<EntityLogoVariant, keyof typeof Ionicons.glyphMap> = {
   league: "trophy-outline",
   team: "shield-outline",
+  player: "person-outline",
 };
 
 const TONE_STYLES: Record<

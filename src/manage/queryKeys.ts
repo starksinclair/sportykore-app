@@ -1,8 +1,10 @@
 export const manageKeys = {
-  leagues: () => ["manage", "leagues"] as const,
+  all: ["manage"] as const,
+  managed: () => [...manageKeys.all, "managed"] as const,
+  leagues: () => [...manageKeys.all, "leagues"] as const,
   league: (leagueId: number, seasonId?: number | null) =>
-    ["manage", "league", leagueId, seasonId ?? null] as const,
-  teams: (leagueId: number) => ["manage", "teams", leagueId] as const,
+    [...manageKeys.all, "league", leagueId, seasonId ?? null] as const,
+  teams: (leagueId: number) => [...manageKeys.all, "teams", leagueId] as const,
   roster: (leagueId: number, seasonId: number) =>
-    ["manage", "roster", leagueId, seasonId] as const,
+    [...manageKeys.all, "roster", leagueId, seasonId] as const,
 };

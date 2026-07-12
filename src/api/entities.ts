@@ -5,6 +5,7 @@
  */
 
 import type { TiebreakerRule } from "@/league/tiebreaker-options";
+import type { TeamLineupGroup } from "@/lineup/types";
 
 export type ApiCountry = {
   id: number;
@@ -123,6 +124,7 @@ export type ApiGame = {
 export type ApiGameDetail = ApiGame & {
   league?: ApiLeague;
   stats: ApiStat[];
+  lineups?: TeamLineupGroup[];
 };
 
 export type SeasonStatus = "inactive" | "active" | "completed";

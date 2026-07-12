@@ -1,28 +1,32 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { Text, View } from "react-native";
 
-import type { ApiPlayer, ApiStat, ApiTeam } from "@/api/entities";
-import { EntityLogo } from "@/components/ui";
-import { groupPlayersByPosition, shortForPosition } from "@/lib/positions";
+import type { ApiStat, ApiTeam } from "@/api/entities";
+import { DetailTabs } from "@/components/ui/detail-tabs";
+import { LineupPitchView } from "@/lineup/components/LineupPitchView";
+import type { TeamLineupGroup } from "@/lineup/types";
 import { fonts } from "@/theme/fonts";
+
+type TeamSide = "home" | "away";
 
 type Props = {
   homeTeam?: ApiTeam;
   awayTeam?: ApiTeam;
-  stats: ApiStat[];
+  lineups: TeamLineupGroup[];
+  stats?: ApiStat[];
 };
 
-export function MatchLineupsTab({ homeTeam, awayTeam, stats }: Props) {
-  const home = useMemo(
-    () => (homeTeam ? buildLineup(stats, homeTeam.id) : []),
-    [stats, homeTeam],
-  );
-  const away = useMemo(
-    () => (awayTeam ? buildLineup(stats, awayTeam.id) : []),
-    [stats, awayTeam],
-  );
+export function MatchLineupsTab({
+  homeTeam,
+  awayTeam,
+  lineups,
+  stats = [],
+}: Props) {
+  const [activeSide, setActiveSide] = useState<TeamSide>("home");
+
+  const homeGroup = lineups.find((g) => g.team.id === homeTeam?.id);
+  const awayGroup = lineups.find((g) => g.team.id === awayTeam?.id);
 
   if (!homeTeam && !awayTeam) {
     return (
@@ -32,141 +36,81 @@ export function MatchLineupsTab({ homeTeam, awayTeam, stats }: Props) {
     );
   }
 
-  if (!home.length && !away.length) {
+  const hasAnyLineup =
+    (homeGroup?.starters.length ?? 0) > 0 ||
+    (awayGroup?.starters.length ?? 0) > 0;
+
+  if (!hasAnyLineup) {
     return (
       <View className="items-center gap-3 rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
         <Ionicons
-          name="people-outline"
+          name="football-outline"
           size={32}
           color="rgba(255,255,255,0.6)"
         />
         <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
-          Lineups not available yet
+          Lineups not submitted yet
         </Text>
         <Text
           style={{ fontFamily: fonts.body }}
           className="text-center text-sm text-white/55"
         >
-          Players who feature in this match&apos;s events will appear here as
-          soon as any stat is recorded.
+          Official team sheets will appear here once managers confirm their
+          starting elevens.
         </Text>
       </View>
     );
   }
 
+  const tabs = [
+    ...(homeTeam
+      ? [{ key: "home" as const, label: homeTeam.name }]
+      : []),
+    ...(awayTeam
+      ? [{ key: "away" as const, label: awayTeam.name }]
+      : []),
+  ];
+
+  const resolvedSide: TeamSide =
+    tabs.some((t) => t.key === activeSide)
+      ? activeSide
+      : (tabs[0]?.key ?? "home");
+
+  const activeTeam = resolvedSide === "home" ? homeTeam : awayTeam;
+  const activeGroup = resolvedSide === "home" ? homeGroup : awayGroup;
+
   return (
-    <View className="gap-6">
+    <View className="gap-5">
+      {tabs.length > 1 ? (
+        <DetailTabs
+          tabs={tabs}
+          activeTab={resolvedSide}
+          onTabChange={setActiveSide}
+          scrollable
+        />
+      ) : null}
+
+      {activeTeam && activeGroup && (activeGroup.starters.length ?? 0) > 0 ? (
+        <LineupPitchView group={activeGroup} tone="dark" stats={stats} />
+      ) : activeTeam ? (
+        <TeamMissingLineup teamName={activeTeam.name} />
+      ) : null}
+    </View>
+  );
+}
+
+function TeamMissingLineup({ teamName }: { teamName: string }) {
+  return (
+    <View className="rounded-[20px] border border-dashed border-white/15 bg-white/5 px-5 py-6">
+      <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+        {teamName}
+      </Text>
       <Text
         style={{ fontFamily: fonts.body }}
-        className="text-xs text-white/45"
+        className="pt-1 text-sm text-white/55"
       >
-        Lineups are derived from recorded match events until the backend
-        provides an official team sheet.
+        Lineup not submitted yet.
       </Text>
-
-      {homeTeam ? (
-        <TeamLineup team={homeTeam} players={home} side="Home" />
-      ) : null}
-      {awayTeam ? (
-        <TeamLineup team={awayTeam} players={away} side="Away" />
-      ) : null}
     </View>
-  );
-}
-
-function TeamLineup({
-  team,
-  players,
-  side,
-}: {
-  team: ApiTeam;
-  players: ApiPlayer[];
-  side: "Home" | "Away";
-}) {
-  const router = useRouter();
-  const groups = useMemo(() => groupPlayersByPosition(players), [players]);
-
-  return (
-    <View className="gap-3">
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2">
-          <EntityLogo
-            logoUrl={team.logoUrl}
-            variant="team"
-            size="xs"
-            tone="dark"
-          />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
-            {team.name}
-          </Text>
-        </View>
-        <Text
-          style={{ fontFamily: fonts.body }}
-          className="text-[11px] uppercase tracking-[1.5px] text-white/45"
-        >
-          {side} · {players.length} player{players.length === 1 ? "" : "s"}
-        </Text>
-      </View>
-
-      {groups.length ? (
-        groups.map((group) => (
-          <View key={group.position ?? "unassigned"} className="gap-2">
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-[11px] uppercase tracking-[1.5px] text-white/45"
-            >
-              {group.label}
-            </Text>
-            <View className="overflow-hidden rounded-[18px] bg-white/6">
-              {group.players.map((player, index, arr) => (
-                <Pressable
-                  key={player.id}
-                  onPress={() => router.push(`/player/${player.id}`)}
-                  className={[
-                    "flex-row items-center gap-3 px-4 py-3 active:bg-white/10",
-                    index !== arr.length - 1 ? "border-b border-white/10" : "",
-                  ].join(" ")}
-                >
-                  <View className="h-8 w-8 items-center justify-center rounded-full bg-[#364156]">
-                    <Text
-                      style={{ fontFamily: fonts.bodyBold }}
-                      className="text-[10px] text-white"
-                    >
-                      {shortForPosition(player.position)}
-                    </Text>
-                  </View>
-                  <Text
-                    style={{ fontFamily: fonts.bodyBold }}
-                    className="flex-1 text-white"
-                    numberOfLines={1}
-                  >
-                    {player.name}
-                  </Text>
-                  <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        ))
-      ) : (
-        <Text
-          style={{ fontFamily: fonts.body }}
-          className="text-sm text-white/55"
-        >
-          No participating players recorded.
-        </Text>
-      )}
-    </View>
-  );
-}
-
-function buildLineup(stats: ApiStat[], teamId: number): ApiPlayer[] {
-  const seen = new Map<number, ApiPlayer>();
-  for (const stat of stats) {
-    if (stat.team?.id !== teamId) continue;
-    if (stat.player) seen.set(stat.player.id, stat.player);
-  }
-  return Array.from(seen.values()).sort((a, b) =>
-    a.name.localeCompare(b.name),
   );
 }

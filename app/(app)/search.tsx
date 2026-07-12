@@ -22,6 +22,7 @@ import {
   removeRecentSearch,
 } from "@/home/recent-searches";
 import type { SearchEntityType, SearchResult } from "@/home/types";
+import { messageFromThrown } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 const ENTITY_ORDER: SearchEntityType[] = ["country", "league", "team", "player"];
 const ENTITY_LABELS: Record<SearchEntityType, string> = {
@@ -133,7 +134,10 @@ export default function SearchScreen() {
               onRemove={handleRemoveRecent}
             />
           ) : searchQuery.isError ? (
-            <SearchErrorState onRetry={() => searchQuery.refetch()} />
+            <SearchErrorState
+              message={messageFromThrown(searchQuery.error)}
+              onRetry={() => searchQuery.refetch()}
+            />
           ) : searchQuery.isLoading && !searchQuery.data ? (
             <View className="items-center pt-12">
               <ActivityIndicator color={colors.brand} />
@@ -173,7 +177,13 @@ function groupResults(results: SearchResult[]) {
   return buckets;
 }
 
-function SearchErrorState({ onRetry }: { onRetry: () => void }) {
+function SearchErrorState({
+  onRetry,
+  message,
+}: {
+  onRetry: () => void;
+  message?: string;
+}) {
   return (
     <View className="rounded-[20px] border border-red-200 bg-red-50 px-5 py-8">
       <Text
@@ -186,7 +196,7 @@ function SearchErrorState({ onRetry }: { onRetry: () => void }) {
         style={{ fontFamily: fonts.body }}
         className="pt-2 text-sm leading-6 text-slate-600"
       >
-        Check your connection and try again.
+        {message || "Check your connection and try again."}
       </Text>
       <Pressable
         onPress={onRetry}

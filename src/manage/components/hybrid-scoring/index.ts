@@ -6,3 +6,4 @@ export type { TeamSide } from "./TeamTabs";
 export { MatchCenterGoalsTab } from "./MatchCenterGoalsTab";
 export { MatchCenterLineupTab } from "./MatchCenterLineupTab";
 export { MatchCenterStatsTab } from "./MatchCenterStatsTab";
+export { MatchCenterSubstitutionPanel } from "./MatchCenterSubstitutionPanel";

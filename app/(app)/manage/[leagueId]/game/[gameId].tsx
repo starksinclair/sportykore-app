@@ -473,6 +473,8 @@ export default function ManageMatchCenterPage() {
           {activeTab === "lineup" ? (
             <MatchCenterLineupTab
               game={game}
+              leagueId={leagueId}
+              seasonId={seasonId}
               homeTeamId={homeTeamId}
               awayTeamId={awayTeamId}
               roster={rosterQuery.data ?? []}

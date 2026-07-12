@@ -3,12 +3,19 @@ import { ApiError, messageFromBackendBody, type ApiParsedErrorPayload } from "@/
 import { getToken } from "@/auth/storage";
 import { notifyUnauthorized } from "@/auth/unauthorized-bus";
 
+export type ApiAuthMode = boolean | "optional";
+
 export type ApiRequestOptions = Omit<RequestInit, "body"> & {
-  /** Attach `Authorization: Bearer <token>` when a token exists. Default `false`. */
-  auth?: boolean;
   /**
-   * When `auth` is true and the server responds 401/403, do not run global
-   * session teardown (used for logout with an already-invalid token).
+   * Auth behaviour for the request. Default `false`.
+   * - `true` — require a Bearer token; throw if none is stored
+   * - `"optional"` — attach Bearer when a token exists; still call without one
+   * - `false` — never attach Authorization
+   */
+  auth?: ApiAuthMode;
+  /**
+   * When a Bearer token was sent and the server responds 401/403, do not run
+   * global session teardown (used for logout with an already-invalid token).
    */
   muteGlobalUnauthorized?: boolean;
   jsonBody?: unknown;
@@ -47,16 +54,18 @@ export async function apiRequest<T = unknown>(
   headers.set("Accept", "application/json");
 
   let tokenValue: string | null = null;
-  if (auth) {
+  if (auth === true || auth === "optional") {
     tokenValue = await getToken();
-    if (!tokenValue) {
+    if (auth === true && !tokenValue) {
       throw new ApiError("Not authenticated.", {
         status: 401,
         url: buildUrl(path),
         body: null,
       });
     }
-    headers.set("Authorization", `Bearer ${tokenValue}`);
+    if (tokenValue) {
+      headers.set("Authorization", `Bearer ${tokenValue}`);
+    }
   }
 
   let res: Response;

@@ -1,14 +1,27 @@
 import { useMemo, useState } from "react";
 import { Text, View } from "react-native";
 
-import type { ApiGameDetail } from "@/api/entities";
+import type { ApiGameDetail, GameStatus } from "@/api/entities";
+import { LineupEditor } from "@/lineup/components/LineupEditor";
+import type { LeagueRosterRow } from "@/manage/types";
 import { fonts } from "@/theme/fonts";
 
-import type { LeagueRosterRow } from "../../types";
+import { MatchCenterSubstitutionPanel } from "./MatchCenterSubstitutionPanel";
 import { TeamTabs, type TeamSide } from "./TeamTabs";
+
+const LIVE_SUB_STATUSES = new Set<GameStatus>([
+  "first_half",
+  "half_time",
+  "second_half",
+  "extra_time",
+  "paused",
+  "live",
+]);
 
 type Props = {
   game: ApiGameDetail;
+  leagueId: number;
+  seasonId: number;
   homeTeamId: number;
   awayTeamId: number;
   roster: LeagueRosterRow[];
@@ -16,6 +29,8 @@ type Props = {
 
 export function MatchCenterLineupTab({
   game,
+  leagueId,
+  seasonId,
   homeTeamId,
   awayTeamId,
   roster,
@@ -23,53 +38,47 @@ export function MatchCenterLineupTab({
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
   const activeTeamId = activeSide === "home" ? homeTeamId : awayTeamId;
 
-  const players = useMemo(
+  const teamRoster = useMemo(
     () => roster.filter((row) => row.team.id === activeTeamId),
     [roster, activeTeamId],
   );
 
-  return (
-    <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
-      <TeamTabs
-        homeLabel={game.homeTeam?.name ?? "Home"}
-        awayLabel={game.awayTeam?.name ?? "Away"}
-        activeSide={activeSide}
-        onSideChange={setActiveSide}
-      />
+  const subEnabled = LIVE_SUB_STATUSES.has(game.status);
 
-      {players.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-          No players on this team for the season.
-        </Text>
-      ) : (
-        players.map((item) => (
-          <View
-            key={item.id}
-            className="mb-2 flex-row items-center justify-between rounded-xl bg-white/6 px-3 py-3"
-          >
-            <View className="flex-row items-center gap-3">
-              <Text
-                style={{ fontFamily: fonts.body }}
-                className="w-8 text-xs text-white/45"
-              >
-                {item.jerseyNumber ? `#${item.jerseyNumber}` : "—"}
-              </Text>
-              <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-white"
-              >
-                {item.player.name}
-              </Text>
-            </View>
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="text-xs capitalize text-white/45"
-            >
-              {item.status}
-            </Text>
-          </View>
-        ))
-      )}
+  return (
+    <View className="gap-4">
+      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <TeamTabs
+          homeLabel={game.homeTeam?.name ?? "Home"}
+          awayLabel={game.awayTeam?.name ?? "Away"}
+          activeSide={activeSide}
+          onSideChange={setActiveSide}
+        />
+
+        <MatchCenterSubstitutionPanel
+          game={game}
+          leagueId={leagueId}
+          seasonId={seasonId}
+          teamId={activeTeamId}
+          enabled={subEnabled}
+        />
+      </View>
+
+      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        {teamRoster.length === 0 ? (
+          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+            No players on this team for the season.
+          </Text>
+        ) : (
+          <LineupEditor
+            gameId={game.id}
+            teamId={activeTeamId}
+            roster={roster}
+            gameStatus={game.status}
+            embedded
+          />
+        )}
+      </View>
     </View>
   );
 }

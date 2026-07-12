@@ -17,6 +17,48 @@ export type OwnedLeague = {
     name: string;
     status: SeasonStatus;
   } | null;
+  role?: "owner";
+};
+
+export type AdminTeamManaged = {
+  id: number;
+  name: string;
+  logoUrl: string | null;
+  league: {
+    id: number;
+    name: string;
+    logoUrl: string | null;
+  };
+  activeSeason: {
+    id: number;
+    name: string;
+    status: SeasonStatus;
+  } | null;
+  role: "team_admin";
+};
+
+export type ManagedHub = {
+  ownedLeagues: OwnedLeague[];
+  adminTeams: AdminTeamManaged[];
+};
+
+export type TeamAdminUser = {
+  id: number;
+  email: string;
+  fullName: string | null;
+};
+
+/** Active team admin row from `GET /api/v1/auth/users/leagues/:leagueId/teams`. */
+export type TeamAdmin = {
+  id: number;
+  teamId: number;
+  userId: number;
+  leagueId: number;
+  user: TeamAdminUser;
+};
+
+export type ManagedTeam = ApiTeam & {
+  admins?: TeamAdmin[];
 };
 
 export type LeagueRosterRow = {
@@ -62,6 +104,26 @@ export type CreateStatPayload = {
   relatedPlayerId?: number;
   minute?: number;
   isStoppageTime?: boolean;
+};
+
+export type RecordSubstitutionItem = {
+  playerOffId: number;
+  playerOnId: number;
+  minute: number;
+  isStoppageTime?: boolean;
+};
+
+export type RecordSubstitutionsPayload = {
+  gameId: number;
+  leagueId: number;
+  seasonId: number;
+  teamId: number;
+  substitutions: RecordSubstitutionItem[];
+};
+
+export type RecordSubstitutionsResult = {
+  message: string;
+  statIds: number[];
 };
 
 import type { TiebreakerRule } from "@/league/tiebreaker-options";

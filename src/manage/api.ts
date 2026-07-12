@@ -10,7 +10,11 @@ import type {
   CreateStatPayload,
   CreatedSeason,
   LeagueRosterRow,
+  ManagedHub,
+  ManagedTeam,
   OwnedLeague,
+  RecordSubstitutionsPayload,
+  RecordSubstitutionsResult,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
@@ -98,20 +102,61 @@ export async function deleteTeam(leagueId: number, teamId: number): Promise<void
   );
 }
 
-export async function fetchOwnedLeagues(): Promise<OwnedLeague[]> {
-  const res = await apiRequest<{ data: OwnedLeague[] }>(
-    "/api/v1/auth/users/leagues",
+export async function fetchManagedHub(): Promise<ManagedHub> {
+  const res = await apiRequest<{ data: ManagedHub }>(
+    "/api/v1/auth/users/managed",
     { auth: true },
   );
-  return res.data;
+  return {
+    ownedLeagues: res.data?.ownedLeagues ?? [],
+    adminTeams: res.data?.adminTeams ?? [],
+  };
 }
 
-export async function fetchLeagueTeams(leagueId: number): Promise<ApiTeam[]> {
-  const res = await apiRequest<{ data: ApiTeam[] }>(
+/** @deprecated Prefer `fetchManagedHub` — kept for call sites that only need owned leagues. */
+export async function fetchOwnedLeagues(): Promise<OwnedLeague[]> {
+  const hub = await fetchManagedHub();
+  return hub.ownedLeagues;
+}
+
+export async function fetchLeagueTeams(leagueId: number): Promise<ManagedTeam[]> {
+  const res = await apiRequest<{ data: ManagedTeam[] }>(
     `/api/v1/auth/users/leagues/${leagueId}/teams`,
     { auth: true },
   );
-  return res.data;
+  return (res.data ?? []).map((team) => ({
+    ...team,
+    admins: team.admins ?? [],
+  }));
+}
+
+export async function assignTeamAdmin(
+  leagueId: number,
+  teamId: number,
+  userId: number,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/teams/${teamId}/admins`,
+    {
+      method: "POST",
+      auth: true,
+      jsonBody: { userId },
+    },
+  );
+}
+
+export async function removeTeamAdmin(
+  leagueId: number,
+  teamId: number,
+  userId: number,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/teams/${teamId}/admins/${userId}`,
+    {
+      method: "DELETE",
+      auth: true,
+    },
+  );
 }
 
 export async function fetchSeasonRoster(
@@ -181,6 +226,19 @@ export async function createStat(payload: CreateStatPayload): Promise<void> {
     auth: true,
     jsonBody: payload,
   });
+}
+
+export async function recordSubstitutions(
+  payload: RecordSubstitutionsPayload,
+): Promise<RecordSubstitutionsResult> {
+  return apiRequest<RecordSubstitutionsResult>(
+    "/api/v1/leagues/stats/substitutions",
+    {
+      method: "POST",
+      auth: true,
+      jsonBody: payload,
+    },
+  );
 }
 
 export async function deleteStat(statId: number): Promise<void> {

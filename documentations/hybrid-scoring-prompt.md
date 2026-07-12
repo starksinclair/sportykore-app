@@ -1,5 +1,9 @@
 # Hybrid Scoring System Implementation Prompt
 
+> **Backend (this repo):** Implemented — `POST /games/:gameId/score`, `PATCH /games/:gameId/stats/:statId/accredit`, nullable `stats.player_id` for unaccredited placeholders, `StatTransformer.isUnaccredited`, SSE `score_updated` / `stat_accredited`. See [ROUTES.md](../ROUTES.md).
+>
+> **Mobile (React Native):** UI/hooks below are for the Expo app — not in this repository.
+
 ## Context
 
 We are building a soccer league management platform using AdonisJS (backend) and React Native Expo (frontend). We already have:
@@ -12,7 +16,7 @@ We are building a soccer league management platform using AdonisJS (backend) and
 | `GameUpdated` event | Fires with reason `'result'` or `'stats'` when game data changes |
 | `UpdateStandings` listener | Recalculates standings and broadcasts via SSE |
 | Transmit SSE | Already configured, broadcasting to `games/:gameId` channel |
-| `TeamOwnerMiddleware` | Both league owner and team owner pass this middleware |
+| `LeagueOwnerMiddleware` | League owner only for Match Center score/clock (`params.gameId`) |
 | `useLiveMinute` hook | Calculates live match minute from stored timestamps |
 | `GameTransformer` | Already serializes game data with `forDetail` variant |
 | `StatTransformer` | Already serializes stat data |
@@ -160,13 +164,13 @@ Logic:
 
 ### 3. Routes
 
-Add to `start/routes.ts` under `teamOwner` middleware:
+Add to `start/routes.ts` under `leagueOwner` middleware:
 
 ```ts
 router.group(() => {
   router.post('/games/:gameId/score', [controllers.GameScore, 'update'])
   router.patch('/games/:gameId/stats/:statId/accredit', [controllers.GameStats, 'accredit'])
-}).middleware([middleware.auth(), middleware.teamOwner()])
+}).middleware([middleware.apiAuth(), middleware.leagueOwner()])
 ```
 
 ### 4. Stat Transformer Update

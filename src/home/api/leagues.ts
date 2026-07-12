@@ -33,7 +33,8 @@ export async function fetchLeagues(
   const res = await apiRequest<{ data: LeagueResponse }>(
     `/api/v1/leagues?${query}`,
     {
-      auth: true,
+      // Public feed; Bearer is optional so favourites decorate when logged in.
+      auth: "optional",
       headers: { "Time-Zone": resolved.timeZone },
     },
   );

@@ -1,4 +1,5 @@
 export { ManageLeagueRow } from "./ManageLeagueRow";
+export { ManageAdminTeamRow } from "./ManageAdminTeamRow";
 export { ManageLoginPrompt } from "./ManageLoginPrompt";
 export { GameControls } from "./GameControls";
 export { LiveMinute } from "@/components/ui/live-minute";
@@ -8,3 +9,4 @@ export { ManageSettingsTab } from "./tabs/ManageSettingsTab";
 export { ManageTeamsTab } from "./tabs/ManageTeamsTab";
 export { EditSeasonSheet } from "./seasons/EditSeasonSheet";
 export { TeamFormSheet } from "./teams/TeamFormSheet";
+export { TeamAdminsSection } from "./teams/TeamAdminsSection";
