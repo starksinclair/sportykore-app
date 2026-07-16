@@ -14,6 +14,7 @@ import { useCountries } from "@/country";
 import { fonts } from "@/theme/fonts";
 
 import { CountryFlag, CountryLabel } from "./CountryFlag";
+import { FormFieldLabel } from "./form-field-label";
 
 export type CountryPickerOption = {
   id: number;
@@ -26,6 +27,7 @@ type Props = {
   onChange: (country: CountryPickerOption) => void;
   label?: string;
   placeholder?: string;
+  required?: boolean;
 };
 
 export function CountryPicker({
@@ -33,6 +35,7 @@ export function CountryPicker({
   onChange,
   label = "Country",
   placeholder = "Select country",
+  required = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const { data: countries, isLoading } = useCountries();
@@ -47,12 +50,7 @@ export function CountryPicker({
 
   return (
     <View className="gap-1.5">
-      <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-wider text-slate-500"
-      >
-        {label}
-      </Text>
+      <FormFieldLabel label={label} required={required} />
 
       <Pressable
         onPress={() => setOpen(true)}

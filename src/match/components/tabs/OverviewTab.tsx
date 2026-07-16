@@ -1,13 +1,17 @@
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
+import MapView, { Marker } from "react-native-maps";
 
 import { EntityLogo } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAt } from "@/lib/datetime";
 import {
   isActivePlayStatus,
   isLiveGameStatus,
 } from "@/lib/general-utils";
+import { openDirections } from "@/lib/maps";
+import { showThrownAsToast } from "@/lib/show-error-toast";
 import { MatchEventsTimeline } from "@/match/components/MatchEventsTimeline";
 import type { MatchDetail } from "@/match/types";
 import { fonts } from "@/theme/fonts";
@@ -26,6 +30,24 @@ export function MatchOverviewTab({ detail }: Props) {
     detail.status === "break" ||
     detail.status === "full_time" ||
     detail.status === "completed";
+
+  const venueLabel = detail.venue?.name ?? detail.venueName ?? "—";
+  const lat = detail.venue?.latitude;
+  const lng = detail.venue?.longitude;
+  const hasCoords =
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng);
+
+  const handleDirections = async () => {
+    if (!hasCoords || lat == null || lng == null) return;
+    try {
+      await openDirections(lat, lng);
+    } catch (err) {
+      showThrownAsToast(err, "Could not open maps");
+    }
+  };
 
   return (
     <View className="gap-6">
@@ -77,10 +99,42 @@ export function MatchOverviewTab({ detail }: Props) {
       <Section title="Match Facts">
         <View className="rounded-[24px] bg-white/6 px-4 py-5">
           <FactRow label="Kickoff" value={formatPlayedAt(detail.playedAt)} />
-          <FactRow label="Venue" value={detail.venueName ?? "—"} />
-          {/* <FactRow label="Status" value={detail.status} /> */}
+          <FactRow label="Venue" value={venueLabel} />
+          {detail.venue?.address ? (
+            <FactRow label="Address" value={detail.venue.address} />
+          ) : null}
         </View>
       </Section>
+
+      {hasCoords && lat != null && lng != null ? (
+        <Section title="Location">
+          <View className="overflow-hidden rounded-[24px] bg-white/6">
+            <MapView
+              style={{ width: "100%", height: 180 }}
+              pointerEvents="none"
+              scrollEnabled={false}
+              zoomEnabled={false}
+              rotateEnabled={false}
+              pitchEnabled={false}
+              initialRegion={{
+                latitude: lat,
+                longitude: lng,
+                latitudeDelta: 0.02,
+                longitudeDelta: 0.02,
+              }}
+            >
+              <Marker coordinate={{ latitude: lat, longitude: lng }} />
+            </MapView>
+            <View className="px-4 py-4">
+              <Button
+                variant="authPurple"
+                label="Get directions"
+                onPress={() => void handleDirections()}
+              />
+            </View>
+          </View>
+        </Section>
+      ) : null}
 
       <Section title="Events">
         <MatchEventsTimeline
@@ -126,7 +180,11 @@ function FactRow({ label, value }: { label: string; value: string }) {
       <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
         {label}
       </Text>
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-sm text-white">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="ml-4 flex-1 text-right text-sm text-white"
+        numberOfLines={2}
+      >
         {value}
       </Text>
     </View>

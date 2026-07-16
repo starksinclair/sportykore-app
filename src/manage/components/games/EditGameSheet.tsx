@@ -10,6 +10,11 @@ import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useUpdateGame } from "../../hooks";
+import {
+  GameVenuePicker,
+  venuePayloadFromSelection,
+  type GameVenueSelection,
+} from "./GameVenuePicker";
 
 type Props = {
   visible: boolean;
@@ -36,6 +41,20 @@ function kickoffFormValues(playedAt: string): { dateStr: string; timeStr: string
   return { dateStr, timeStr };
 }
 
+function selectionFromGame(game: ApiGame): GameVenueSelection {
+  if (game.venueId != null) {
+    return {
+      kind: "venue",
+      venueId: game.venueId,
+      name: game.venue?.name ?? game.venueName ?? "",
+    };
+  }
+  if (game.venueName?.trim()) {
+    return { kind: "one_off", venueName: game.venueName };
+  }
+  return { kind: "none" };
+}
+
 export function EditGameSheet({
   visible,
   game,
@@ -46,14 +65,16 @@ export function EditGameSheet({
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const [dateStr, setDateStr] = useState("");
   const [timeStr, setTimeStr] = useState("");
-  const [venueName, setVenueName] = useState("");
+  const [venueSelection, setVenueSelection] = useState<GameVenueSelection>({
+    kind: "none",
+  });
 
   useEffect(() => {
     if (game && visible) {
       const { dateStr: date, timeStr: time } = kickoffFormValues(game.playedAt);
       setDateStr(date);
       setTimeStr(time);
-      setVenueName(game.venueName ?? "");
+      setVenueSelection(selectionFromGame(game));
     }
   }, [game, visible]);
 
@@ -65,12 +86,14 @@ export function EditGameSheet({
       return;
     }
 
+    const venueFields = venuePayloadFromSelection(venueSelection);
+
     try {
       await updateMutation.mutateAsync({
         gameId: game.id,
         payload: {
           playedAt,
-          venueName: venueName.trim() || null,
+          ...venueFields,
         },
       });
       showInfoToast("Fixture updated", "Kick-off details were saved.");
@@ -104,11 +127,11 @@ export function EditGameSheet({
           placeholder="15:00"
           autoCapitalize="none"
         />
-        <AuthTextField
-          label="Venue (optional)"
-          value={venueName}
-          onChangeText={setVenueName}
-          placeholder="Riverside Pitch 2"
+        <GameVenuePicker
+          leagueId={leagueId}
+          enabled={visible}
+          selection={venueSelection}
+          onChange={setVenueSelection}
         />
         <Button
           variant="authPurple"

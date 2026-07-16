@@ -15,6 +15,7 @@ export type {
   EntityLogoTone,
   EntityLogoVariant,
 } from "./entity-logo";
+export { FormFieldLabel } from "./form-field-label";
 export { GamePhaseLabel } from "./game-phase-label";
 export { LiveMinute } from "./live-minute";
 export { LogoImageUpload } from "./logo-image-upload";

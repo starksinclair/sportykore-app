@@ -5,6 +5,10 @@ import type { ApiGame, GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import {
+  useCompletePenaltyShootout,
+  useEnterPenaltyShootout,
+} from "@/knockout";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -19,14 +23,23 @@ type Props = {
 
 export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
   const actions = useGameTimeActions(game.id, leagueId, seasonId);
+  const enterPens = useEnterPenaltyShootout(game.id, leagueId);
+  const completePens = useCompletePenaltyShootout(game.id, leagueId);
+
   const [fullTimeOpen, setFullTimeOpen] = useState(false);
+  const [pensOpen, setPensOpen] = useState(false);
   const [homeScore, setHomeScore] = useState(String(game.homeScore ?? 0));
   const [awayScore, setAwayScore] = useState(String(game.awayScore ?? 0));
+  const [homePens, setHomePens] = useState("0");
+  const [awayPens, setAwayPens] = useState("0");
 
   useEffect(() => {
     setHomeScore(String(game.homeScore ?? 0));
     setAwayScore(String(game.awayScore ?? 0));
   }, [game.homeScore, game.awayScore, fullTimeOpen]);
+
+  const pending =
+    actions.isPending || enterPens.isPending || completePens.isPending;
 
   const run = async (fn: () => Promise<unknown>, errorTitle: string) => {
     try {
@@ -52,6 +65,28 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
     }
   };
 
+  const handleCompletePens = async () => {
+    const home = Number(homePens);
+    const away = Number(awayPens);
+    if (!Number.isInteger(home) || !Number.isInteger(away) || home === away) {
+      showInfoToast(
+        "Invalid penalties",
+        "Enter unequal whole numbers for both sides.",
+      );
+      return;
+    }
+    try {
+      await completePens.mutateAsync({
+        homePenaltyScore: home,
+        awayPenaltyScore: away,
+      });
+      setPensOpen(false);
+      onFullTime?.();
+    } catch (err) {
+      showThrownAsToast(err, "Could not complete penalties");
+    }
+  };
+
   const buttons = controlsForStatus(game.status);
   if (!buttons.length) return null;
 
@@ -70,7 +105,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="authPurple"
               label="Start first half"
               loading={actions.startFirstHalf.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(() => actions.startFirstHalf.mutateAsync(), "Could not start first half")
               }
@@ -81,7 +116,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="accent"
               label="Half time"
               loading={actions.startHalfTime.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(() => actions.startHalfTime.mutateAsync(), "Could not start half time")
               }
@@ -92,7 +127,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="authPurple"
               label="Start second half"
               loading={actions.startSecondHalf.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(
                   () => actions.startSecondHalf.mutateAsync(),
@@ -106,10 +141,32 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="secondary"
               label="Extra time"
               loading={actions.startExtraTime.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(() => actions.startExtraTime.mutateAsync(), "Could not start extra time")
               }
+            />
+          ) : null}
+          {buttons.includes("penalties") ? (
+            <Button
+              variant="secondary"
+              label="Penalties"
+              loading={enterPens.isPending}
+              disabled={pending}
+              onPress={() =>
+                void run(async () => {
+                  await enterPens.mutateAsync();
+                  setPensOpen(true);
+                }, "Could not start penalties")
+              }
+            />
+          ) : null}
+          {buttons.includes("completePens") ? (
+            <Button
+              variant="accent"
+              label="Enter penalty scores"
+              disabled={pending}
+              onPress={() => setPensOpen(true)}
             />
           ) : null}
           {buttons.includes("pause") ? (
@@ -117,7 +174,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="secondary"
               label="Pause"
               loading={actions.pause.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(() => actions.pause.mutateAsync(), "Could not pause match")
               }
@@ -128,7 +185,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               variant="authPurple"
               label="Resume"
               loading={actions.resume.isPending}
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() =>
                 void run(() => actions.resume.mutateAsync(), "Could not resume match")
               }
@@ -138,7 +195,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
             <Button
               variant="accent"
               label="Full time"
-              disabled={actions.isPending}
+              disabled={pending}
               onPress={() => setFullTimeOpen(true)}
             />
           ) : null}
@@ -172,6 +229,34 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
           />
         </View>
       </BottomSheetModal>
+
+      <BottomSheetModal
+        visible={pensOpen}
+        onClose={() => setPensOpen(false)}
+        title="Penalty shootout"
+        subtitle="Scores must differ to confirm a winner."
+      >
+        <View className="gap-4">
+          <AuthTextField
+            label="Home penalties"
+            value={homePens}
+            onChangeText={setHomePens}
+            keyboardType="number-pad"
+          />
+          <AuthTextField
+            label="Away penalties"
+            value={awayPens}
+            onChangeText={setAwayPens}
+            keyboardType="number-pad"
+          />
+          <Button
+            variant="authPurple"
+            label="Confirm penalties"
+            loading={completePens.isPending}
+            onPress={() => void handleCompletePens()}
+          />
+        </View>
+      </BottomSheetModal>
     </>
   );
 }
@@ -181,6 +266,8 @@ type ControlKey =
   | "halfTime"
   | "startSecondHalf"
   | "extraTime"
+  | "penalties"
+  | "completePens"
   | "fullTime"
   | "pause"
   | "resume";
@@ -197,9 +284,11 @@ function controlsForStatus(status: GameStatus): ControlKey[] {
     case "break":
       return ["startSecondHalf"];
     case "second_half":
-      return ["fullTime", "extraTime", "pause"];
+      return ["fullTime", "extraTime", "penalties", "pause"];
     case "extra_time":
-      return ["fullTime", "pause"];
+      return ["fullTime", "penalties", "pause"];
+    case "penalty_shootout":
+      return ["completePens", "pause"];
     case "paused":
       return ["resume"];
     default:

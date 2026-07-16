@@ -19,6 +19,11 @@ type BottomSheetModalProps = {
   subtitle?: string;
   children: ReactNode;
   variant?: "light" | "dark";
+  /**
+   * When false, children render in a plain View instead of ScrollView.
+   * Use this when embedding a VirtualizedList (e.g. Places autocomplete).
+   */
+  scrollEnabled?: boolean;
 };
 
 export function BottomSheetModal({
@@ -28,6 +33,7 @@ export function BottomSheetModal({
   subtitle,
   children,
   variant = "light",
+  scrollEnabled = true,
 }: BottomSheetModalProps) {
   const isDark = variant === "dark";
   return (
@@ -75,12 +81,17 @@ export function BottomSheetModal({
                 <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
               </Pressable>
             </View>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.content}
-            >
-              {children}
-            </ScrollView>
+            {scrollEnabled ? (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.content}
+              >
+                {children}
+              </ScrollView>
+            ) : (
+              <View style={styles.content}>{children}</View>
+            )}
           </View>
         </SafeAreaView>
       </View>
@@ -101,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    maxHeight: "72%",
+    maxHeight: "100%",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     backgroundColor: "#FFFFFF",

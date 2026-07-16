@@ -23,17 +23,25 @@ type Props = {
   seasonId: number;
   games: ApiGame[];
   statTypes: ApiStatType[];
+  /** False for pure knockout seasons — fixtures come from seed / next-round. */
+  canScheduleRoundRobin?: boolean;
 };
 
-export function ManageGamesTab({ leagueId, seasonId, games }: Props) {
+export function ManageGamesTab({
+  leagueId,
+  seasonId,
+  games,
+  canScheduleRoundRobin = true,
+}: Props) {
   const [addOpen, setAddOpen] = useState(false);
   const { live, upcoming, results } = useMemo(
     () => partitionGames(games),
     [games],
   );
 
-  const defaultFilter: GameFilter = live.length > 0 ? "live" : "upcoming";
-  const [activeFilter, setActiveFilter] = useState<GameFilter>(defaultFilter);
+  const [activeFilter, setActiveFilter] = useState<GameFilter>(
+    live.length > 0 ? "live" : "upcoming",
+  );
 
   useEffect(() => {
     setActiveFilter(live.length > 0 ? "live" : "upcoming");
@@ -50,21 +58,27 @@ export function ManageGamesTab({ leagueId, seasonId, games }: Props) {
     activeFilter === "live"
       ? "No live matches right now."
       : activeFilter === "upcoming"
-        ? "No scheduled fixtures. Tap Add game to create one."
+        ? canScheduleRoundRobin
+          ? "No scheduled fixtures. Tap Add game to create one."
+          : "Knockout fixtures appear after you seed the bracket."
         : "Completed and cancelled games appear here.";
 
   return (
     <View className="gap-6 pb-8">
       <View className="flex-row items-center justify-between gap-3">
         <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          Schedule fixtures and run live scoring for this season.
+          {canScheduleRoundRobin
+            ? "Schedule fixtures and run live scoring for this season."
+            : "Knockout games are created by seeding — open Knockout to manage the bracket."}
         </Text>
-        <Button
-          variant="authPurple"
-          label="Add game"
-          onPress={() => setAddOpen(true)}
-          className="h-11 px-4"
-        />
+        {canScheduleRoundRobin ? (
+          <Button
+            variant="authPurple"
+            label="Add game"
+            onPress={() => setAddOpen(true)}
+            className="h-11 px-4"
+          />
+        ) : null}
       </View>
 
       <DetailTabs
@@ -82,12 +96,14 @@ export function ManageGamesTab({ leagueId, seasonId, games }: Props) {
         emptyMessage={emptyMessage}
       />
 
-      <AddGameSheet
-        visible={addOpen}
-        onClose={() => setAddOpen(false)}
-        leagueId={leagueId}
-        seasonId={seasonId}
-      />
+      {canScheduleRoundRobin ? (
+        <AddGameSheet
+          visible={addOpen}
+          onClose={() => setAddOpen(false)}
+          leagueId={leagueId}
+          seasonId={seasonId}
+        />
+      ) : null}
     </View>
   );
 }

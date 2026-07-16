@@ -31,6 +31,7 @@ const LIVE_SUB_STATUSES = new Set<GameStatus>([
   "half_time",
   "second_half",
   "extra_time",
+  "penalty_shootout",
   "paused",
   "live",
 ]);

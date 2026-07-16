@@ -10,9 +10,12 @@ import {
   createSeason,
   createStat,
   createTeam,
+  createVenue,
   deleteGame,
   deleteStat,
   deleteTeam,
+  deleteVenue,
+  fetchLeagueVenues,
   endGameFullTime,
   fetchLeagueTeams,
   fetchManagedHub,
@@ -33,6 +36,7 @@ import {
   updateLeaguePlayer,
   updateSeason,
   updateTeam,
+  updateVenue,
 } from "./api";
 import type { AccreditStatPayload, CreateTeamPayload, GameScorePayload, UpdateTeamPayload } from "./api";
 import {
@@ -47,10 +51,12 @@ import type {
   CreateGamePayload,
   CreateSeasonPayload,
   CreateStatPayload,
+  CreateVenuePayload,
   RecordSubstitutionsPayload,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateVenuePayload,
 } from "./types";
 
 export function useManagedHub(enabled: boolean) {
@@ -102,6 +108,53 @@ export function useLeagueTeams(leagueId: number, enabled = true) {
     enabled: leagueId > 0 && enabled,
     staleTime: 60 * 1000,
     networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
+
+export function useLeagueVenues(leagueId: number, enabled = true) {
+  const { isOnline } = useNetworkStatus();
+  return useQuery({
+    queryKey: manageKeys.venues(leagueId),
+    queryFn: () => fetchLeagueVenues(leagueId),
+    enabled: leagueId > 0 && enabled,
+    staleTime: 60 * 1000,
+    networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
+
+export function useCreateVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateVenuePayload) => createVenue(leagueId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
+  });
+}
+
+export function useUpdateVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      venueId,
+      payload,
+    }: {
+      venueId: number;
+      payload: UpdateVenuePayload;
+    }) => updateVenue(venueId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
+  });
+}
+
+export function useDeleteVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (venueId: number) => deleteVenue(venueId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
   });
 }
 

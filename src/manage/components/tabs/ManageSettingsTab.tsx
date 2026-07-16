@@ -11,6 +11,16 @@ import {
   DEFAULT_TIEBREAKER,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import {
+  leagueDurationProgress,
+  parseCalendarDate,
+  toCalendarDateString,
+} from "@/lib/datetime";
+import {
+  KnockoutTieFormatControl,
+  buildKnockoutConfig,
+  type TieFormatSelection,
+} from "@/knockout";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -39,6 +49,8 @@ export function ManageSettingsTab({
 
   const [name, setName] = useState(league.name);
   const [description, setDescription] = useState(league.description ?? "");
+  const [startDate, setStartDate] = useState(toCalendarDateString(league.startDate));
+  const [endDate, setEndDate] = useState(toCalendarDateString(league.endDate));
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
   const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(
     league.tiebreaker ?? DEFAULT_TIEBREAKER,
@@ -49,17 +61,38 @@ export function ManageSettingsTab({
   const [newSeasonStatus, setNewSeasonStatus] = useState<SeasonStatus>(
     SeasonStatusEnum.Inactive,
   );
+  const [newSeasonFormat, setNewSeasonFormat] = useState<"league" | "knockout">(
+    "league",
+  );
+  const [newSeasonTieFormat, setNewSeasonTieFormat] = useState<TieFormatSelection>({
+    kind: "single",
+  });
+  const [newSeasonThirdPlace, setNewSeasonThirdPlace] = useState(false);
 
   useEffect(() => {
     setName(league.name);
     setDescription(league.description ?? "");
+    setStartDate(toCalendarDateString(league.startDate));
+    setEndDate(toCalendarDateString(league.endDate));
     setTiebreakerId(league.tiebreaker ?? DEFAULT_TIEBREAKER);
-  }, [league.id, league.name, league.description, league.tiebreaker]);
+  }, [
+    league.id,
+    league.name,
+    league.description,
+    league.startDate,
+    league.endDate,
+    league.tiebreaker,
+  ]);
 
   const handleSaveLeague = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       showInfoToast("Name required", "Enter a league name.");
+      return;
+    }
+    const durationError = validateLeagueDuration(startDate, endDate);
+    if (durationError) {
+      showInfoToast("Invalid duration", durationError);
       return;
     }
     try {
@@ -68,6 +101,8 @@ export function ManageSettingsTab({
         description: description.trim() || null,
         gender: divisionId === "open" ? null : divisionId,
         tiebreaker: tiebreakerId,
+        startDate: toCalendarDateString(startDate) || null,
+        endDate: toCalendarDateString(endDate) || null,
       });
       showInfoToast("League updated", "Your changes were saved.");
     } catch (err) {
@@ -85,9 +120,23 @@ export function ManageSettingsTab({
       const created = await createSeasonMutation.mutateAsync({
         name: trimmed,
         status: newSeasonStatus,
+        format: newSeasonFormat,
+        knockout:
+          newSeasonFormat === "knockout"
+            ? {
+                name: "Cup",
+                config: buildKnockoutConfig(
+                  newSeasonTieFormat,
+                  newSeasonThirdPlace,
+                ),
+              }
+            : undefined,
       });
       setNewSeasonName("");
       setNewSeasonStatus(SeasonStatusEnum.Inactive);
+      setNewSeasonFormat("league");
+      setNewSeasonTieFormat({ kind: "single" });
+      setNewSeasonThirdPlace(false);
       onSeasonCreated(created.id);
       showInfoToast("Season created", `"${created.name}" is now available in the picker.`);
     } catch (err) {
@@ -119,6 +168,40 @@ export function ManageSettingsTab({
           numberOfLines={3}
           containerClassName="[&_input]:text-neutral-900"
         />
+
+        <View className="gap-2">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-xs uppercase tracking-wide text-white/45"
+          >
+            League duration
+          </Text>
+          <LeagueDurationProgress startDate={startDate} endDate={endDate} />
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <AuthTextField
+                label="Start date"
+                value={startDate}
+                onChangeText={setStartDate}
+                placeholder="YYYY-MM-DD"
+                autoCapitalize="none"
+                keyboardType="numbers-and-punctuation"
+                containerClassName="[&_input]:text-neutral-900"
+              />
+            </View>
+            <View className="flex-1">
+              <AuthTextField
+                label="End date"
+                value={endDate}
+                onChangeText={setEndDate}
+                placeholder="YYYY-MM-DD"
+                autoCapitalize="none"
+                keyboardType="numbers-and-punctuation"
+                containerClassName="[&_input]:text-neutral-900"
+              />
+            </View>
+          </View>
+        </View>
 
         <View className="gap-2">
           <Text
@@ -249,6 +332,52 @@ export function ManageSettingsTab({
           onChange={setNewSeasonStatus}
         />
 
+        <View className="gap-2">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-xs uppercase tracking-wide text-white/45"
+          >
+            Format
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {(
+              [
+                { id: "league" as const, label: "League (round-robin)" },
+                { id: "knockout" as const, label: "Knockouts" },
+              ] as const
+            ).map((opt) => {
+              const active = newSeasonFormat === opt.id;
+              return (
+                <Pressable
+                  key={opt.id}
+                  onPress={() => setNewSeasonFormat(opt.id)}
+                  className={`rounded-xl border px-3 py-2 ${
+                    active
+                      ? "border-brand-400 bg-brand-500/30"
+                      : "border-white/15 bg-white/5"
+                  }`}
+                >
+                  <Text
+                    style={{ fontFamily: fonts.bodySemibold }}
+                    className={active ? "text-white" : "text-white/70"}
+                  >
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {newSeasonFormat === "knockout" ? (
+            <KnockoutTieFormatControl
+              value={newSeasonTieFormat}
+              onChange={setNewSeasonTieFormat}
+              hasThirdPlace={newSeasonThirdPlace}
+              onHasThirdPlaceChange={setNewSeasonThirdPlace}
+              tone="dark"
+            />
+          ) : null}
+        </View>
+
         <Button
           variant="accent"
           label={createSeasonMutation.isPending ? "Creating…" : "Add season"}
@@ -266,4 +395,78 @@ export function ManageSettingsTab({
       />
     </View>
   );
+}
+
+function LeagueDurationProgress({
+  startDate,
+  endDate,
+}: {
+  startDate: string;
+  endDate: string;
+}) {
+  const progress = leagueDurationProgress(startDate, endDate);
+  if (progress == null) {
+    return (
+      <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-white/45">
+        Set start and end dates to track league progress.
+      </Text>
+    );
+  }
+
+  const pct = Math.round(progress * 100);
+  const statusLabel =
+    progress <= 0 ? "Not started" : progress >= 1 ? "Complete" : `${pct}% through`;
+
+  return (
+    <View className="gap-2 rounded-xl bg-white/5 px-3 py-3">
+      <View className="flex-row items-center justify-between gap-2">
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-xs text-white/50"
+          numberOfLines={1}
+        >
+          {startDate.trim()}
+        </Text>
+        <Text
+          style={{ fontFamily: fonts.bodySemibold }}
+          className="text-xs text-accent-300"
+        >
+          {statusLabel}
+        </Text>
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-right text-xs text-white/50"
+          numberOfLines={1}
+        >
+          {endDate.trim()}
+        </Text>
+      </View>
+      <View className="h-2 overflow-hidden rounded-full bg-white/10">
+        <View
+          className="h-full rounded-full bg-accent-400"
+          style={{ width: `${pct}%` }}
+        />
+      </View>
+    </View>
+  );
+}
+
+function validateLeagueDuration(startDate: string, endDate: string): string | null {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start && !end) return null;
+  if (start && !parseCalendarDate(start)) {
+    return "Start date must be YYYY-MM-DD.";
+  }
+  if (end && !parseCalendarDate(end)) {
+    return "End date must be YYYY-MM-DD.";
+  }
+  if (start && end) {
+    const startParsed = parseCalendarDate(start)!;
+    const endParsed = parseCalendarDate(end)!;
+    if (endParsed.getTime() < startParsed.getTime()) {
+      return "End date must be on or after the start date.";
+    }
+  }
+  return null;
 }

@@ -10,8 +10,12 @@ import {
 
 import { fonts } from "@/theme/fonts";
 
+import { FormFieldLabel } from "./form-field-label";
+
 export type AuthTextFieldProps = TextInputProps & {
   label: string;
+  /** Shows a red asterisk next to the label. */
+  required?: boolean;
   /** Renders aligned with the label row (e.g. “Forgot?”). */
   labelAccessory?: ReactNode;
   leftIcon?: ReactNode;
@@ -25,6 +29,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
   function AuthTextField(
     {
       label,
+      required = false,
       labelAccessory,
       leftIcon,
       rightAccessory,
@@ -39,12 +44,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
     return (
       <View className={`gap-1.5 ${containerClassName ?? ""}`}>
         <View className="flex-row items-center justify-between gap-2">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[11px] uppercase tracking-wider text-slate-500"
-          >
-            {label}
-          </Text>
+          <FormFieldLabel label={label} required={required} />
           {labelAccessory}
         </View>
         <View

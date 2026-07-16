@@ -13,6 +13,7 @@ const LIVE_STATUSES = new Set([
   "half_time",
   "second_half",
   "extra_time",
+  "penalty_shootout",
   "paused",
   "live",
   "break",

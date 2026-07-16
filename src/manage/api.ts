@@ -1,4 +1,4 @@
-import type { ApiTeam } from "@/api/entities";
+import type { ApiTeam, ApiVenue } from "@/api/entities";
 import { apiRequest } from "@/api/http-client";
 import type { PickedImageFile } from "@/lib/picked-image";
 
@@ -8,6 +8,7 @@ import type {
   CreateGamePayload,
   CreateSeasonPayload,
   CreateStatPayload,
+  CreateVenuePayload,
   CreatedSeason,
   LeagueRosterRow,
   ManagedHub,
@@ -18,6 +19,7 @@ import type {
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateVenuePayload,
 } from "./types";
 
 export type CreateTeamPayload = {
@@ -218,6 +220,51 @@ export async function deleteGame(gameId: number): Promise<void> {
     method: "DELETE",
     auth: true,
   });
+}
+
+export async function fetchLeagueVenues(leagueId: number): Promise<ApiVenue[]> {
+  return apiRequest<{ data: ApiVenue[] }>(
+    `/api/v1/leagues/${leagueId}/venues`,
+    { auth: true },
+  ).then((r) => r.data);
+}
+
+export async function createVenue(
+  leagueId: number,
+  payload: CreateVenuePayload,
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/venues`,
+    {
+      method: "POST",
+      auth: true,
+      jsonBody: payload,
+    },
+  );
+}
+
+export async function updateVenue(
+  venueId: number,
+  payload: UpdateVenuePayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/venues/${venueId}`,
+    {
+      method: "PUT",
+      auth: true,
+      jsonBody: payload,
+    },
+  );
+}
+
+export async function deleteVenue(venueId: number): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/venues/${venueId}`,
+    {
+      method: "DELETE",
+      auth: true,
+    },
+  );
 }
 
 export async function createStat(payload: CreateStatPayload): Promise<void> {

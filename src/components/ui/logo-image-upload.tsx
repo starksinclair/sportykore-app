@@ -3,6 +3,7 @@ import { Image } from "expo-image";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
+import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { colors } from "@/constants";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { pickProfileImage } from "@/lib/pick-profile-image";
@@ -24,6 +25,9 @@ type Props = {
   hint?: string;
   size?: Size;
   compact?: boolean;
+  layout?: "row" | "centered";
+  /** Override the default profile image picker (e.g. competition PNG-only). */
+  onPick?: () => Promise<PickedImageFile | null>;
   accessibilityLabel?: string;
 };
 
@@ -34,6 +38,8 @@ export function LogoImageUpload({
   hint = "JPG, PNG, or WebP · max 2 MB",
   size = "md",
   compact = false,
+  layout = "row",
+  onPick,
   accessibilityLabel,
 }: Props) {
   const [picking, setPicking] = useState(false);
@@ -42,7 +48,7 @@ export function LogoImageUpload({
   const handlePick = async () => {
     setPicking(true);
     try {
-      const picked = await pickProfileImage();
+      const picked = await (onPick ?? pickProfileImage)();
       if (picked) onChange(picked);
     } catch (error) {
       showThrownAsToast(error, "Could not pick image");
@@ -95,50 +101,56 @@ export function LogoImageUpload({
     return picker;
   }
 
+  const meta = value ? (
+    <>
+      <Text
+        style={{ fontFamily: fonts.bodySemibold }}
+        className={`text-sm text-neutral-900 ${layout === "centered" ? "text-center" : ""}`}
+        numberOfLines={1}
+      >
+        {value.name}
+      </Text>
+      <Pressable
+        onPress={() => onChange(null)}
+        accessibilityRole="button"
+        accessibilityLabel="Remove logo"
+        hitSlop={8}
+        className={layout === "centered" ? "items-center" : undefined}
+      >
+        <Text
+          style={{ fontFamily: fonts.bodySemibold }}
+          className="text-sm text-brand"
+        >
+          Remove
+        </Text>
+      </Pressable>
+    </>
+  ) : (
+    <Text
+      style={{ fontFamily: fonts.body }}
+      className={`text-xs leading-5 text-slate-500 ${layout === "centered" ? "text-center" : ""}`}
+    >
+      {hint}
+    </Text>
+  );
+
+  if (layout === "centered") {
+    return (
+      <View className="items-center gap-3">
+        {label ? <FormFieldLabel label={label} /> : null}
+        {picker}
+        <View className="w-full gap-1 px-2">{meta}</View>
+      </View>
+    );
+  }
+
   return (
     <View className="gap-2">
-      {label ? (
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-[11px] uppercase tracking-wider text-slate-500"
-        >
-          {label}
-        </Text>
-      ) : null}
+      {label ? <FormFieldLabel label={label} /> : null}
 
       <View className="flex-row items-center gap-3">
         {picker}
-
-        <View className="flex-1 gap-1">
-          {value ? (
-            <>
-              <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-neutral-900"
-                numberOfLines={1}
-              >
-                {value.name}
-              </Text>
-              <Pressable
-                onPress={() => onChange(null)}
-                accessibilityRole="button"
-                accessibilityLabel="Remove logo"
-                hitSlop={8}
-              >
-                <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-sm text-brand"
-                >
-                  Remove
-                </Text>
-              </Pressable>
-            </>
-          ) : (
-            <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-slate-500">
-              {hint}
-            </Text>
-          )}
-        </View>
+        <View className="flex-1 gap-1">{meta}</View>
       </View>
     </View>
   );

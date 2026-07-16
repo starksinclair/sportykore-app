@@ -7,4 +7,6 @@ export const manageKeys = {
   teams: (leagueId: number) => [...manageKeys.all, "teams", leagueId] as const,
   roster: (leagueId: number, seasonId: number) =>
     [...manageKeys.all, "roster", leagueId, seasonId] as const,
+  venues: (leagueId: number) =>
+    [...manageKeys.all, "venues", leagueId] as const,
 };

@@ -20,12 +20,36 @@ export type ApiLeague = {
   games?: ApiGame[];
   description: string;
   tiebreaker?: TiebreakerRule | null;
+  startDate: string | null;
+  endDate: string | null;
 };
 
 export type ApiTeam = {
   id: number;
   name: string;
   logoUrl: string | null;
+};
+
+export type ApiVenue = {
+  id: number;
+  name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  googlePlaceId: string | null;
+  capacity: number | null;
+  city: string | null;
+  notes: string | null;
+};
+
+/** Nested venue on game serializers (subset of full Venue). */
+export type ApiGameVenue = {
+  id: number;
+  name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  capacity: number | null;
 };
 
 export type PlayerPosition = "attack" | "defence" | "midfield" | "goalkeeper";
@@ -83,6 +107,7 @@ export type GameStatus =
   | "half_time"
   | "second_half"
   | "extra_time"
+  | "penalty_shootout"
   | "full_time"
   | "paused"
   | "postponed"
@@ -99,7 +124,72 @@ export type PausedFromStatus =
   | "first_half"
   | "second_half"
   | "extra_time"
+  | "penalty_shootout"
   | "live";
+
+export type StageType = "round_robin" | "group" | "knockout" | "playoff";
+export type StageStatus = "upcoming" | "active" | "completed";
+export type TieFormat = "single" | "two_legged" | "best_of";
+export type TieStatus = "pending" | "in_progress" | "completed";
+export type BracketRound =
+  | "r256"
+  | "r128"
+  | "r64"
+  | "r32"
+  | "r16"
+  | "qf"
+  | "sf"
+  | "final"
+  | "third_place";
+
+export type CompetitionFormat = "league" | "knockout";
+
+export type KnockoutTieConfig = {
+  tie_format: TieFormat;
+  best_of?: number;
+  away_goals?: boolean;
+};
+
+export type KnockoutStageConfig = {
+  format?: {
+    starting_round?: BracketRound;
+    has_third_place?: boolean;
+  };
+  ties: {
+    default: KnockoutTieConfig;
+    rounds?: Partial<Record<BracketRound, KnockoutTieConfig>>;
+  };
+};
+
+export type ApiStage = {
+  id: number;
+  seasonId: number;
+  name: string;
+  stageType: StageType;
+  sequence: number;
+  status: StageStatus;
+  sourceStageId?: number | null;
+  config: KnockoutStageConfig | Record<string, unknown>;
+};
+
+export type ApiTie = {
+  id: number;
+  stageId: number;
+  round: BracketRound;
+  bracketPosition: number;
+  tieFormat: TieFormat;
+  bestOf: number | null;
+  targetWins: number | null;
+  awayGoals: boolean;
+  isBye: boolean;
+  homeScoreAgg: number | null;
+  awayScoreAgg: number | null;
+  status: TieStatus;
+  homeTeam?: ApiTeam | null;
+  awayTeam?: ApiTeam | null;
+  winnerTeam?: ApiTeam | null;
+  games?: ApiGame[];
+};
 
 export type ApiGame = {
   id: number;
@@ -108,6 +198,8 @@ export type ApiGame = {
   homeScore: number | null;
   awayScore: number | null;
   venueName: string | null;
+  venueId?: number | null;
+  venue?: ApiGameVenue | null;
   currentMinute: number;
   firstHalfDuration?: number;
   secondHalfDuration?: number;
@@ -117,8 +209,16 @@ export type ApiGame = {
   extraTimeStartedAt?: string | null;
   pausedAt?: string | null;
   pausedFromStatus?: PausedFromStatus | null;
+  stageId?: number | null;
+  tieId?: number | null;
+  leg?: number | null;
+  round?: BracketRound | null;
+  bracketPosition?: number | null;
+  homePenaltyScore?: number | null;
+  awayPenaltyScore?: number | null;
   homeTeam?: ApiTeam;
   awayTeam?: ApiTeam;
+  winnerTeam?: ApiTeam | null;
 };
 
 export type ApiGameDetail = ApiGame & {
@@ -140,6 +240,7 @@ export type ApiSeasonDetail = ApiSeason & {
   games: ApiGame[];
   standings: ApiStanding[];
   stats: ApiStat[];
+  stages?: ApiStage[];
 };
 
 /** Wire shape of `GET /api/v1/leagues/:leagueId` — the available seasons plus the active season detail. */

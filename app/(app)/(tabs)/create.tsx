@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -21,12 +22,20 @@ import { CountryLabel } from "@/components/ui/CountryFlag";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { CountryPicker } from "@/components/ui/country-picker";
-import { Logo } from "@/components/ui/logo";
+import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
-import { useCreateLeague } from "@/league/hooks";
+import type { CompetitionFormat } from "@/api/entities";
+import { CompetitionFormatPicker } from "@/league/components/CompetitionFormatPicker";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
+import { useCreateLeague } from "@/league/hooks";
+import {
+  KnockoutTieFormatControl,
+  buildKnockoutConfig,
+  type TieFormatSelection,
+} from "@/knockout";
+import { parseCalendarDate } from "@/lib/datetime";
 import {
   DIVISION_OPTIONS,
   type CountryOption,
@@ -36,6 +45,7 @@ import {
   tiebreakerLabel,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { fonts } from "@/theme/fonts";
 
@@ -56,12 +66,18 @@ export default function CreateScreen() {
 
   const [name, setName] = useState("");
   const [season, setSeason] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
   const [leagueLogo, setLeagueLogo] = useState<PickedImageFile | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [city, setCity] = useState("");
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
   const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(DEFAULT_TIEBREAKER);
+  const [format, setFormat] = useState<CompetitionFormat>("league");
+  const [knockoutName, setKnockoutName] = useState("Cup");
+  const [tieFormat, setTieFormat] = useState<TieFormatSelection>({ kind: "single" });
+  const [hasThirdPlace, setHasThirdPlace] = useState(false);
 
   const [teams, setTeams] = useState<TeamRow[]>(() => [
     { id: "t1", name: "", logo: null },
@@ -73,9 +89,17 @@ export default function CreateScreen() {
 
   const createLeagueMutation = useCreateLeague();
   const { requireAuth } = useAuthGate();
+  const router = useRouter();
 
+  const durationError = validateLeagueDuration(startDate, endDate);
   const step1Valid =
-    name.trim().length > 0 && season.trim().length > 0 && selectedCountry !== null;
+    name.trim().length > 0 &&
+    season.trim().length > 0 &&
+    selectedCountry !== null &&
+    Boolean(format) &&
+    startDate.trim().length > 0 &&
+    endDate.trim().length > 0 &&
+    durationError === null;
 
   const namedTeams = teams.filter((t) => t.name.trim().length > 0);
   const step2Valid = namedTeams.length >= 2;
@@ -84,7 +108,10 @@ export default function CreateScreen() {
     setStepError(null);
     if (step === 1) {
       if (!step1Valid) {
-        setStepError("Add a league name, season, and country to continue.");
+        setStepError(
+          durationError ??
+            "Add competition name, season, country, format, and start/end dates to continue.",
+        );
         return;
       }
       setStep(2);
@@ -101,30 +128,49 @@ export default function CreateScreen() {
 
   const handleCreate = async () => {
     setStepError(null);
-    if (!requireAuth({ action: "create a league" })) {
+    if (!requireAuth({ action: "create a competition" })) {
+      return;
+    }
+    const createDurationError = validateLeagueDuration(startDate, endDate);
+    if (createDurationError) {
+      setStepError(createDurationError);
       return;
     }
     try {
-      await createLeagueMutation.mutateAsync({
+      const result = await createLeagueMutation.mutateAsync({
         name: name.trim(),
         seasonName: season.trim(),
         countryId: selectedCountry!.id,
         description: description.trim() || undefined,
         gender: divisionId !== "open" ? divisionId : undefined,
-        tiebreaker: tiebreakerId,
+        tiebreaker: format === "league" ? tiebreakerId : undefined,
         logo: leagueLogo ?? undefined,
+        startDate: startDate.trim(),
+        endDate: endDate.trim(),
+        format,
+        knockout:
+          format === "knockout"
+            ? {
+                name: knockoutName.trim() || "Cup",
+                seed: true,
+                config: buildKnockoutConfig(tieFormat, hasThirdPlace),
+              }
+            : undefined,
         teams: namedTeams.map((team) => ({
           name: team.name.trim(),
           logo: team.logo ?? undefined,
         })),
       });
       setCreated(true);
+      if (result.leagueId != null) {
+        router.push(`/manage/${result.leagueId}`);
+      }
     } catch (err) {
-      console.error("Failed to create league", err);
+      console.error("Failed to create competition", err);
       if (err instanceof ApiError && err.status === 401) {
-        setStepError("Please create an account first to create a league.");
+        setStepError("Please create an account first to create a competition.");
       } else {
-        setStepError(err instanceof Error ? err.message : "Failed to create league. Try again.");
+        setStepError(err instanceof Error ? err.message : "Failed to create competition. Try again.");
       }
     }
   };
@@ -158,12 +204,18 @@ export default function CreateScreen() {
     setStep(1);
     setName("");
     setSeason("");
+    setStartDate("");
+    setEndDate("");
     setDescription("");
     setLeagueLogo(null);
     setSelectedCountry(null);
     setCity("");
     setDivisionId("open");
     setTiebreakerId(DEFAULT_TIEBREAKER);
+    setFormat("league");
+    setKnockoutName("Cup");
+    setTieFormat({ kind: "single" });
+    setHasThirdPlace(false);
     setTeams([
       { id: "t1", name: "", logo: null },
       { id: "t2", name: "", logo: null },
@@ -197,19 +249,18 @@ export default function CreateScreen() {
         >
           <View className="gap-6">
             <View className="gap-2">
-              <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
+              {/* <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} /> */}
               <Text
                 style={{ fontFamily: fonts.bodyBold }}
                 className="text-[26px] leading-8 text-white"
               >
-                Create a league
+                Create a competition
               </Text>
               <Text
                 style={{ fontFamily: fonts.body }}
                 className="text-sm leading-6 text-white/70"
               >
-                Three quick steps — you can adjust details later from Manage once the league
-                goes live.
+                Three quick steps — pick a league table or a knockout cup, then manage it live.
               </Text>
             </View>
 
@@ -252,6 +303,10 @@ export default function CreateScreen() {
                   setName={setName}
                   season={season}
                   setSeason={setSeason}
+                  startDate={startDate}
+                  setStartDate={setStartDate}
+                  endDate={endDate}
+                  setEndDate={setEndDate}
                   description={description}
                   setDescription={setDescription}
                   leagueLogo={leagueLogo}
@@ -262,6 +317,14 @@ export default function CreateScreen() {
                   setDivisionId={setDivisionId}
                   tiebreakerId={tiebreakerId}
                   setTiebreakerId={setTiebreakerId}
+                  format={format}
+                  setFormat={setFormat}
+                  knockoutName={knockoutName}
+                  setKnockoutName={setKnockoutName}
+                  tieFormat={tieFormat}
+                  setTieFormat={setTieFormat}
+                  hasThirdPlace={hasThirdPlace}
+                  setHasThirdPlace={setHasThirdPlace}
                   selectedCountry={selectedCountry}
                   onSelectCountry={setSelectedCountry}
                 />
@@ -270,6 +333,7 @@ export default function CreateScreen() {
               {step === 2 ? (
                 <StepTeams
                   teams={teams}
+                  format={format}
                   onChangeName={updateTeamName}
                   onChangeLogo={updateTeamLogo}
                   onAdd={addTeam}
@@ -281,12 +345,18 @@ export default function CreateScreen() {
                 <StepReview
                   name={name}
                   season={season}
+                  startDate={startDate}
+                  endDate={endDate}
                   description={description}
                   leagueLogo={leagueLogo}
                   country={selectedCountry ?? undefined}
                   city={city}
                   divisionId={divisionId}
                   tiebreakerId={tiebreakerId}
+                  format={format}
+                  knockoutName={knockoutName}
+                  tieFormat={tieFormat}
+                  hasThirdPlace={hasThirdPlace}
                   teams={namedTeams}
                   created={created}
                 />
@@ -307,7 +377,7 @@ export default function CreateScreen() {
                   ) : null}
                   <Button
                     variant="primary"
-                    label={step === 3 ? "Create League" : "Continue"}
+                    label={step === 3 ? "Create competition" : "Continue"}
                     className="flex-1"
                     onPress={step === 3 ? handleCreate : goNext}
                     loading={createLeagueMutation.isPending}
@@ -330,6 +400,10 @@ function StepBasics({
   setName,
   season,
   setSeason,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   description,
   setDescription,
   leagueLogo,
@@ -340,6 +414,14 @@ function StepBasics({
   setDivisionId,
   tiebreakerId,
   setTiebreakerId,
+  format,
+  setFormat,
+  knockoutName,
+  setKnockoutName,
+  tieFormat,
+  setTieFormat,
+  hasThirdPlace,
+  setHasThirdPlace,
   selectedCountry,
   onSelectCountry,
 }: {
@@ -347,6 +429,10 @@ function StepBasics({
   setName: (v: string) => void;
   season: string;
   setSeason: (v: string) => void;
+  startDate: string;
+  setStartDate: (v: string) => void;
+  endDate: string;
+  setEndDate: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
   leagueLogo: PickedImageFile | null;
@@ -357,25 +443,32 @@ function StepBasics({
   setDivisionId: (v: (typeof DIVISION_OPTIONS)[number]["id"]) => void;
   tiebreakerId: TiebreakerRule;
   setTiebreakerId: (v: TiebreakerRule) => void;
+  format: CompetitionFormat;
+  setFormat: (v: CompetitionFormat) => void;
+  knockoutName: string;
+  setKnockoutName: (v: string) => void;
+  tieFormat: TieFormatSelection;
+  setTieFormat: (v: TieFormatSelection) => void;
+  hasThirdPlace: boolean;
+  setHasThirdPlace: (v: boolean) => void;
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
   return (
     <View className="gap-4">
       <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 1 — League basics
+        Step 1 — Competition basics
       </Text>
 
-      <LogoImageUpload
-        label="League logo (optional)"
-        value={leagueLogo}
-        onChange={onLeagueLogoChange}
-        size="lg"
-        accessibilityLabel="League logo"
+      <CompetitionFormatPicker
+        value={format}
+        onChange={setFormat}
+        required
       />
 
       <AuthTextField
-        label="League name"
+        label="Competition name"
+        required
         placeholder="e.g. Surulere Sunday League"
         value={name}
         onChangeText={setName}
@@ -384,23 +477,54 @@ function StepBasics({
 
       <AuthTextField
         label="Season"
+        required
         placeholder="e.g. 2025/26"
         value={season}
         onChangeText={setSeason}
         autoCapitalize="none"
       />
 
-      <CountryPicker value={selectedCountry} onChange={onSelectCountry} />
+      <View className="gap-2">
+        <FormFieldLabel label="Competition duration" required />
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <AuthTextField
+              label="Start date"
+              placeholder="YYYY-MM-DD"
+              value={startDate}
+              onChangeText={setStartDate}
+              autoCapitalize="none"
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+          <View className="flex-1">
+            <AuthTextField
+              label="End date"
+              placeholder="YYYY-MM-DD"
+              value={endDate}
+              onChangeText={setEndDate}
+              autoCapitalize="none"
+              keyboardType="numbers-and-punctuation"
+            />
+          </View>
+        </View>
+      </View>
+
+      <CountryPicker
+        value={selectedCountry}
+        onChange={onSelectCountry}
+        required
+      />
 
       <AuthTextField
-        label="City / area (optional)"
+        label="City / area"
         placeholder="e.g. Lagos Mainland"
         value={city}
         onChangeText={setCity}
         autoCapitalize="words"
       />
 
-      <LabelBlock label="Division / band (optional)">
+      <LabelBlock label="Division / band">
         <View className="flex-row flex-wrap gap-2">
           {DIVISION_OPTIONS.map((opt) => (
             <Chip
@@ -413,19 +537,32 @@ function StepBasics({
         </View>
       </LabelBlock>
 
-      <TiebreakerPicker
-        value={tiebreakerId}
-        onChange={setTiebreakerId}
-        variant="light"
-      />
+      {format === "league" ? (
+        <TiebreakerPicker
+          value={tiebreakerId}
+          onChange={setTiebreakerId}
+          variant="light"
+        />
+      ) : (
+        <View className="gap-3">
+          <AuthTextField
+            label="Knockout stage name"
+            value={knockoutName}
+            onChangeText={setKnockoutName}
+            placeholder="Cup"
+          />
+          <KnockoutTieFormatControl
+            value={tieFormat}
+            onChange={setTieFormat}
+            hasThirdPlace={hasThirdPlace}
+            onHasThirdPlaceChange={setHasThirdPlace}
+            tone="light"
+          />
+        </View>
+      )}
 
       <View className="gap-1.5">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-[11px] uppercase tracking-wider text-slate-500"
-        >
-          Description (optional)
-        </Text>
+        <FormFieldLabel label="Description" />
         <TextInput
           value={description}
           onChangeText={setDescription}
@@ -445,6 +582,17 @@ function StepBasics({
           className="border border-transparent text-base text-neutral-950"
         />
       </View>
+
+      <LogoImageUpload
+        label="Logo"
+        value={leagueLogo}
+        onChange={onLeagueLogoChange}
+        size="lg"
+        layout="centered"
+        onPick={pickCompetitionLogo}
+        hint="Recommend image: 150x150 px, png only, max 5mb, keep logo centered, clear background"
+        accessibilityLabel="Competition logo"
+      />
     </View>
   );
 }
@@ -452,12 +600,7 @@ function StepBasics({
 function LabelBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View className="gap-2">
-      <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-wider text-slate-500"
-      >
-        {label}
-      </Text>
+      <FormFieldLabel label={label} />
       {children}
     </View>
   );
@@ -493,12 +636,14 @@ function Chip({
 
 function StepTeams({
   teams,
+  format,
   onChangeName,
   onChangeLogo,
   onAdd,
   onRemove,
 }: {
   teams: TeamRow[];
+  format: CompetitionFormat;
   onChangeName: (id: string, name: string) => void;
   onChangeLogo: (id: string, logo: PickedImageFile | null) => void;
   onAdd: () => void;
@@ -510,7 +655,9 @@ function StepTeams({
         Step 2 — Teams
       </Text>
       <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
-        Add at least two teams. You can add logos now or update them later from Manage.
+        {format === "knockout"
+          ? "Add at least two teams. List order is seeding (first listed = seed 1)."
+          : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
       <View className="gap-3">
@@ -565,29 +712,50 @@ function StepTeams({
 function StepReview({
   name,
   season,
+  startDate,
+  endDate,
   description,
   leagueLogo,
   country,
   city,
   divisionId,
   tiebreakerId,
+  format,
+  knockoutName,
+  tieFormat,
+  hasThirdPlace,
   teams,
   created,
 }: {
   name: string;
   season: string;
+  startDate: string;
+  endDate: string;
   description: string;
   leagueLogo: PickedImageFile | null;
   country: CountryOption | undefined;
   city: string;
   divisionId: string;
   tiebreakerId: TiebreakerRule;
+  format: CompetitionFormat;
+  knockoutName: string;
+  tieFormat: TieFormatSelection;
+  hasThirdPlace: boolean;
   teams: TeamRow[];
   created: boolean;
 }) {
   const divisionLabel =
     DIVISION_OPTIONS.find((d) => d.id === divisionId)?.label ?? divisionId;
 
+  const durationLabel = formatDurationSummary(startDate, endDate);
+  const formatLabel =
+    format === "knockout" ? "Knockouts" : "League (round-robin)";
+  const tieFormatLabel =
+    tieFormat.kind === "single"
+      ? "Single match"
+      : tieFormat.kind === "two_legged"
+        ? "Home & away"
+        : `Best of ${tieFormat.bestOf}`;
 
   return (
     <View className="gap-5">
@@ -596,7 +764,7 @@ function StepReview({
       </Text>
 
       <View className="gap-3 rounded-2xl bg-neutral-50 px-4 py-4">
-        <SummaryLine label="League">
+        <SummaryLine label="Competition">
           <View className="flex-row items-center gap-3">
             {leagueLogo ? (
               <Image
@@ -611,6 +779,20 @@ function StepReview({
           </View>
         </SummaryLine>
         <SummaryLine label="Season" value={season} />
+        <SummaryLine label="Format" value={formatLabel} />
+        {format === "knockout" ? (
+          <>
+            <SummaryLine label="Knockout stage" value={knockoutName.trim() || "Cup"} />
+            <SummaryLine label="Tie format" value={tieFormatLabel} />
+            <SummaryLine
+              label="Third place"
+              value={hasThirdPlace ? "Yes" : "No"}
+            />
+          </>
+        ) : (
+          <SummaryLine label="Tiebreaker" value={tiebreakerLabel(tiebreakerId)} />
+        )}
+        <SummaryLine label="Duration" value={durationLabel} />
         {country ? (
           <SummaryLine label="Country">
             <CountryLabel
@@ -624,7 +806,6 @@ function StepReview({
         ) : null}
         {city.trim() ? <SummaryLine label="City / area" value={city.trim()} /> : null}
         <SummaryLine label="Division" value={divisionLabel} />
-        <SummaryLine label="Tiebreaker" value={tiebreakerLabel(tiebreakerId)} />
         {description.trim() ? (
           <View className="gap-1 pt-1">
             <Text
@@ -671,16 +852,15 @@ function StepReview({
         <View className="flex-row gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
           <Ionicons name="checkmark-circle-outline" size={22} color="#15803d" style={{ marginTop: 2 }} />
           <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-green-950">
-            Your league is live. Head to the Manage tab to schedule games, invite players, and
-            generate team invite links.
+            Your competition is live. Open Manage to schedule games, seed a cup bracket, or
+            invite players.
           </Text>
         </View>
       ) : (
         <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <Ionicons name="information-circle-outline" size={22} color={colors.brand} style={{ marginTop: 2 }} />
           <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-amber-950">
-            After creating your league, open Manage to generate invite links per team and add
-            players to the roster.
+            After creating, open Manage to invite players or finish knockout seeding if needed.
           </Text>
         </View>
       )}
@@ -712,6 +892,35 @@ function SummaryLine({
       )}
     </View>
   );
+}
+
+function validateLeagueDuration(startDate: string, endDate: string): string | null {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start || !end) {
+    return "Enter start and end dates for the competition.";
+  }
+  if (!parseCalendarDate(start)) {
+    return "Start date must be YYYY-MM-DD.";
+  }
+  if (!parseCalendarDate(end)) {
+    return "End date must be YYYY-MM-DD.";
+  }
+  const startParsed = parseCalendarDate(start)!;
+  const endParsed = parseCalendarDate(end)!;
+  if (endParsed.getTime() < startParsed.getTime()) {
+    return "End date must be on or after the start date.";
+  }
+  return null;
+}
+
+function formatDurationSummary(startDate: string, endDate: string): string {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start && !end) return "—";
+  if (start && end) return `${start} → ${end}`;
+  if (start) return `From ${start}`;
+  return `Until ${end}`;
 }
 
 

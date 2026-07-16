@@ -10,6 +10,11 @@ import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useCreateGame, useLeagueTeams } from "../../hooks";
+import {
+  GameVenuePicker,
+  venuePayloadFromSelection,
+  type GameVenueSelection,
+} from "./GameVenuePicker";
 
 type Props = {
   visible: boolean;
@@ -87,7 +92,9 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
   const [awayTeamId, setAwayTeamId] = useState<number | null>(null);
   const [dateStr, setDateStr] = useState(defaultDate);
   const [timeStr, setTimeStr] = useState("15:00");
-  const [venueName, setVenueName] = useState("");
+  const [venueSelection, setVenueSelection] = useState<GameVenueSelection>({
+    kind: "none",
+  });
   const [firstHalfMinutes, setFirstHalfMinutes] = useState("45");
   const [secondHalfMinutes, setSecondHalfMinutes] = useState("45");
 
@@ -104,7 +111,7 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
     setAwayTeamId(null);
     setDateStr(toCalendarDateParam(new Date()));
     setTimeStr("15:00");
-    setVenueName("");
+    setVenueSelection({ kind: "none" });
     setFirstHalfMinutes("45");
     setSecondHalfMinutes("45");
     onClose();
@@ -130,6 +137,8 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
     const secondHalfDuration = parseHalfMinutes(secondHalfMinutes, "Second half");
     if (secondHalfDuration == null) return;
 
+    const venueFields = venuePayloadFromSelection(venueSelection);
+
     try {
       await createMutation.mutateAsync({
         leagueId,
@@ -137,7 +146,11 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
         homeTeamId,
         awayTeamId,
         playedAt,
-        venueName: venueName.trim() || undefined,
+        ...(venueFields.venueId != null
+          ? { venueId: venueFields.venueId }
+          : venueFields.venueName
+            ? { venueName: venueFields.venueName }
+            : {}),
         status: "scheduled",
         firstHalfDuration,
         secondHalfDuration,
@@ -192,11 +205,11 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
             placeholder="15:00"
             autoCapitalize="none"
           />
-          <AuthTextField
-            label="Venue (optional)"
-            value={venueName}
-            onChangeText={setVenueName}
-            placeholder="Riverside Pitch 2"
+          <GameVenuePicker
+            leagueId={leagueId}
+            enabled={visible}
+            selection={venueSelection}
+            onChange={setVenueSelection}
           />
           <View className="flex-row gap-3">
             <View className="flex-1">

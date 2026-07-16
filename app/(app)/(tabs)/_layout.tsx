@@ -65,6 +65,7 @@ export default function TabsLayout() {
         name="create"
         options={{
           title: "Create",
+          tabBarAccessibilityLabel: "Create competition",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
               name={focused ? "add-circle" : "add-circle-outline"}

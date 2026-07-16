@@ -27,7 +27,9 @@ import {
   useTransmitGameListener,
   type GameSSEPayload,
 } from "@/lib/transmit";
+import { useStageBracket } from "@/knockout";
 import { GameControls } from "@/manage/components/GameControls";
+import { MatchSeriesHeader } from "@/manage/components/MatchSeriesHeader";
 import {
   HybridScoringPanel,
   MatchCenterGoalsTab,
@@ -175,6 +177,14 @@ export default function ManageMatchCenterPage() {
   const liveMinute = useLiveMinute(game);
   const homeTeamId = game?.homeTeam?.id;
   const awayTeamId = game?.awayTeam?.id;
+
+  const stageId = game?.stageId ?? 0;
+  const bracketQuery = useStageBracket(stageId);
+  const seriesTie = useMemo(() => {
+    const tieId = game?.tieId;
+    if (tieId == null) return null;
+    return bracketQuery.data?.ties.find((t) => t.id === tieId) ?? null;
+  }, [bracketQuery.data?.ties, game?.tieId]);
 
   useEffect(() => {
     if (!pendingTeam || pendingStatId != null || !game || homeTeamId == null) {
@@ -392,7 +402,24 @@ export default function ManageMatchCenterPage() {
                 align="right"
               />
             </View>
+            {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
+              <Text
+                style={{ fontFamily: fonts.bodySemibold }}
+                className="text-sm text-accent-200"
+              >
+                Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
+              </Text>
+            ) : game.status === "penalty_shootout" ? (
+              <Text
+                style={{ fontFamily: fonts.bodySemibold }}
+                className="text-sm text-accent-200"
+              >
+                Penalty shootout
+              </Text>
+            ) : null}
           </View>
+
+          <MatchSeriesHeader game={game} tie={seriesTie} />
 
           <GameControls
             game={game}

@@ -5,16 +5,15 @@ import {
   ActivityIndicator,
   RefreshControl,
   SectionList,
-  type SectionListData,
   Text,
   View,
+  type SectionListData,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
-import { Logo } from "@/components/ui/logo";
 import { colors, scoreboardPattern } from "@/constants";
 import { messageFromThrown } from "@/lib/show-error-toast";
 import {
@@ -99,7 +98,7 @@ export default function ManageScreen() {
         />
 
         <View className="px-5 pb-4 pt-2">
-          <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
+          {/* <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} /> */}
           <Text
             style={{ fontFamily: fonts.bodyBold }}
             className="pt-3 text-[26px] text-white"
