@@ -243,9 +243,7 @@ export function MatchCenterSubstitutionPanel({
         >
           Substitutions
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/40">
-          Recorded as match events. Starting lineup on the pitch stays unchanged.
-        </Text>
+       
       </View>
 
       {canDraft ? (

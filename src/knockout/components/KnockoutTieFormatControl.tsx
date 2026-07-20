@@ -85,6 +85,7 @@ export function KnockoutTieFormatControl({
             <Pressable
               key={preset.id}
               onPress={() => onChange(preset.selection)}
+              style={{ maxWidth: "100%" }}
               className={`rounded-xl border px-3 py-2 ${
                 active
                   ? isDark
@@ -106,6 +107,8 @@ export function KnockoutTieFormatControl({
                       ? "text-white/70"
                       : "text-slate-800"
                 }
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {preset.label}
               </Text>
@@ -151,13 +154,14 @@ export function KnockoutTieFormatControl({
               awayGoals: !(value.awayGoals ?? false),
             })
           }
-          className={`flex-row items-center justify-between rounded-xl border px-3 py-3 ${
+          className={`flex-row items-center justify-between gap-3 rounded-xl border px-3 py-3 ${
             isDark ? "border-white/15 bg-white/5" : "border-slate-200 bg-slate-50"
           }`}
         >
           <Text
             style={{ fontFamily: fonts.body }}
             className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
+            numberOfLines={1}
           >
             Away goals tiebreak
           </Text>
@@ -180,13 +184,14 @@ export function KnockoutTieFormatControl({
 
       <Pressable
         onPress={() => onHasThirdPlaceChange(!hasThirdPlace)}
-        className={`flex-row items-center justify-between rounded-xl border px-3 py-3 ${
+        className={`flex-row items-center justify-between gap-3 rounded-xl border px-3 py-3 ${
           isDark ? "border-white/15 bg-white/5" : "border-slate-200 bg-slate-50"
         }`}
       >
         <Text
           style={{ fontFamily: fonts.body }}
           className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
+          numberOfLines={1}
         >
           Third-place playoff
         </Text>

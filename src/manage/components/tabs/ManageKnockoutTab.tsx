@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 
-import type { ApiStage, ApiTeam } from "@/api/entities";
+import type { ApiStage, ApiTeam, KnockoutStageConfig } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -17,7 +17,9 @@ import {
   BracketView,
   KnockoutTieFormatControl,
   buildKnockoutConfig,
+  buildSeedPreviewTies,
   byeCountForTeamCount,
+  byeExplanation,
   completedRoundReadyForNext,
   useCreateKnockoutStage,
   useGenerateNextRound,
@@ -57,17 +59,30 @@ export function ManageKnockoutTab({
 
   const [createOpen, setCreateOpen] = useState(false);
   const [seedOpen, setSeedOpen] = useState(false);
+  const hasKnockoutStage = knockouts.length > 0;
 
   return (
     <View className="gap-6 pb-8">
       <View className="flex-row items-center justify-between gap-3">
         <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          Seed brackets, advance rounds, or add a cup stage to this season.
+          {hasKnockoutStage
+            ? "Seed the bracket and advance rounds for this knockout competition."
+            : "Add a cup stage, then seed teams in draw order to build the bracket."}
         </Text>
         <Button
           variant="authPurple"
           label="Add cup"
-          onPress={() => setCreateOpen(true)}
+          disabled={hasKnockoutStage}
+          onPress={() => {
+            if (hasKnockoutStage) {
+              showInfoToast(
+                "Stage already exists",
+                "Knockout competitions can only have one stage.",
+              );
+              return;
+            }
+            setCreateOpen(true);
+          }}
           className="h-11 px-4"
         />
       </View>
@@ -232,6 +247,10 @@ function KnockoutStagePanel({
         <BracketView
           ties={ties}
           tone="dark"
+          hasThirdPlace={Boolean(
+            (stage.config as KnockoutStageConfig | undefined)?.format
+              ?.has_third_place,
+          )}
           onTiePress={(tie) => {
             const openGame = (tie.games ?? []).find(
               (g) =>
@@ -341,12 +360,23 @@ function SeedKnockoutSheet({
 }) {
   const seedMutation = useSeedKnockoutStage(leagueId, seasonId);
   const [order, setOrder] = useState<ApiTeam[]>(() => [...teams]);
+  const [step, setStep] = useState<"order" | "preview">("order");
 
   useEffect(() => {
-    if (visible) setOrder([...teams]);
+    if (visible) {
+      setOrder([...teams]);
+      setStep("order");
+    }
   }, [visible, teams]);
 
   const byeCount = byeCountForTeamCount(order.length);
+  const previewTies = useMemo(
+    () => buildSeedPreviewTies(order, stage.config),
+    [order, stage.config],
+  );
+  const hasThirdPlace = Boolean(
+    (stage.config as KnockoutStageConfig | undefined)?.format?.has_third_place,
+  );
 
   const move = (index: number, dir: -1 | 1) => {
     const next = index + dir;
@@ -360,11 +390,15 @@ function SeedKnockoutSheet({
     });
   };
 
-  const handleSeed = async () => {
+  const handlePreview = () => {
     if (order.length < 2) {
       showInfoToast("Need teams", "Add at least two teams before seeding.");
       return;
     }
+    setStep("preview");
+  };
+
+  const handleGenerate = async () => {
     try {
       await seedMutation.mutateAsync({
         stageId: stage.id,
@@ -381,48 +415,100 @@ function SeedKnockoutSheet({
     <BottomSheetModal
       visible={visible}
       onClose={onClose}
-      title="Seed bracket"
-      subtitle="Top of the list = seed 1. Byes pad non–power-of-two draws."
+      title={step === "order" ? "Seed bracket" : "Preview bracket"}
+      subtitle={
+        step === "order"
+          ? "Top of the list is seed 1. Teams pair in list order — 1 v 2, 3 v 4 — and byes go to the top seeds."
+          : "Check the matchups before you lock them in."
+      }
       scrollEnabled
     >
-      <View className="gap-3">
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-600">
-          {order.length} teams
-          {byeCount > 0 ? ` · ${byeCount} bye${byeCount === 1 ? "" : "s"}` : ""}
-        </Text>
-        {order.map((team, index) => (
-          <View
-            key={team.id}
-            className="flex-row items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-          >
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="w-8 text-sm text-brand-700"
+      {step === "order" ? (
+        <View className="gap-3">
+          <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-600">
+            {order.length} teams
+            {byeCount > 0
+              ? byeCount === 1
+                ? " · top seed skips round one"
+                : ` · top ${byeCount} seeds skip round one`
+              : ""}
+          </Text>
+          {order.map((team, index) => (
+            <View
+              key={team.id}
+              className="flex-row items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
             >
-              {index + 1}
-            </Text>
-            <Text
-              style={{ fontFamily: fonts.bodySemibold }}
-              className="flex-1 text-sm text-slate-900"
-              numberOfLines={1}
-            >
-              {team.name}
-            </Text>
-            <Pressable onPress={() => move(index, -1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-up" size={18} color="#64748b" />
-            </Pressable>
-            <Pressable onPress={() => move(index, 1)} hitSlop={8} className="p-1">
-              <Ionicons name="chevron-down" size={18} color="#64748b" />
-            </Pressable>
+              <Text
+                style={{ fontFamily: fonts.bodyBold }}
+                className="w-8 text-sm text-brand-700"
+              >
+                {index + 1}
+              </Text>
+              <Text
+                style={{ fontFamily: fonts.bodySemibold }}
+                className="flex-1 text-sm text-slate-900"
+                numberOfLines={1}
+              >
+                {team.name}
+              </Text>
+              <Pressable onPress={() => move(index, -1)} hitSlop={8} className="p-1">
+                <Ionicons name="chevron-up" size={18} color="#64748b" />
+              </Pressable>
+              <Pressable onPress={() => move(index, 1)} hitSlop={8} className="p-1">
+                <Ionicons name="chevron-down" size={18} color="#64748b" />
+              </Pressable>
+            </View>
+          ))}
+          <Button
+            variant="authPurple"
+            label="Preview bracket"
+            onPress={handlePreview}
+          />
+        </View>
+      ) : (
+        <View className="gap-4">
+          <View style={{ marginHorizontal: -20 }}>
+            <BracketView
+              ties={previewTies}
+              tone="dark"
+              hasThirdPlace={hasThirdPlace}
+            />
           </View>
-        ))}
-        <Button
-          variant="authPurple"
-          label={seedMutation.isPending ? "Seeding…" : "Seed bracket"}
-          loading={seedMutation.isPending}
-          onPress={() => void handleSeed()}
-        />
-      </View>
+          {byeExplanation(order.length) ? (
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-sm leading-6 text-slate-600"
+            >
+              {byeExplanation(order.length)}
+            </Text>
+          ) : null}
+          <View className="flex-row items-start gap-2 rounded-xl border border-accent-200 bg-accent-50 px-3 py-3">
+            <Ionicons name="warning" size={18} color="#B88312" />
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="flex-1 text-sm leading-5 text-slate-700"
+            >
+              Generating the bracket locks the seeding. You can&apos;t reorder
+              or re-seed teams once ties and fixtures are created.
+            </Text>
+          </View>
+          <View className="flex-row gap-3">
+            <Button
+              variant="secondary"
+              label="Back"
+              onPress={() => setStep("order")}
+              className="flex-1"
+            />
+            <Button
+              variant="authPurple"
+              label={seedMutation.isPending ? "Generating…" : "Generate bracket"}
+              loading={seedMutation.isPending}
+              onPress={() => void handleGenerate()}
+              className="flex-1"
+            />
+          </View>
+        </View>
+      )}
     </BottomSheetModal>
   );
 }

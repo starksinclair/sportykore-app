@@ -2,6 +2,7 @@ import { apiRequest } from "@/api/http-client";
 import type { PickedImageFile } from "@/lib/picked-image";
 import type {
   CompetitionFormat,
+  GroupStageConfig,
   KnockoutStageConfig,
 } from "@/api/entities";
 
@@ -33,6 +34,11 @@ export type CreateLeagueKnockoutPayload = {
   config: KnockoutStageConfig;
 };
 
+export type CreateLeagueGroupPayload = {
+  name?: string;
+  config?: GroupStageConfig;
+};
+
 export type CreateLeaguePayload = {
   name: string;
   seasonName: string;
@@ -45,6 +51,7 @@ export type CreateLeaguePayload = {
   endDate?: string;
   format?: CompetitionFormat;
   knockout?: CreateLeagueKnockoutPayload;
+  group?: CreateLeagueGroupPayload;
   teams?: CreateLeagueTeamPayload[];
 };
 
@@ -74,7 +81,9 @@ function readCreateLeagueResult(body: unknown): CreateLeagueResult {
     seasonId: typeof record.seasonId === "number" ? record.seasonId : undefined,
     stageId: typeof record.stageId === "number" ? record.stageId : undefined,
     format:
-      record.format === "league" || record.format === "knockout"
+      record.format === "league" ||
+      record.format === "knockout" ||
+      record.format === "group"
         ? record.format
         : undefined,
     seeded: typeof record.seeded === "boolean" ? record.seeded : undefined,
@@ -120,6 +129,9 @@ function buildCreateLeagueFormData(payload: CreateLeaguePayload): FormData {
   }
   if (payload.knockout) {
     form.append("knockout", JSON.stringify(payload.knockout));
+  }
+  if (payload.group) {
+    form.append("group", JSON.stringify(payload.group));
   }
   if (payload.logo) {
     appendImageFile(form, "logo", payload.logo);

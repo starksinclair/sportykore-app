@@ -57,6 +57,7 @@ export function BottomSheetModal({
                     isDark && styles.titleDark,
                     { fontFamily: fonts.bodyBold },
                   ]}
+                  numberOfLines={2}
                 >
                   {title}
                 </Text>
@@ -67,6 +68,7 @@ export function BottomSheetModal({
                       isDark && styles.subtitleDark,
                       { fontFamily: fonts.body },
                     ]}
+                    numberOfLines={3}
                   >
                     {subtitle}
                   </Text>
@@ -112,11 +114,11 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   sheet: {
-    maxHeight: "100%",
+    maxHeight: "94%",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
   },
@@ -132,11 +134,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 16,
+    gap: 10,
     marginBottom: 12,
   },
   headerCopy: {
     flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   title: {
@@ -149,8 +152,8 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   closeButton: {
-    height: 40,
-    width: 40,
+    height: 36,
+    width: 36,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,

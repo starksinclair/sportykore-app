@@ -21,6 +21,11 @@ import {
   buildKnockoutConfig,
   type TieFormatSelection,
 } from "@/knockout";
+import {
+  GroupFormatConfigControl,
+  buildDefaultGroupConfig,
+  type GroupFormatFormState,
+} from "@/groups";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -61,13 +66,19 @@ export function ManageSettingsTab({
   const [newSeasonStatus, setNewSeasonStatus] = useState<SeasonStatus>(
     SeasonStatusEnum.Inactive,
   );
-  const [newSeasonFormat, setNewSeasonFormat] = useState<"league" | "knockout">(
-    "league",
-  );
+  const [newSeasonFormat, setNewSeasonFormat] = useState<
+    "league" | "knockout" | "group"
+  >("league");
   const [newSeasonTieFormat, setNewSeasonTieFormat] = useState<TieFormatSelection>({
     kind: "single",
   });
   const [newSeasonThirdPlace, setNewSeasonThirdPlace] = useState(false);
+  const [newSeasonGroupForm, setNewSeasonGroupForm] =
+    useState<GroupFormatFormState>({
+      groupCount: 2,
+      doubleRoundRobin: false,
+      perGroup: 2,
+    });
 
   useEffect(() => {
     setName(league.name);
@@ -131,12 +142,28 @@ export function ManageSettingsTab({
                 ),
               }
             : undefined,
+        group:
+          newSeasonFormat === "group"
+            ? {
+                name: "Group Stage",
+                config: buildDefaultGroupConfig({
+                  groupCount: newSeasonGroupForm.groupCount,
+                  doubleRoundRobin: newSeasonGroupForm.doubleRoundRobin,
+                  perGroup: newSeasonGroupForm.perGroup,
+                }),
+              }
+            : undefined,
       });
       setNewSeasonName("");
       setNewSeasonStatus(SeasonStatusEnum.Inactive);
       setNewSeasonFormat("league");
       setNewSeasonTieFormat({ kind: "single" });
       setNewSeasonThirdPlace(false);
+      setNewSeasonGroupForm({
+        groupCount: 2,
+        doubleRoundRobin: false,
+        perGroup: 2,
+      });
       onSeasonCreated(created.id);
       showInfoToast("Season created", `"${created.name}" is now available in the picker.`);
     } catch (err) {
@@ -344,6 +371,7 @@ export function ManageSettingsTab({
               [
                 { id: "league" as const, label: "League (round-robin)" },
                 { id: "knockout" as const, label: "Knockouts" },
+                { id: "group" as const, label: "Groups" },
               ] as const
             ).map((opt) => {
               const active = newSeasonFormat === opt.id;
@@ -373,6 +401,13 @@ export function ManageSettingsTab({
               onChange={setNewSeasonTieFormat}
               hasThirdPlace={newSeasonThirdPlace}
               onHasThirdPlaceChange={setNewSeasonThirdPlace}
+              tone="dark"
+            />
+          ) : null}
+          {newSeasonFormat === "group" ? (
+            <GroupFormatConfigControl
+              value={newSeasonGroupForm}
+              onChange={setNewSeasonGroupForm}
               tone="dark"
             />
           ) : null}

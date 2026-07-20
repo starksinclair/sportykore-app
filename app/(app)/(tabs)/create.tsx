@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import type { CompetitionFormat } from "@/api/entities";
 import { ApiError } from "@/api/errors";
 import { useAuthGate } from "@/auth";
 import { Button } from "@/components/ui/Button";
@@ -26,16 +27,19 @@ import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
-import type { CompetitionFormat } from "@/api/entities";
-import { CompetitionFormatPicker } from "@/league/components/CompetitionFormatPicker";
-import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
-import { useCreateLeague } from "@/league/hooks";
+import {
+  GroupFormatConfigControl,
+  buildDefaultGroupConfig,
+  type GroupFormatFormState,
+} from "@/groups";
 import {
   KnockoutTieFormatControl,
   buildKnockoutConfig,
   type TieFormatSelection,
 } from "@/knockout";
-import { parseCalendarDate } from "@/lib/datetime";
+import { CompetitionFormatPicker } from "@/league/components/CompetitionFormatPicker";
+import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
+import { useCreateLeague } from "@/league/hooks";
 import {
   DIVISION_OPTIONS,
   type CountryOption,
@@ -45,6 +49,7 @@ import {
   tiebreakerLabel,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import { parseCalendarDate } from "@/lib/datetime";
 import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { fonts } from "@/theme/fonts";
@@ -65,7 +70,7 @@ export default function CreateScreen() {
   const [step, setStep] = useState(1);
 
   const [name, setName] = useState("");
-  const [season, setSeason] = useState("");
+  const season = String(new Date().getFullYear());
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
@@ -78,6 +83,11 @@ export default function CreateScreen() {
   const [knockoutName, setKnockoutName] = useState("Cup");
   const [tieFormat, setTieFormat] = useState<TieFormatSelection>({ kind: "single" });
   const [hasThirdPlace, setHasThirdPlace] = useState(false);
+  const [groupForm, setGroupForm] = useState<GroupFormatFormState>({
+    groupCount: 2,
+    doubleRoundRobin: false,
+    perGroup: 2,
+  });
 
   const [teams, setTeams] = useState<TeamRow[]>(() => [
     { id: "t1", name: "", logo: null },
@@ -94,7 +104,6 @@ export default function CreateScreen() {
   const durationError = validateLeagueDuration(startDate, endDate);
   const step1Valid =
     name.trim().length > 0 &&
-    season.trim().length > 0 &&
     selectedCountry !== null &&
     Boolean(format) &&
     startDate.trim().length > 0 &&
@@ -110,7 +119,7 @@ export default function CreateScreen() {
       if (!step1Valid) {
         setStepError(
           durationError ??
-            "Add competition name, season, country, format, and start/end dates to continue.",
+            "Add competition name, country, format, and start/end dates to continue.",
         );
         return;
       }
@@ -156,15 +165,26 @@ export default function CreateScreen() {
                 config: buildKnockoutConfig(tieFormat, hasThirdPlace),
               }
             : undefined,
+        group:
+          format === "group"
+            ? {
+                name: "Group Stage",
+                config: buildDefaultGroupConfig({
+                  groupCount: groupForm.groupCount,
+                  doubleRoundRobin: groupForm.doubleRoundRobin,
+                  perGroup: groupForm.perGroup,
+                }),
+              }
+            : undefined,
         teams: namedTeams.map((team) => ({
           name: team.name.trim(),
           logo: team.logo ?? undefined,
         })),
       });
       setCreated(true);
-      if (result.leagueId != null) {
-        router.push(`/manage/${result.leagueId}`);
-      }
+      // if (result.leagueId != null) {
+      //   router.push(`/manage/${result.leagueId}`);
+      // }
     } catch (err) {
       console.error("Failed to create competition", err);
       if (err instanceof ApiError && err.status === 401) {
@@ -203,7 +223,6 @@ export default function CreateScreen() {
   const resetWizard = () => {
     setStep(1);
     setName("");
-    setSeason("");
     setStartDate("");
     setEndDate("");
     setDescription("");
@@ -216,6 +235,11 @@ export default function CreateScreen() {
     setKnockoutName("Cup");
     setTieFormat({ kind: "single" });
     setHasThirdPlace(false);
+    setGroupForm({
+      groupCount: 2,
+      doubleRoundRobin: false,
+      perGroup: 2,
+    });
     setTeams([
       { id: "t1", name: "", logo: null },
       { id: "t2", name: "", logo: null },
@@ -260,7 +284,7 @@ export default function CreateScreen() {
                 style={{ fontFamily: fonts.body }}
                 className="text-sm leading-6 text-white/70"
               >
-                Three quick steps — pick a league table or a knockout cup, then manage it live.
+                Three quick steps — pick a league, groups, or knockout cup, then manage it live.
               </Text>
             </View>
 
@@ -301,8 +325,6 @@ export default function CreateScreen() {
                 <StepBasics
                   name={name}
                   setName={setName}
-                  season={season}
-                  setSeason={setSeason}
                   startDate={startDate}
                   setStartDate={setStartDate}
                   endDate={endDate}
@@ -325,6 +347,8 @@ export default function CreateScreen() {
                   setTieFormat={setTieFormat}
                   hasThirdPlace={hasThirdPlace}
                   setHasThirdPlace={setHasThirdPlace}
+                  groupForm={groupForm}
+                  setGroupForm={setGroupForm}
                   selectedCountry={selectedCountry}
                   onSelectCountry={setSelectedCountry}
                 />
@@ -357,6 +381,7 @@ export default function CreateScreen() {
                   knockoutName={knockoutName}
                   tieFormat={tieFormat}
                   hasThirdPlace={hasThirdPlace}
+                  groupForm={groupForm}
                   teams={namedTeams}
                   created={created}
                 />
@@ -377,7 +402,7 @@ export default function CreateScreen() {
                   ) : null}
                   <Button
                     variant="primary"
-                    label={step === 3 ? "Create competition" : "Continue"}
+                    label={step === 3 ? "Create" : "Continue"}
                     className="flex-1"
                     onPress={step === 3 ? handleCreate : goNext}
                     loading={createLeagueMutation.isPending}
@@ -398,8 +423,6 @@ export default function CreateScreen() {
 function StepBasics({
   name,
   setName,
-  season,
-  setSeason,
   startDate,
   setStartDate,
   endDate,
@@ -422,13 +445,13 @@ function StepBasics({
   setTieFormat,
   hasThirdPlace,
   setHasThirdPlace,
+  groupForm,
+  setGroupForm,
   selectedCountry,
   onSelectCountry,
 }: {
   name: string;
   setName: (v: string) => void;
-  season: string;
-  setSeason: (v: string) => void;
   startDate: string;
   setStartDate: (v: string) => void;
   endDate: string;
@@ -451,6 +474,8 @@ function StepBasics({
   setTieFormat: (v: TieFormatSelection) => void;
   hasThirdPlace: boolean;
   setHasThirdPlace: (v: boolean) => void;
+  groupForm: GroupFormatFormState;
+  setGroupForm: (v: GroupFormatFormState) => void;
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
@@ -473,15 +498,6 @@ function StepBasics({
         value={name}
         onChangeText={setName}
         autoCapitalize="words"
-      />
-
-      <AuthTextField
-        label="Season"
-        required
-        placeholder="e.g. 2025/26"
-        value={season}
-        onChangeText={setSeason}
-        autoCapitalize="none"
       />
 
       <View className="gap-2">
@@ -543,7 +559,7 @@ function StepBasics({
           onChange={setTiebreakerId}
           variant="light"
         />
-      ) : (
+      ) : format === "knockout" ? (
         <View className="gap-3">
           <AuthTextField
             label="Knockout stage name"
@@ -559,6 +575,8 @@ function StepBasics({
             tone="light"
           />
         </View>
+      ) : (
+        <GroupFormatConfigControl value={groupForm} onChange={setGroupForm} />
       )}
 
       <View className="gap-1.5">
@@ -657,7 +675,9 @@ function StepTeams({
       <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
         {format === "knockout"
           ? "Add at least two teams. List order is seeding (first listed = seed 1)."
-          : "Add at least two teams. You can add logos now or update them later from Manage."}
+          : format === "group"
+            ? "Add enrolled teams. You’ll assign them to groups from Manage → Groups."
+            : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
       <View className="gap-3">
@@ -724,6 +744,7 @@ function StepReview({
   knockoutName,
   tieFormat,
   hasThirdPlace,
+  groupForm,
   teams,
   created,
 }: {
@@ -741,6 +762,7 @@ function StepReview({
   knockoutName: string;
   tieFormat: TieFormatSelection;
   hasThirdPlace: boolean;
+  groupForm: GroupFormatFormState;
   teams: TeamRow[];
   created: boolean;
 }) {
@@ -749,7 +771,11 @@ function StepReview({
 
   const durationLabel = formatDurationSummary(startDate, endDate);
   const formatLabel =
-    format === "knockout" ? "Knockouts" : "League (round-robin)";
+    format === "knockout"
+      ? "Knockouts"
+      : format === "group"
+        ? "Groups"
+        : "League (round-robin)";
   const tieFormatLabel =
     tieFormat.kind === "single"
       ? "Single match"
@@ -787,6 +813,18 @@ function StepReview({
             <SummaryLine
               label="Third place"
               value={hasThirdPlace ? "Yes" : "No"}
+            />
+          </>
+        ) : format === "group" ? (
+          <>
+            <SummaryLine label="Groups" value={String(groupForm.groupCount)} />
+            <SummaryLine
+              label="Round robin"
+              value={groupForm.doubleRoundRobin ? "Home & away" : "Single"}
+            />
+            <SummaryLine
+              label="Advance per group"
+              value={String(groupForm.perGroup)}
             />
           </>
         ) : (

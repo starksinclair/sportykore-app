@@ -5,8 +5,8 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { colors } from "@/constants";
-import type { PickedImageFile } from "@/lib/picked-image";
 import { pickProfileImage } from "@/lib/pick-profile-image";
+import type { PickedImageFile } from "@/lib/picked-image";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 

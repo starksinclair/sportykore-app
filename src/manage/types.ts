@@ -4,6 +4,7 @@ import type {
   ApiSeason,
   ApiTeam,
   CompetitionFormat,
+  GroupStageConfig,
   KnockoutStageConfig,
   PlayerPosition,
   SeasonStatus,
@@ -175,6 +176,10 @@ export type CreateSeasonPayload = {
   knockout?: {
     name?: string;
     config: KnockoutStageConfig;
+  };
+  group?: {
+    name?: string;
+    config?: GroupStageConfig;
   };
 };
 

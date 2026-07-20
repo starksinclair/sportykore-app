@@ -64,7 +64,9 @@ export function DetailTabs<T extends string>({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerClassName="px-1"
+      nestedScrollEnabled
+      className="grow-0"
+      contentContainerClassName="grow px-1"
     >
       {row}
     </ScrollView>

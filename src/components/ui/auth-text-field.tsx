@@ -18,6 +18,7 @@ export type AuthTextFieldProps = TextInputProps & {
   required?: boolean;
   /** Renders aligned with the label row (e.g. “Forgot?”). */
   labelAccessory?: ReactNode;
+  labelClassName?: string;
   leftIcon?: ReactNode;
   rightAccessory?: ReactNode;
   containerClassName?: string;
@@ -31,6 +32,7 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
       label,
       required = false,
       labelAccessory,
+      labelClassName,
       leftIcon,
       rightAccessory,
       containerClassName,
@@ -44,7 +46,11 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
     return (
       <View className={`gap-1.5 ${containerClassName ?? ""}`}>
         <View className="flex-row items-center justify-between gap-2">
-          <FormFieldLabel label={label} required={required} />
+          <FormFieldLabel
+            label={label}
+            required={required}
+            className={labelClassName}
+          />
           {labelAccessory}
         </View>
         <View

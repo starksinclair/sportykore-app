@@ -87,8 +87,13 @@ export function pickPrimaryStage(
 ): ApiStage | null {
   if (!stages?.length) return null;
   const ordered = [...stages].sort((a, b) => a.sequence - b.sequence);
+  const active = [...ordered]
+    .filter((s) => s.status === "active")
+    .sort((a, b) => b.sequence - a.sequence);
+  if (active[0]) return active[0];
   return (
     ordered.find((s) => s.stageType === "knockout") ??
+    ordered.find((s) => s.stageType === "group") ??
     ordered.find((s) => s.stageType === "round_robin") ??
     ordered[0] ??
     null
@@ -97,6 +102,10 @@ export function pickPrimaryStage(
 
 export function hasRoundRobinStage(stages: ApiStage[] | undefined | null): boolean {
   return Boolean(stages?.some((s) => s.stageType === "round_robin"));
+}
+
+export function hasGroupStage(stages: ApiStage[] | undefined | null): boolean {
+  return Boolean(stages?.some((s) => s.stageType === "group"));
 }
 
 export function knockoutStages(stages: ApiStage[] | undefined | null): ApiStage[] {

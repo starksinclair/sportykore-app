@@ -27,9 +27,9 @@ export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
-    allowsEditing: true,
+    allowsEditing: false,
     aspect: [1, 1],
-    quality: 1,
+    quality: 0.8,
   });
 
   if (result.canceled || !result.assets[0]) {

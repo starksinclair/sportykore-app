@@ -94,6 +94,13 @@ export async function apiRequest<T = unknown>(
 
   const parsed = await readJsonSafe(res);
 
+  // if (__DEV__) {
+  //   console.log(
+  //     `[api] ${(rest.method ?? "GET").toUpperCase()} ${path} → ${res.status}`,
+  //     parsed,
+  //   );
+  // }
+
   if (!res.ok) {
     const message =
       messageFromBackendBody(parsed as ApiParsedErrorPayload) ??

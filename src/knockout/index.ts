@@ -23,11 +23,23 @@ export {
 } from "./hooks";
 export { knockoutKeys } from "./queryKeys";
 export {
+  ROUND_SIZE,
+  buildBracketScaffold,
+  buildSeedPreviewTies,
+  byeExplanation,
+  entryRoundForTeamCount,
+  roundFromSize,
+  type BracketColumn,
+  type BracketScaffold,
+  type BracketSlot,
+} from "./bracket";
+export {
   BRACKET_ROUND_ORDER,
   ROUND_LABELS,
   byeCountForTeamCount,
   completedRoundReadyForNext,
   groupTiesByRound,
+  hasGroupStage,
   hasRoundRobinStage,
   isRoundComplete,
   knockoutStages,
@@ -38,6 +50,7 @@ export {
   seriesScoreLabel,
   splitTiesSides,
 } from "./utils";
+export { seedSourceFromTeamIds, type SeedSource } from "./seedSource";
 export {
   BracketView,
   TieCard,

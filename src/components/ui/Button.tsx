@@ -62,7 +62,7 @@ export function Button({
       accessibilityRole="button"
       disabled={isDisabled}
       className={[
-        "items-center justify-center flex-row",
+        "min-w-0 items-center justify-center flex-row",
         sizeClasses[size],
         containerByVariant[variant],
         isDisabled ? "opacity-50" : "",
@@ -75,14 +75,17 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={indicatorColor} />
       ) : (
-        <View className="flex-row items-center gap-2">
+        <View className="min-w-0 flex-row items-center gap-2">
           {icon && iconPosition === "left" ? icon : null}
           {label ? (
             <Text
               className={[
-                "text-base font-semibold",
+                "min-w-0 text-center text-base font-semibold",
                 labelByVariant[variant],
               ].join(" ")}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.82}
             >
               {label}
             </Text>

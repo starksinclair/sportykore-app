@@ -23,6 +23,11 @@ const FORMAT_OPTIONS: {
     label: "Knockouts",
     description: "Cup bracket. Team order on the next step becomes seeding.",
   },
+  {
+    id: "group",
+    label: "Groups",
+    description: "Split teams into groups, then advance to a knockout.",
+  },
 ];
 
 function formatLabel(format: CompetitionFormat): string {

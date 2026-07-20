@@ -86,6 +86,19 @@ export type ApiPlayerWithStats = ApiPlayer & {
   stats: ApiStat[];
 };
 
+export type StandingZoneType =
+  | "promotion"
+  | "promotion_playoff"
+  | "playoff"
+  | "relegation_playoff"
+  | "relegation"
+  | "qualified";
+
+export type ApiStandingZoneTag = {
+  type: StandingZoneType;
+  label?: string | null;
+};
+
 export type ApiStanding = {
   id: number;
   position: number;
@@ -99,6 +112,76 @@ export type ApiStanding = {
   points: number;
   form: string | null;
   team?: ApiTeam;
+  pointsAdjustment?: number | null;
+  adjustmentReasons?: string[];
+  manuallyAdjusted?: boolean;
+  overrideReason?: string | null;
+  zone?: ApiStandingZoneTag | null;
+};
+
+export type ApiStageGroup = {
+  id: number;
+  stageId: number;
+  name: string;
+  sequence: number;
+};
+
+export type ApiStandingAdjustment = {
+  id: number;
+  stageId: number;
+  teamId: number;
+  stageGroupId?: number | null;
+  pointsDelta: number;
+  reason: string;
+  team?: ApiTeam;
+};
+
+export type ApiStandingOverride = {
+  id: number;
+  stageId: number;
+  teamId: number;
+  stageGroupId?: number | null;
+  rank: number;
+  reason: string;
+  cohortSignature: string;
+  stale?: boolean;
+  team?: ApiTeam;
+};
+
+export type ApiStandingZone = {
+  id: number;
+  stageId: number;
+  stageGroupId?: number | null;
+  zoneType: StandingZoneType;
+  fromPosition: number;
+  toPosition: number;
+  label?: string | null;
+};
+
+export type ApiStageStandingsTable = {
+  stageGroupId: number | null;
+  stageGroupName: string | null;
+  sequence: number | null;
+  rows: ApiStanding[];
+  staleOverrides: ApiStandingOverride[];
+};
+
+export type ApiStageStandings = {
+  stage: ApiStage;
+  tables: ApiStageStandingsTable[];
+};
+
+export type ApiAdminAuditLog = {
+  id: number;
+  leagueId: number;
+  action: string;
+  actorId?: number | null;
+  actorName?: string | null;
+  targetType?: string | null;
+  targetId?: number | null;
+  targetLabel?: string | null;
+  metadata?: Record<string, unknown> | null;
+  createdAt: string;
 };
 
 export type GameStatus =
@@ -142,7 +225,7 @@ export type BracketRound =
   | "final"
   | "third_place";
 
-export type CompetitionFormat = "league" | "knockout";
+export type CompetitionFormat = "league" | "knockout" | "group";
 
 export type KnockoutTieConfig = {
   tie_format: TieFormat;
@@ -161,6 +244,16 @@ export type KnockoutStageConfig = {
   };
 };
 
+export type GroupStageConfig = {
+  format: {
+    group_count: number;
+    double_round_robin: boolean;
+  };
+  advancement: {
+    per_group: number;
+  };
+};
+
 export type ApiStage = {
   id: number;
   seasonId: number;
@@ -169,7 +262,8 @@ export type ApiStage = {
   sequence: number;
   status: StageStatus;
   sourceStageId?: number | null;
-  config: KnockoutStageConfig | Record<string, unknown>;
+  config: KnockoutStageConfig | GroupStageConfig | Record<string, unknown>;
+  groups?: ApiStageGroup[];
 };
 
 export type ApiTie = {
@@ -210,6 +304,7 @@ export type ApiGame = {
   pausedAt?: string | null;
   pausedFromStatus?: PausedFromStatus | null;
   stageId?: number | null;
+  stageGroupId?: number | null;
   tieId?: number | null;
   leg?: number | null;
   round?: BracketRound | null;

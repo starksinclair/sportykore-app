@@ -13,10 +13,11 @@ import {
 } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { hasGroupStage } from "@/groups";
 import { LeagueBracketTab } from "@/league/components/tabs/BracketTab";
 import { LeagueMatchesTab } from "@/league/components/tabs/MatchesTab";
 import { LeagueOverviewTab } from "@/league/components/tabs/OverviewTab";
-import { LeagueStandingsTab } from "@/league/components/tabs/StandingsTab";
+import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
 import { LeagueStatsTab } from "@/league/components/tabs/StatsTab";
 import { useLeagueDetail } from "@/league";
 import {
@@ -42,6 +43,8 @@ export default function LeagueRoute() {
   const primary = pickPrimaryStage(stages);
   const knockouts = knockoutStages(stages);
   const hasRr = hasRoundRobinStage(stages);
+  const hasGroup = hasGroupStage(stages);
+  const hasTableStage = hasRr || hasGroup;
 
   useEffect(() => {
     if (primary && activeStageId == null) {
@@ -52,9 +55,17 @@ export default function LeagueRoute() {
   const selectedStage: ApiStage | null =
     stages.find((s) => s.id === activeStageId) ?? primary;
 
+  const standingStage: ApiStage | null =
+    selectedStage?.stageType === "round_robin" ||
+    selectedStage?.stageType === "group"
+      ? selectedStage
+      : stages.find((s) => s.stageType === "group") ??
+        stages.find((s) => s.stageType === "round_robin") ??
+        null;
+
   const tabs: readonly DetailTab<TabKey>[] = useMemo(() => {
     const list: DetailTab<TabKey>[] = [{ key: "overview", label: "Overview" }];
-    if (hasRr) {
+    if (hasTableStage) {
       list.push({ key: "matches", label: "Matches" });
       list.push({ key: "standings", label: "Standings" });
     }
@@ -63,7 +74,7 @@ export default function LeagueRoute() {
     }
     list.push({ key: "stats", label: "Stats" });
     return list;
-  }, [hasRr, knockouts.length]);
+  }, [hasTableStage, knockouts.length]);
 
   useEffect(() => {
     if (!tabs.some((t) => t.key === activeTab)) {
@@ -104,6 +115,16 @@ export default function LeagueRoute() {
     status: entry.status,
   }));
 
+  const matchesForTab =
+    selectedStage?.stageType === "group"
+      ? (season.games ?? []).filter(
+          (g) =>
+            g.stageId === selectedStage.id ||
+            (g.stageGroupId != null &&
+              (selectedStage.groups ?? []).some((gr) => gr.id === g.stageGroupId)),
+        )
+      : season.games;
+
   return (
     <DetailScreenShell
       title={season.league.name}
@@ -136,7 +157,10 @@ export default function LeagueRoute() {
                         setActiveStageId(stage.id);
                         if (stage.stageType === "knockout") {
                           setActiveTab("bracket");
-                        } else if (stage.stageType === "round_robin") {
+                        } else if (
+                          stage.stageType === "round_robin" ||
+                          stage.stageType === "group"
+                        ) {
                           setActiveTab("standings");
                         }
                       }}
@@ -149,7 +173,9 @@ export default function LeagueRoute() {
                       <Text
                         style={{ fontFamily: fonts.bodySemibold }}
                         className={
-                          active ? "text-xs text-accent-200" : "text-xs text-white/60"
+                          active
+                            ? "text-xs text-accent-200"
+                            : "text-xs text-white/60"
                         }
                       >
                         {stage.name}
@@ -163,19 +189,27 @@ export default function LeagueRoute() {
             tabs={tabs}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            scrollable
           />
         </>
       }
     >
       {activeTab === "overview" ? <LeagueOverviewTab season={season} /> : null}
-      {activeTab === "matches" ? <LeagueMatchesTab games={season.games} /> : null}
-      {activeTab === "standings" ? (
-        <LeagueStandingsTab standings={season.standings} />
+      {activeTab === "matches" ? (
+        <LeagueMatchesTab games={matchesForTab ?? []} />
+      ) : null}
+      {activeTab === "standings" && standingStage ? (
+        <LeagueStageStandingsPanel
+          stage={standingStage}
+          fallbackStandings={season.standings}
+        />
       ) : null}
       {activeTab === "bracket" && selectedStage?.stageType === "knockout" ? (
         <LeagueBracketTab stage={selectedStage} />
       ) : null}
-      {activeTab === "bracket" && selectedStage?.stageType !== "knockout" && knockouts[0] ? (
+      {activeTab === "bracket" &&
+      selectedStage?.stageType !== "knockout" &&
+      knockouts[0] ? (
         <LeagueBracketTab stage={knockouts[0]} />
       ) : null}
       {activeTab === "stats" ? (

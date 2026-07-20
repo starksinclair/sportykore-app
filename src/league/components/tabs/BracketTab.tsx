@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import type { ApiStage } from "@/api/entities";
+import type { ApiStage, KnockoutStageConfig } from "@/api/entities";
 import { BracketView, useStageBracket } from "@/knockout";
 import { fonts } from "@/theme/fonts";
 
@@ -29,6 +29,10 @@ export function LeagueBracketTab({ stage }: Props) {
         ties={bracketQuery.data?.ties ?? []}
         isLoading={bracketQuery.isLoading}
         tone="dark"
+        hasThirdPlace={Boolean(
+          (stage.config as KnockoutStageConfig | undefined)?.format
+            ?.has_third_place,
+        )}
       />
     </View>
   );

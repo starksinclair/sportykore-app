@@ -1,5 +1,6 @@
 import type { ApiTie } from "@/api/entities";
 import { fonts } from "@/theme/fonts";
+import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import { seriesScoreLabel } from "../utils";
@@ -7,53 +8,71 @@ import { seriesScoreLabel } from "../utils";
 type Props = {
   tie: ApiTie;
   tone?: "light" | "dark";
+  /** "bracket" renders the compact pitch-palette card used inside BracketView. */
+  variant?: "default" | "bracket";
   onPress?: (tie: ApiTie) => void;
 };
 
-export function TieCard({ tie, tone = "dark", onPress }: Props) {
+function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props) {
   const isDark = tone === "dark";
+  const isBracket = variant === "bracket";
   const homeName = tie.homeTeam?.name ?? (tie.isBye ? "BYE" : "TBD");
   const awayName = tie.awayTeam?.name ?? (tie.isBye ? "—" : "TBD");
   const score = seriesScoreLabel(tie);
   const homeWon = tie.winnerTeam?.id != null && tie.winnerTeam.id === tie.homeTeam?.id;
   const awayWon = tie.winnerTeam?.id != null && tie.winnerTeam.id === tie.awayTeam?.id;
+  const decided = tie.status === "completed" && !tie.isBye;
+
+  // Bracket cards always sit on the purple pitch, so they ignore `tone`.
+  const teamClass = (won: boolean) =>
+    isBracket
+      ? won
+        ? "text-accent-300"
+        : decided
+          ? "text-white/60"
+          : "text-white"
+      : isDark
+        ? "text-white"
+        : "text-slate-900";
 
   const content = (
     <View
-      className={`min-w-[140px] rounded-xl border px-3 py-2.5 ${
-        isDark
-          ? "border-white/12 bg-white/6"
-          : "border-slate-200 bg-white"
-      }`}
+      className={
+        isBracket
+          ? "w-[132px] rounded-xl border border-accent-400/40 bg-brand-800 px-2.5 py-2"
+          : `min-w-[140px] rounded-xl border px-3 py-2.5 ${
+              isDark ? "border-white/12 bg-white/6" : "border-slate-200 bg-white"
+            }`
+      }
     >
       {tie.isBye ? (
         <Text
           style={{ fontFamily: fonts.bodySemibold }}
-          className={`text-xs ${isDark ? "text-accent-300" : "text-brand-700"}`}
+          className={`text-xs ${
+            isBracket || isDark ? "text-accent-300" : "text-brand-700"
+          }`}
         >
           Bye
         </Text>
       ) : null}
-      <View className="flex-row items-center justify-between gap-2">
-        <Text
-          style={{ fontFamily: homeWon ? fonts.bodyBold : fonts.body }}
-          className={`flex-1 text-sm ${isDark ? "text-white" : "text-slate-900"}`}
-          numberOfLines={1}
-        >
-          {homeName}
-        </Text>
-      </View>
+      <Text
+        style={{ fontFamily: homeWon ? fonts.bodyBold : fonts.body }}
+        className={`${isBracket ? "text-xs" : "text-sm"} ${teamClass(homeWon)}`}
+        numberOfLines={1}
+      >
+        {homeName}
+      </Text>
       <Text
         style={{ fontFamily: fonts.bodyBold }}
-        className={`py-1 text-center text-sm ${
-          isDark ? "text-accent-300" : "text-brand-700"
+        className={`py-1 text-center ${isBracket ? "text-xs" : "text-sm"} ${
+          isBracket || isDark ? "text-accent-300" : "text-brand-700"
         }`}
       >
         {score}
       </Text>
       <Text
         style={{ fontFamily: awayWon ? fonts.bodyBold : fonts.body }}
-        className={`text-sm ${isDark ? "text-white" : "text-slate-900"}`}
+        className={`${isBracket ? "text-xs" : "text-sm"} ${teamClass(awayWon)}`}
         numberOfLines={1}
       >
         {awayName}
@@ -61,7 +80,9 @@ export function TieCard({ tie, tone = "dark", onPress }: Props) {
       {tie.tieFormat === "best_of" && tie.bestOf != null ? (
         <Text
           style={{ fontFamily: fonts.body }}
-          className={`pt-1 text-[10px] ${isDark ? "text-white/45" : "text-slate-500"}`}
+          className={`pt-1 text-[10px] ${
+            isBracket || isDark ? "text-white/45" : "text-slate-500"
+          }`}
         >
           Best of {tie.bestOf}
         </Text>
@@ -77,3 +98,5 @@ export function TieCard({ tie, tone = "dark", onPress }: Props) {
     </Pressable>
   );
 }
+
+export const TieCard = memo(TieCardBase);
