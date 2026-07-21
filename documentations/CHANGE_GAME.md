@@ -1,10 +1,10 @@
 # Live Game Time Implementation Prompt
 
-> **Backend (this repo):** Implemented — migration, `GameTimeService`, `GameTimeController`, `leagueOwner` middleware (resolves `params.gameId`), routes under `/api/v1/games/:gameId/*`, transformer fields, SSE `status_changed` broadcasts. See [ROUTES.md](../ROUTES.md).
+> **Backend (this repo):** Implemented - migration, `GameTimeService`, `GameTimeController`, `leagueOwner` middleware (resolves `params.gameId`), routes under `/api/v1/games/:gameId/*`, transformer fields, SSE `status_changed` broadcasts. See [ROUTES.md](../ROUTES.md).
 >
 > **Venues / directions:** Game detail may include nested `venue` (`latitude`/`longitude`) for a “Get directions” link. Map picker + API contract: [VENUES.md](VENUES.md).
 >
-> **Mobile (React Native):** Hooks/components below are for the Expo app — not in this repository.
+> **Mobile (React Native):** Hooks/components below are for the Expo app - not in this repository.
 
 ## Context
 
@@ -17,13 +17,13 @@ We are building a soccer league management platform using AdonisJS (backend) and
 | `UpdateStandings` listener | Recalculates standings and broadcasts via SSE                    |
 | Transmit SSE               | Already configured for real-time broadcasting                    |
 | `LeagueOwnerMiddleware`    | Guards league-level routes                                       |
-| `LeagueOwnerMiddleware`    | Guards Match Center clock/score — league owner only (`params.gameId` → league) |
+| `LeagueOwnerMiddleware`    | Guards Match Center clock/score - league owner only (`params.gameId` → league) |
 
 ---
 
 ## Task
 
-Implement a **live game time system** where the current match minute is calculated mathematically from stored timestamps — not polled or stored in the DB every minute.
+Implement a **live game time system** where the current match minute is calculated mathematically from stored timestamps - not polled or stored in the DB every minute.
 
 ---
 
@@ -44,7 +44,7 @@ Implement a **live game time system** where the current match minute is calculat
 Add the following columns to the existing `games` migration, i will just rerun the migration:
 
 ```ts
-// half durations — set when creating the game
+// half durations - set when creating the game
 table.integer('first_half_duration').defaultTo(45) // in minutes
 table.integer('second_half_duration').defaultTo(45) // in minutes
 table.integer('extra_time_duration').nullable() // only if applicable
@@ -172,7 +172,7 @@ Create `hooks/useLiveMinute.ts`:
 
 - Accepts a `game` object
 - Uses `setInterval` with a **1 second** tick
-- Calculates the current minute from the game's timestamps locally — no API polling
+- Calculates the current minute from the game's timestamps locally - no API polling
 - Returns the current `minute` as a number
 - Clears interval on unmount
 - Stops updating when status is `scheduled`, `half_time`, `full_time`, `cancelled`, or `postponed`
@@ -275,7 +275,7 @@ Standings recalculate → SSE pushes standings update to all viewers
 
 - Do not update `currentMinute` in the DB every minute
 - Do not poll the API for the current minute
-- Do not use `setTimeout` chains — use `setInterval` with cleanup
+- Do not use `setTimeout` chains - use `setInterval` with cleanup
 - Do not forget to unsubscribe from SSE on component unmount
 - Do not allow non-owners to access game control endpoints
-- Do not skip the score entry modal on full time — always confirm before ending the game
+- Do not skip the score entry modal on full time - always confirm before ending the game

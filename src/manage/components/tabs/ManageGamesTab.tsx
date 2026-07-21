@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame, ApiStatType } from "@/api/entities";
-import { Button } from "@/components/ui/Button";
 import { DetailTabs, type DetailTab } from "@/components/ui/detail-tabs";
 import { fonts } from "@/theme/fonts";
 
@@ -23,7 +23,7 @@ type Props = {
   seasonId: number;
   games: ApiGame[];
   statTypes: ApiStatType[];
-  /** False for pure knockout seasons — fixtures come from seed / next-round. */
+  /** False for pure knockout seasons - fixtures come from seed / next-round. */
   canScheduleRoundRobin?: boolean;
 };
 
@@ -45,7 +45,7 @@ export function ManageGamesTab({
 
   useEffect(() => {
     setActiveFilter(live.length > 0 ? "live" : "upcoming");
-  }, [seasonId]);
+  }, [live.length, seasonId]);
 
   const activeGames =
     activeFilter === "live"
@@ -65,20 +65,43 @@ export function ManageGamesTab({
 
   return (
     <View className="gap-6 pb-8">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          {canScheduleRoundRobin
-            ? "Schedule fixtures and run live scoring for this season."
-            : "Knockout games are created by seeding — open Knockout to manage the bracket."}
-        </Text>
-        {canScheduleRoundRobin ? (
-          <Button
-            variant="authPurple"
-            label="Add game"
-            onPress={() => setAddOpen(true)}
-            className="h-11 px-4"
-          />
-        ) : null}
+      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="calendar-outline" size={22} color="#E6A817" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              Match schedule
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-xs leading-5 text-white/50"
+              numberOfLines={2}
+            >
+              {canScheduleRoundRobin
+                ? "Schedule fixtures and run live scoring for this season."
+                : "Knockout games are created by seeding. Open Knockout to manage the bracket."}
+            </Text>
+          </View>
+          {canScheduleRoundRobin ? (
+            <Pressable
+              onPress={() => setAddOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Add game"
+              className="h-10 flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 active:opacity-90"
+            >
+              <Ionicons name="add" size={16} color="#171717" />
+              <Text
+                style={{ fontFamily: fonts.bodyBold }}
+                className="text-xs text-neutral-950"
+                numberOfLines={1}
+              >
+                Add
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <DetailTabs

@@ -17,7 +17,7 @@ function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props
   const isDark = tone === "dark";
   const isBracket = variant === "bracket";
   const homeName = tie.homeTeam?.name ?? (tie.isBye ? "BYE" : "TBD");
-  const awayName = tie.awayTeam?.name ?? (tie.isBye ? "—" : "TBD");
+  const awayName = tie.awayTeam?.name ?? (tie.isBye ? "-" : "TBD");
   const score = seriesScoreLabel(tie);
   const homeWon = tie.winnerTeam?.id != null && tie.winnerTeam.id === tie.homeTeam?.id;
   const awayWon = tie.winnerTeam?.id != null && tie.winnerTeam.id === tie.awayTeam?.id;

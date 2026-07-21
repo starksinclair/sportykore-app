@@ -1,10 +1,19 @@
-import { useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { useState, type ReactNode } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import type { ApiTeam } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
@@ -43,43 +52,189 @@ function TeamPicker({
   label: string;
   teams: ApiTeam[];
   selectedId: number | null;
-  onSelect: (id: number) => void;
+  onSelect: (id: number | null) => void;
   excludeId?: number | null;
 }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const options = teams.filter((t) => t.id !== excludeId);
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? options.filter((team) => team.name.toLowerCase().includes(q))
+    : options;
+  const selectedTeam = teams.find((team) => team.id === selectedId);
+  const hasSelection = selectedTeam != null;
+
+  const handleSelect = (id: number) => {
+    onSelect(id);
+    setOpen(false);
+    setQuery("");
+  };
+
+  const handleClear = () => {
+    onSelect(null);
+    setOpen(false);
+    setQuery("");
+  };
 
   return (
     <View className="gap-2">
       <Text
         style={{ fontFamily: fonts.bodyBold }}
-        className="text-xs uppercase tracking-wide text-slate-500"
+        className="text-xs uppercase tracking-wide text-white/50"
       >
         {label}
       </Text>
-      <View className="flex-row flex-wrap gap-2">
-        {options.map((team) => {
-          const active = selectedId === team.id;
-          return (
+      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+        <Pressable
+          onPress={() => setOpen((current) => !current)}
+          className="flex-row items-center gap-3 px-3.5 py-3"
+          accessibilityRole="button"
+          accessibilityLabel={`Choose ${label.toLowerCase()}`}
+        >
+          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons
+              name={hasSelection ? "shield-checkmark" : "shield-outline"}
+              size={18}
+              color="#E6A817"
+            />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text
+              style={{ fontFamily: fonts.bodySemibold }}
+              className={hasSelection ? "text-sm text-white" : "text-sm text-white/65"}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedTeam?.name ?? `Choose ${label.toLowerCase()}`}
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="pt-0.5 text-xs text-white/45"
+              numberOfLines={1}
+            >
+              {hasSelection
+                ? label
+                : `${options.length} team${options.length === 1 ? "" : "s"} available`}
+            </Text>
+          </View>
+          {hasSelection ? (
             <Pressable
-              key={team.id}
-              onPress={() => onSelect(team.id)}
-              className={`rounded-xl border px-3 py-2 ${
-                active
-                  ? "border-brand-500 bg-brand-50"
-                  : "border-slate-200 bg-slate-50"
-              }`}
+              onPress={handleClear}
+              hitSlop={10}
+              className="rounded-lg px-2 py-1"
             >
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}
-                className={active ? "text-brand-700" : "text-slate-800"}
+                className="text-xs text-white/55"
               >
-                {team.name}
+                Clear
               </Text>
             </Pressable>
-          );
-        })}
+          ) : null}
+          <Ionicons
+            name={open ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="rgba(255,255,255,0.45)"
+          />
+        </Pressable>
+
+        {open ? (
+          <View className="border-t border-white/10 bg-neutral-950/70">
+            {options.length > 5 ? (
+              <View className="flex-row items-center gap-2 border-b border-white/10 px-3 py-2">
+                <Ionicons
+                  name="search"
+                  size={16}
+                  color="rgba(255,255,255,0.45)"
+                />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search teams"
+                  placeholderTextColor="#94a3b8"
+                  autoCorrect={false}
+                  style={{
+                    flex: 1,
+                    fontFamily: fonts.body,
+                    fontSize: 14,
+                    color: "#FFFFFF",
+                    paddingVertical: 6,
+                  }}
+                />
+                {query ? (
+                  <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                    <Ionicons
+                      name="close-circle"
+                      size={16}
+                      color="rgba(255,255,255,0.45)"
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <ScrollView
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              style={{ maxHeight: 220 }}
+            >
+              {filtered.map((team) => (
+                <TeamOptionRow
+                  key={team.id}
+                  label={team.name}
+                  selected={selectedId === team.id}
+                  onPress={() => handleSelect(team.id)}
+                />
+              ))}
+              {filtered.length === 0 ? (
+                <Text
+                  style={{ fontFamily: fonts.body }}
+                  className="px-4 py-4 text-sm text-white/45"
+                >
+                  {`No teams match "${query.trim()}".`}
+                </Text>
+              ) : null}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
     </View>
+  );
+}
+
+function TeamOptionRow({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
+        selected ? "bg-accent-500/10" : "bg-transparent"
+      }`}
+    >
+      <View className="min-w-0 flex-1">
+        <Text
+          style={{ fontFamily: fonts.bodySemibold }}
+          className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {label}
+        </Text>
+      </View>
+      {selected ? (
+        <Ionicons name="checkmark-circle" size={20} color="#E6A817" />
+      ) : (
+        <View className="h-5 w-5 rounded-full border border-white/20" />
+      )}
+    </Pressable>
   );
 }
 
@@ -167,70 +322,90 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
       visible={visible}
       onClose={resetAndClose}
       title="Schedule game"
-      subtitle="Add a fixture for the selected season"
+      subtitle="Pick teams, kick-off details, and the match venue."
+      variant="dark"
     >
       {teamsQuery.isLoading ? (
-        <ActivityIndicator className="py-6" color="#4A148C" />
+        <ActivityIndicator className="py-6" color="#E6A817" />
       ) : teams.length < 2 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-600">
-          Add at least two teams to this league before scheduling games.
-        </Text>
+        <View className="items-center gap-3 rounded-[20px] border border-white/10 bg-white/5 px-4 py-6">
+          <Ionicons name="people-outline" size={28} color="#E6A817" />
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="text-center text-sm leading-6 text-white/60"
+          >
+            Add at least two teams to this league before scheduling games.
+          </Text>
+        </View>
       ) : (
         <View className="gap-4">
-          <TeamPicker
-            label="Home team"
-            teams={teams}
-            selectedId={homeTeamId}
-            onSelect={setHomeTeamId}
-            excludeId={awayTeamId}
-          />
-          <TeamPicker
-            label="Away team"
-            teams={teams}
-            selectedId={awayTeamId}
-            onSelect={setAwayTeamId}
-            excludeId={homeTeamId}
-          />
-          <AuthTextField
-            label="Date (YYYY-MM-DD)"
-            value={dateStr}
-            onChangeText={setDateStr}
-            placeholder="2026-05-23"
-            autoCapitalize="none"
-          />
-          <AuthTextField
-            label="Kick-off time (HH:mm) uses 24-hour format"
-            value={timeStr}
-            onChangeText={setTimeStr}
-            placeholder="15:00"
-            autoCapitalize="none"
-          />
-          <GameVenuePicker
-            leagueId={leagueId}
-            enabled={visible}
-            selection={venueSelection}
-            onChange={setVenueSelection}
-          />
-          <View className="flex-row gap-3">
-            <View className="flex-1">
-              <AuthTextField
-                label="First half (min)"
-                value={firstHalfMinutes}
-                onChangeText={setFirstHalfMinutes}
-                keyboardType="number-pad"
-                placeholder="45"
-              />
+          <GameSheetBlock title="Teams">
+            <TeamPicker
+              label="Home team"
+              teams={teams}
+              selectedId={homeTeamId}
+              onSelect={setHomeTeamId}
+              excludeId={awayTeamId}
+            />
+            <TeamPicker
+              label="Away team"
+              teams={teams}
+              selectedId={awayTeamId}
+              onSelect={setAwayTeamId}
+              excludeId={homeTeamId}
+            />
+          </GameSheetBlock>
+          <GameSheetBlock title="Kick-off">
+            <NativeDatePickerField
+              label="Date"
+              value={dateStr}
+              onChange={(value) => setDateStr(value ?? "")}
+              placeholder="Pick fixture date"
+              labelClassName="text-white/60"
+              required
+            />
+            <AuthTextField
+              label="Kick-off time (HH:mm) uses 24-hour format"
+              labelClassName="text-white/60"
+              value={timeStr}
+              onChangeText={setTimeStr}
+              placeholder="15:00"
+              autoCapitalize="none"
+            />
+          </GameSheetBlock>
+          <GameSheetBlock title="Venue">
+            <GameVenuePicker
+              leagueId={leagueId}
+              enabled={visible}
+              selection={venueSelection}
+              onChange={setVenueSelection}
+              variant="dark"
+            />
+          </GameSheetBlock>
+          <GameSheetBlock title="Match length">
+            <View className="flex-row gap-3">
+              <View className="flex-1">
+                <AuthTextField
+                  label="First half (min)"
+                  labelClassName="text-white/60"
+                  value={firstHalfMinutes}
+                  onChangeText={setFirstHalfMinutes}
+                  keyboardType="number-pad"
+                  placeholder="45"
+                />
+              </View>
+              <View className="flex-1">
+                <AuthTextField
+                  label="Second half (min)"
+                  labelClassName="text-white/60"
+                  value={secondHalfMinutes}
+                  onChangeText={setSecondHalfMinutes}
+                  keyboardType="number-pad"
+                  placeholder="45"
+                />
+              </View>
             </View>
-            <View className="flex-1">
-              <AuthTextField
-                label="Second half (min)"
-                value={secondHalfMinutes}
-                onChangeText={setSecondHalfMinutes}
-                keyboardType="number-pad"
-                placeholder="45"
-              />
-            </View>
-          </View>
+          </GameSheetBlock>
           <Button
             variant="authPurple"
             label={createMutation.isPending ? "Scheduling…" : "Schedule game"}
@@ -241,5 +416,25 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
         </View>
       )}
     </BottomSheetModal>
+  );
+}
+
+function GameSheetBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-xs uppercase tracking-wide text-white/50"
+      >
+        {title}
+      </Text>
+      <View className="gap-3">{children}</View>
+    </View>
   );
 }

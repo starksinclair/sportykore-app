@@ -21,5 +21,6 @@ export { LiveMinute } from "./live-minute";
 export { LogoImageUpload } from "./logo-image-upload";
 export { Logo } from "./logo";
 export type { LogoProps, LogoVariant } from "./logo";
+export { NativeDatePickerField } from "./native-date-picker-field";
 export { SeasonPicker } from "./season-picker";
 export type { SeasonOption } from "./season-picker";

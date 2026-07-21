@@ -90,7 +90,7 @@ export function MatchCenterGoalsTab({
 }
 
 function formatGoalMinute(stat: ApiStat | undefined): string {
-  if (stat?.minute == null) return "—";
+  if (stat?.minute == null) return "-";
   return `${stat.minute}${stat.isStoppageTime ? "+" : ""}'`;
 }
 

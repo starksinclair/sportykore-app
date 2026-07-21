@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -15,6 +15,8 @@ import {
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ApiError } from "@/api/errors";
+import { useAuth } from "@/auth";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -47,7 +49,14 @@ import {
   startOfDay,
   startOfMonth,
 } from "@/home/utils";
+import { acceptInvite } from "@/invite/api";
+import {
+  clearPendingInviteToken,
+  getPendingInviteContext,
+  getPendingInviteToken,
+} from "@/invite/storage";
 import { messageFromThrown } from "@/lib/show-error-toast";
+import { useOwnPlayerProfile } from "@/player";
 import { fonts } from "@/theme/fonts";
 import { StatusBar } from "expo-status-bar";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
@@ -72,6 +81,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
+  const { user } = useAuth();
   const today = useMemo(() => startOfDay(new Date()), []);
 
   const [activeTab, setActiveTab] = useState<FeedTab>("matches");
@@ -81,6 +91,24 @@ export default function HomeScreen() {
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [selectedDateOffset, setSelectedDateOffset] = useState(0);
   const [liveOnly, setLiveOnly] = useState(false);
+  const [pendingInvite, setPendingInvite] = useState<{
+    token: string;
+    leagueName?: string;
+    teamName?: string;
+  } | null>(null);
+  const ownProfileQuery = useOwnPlayerProfile(Boolean(user));
+  const canSafelyVerifyPendingInvite =
+    Boolean(user && pendingInvite?.token) &&
+    ownProfileQuery.data?.kind === "missing";
+  const pendingInviteQuery = useQuery({
+    queryKey: ["invite", "pending", pendingInvite?.token],
+    queryFn: () => acceptInvite(pendingInvite!.token),
+    enabled: canSafelyVerifyPendingInvite,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+  const showPendingInviteBanner =
+    pendingInviteQuery.data?.requiresProfile === true;
 
   const selectedDate = getDateMeta(today, selectedDateOffset);
   const calendarCells = buildCalendarCells(calendarMonth);
@@ -101,8 +129,14 @@ export default function HomeScreen() {
     error: leagueResponseErr,
     refetch: refetchLeagueResponse,
   } = useLeaguesByCountry(leagueParams);
-  const matches = leagueResponse?.matches ?? [];
-  const leagues = leagueResponse?.leagues ?? [];
+  const matches = useMemo(
+    () => leagueResponse?.matches ?? [],
+    [leagueResponse?.matches],
+  );
+  const leagues = useMemo(
+    () => leagueResponse?.leagues ?? [],
+    [leagueResponse?.leagues],
+  );
   const feedErrorMessage = leagueResponseError
     ? messageFromThrown(leagueResponseErr)
     : undefined;
@@ -155,6 +189,26 @@ export default function HomeScreen() {
   const [refreshing, onRefresh] = useRefresh([
     refetchLeagueResponse,
   ]);
+
+  useEffect(() => {
+    void (async () => {
+      const token = await getPendingInviteToken();
+      if (!token) {
+        setPendingInvite(null);
+        return;
+      }
+      const context = await getPendingInviteContext();
+      setPendingInvite({ token, ...context });
+    })();
+  }, []);
+
+  useEffect(() => {
+    const error = pendingInviteQuery.error;
+    if (!(error instanceof ApiError)) return;
+    if (error.status === 403 || error.status === 404 || error.status === 409) {
+      void clearPendingInviteToken().then(() => setPendingInvite(null));
+    }
+  }, [pendingInviteQuery.error]);
   useEffect(() => {
     if (!isOnline) return;
     const prevParams = resolveLeaguesParams({
@@ -267,6 +321,13 @@ export default function HomeScreen() {
           </View>
         </View>
       </Animated.View>
+      {showPendingInviteBanner && pendingInvite ? (
+        <PendingInviteBanner
+          leagueName={pendingInvite.leagueName}
+          teamName={pendingInvite.teamName}
+          onPress={() => router.push("/join/create-profile")}
+        />
+      ) : null}
     </>
   );
 
@@ -377,7 +438,7 @@ export default function HomeScreen() {
                     style={{ fontFamily: fonts.body }}
                     className="text-sm leading-5 text-slate-600"
                   >
-                    No favourite leagues yet — tap the heart on a league to pin it here.
+                    No favourite leagues yet - tap the heart on a league to pin it here.
                   </Text>
                 </View>
               );
@@ -614,6 +675,48 @@ export default function HomeScreen() {
         </Animated.View>
       </BottomSheetModal>
     </View>
+  );
+}
+
+function PendingInviteBanner({
+  leagueName,
+  teamName,
+  onPress,
+}: {
+  leagueName?: string;
+  teamName?: string;
+  onPress: () => void;
+}) {
+  const target = [teamName, leagueName].filter(Boolean).join(" · ");
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-[16px] border border-[#E6A817]/40 bg-[#FFF7D6] px-4 py-4 active:opacity-85"
+      accessibilityRole="button"
+      accessibilityLabel="Complete invite"
+    >
+      <View className="h-10 w-10 items-center justify-center rounded-full bg-[#4A148C]">
+        <Ionicons name="mail-unread-outline" size={19} color="#E6A817" />
+      </View>
+      <View className="min-w-0 flex-1 gap-0.5">
+        <Text
+          style={{ fontFamily: fonts.bodyBold }}
+          className="text-sm text-neutral-950"
+        >
+          Finish your invite
+        </Text>
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-xs leading-5 text-neutral-700"
+          numberOfLines={2}
+        >
+          {target
+            ? `Create your player profile to join ${target}.`
+            : "Create your player profile to join this league."}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#4A148C" />
+    </Pressable>
   );
 }
 

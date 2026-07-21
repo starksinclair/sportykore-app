@@ -109,7 +109,7 @@ export default function ManageScreen() {
             style={{ fontFamily: fonts.body }}
             className="pt-1 text-sm text-white/60"
           >
-            Leagues you own and teams you admin — run match day and set lineups.
+            Leagues you own and teams you admin - run match day and set lineups.
           </Text>
         </View>
 

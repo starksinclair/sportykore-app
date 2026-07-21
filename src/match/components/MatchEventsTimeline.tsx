@@ -268,7 +268,7 @@ function EventBubble({
 }
 
 function formatMinute(stat: ApiStat): string {
-  if (stat.minute == null) return "—";
+  if (stat.minute == null) return "-";
   return `${stat.minute}${stat.isStoppageTime ? "+" : ""}'`;
 }
 

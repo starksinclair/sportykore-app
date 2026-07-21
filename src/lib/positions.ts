@@ -27,7 +27,7 @@ export const POSITION_SHORT: Record<PlayerPosition, string> = {
 };
 
 export const UNASSIGNED_LABEL = "Unassigned";
-export const UNASSIGNED_SHORT = "—";
+export const UNASSIGNED_SHORT = "-";
 
 /** Bucket of players sharing a position; `position: null` collects unassigned. */
 export type PositionGroup<T extends { position?: PlayerPosition | null }> = {

@@ -50,7 +50,7 @@ function normalizeCountryDetail(data: ApiCountryDetail): CountryDetail {
         avatarInitials:
           entry.player.avatarInitials?.trim() ||
           initialsFromName(entry.player.name),
-        position: entry.player.position ?? "—",
+        position: entry.player.position ?? "-",
         ...(entry.player.teamId != null
           ? { teamId: String(entry.player.teamId) }
           : {}),
@@ -86,9 +86,9 @@ function normalizeCountryDetail(data: ApiCountryDetail): CountryDetail {
         status: match.status,
         kickoffLabel:
           match.kickoffLabel ??
-          (playedAt ? formatPlayedAtDate(playedAt) : "—"),
+          (playedAt ? formatPlayedAtDate(playedAt) : "-"),
         venue: match.venue ?? "Venue TBC",
-        round: match.round ?? "—",
+        round: match.round ?? "-",
         live: match.live,
         isoDate: match.isoDate ?? playedAt.slice(0, 10),
       };

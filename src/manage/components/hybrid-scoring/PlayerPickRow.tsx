@@ -35,7 +35,7 @@ export function PlayerActionRow({ name, jersey, actions }: ActionRowProps) {
           style={{ fontFamily: fonts.body }}
           className="w-8 text-xs text-white/45"
         >
-          {jersey ? `#${jersey}` : "—"}
+          {jersey ? `#${jersey}` : "-"}
         </Text>
         <Text
           style={{ fontFamily: fonts.bodySemibold }}
@@ -102,7 +102,7 @@ export function PlayerPickRow({
           style={{ fontFamily: fonts.body }}
           className="w-8 text-xs text-white/45"
         >
-          {jersey ? `#${jersey}` : "—"}
+          {jersey ? `#${jersey}` : "-"}
         </Text>
         <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
           {name}

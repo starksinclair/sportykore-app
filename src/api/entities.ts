@@ -57,8 +57,29 @@ export type PlayerPosition = "attack" | "defence" | "midfield" | "goalkeeper";
 export type ApiPlayer = {
   id: number;
   name: string;
-  avatarUrl: string | null;
+  avatarUrl?: string | null;
   position?: PlayerPosition | null;
+  bio?: string | null;
+  primaryPosition?: PlayerPosition | null;
+  secondaryPosition?: PlayerPosition | null;
+  preferredFoot?: "left" | "right" | "both" | null;
+  heightCm?: number | null;
+  city?: string | null;
+  state?: string | null;
+  nationality?: string | null;
+  socialHandle?: string | null;
+  visibility?: "active" | "private";
+  age?: number | null;
+  country?: ApiCountry | null;
+  highlights?: ApiPlayerHighlight[];
+};
+
+export type ApiPlayerHighlight = {
+  id: number;
+  videoId: string;
+  title?: string | null;
+  sortOrder: number;
+  thumbnailUrl?: string | null;
 };
 
 export type ApiStatType = {
@@ -141,7 +162,7 @@ export type ApiStandingOverride = {
   stageId: number;
   teamId: number;
   stageGroupId?: number | null;
-  rank: number;
+  manualRank: number;
   reason: string;
   cohortSignature: string;
   stale?: boolean;
@@ -338,7 +359,7 @@ export type ApiSeasonDetail = ApiSeason & {
   stages?: ApiStage[];
 };
 
-/** Wire shape of `GET /api/v1/leagues/:leagueId` — the available seasons plus the active season detail. */
+/** Wire shape of `GET /api/v1/leagues/:leagueId` - the available seasons plus the active season detail. */
 export type ApiLeagueDetail = {
   seasons: ApiSeason[];
   season: ApiSeasonDetail;
@@ -388,7 +409,7 @@ export type ApiPlayerLeague = {
 
 /** Wire shape of `GET /api/v1/players/:id`. Stats and games are grouped per league → season. */
 export type ApiPlayerDetail = {
-  player: ApiPlayer & { country: ApiCountry | null };
+  player: ApiPlayer & { country?: ApiCountry | null };
   statTypes: ApiStatType[];
   leagues: ApiPlayerLeague[];
 };

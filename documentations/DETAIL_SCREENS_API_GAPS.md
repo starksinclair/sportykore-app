@@ -1,4 +1,4 @@
-# Detail screens — API gaps
+# Detail screens - API gaps
 
 This file tracks the data the entity detail screens (League, Team, Player,
 Match) would like to render but cannot yet, because the backend does not expose

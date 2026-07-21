@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type {
+  ApiStanding,
   ApiTeam,
   ApiTeamLeague,
   ApiTeamSeason,
@@ -22,9 +23,12 @@ type Props = {
   team: ApiTeam;
   league: ApiTeamLeague | null;
   season: ApiTeamSeason | null;
+  /** Live stage-standings row (points/position include deductions); falls
+   * back to the static `season.standings` snapshot when not yet loaded. */
+  liveStanding?: ApiStanding | null;
 };
 
-export function TeamOverviewTab({ team, league, season }: Props) {
+export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
   const router = useRouter();
   const teamId = team.id;
 
@@ -33,8 +37,8 @@ export function TeamOverviewTab({ team, league, season }: Props) {
 
   const topPlayer = useMemo(() => deriveTopPlayer(players), [players]);
   const standing = useMemo(
-    () => findStandingFor(season, teamId),
-    [season, teamId],
+    () => liveStanding ?? findStandingFor(season, teamId),
+    [liveStanding, season, teamId],
   );
   // Prefer the backend-computed standings row when present, otherwise derive
   // W/D/L from completed `season.games` so the cards still populate while a

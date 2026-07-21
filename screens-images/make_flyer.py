@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SportyKore — campaign flyer generator (1080×1920, 9:16).
+SportyKore - campaign flyer generator (1080×1920, 9:16).
 
 Reads campaign definitions from campaigns.json (mirrors CANVA_CAMPAIGNS.md).
 Pass a campaign id and optional overrides; output is brand-consistent every time.
@@ -38,7 +38,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 try:
     import requests
-except ImportError:  # pragma: no cover — only needed for --generate-vector
+except ImportError:  # pragma: no cover - only needed for --generate-vector
     requests = None  # type: ignore
 
 HERE = Path(__file__).resolve().parent
@@ -48,11 +48,11 @@ DEFAULT_OUTPUT_DIR = HERE / "output"
 
 W, H = 1080, 1920
 
-# Brand tokens — CANVA_CAMPAIGNS.md / tailwind.config.js
+# Brand tokens - CANVA_CAMPAIGNS.md / tailwind.config.js
 DARK = (18, 18, 18)  # #121212
 GOLD_TINT = (230, 168, 23)  # #E6A817
 GOLD = (230, 168, 23)  # wordmark / accents
-GOLD_CTA = (242, 169, 0)  # #F2A900 — CTA pill
+GOLD_CTA = (242, 169, 0)  # #F2A900 - CTA pill
 GOLD_DEEP = (230, 168, 23)
 PURPLE = (74, 20, 140)  # #4A148C
 PURPLE_DEEP = (44, 12, 84)  # #2C0C54
@@ -457,7 +457,7 @@ def render_campaign_flyer(
         img.paste(motif, (cx - motif_size // 2, vector_top + (VECTOR_H - motif_size) // 2), motif)
         y = vector_top + VECTOR_H
 
-    # Phone + screenshot — fit between vector and CTA safe zone
+    # Phone + screenshot - fit between vector and CTA safe zone
     cta_zone_top = H - SAFE_BOTTOM - 200
     available_h = max(280, cta_zone_top - y - 32)
 

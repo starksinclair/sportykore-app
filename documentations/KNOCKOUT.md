@@ -2,7 +2,7 @@
 
 In the product UI, **competition** maps to the existing **league** resource (`POST /leagues`, `GET /leagues/:id`). A season’s **stage(s)** decide what the hub shows: standings (`round_robin`) or bracket (`knockout`).
 
-API tables: [ROUTES.md](../ROUTES.md). This doc is Expo/Match Center facing — no Expo code ships in this repo.
+API tables: [ROUTES.md](../ROUTES.md). This doc is Expo/Match Center facing - no Expo code ships in this repo.
 
 ## Create competition / league
 
@@ -29,7 +29,7 @@ POST /api/v1/leagues
 }
 ```
 
-Omit `format` — same as `"league"`.
+Omit `format` - same as `"league"`.
 
 ### Knockout create
 
@@ -98,7 +98,7 @@ POST /api/v1/leagues/stages/:stageId/seed
 POST /api/v1/leagues/:leagueId/seasons
 ```
 
-Same `format` / `knockout` fields (no auto-seed on season create — add teams then `…/stages/:id/seed`). Response includes `stageId`, `format`, `seeded: false`.
+Same `format` / `knockout` fields (no auto-seed on season create - add teams then `…/stages/:id/seed`). Response includes `stageId`, `format`, `seeded: false`.
 
 ### Competition screen: standings vs bracket
 
@@ -109,9 +109,9 @@ Suggested client logic:
 1. Pick primary stage: prefer `knockout` if present, else `round_robin` (or let the user switch when both exist).
 2. `round_robin` → show `season.standings` + fixtures.
 3. `knockout` → `GET /leagues/stages/:id/bracket` instead of standings.
-4. Shared chrome: teams, info, manage — unchanged.
+4. Shared chrome: teams, info, manage - unchanged.
 
-Pure knockout seasons have **no** round_robin stage until something (e.g. `POST /leagues/games`) calls `ensureRoundRobinStage`. Don’t schedule cup ties via that endpoint — they come from seed / next-round.
+Pure knockout seasons have **no** round_robin stage until something (e.g. `POST /leagues/games`) calls `ensureRoundRobinStage`. Don’t schedule cup ties via that endpoint - they come from seed / next-round.
 
 ---
 
@@ -127,7 +127,7 @@ game → full_time / pens  →  advanceTie (updates series)
 owner confirms           →  generateNextRound (winners pair)
 ```
 
-**Boundary:** the client decides **who** is seed 1…N (create `teams[]` order or explicit seed call). The API never computes seeds from standings. Progression only moves **winners** — never re-seeds.
+**Boundary:** the client decides **who** is seed 1…N (create `teams[]` order or explicit seed call). The API never computes seeds from standings. Progression only moves **winners** - never re-seeds.
 
 **Unit of competition:** a **tie** (series), not a single game. Formats: `single`, `two_legged`, `best_of`.
 
@@ -137,7 +137,7 @@ owner confirms           →  generateNextRound (winners pair)
 | --- | --- |
 | `round_robin` | League table fixtures + standings |
 | `knockout` | Bracket ties |
-| `group` / `playoff` | Reserved — not generated yet |
+| `group` / `playoff` | Reserved - not generated yet |
 
 Statuses: `upcoming` → `active` (after seed) → `completed` (final done; + third place if configured).
 
@@ -198,9 +198,9 @@ Body: { completedRound: "qf" | "sf" | … }
 
 All ties in `completedRound` must be `completed` with a winner. Pairs winners by `bracketPosition`. Calling again when the next round already exists is a **no-op** (idempotent).
 
-`completedRound: "final"` only marks the stage completed (when final ± third place are done) — it does not create further ties.
+`completedRound: "final"` only marks the stage completed (when final ± third place are done) - it does not create further ties.
 
-**There is no auto next-round** — the manage hub should show “Generate next round” once the current round is fully decided.
+**There is no auto next-round** - the manage hub should show “Generate next round” once the current round is fully decided.
 
 ### Public reads
 
@@ -222,7 +222,7 @@ API returns a flat list of ties. Typical Expo layout:
 4. Bye tiles: show seed/team, no score, auto-advance badge.
 5. Series score: prefer `tie.homeScoreAgg` / `awayScoreAgg` when present; else latest game scores.
 
-Do not invent pairing — `generateNextRound` ownership of who faces whom is authoritative.
+Do not invent pairing - `generateNextRound` ownership of who faces whom is authoritative.
 
 ## Regular fixtures vs knockout games
 
@@ -248,7 +248,7 @@ Status `penalty_shootout` is live (like other period statuses).
 
 Complete requires unequal scores; sets `winnerTeamId`, status `full_time`, then `advanceTie` when `tieId` is set.
 
-**Single** knockout: decisive FT (or pens if you entered shootout) completes the tie. Do not call FT with a draw and no pens — `advanceTie` needs a game winner.
+**Single** knockout: decisive FT (or pens if you entered shootout) completes the tie. Do not call FT with a draw and no pens - `advanceTie` needs a game winner.
 
 **Two-legged:** both legs FT; aggregate on tie home/away. Level aggregate → second-leg `winnerTeamId` (usually pens) decides.
 
@@ -261,7 +261,7 @@ Show series context from the enclosing tie (`GET …/bracket` or game detail wit
 - [ ] Create competition: `format` league vs knockout (+ `knockout.config` / teams order = seeds)
 - [ ] After create: use `leagueId` / `seasonId` / `stageId` / `seeded` from response
 - [ ] Competition hub: `season.stages` → standings **or** bracket
-- [ ] Season stages list (`GET seasons/:id/stages`) — switch League vs Cup when both exist
+- [ ] Season stages list (`GET seasons/:id/stages`) - switch League vs Cup when both exist
 - [ ] Add-on knockout on a league season: `POST …/stages` then seed
 - [ ] Seed: ordered team picker when `seeded: false`
 - [ ] Bracket view from `GET …/bracket`

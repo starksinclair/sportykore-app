@@ -232,7 +232,7 @@ export function LineupEditor({
       {locked ? (
         <View className="rounded-xl bg-white/8 px-4 py-3">
           <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/70">
-            This match is finished — lineup is read-only.
+            This match is finished - lineup is read-only.
           </Text>
         </View>
       ) : null}

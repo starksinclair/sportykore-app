@@ -112,7 +112,7 @@ export type UpdateAdjustmentPayload = {
 export type CreateOverridePayload = {
   stageGroupId?: number | null;
   reason: string;
-  ranks: { teamId: number; rank: number }[];
+  ranks: { teamId: number; manualRank: number }[];
 };
 
 export type CreateZonePayload = {
@@ -158,7 +158,9 @@ export async function fetchStageStandings(
 
 /**
  * Older backends send flat teamId/teamName on stage-standings rows instead of
- * the nested team object the UI renders; rebuild it when missing.
+ * the nested team object the UI renders (rebuild it when missing), and used
+ * to key the row's zone tag as `zoneType` instead of `type` - normalize both
+ * so zone colors/legend render regardless of the deployed backend version.
  */
 function normalizeStandings(data: ApiStageStandings): ApiStageStandings {
   for (const table of data?.tables ?? []) {
@@ -171,6 +173,12 @@ function normalizeStandings(data: ApiStageStandings): ApiStageStandings {
             name: raw.teamName ?? `Team ${raw.teamId}`,
             logoUrl: null,
           };
+        }
+      }
+      if (row.zone) {
+        const rawZone = row.zone as typeof row.zone & { zoneType?: StandingZoneType };
+        if (!rawZone.type && rawZone.zoneType) {
+          row.zone = { type: rawZone.zoneType, label: rawZone.label };
         }
       }
     }

@@ -12,7 +12,7 @@ Many African community pitches, school fields, and estate grounds are **not** on
 | --- | --- | --- |
 | **1. Places Autocomplete** | Known stadiums / listed grounds | `name`, `address`, `lat`/`lng`, `googlePlaceId` |
 | **2. Drop a pin** | Unlisted pitch with a real location | Admin-typed `name` + `lat`/`lng` (+ optional reverse-geocoded `address`/`city`) |
-| **3. Name only** | No map / unknown coords | `name` only — valid; no directions link |
+| **3. Name only** | No map / unknown coords | `name` only - valid; no directions link |
 
 ## Schema (client mental model)
 
@@ -29,7 +29,7 @@ games
 ```
 
 - Venues are **league-scoped**, not global. The same real-world pitch may exist as separate rows in many leagues (MVP tradeoff).
-- `googlePlaceId` is nullable and **not** unique yet — useful later if you consolidate shared venues.
+- `googlePlaceId` is nullable and **not** unique yet - useful later if you consolidate shared venues.
 - Keep sending / reading `venueName` on games. When `venueId` is set, the API copies `venues.name` into `venueName` as a snapshot. If an admin deletes a venue, games keep `venueName` and lose only the structured link.
 
 **Display name:** prefer `game.venue.name` when nested `venue` is present; else `game.venueName`.
@@ -76,8 +76,8 @@ PUT  /api/v1/leagues/games/:id
 
 | Field | Rules |
 | --- | --- |
-| `venueId` | optional FK to `venues`, nullable — must belong to the game’s league |
-| `venueName` | optional string, max 255, nullable — one-off / legacy |
+| `venueId` | optional FK to `venues`, nullable - must belong to the game’s league |
+| `venueName` | optional string, max 255, nullable - one-off / legacy |
 
 **If both are sent, `venueId` wins** and the server sets `venueName` to the venue’s name.  
 **If only `venueName`:** leave `venueId` null.  
@@ -119,7 +119,7 @@ Hide the directions CTA when `latitude` or `longitude` is null (name-only venues
 
 ## Expo UI guidance
 
-### Manage hub — Venues section
+### Manage hub - Venues section
 
 Add a **Venues** area next to teams (owner-only):
 
@@ -127,7 +127,7 @@ Add a **Venues** area next to teams (owner-only):
 2. Add / edit form with the three location paths below + capacity / notes.
 3. Delete: confirm; past games keep `venueName`.
 
-### Add / edit game — venue picker
+### Add / edit game - venue picker
 
 Replace a free-text-only venue field with:
 
@@ -135,7 +135,7 @@ Replace a free-text-only venue field with:
 2. **Add new venue** shortcut → same form as manage hub, then select the new id.
 3. **One-off name** escape hatch → send `venueName` only (no `venueId`).
 
-### Path 1 — Places Autocomplete
+### Path 1 - Places Autocomplete
 
 Suggested package: `react-native-google-places-autocomplete`.
 
@@ -148,19 +148,19 @@ Suggested package: `react-native-google-places-autocomplete`.
 
 Keys stay on the client (Expo config). The Sportykore API does **not** proxy Google Places.
 
-### Path 2 — Drop a pin (first-class)
+### Path 2 - Drop a pin (first-class)
 
 Suggested package: `react-native-maps` with a **draggable** `Marker` (or long-press to place).
 
 1. Show a map (default to device location or a country/city center).
 2. User places / drags the pin → set `latitude` / `longitude`.
 3. Optionally reverse-geocode once to prefill `address` / `city` (cheap; skip if you want zero Places cost).
-4. **User always types `name`** — reverse geocode must not force a Google place name for an unlisted estate pitch.
+4. **User always types `name`** - reverse geocode must not force a Google place name for an unlisted estate pitch.
 5. Leave `googlePlaceId` null unless they also came from Places.
 
 This is how unlisted pitches get real directions without appearing in Autocomplete.
 
-### Path 3 — Name only
+### Path 3 - Name only
 
 Single text field → save venue with `name` only, or game with `venueName` only. Valid. No pin, no directions.
 

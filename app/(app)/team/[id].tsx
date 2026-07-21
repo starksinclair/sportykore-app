@@ -12,7 +12,10 @@ import {
 } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { standingStages, useStageStandings } from "@/groups";
+import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
 import { LeagueStandingsTab } from "@/league/components/tabs/StandingsTab";
+import { useSeasonStages } from "@/knockout";
 import { useTeamDetail } from "@/team";
 import { TeamMatchesTab } from "@/team/components/tabs/MatchesTab";
 import { TeamOverviewTab } from "@/team/components/tabs/OverviewTab";
@@ -63,6 +66,33 @@ export default function TeamRoute() {
     const stillValid = selectedLeague.seasons.some((s) => s.id === seasonId);
     if (!stillValid) setSeasonId(selectedLeague.seasons[0]?.id ?? null);
   }, [selectedLeague, seasonId]);
+
+  // `selectedSeason.standings` is a static, precomputed snapshot (no zones,
+  // no adjustment badges); fetch stages so the live stage-standings query -
+  // same one the league page uses, deductions/zones included - can drive
+  // this tab instead, with the snapshot only as a loading/error fallback.
+  const stagesQuery = useSeasonStages(
+    selectedSeason?.id ?? 0,
+    Boolean(selectedSeason),
+  );
+  const standingStage =
+    standingStages(stagesQuery.data).find((s) => s.stageType === "group") ??
+    standingStages(stagesQuery.data).find(
+      (s) => s.stageType === "round_robin",
+    ) ??
+    null;
+
+  // Same live query backs the Overview tab's position line: the static
+  // `season.standings` snapshot doesn't reflect point deductions for group
+  // stages, and can lag for round_robin too.
+  const standingsQuery = useStageStandings(
+    standingStage?.id ?? 0,
+    Boolean(standingStage),
+  );
+  const liveStanding =
+    standingsQuery.data?.tables
+      .flatMap((t) => t.rows)
+      .find((row) => row.team?.id === teamId) ?? null;
 
   if (!isValidId) {
     return (
@@ -145,6 +175,7 @@ export default function TeamRoute() {
           team={team}
           league={selectedLeague}
           season={selectedSeason}
+          liveStanding={liveStanding}
         />
       ) : null}
       {activeTab === "matches" ? (
@@ -152,10 +183,18 @@ export default function TeamRoute() {
       ) : null}
       {activeTab === "squad" ? <TeamSquadTab season={selectedSeason} /> : null}
       {activeTab === "standings" ? (
-        <LeagueStandingsTab
-          standings={selectedSeason?.standings ?? []}
-          highlightTeamId={team.id}
-        />
+        standingStage ? (
+          <LeagueStageStandingsPanel
+            stage={standingStage}
+            highlightTeamId={team.id}
+            fallbackStandings={selectedSeason?.standings ?? []}
+          />
+        ) : (
+          <LeagueStandingsTab
+            standings={selectedSeason?.standings ?? []}
+            highlightTeamId={team.id}
+          />
+        )
       ) : null}
     </DetailScreenShell>
   );

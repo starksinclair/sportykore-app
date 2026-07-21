@@ -52,7 +52,7 @@ function opponentFor(game: ApiGame, teamId: number) {
 }
 
 function positionLabel(position: ApiPlayerWithStats["position"]): string {
-  if (!position) return "—";
+  if (!position) return "-";
   return position.charAt(0).toUpperCase() + position.slice(1);
 }
 

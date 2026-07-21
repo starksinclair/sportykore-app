@@ -97,7 +97,7 @@ export function TeamFormSheet({
               tone="dark"
             />
             <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-              Current logo — pick a new image below to replace.
+              Current logo - pick a new image below to replace.
             </Text>
           </View>
         ) : null}

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
@@ -111,38 +113,72 @@ export function EditGameSheet({
       onClose={onClose}
       title="Edit fixture"
       subtitle={`${game.homeTeam?.name ?? "Home"} vs ${game.awayTeam?.name ?? "Away"}`}
+      variant="dark"
     >
       <View className="gap-4">
-        <AuthTextField
-          label="Date (YYYY-MM-DD)"
-          value={dateStr}
-          onChangeText={setDateStr}
-          placeholder="2026-05-23"
-          autoCapitalize="none"
-        />
-        <AuthTextField
-          label="Kick-off time (HH:mm) uses 24-hour format"
-          value={timeStr}
-          onChangeText={setTimeStr}
-          placeholder="15:00"
-          autoCapitalize="none"
-        />
-        <GameVenuePicker
-          leagueId={leagueId}
-          enabled={visible}
-          selection={venueSelection}
-          onChange={setVenueSelection}
-        />
+        <GameSheetBlock title="Kick-off">
+          <NativeDatePickerField
+            label="Date"
+            value={dateStr}
+            onChange={(value) => setDateStr(value ?? "")}
+            placeholder="Pick fixture date"
+            labelClassName="text-white/60"
+            required
+          />
+          <AuthTextField
+            label="Kick-off time (HH:mm) uses 24-hour format"
+            labelClassName="text-white/60"
+            value={timeStr}
+            onChangeText={setTimeStr}
+            placeholder="15:00"
+            autoCapitalize="none"
+          />
+        </GameSheetBlock>
+        <GameSheetBlock title="Venue">
+          <GameVenuePicker
+            leagueId={leagueId}
+            enabled={visible}
+            selection={venueSelection}
+            onChange={setVenueSelection}
+            variant="dark"
+          />
+        </GameSheetBlock>
         <Button
           variant="authPurple"
           label={updateMutation.isPending ? "Saving…" : "Save changes"}
           loading={updateMutation.isPending}
           onPress={() => void handleSave()}
         />
-        <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-slate-500">
-          Teams cannot be changed here — delete and reschedule if needed.
-        </Text>
+        <View className="flex-row items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+          <Ionicons name="information-circle-outline" size={17} color="#E6A817" />
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="min-w-0 flex-1 text-xs leading-5 text-white/50"
+          >
+            Teams cannot be changed here. Delete and reschedule if needed.
+          </Text>
+        </View>
       </View>
     </BottomSheetModal>
+  );
+}
+
+function GameSheetBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-xs uppercase tracking-wide text-white/50"
+      >
+        {title}
+      </Text>
+      <View className="gap-3">{children}</View>
+    </View>
   );
 }

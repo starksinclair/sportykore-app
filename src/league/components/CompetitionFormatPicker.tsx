@@ -16,7 +16,7 @@ const FORMAT_OPTIONS: {
   {
     id: "league",
     label: "League (round-robin)",
-    description: "Table standings from fixtures — round-robin.",
+    description: "Table standings from fixtures - round-robin.",
   },
   {
     id: "knockout",

@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
-import { Button } from "@/components/ui/Button";
 import { EntityLogo } from "@/components/ui";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
@@ -68,17 +67,39 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
 
   return (
     <View className="gap-6 pb-8">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          Teams belong to the whole league — use them for fixtures, standings, and player
-          invites.
-        </Text>
-        <Button
-          variant="authPurple"
-          label="Add team"
-          onPress={openAdd}
-          className="h-11 px-4"
-        />
+      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="shirt-outline" size={22} color="#E6A817" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              League teams
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-xs leading-5 text-white/50"
+              numberOfLines={2}
+            >
+              Teams power fixtures, standings, and player invites.
+            </Text>
+          </View>
+          <Pressable
+            onPress={openAdd}
+            accessibilityRole="button"
+            accessibilityLabel="Add team"
+            className="h-10 flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 active:opacity-90"
+          >
+            <Ionicons name="add" size={16} color="#171717" />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-xs text-neutral-950"
+              numberOfLines={1}
+            >
+              Add
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {isLoading ? (

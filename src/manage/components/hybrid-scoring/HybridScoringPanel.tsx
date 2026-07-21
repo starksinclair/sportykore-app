@@ -188,7 +188,7 @@ export function HybridScoringPanel({
           />
           <Button
             variant="ghost"
-            label="Skip — score only"
+            label="Skip - score only"
             disabled={!accreditActive}
             onPress={onSkip}
           />

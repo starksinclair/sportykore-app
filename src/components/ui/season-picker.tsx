@@ -50,7 +50,7 @@ export function SeasonPicker({
           style={{ fontFamily: fonts.bodySemibold }}
           className="text-[15px] text-white"
         >
-          {label}: {active?.name ?? "—"}
+          {label}: {active?.name ?? "-"}
         </Text>
         {interactive ? (
           <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.7)" />

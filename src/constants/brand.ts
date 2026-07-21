@@ -1,5 +1,5 @@
 /**
- * SportyKore brand tokens — keep in sync with tailwind.config.js and WAITLIST_BRAND_GUIDE.md.
+ * SportyKore brand tokens - keep in sync with tailwind.config.js and WAITLIST_BRAND_GUIDE.md.
  */
 
 export const colors = {

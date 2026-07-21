@@ -6,7 +6,7 @@ import {
   GroupStandingsView,
   LeagueStandingsTab,
 } from "@/league/components/tabs/StandingsTab";
-import { useStageStandings } from "@/groups";
+import { useStageStandings, useZones } from "@/groups";
 import { fonts } from "@/theme/fonts";
 
 type Props = {
@@ -22,6 +22,8 @@ export function LeagueStageStandingsPanel({
   fallbackStandings,
 }: Props) {
   const query = useStageStandings(stage.id, true);
+  const zonesQuery = useZones(stage.id, true);
+  const zones = zonesQuery.data ?? [];
 
   if (query.isLoading && !query.data) {
     return (
@@ -37,6 +39,7 @@ export function LeagueStageStandingsPanel({
         <LeagueStandingsTab
           standings={fallbackStandings}
           highlightTeamId={highlightTeamId}
+          zones={zones}
         />
       );
     }
@@ -52,6 +55,7 @@ export function LeagueStageStandingsPanel({
       <GroupStandingsView
         tables={query.data.tables}
         highlightTeamId={highlightTeamId}
+        zones={zones}
       />
     );
   }
@@ -61,6 +65,7 @@ export function LeagueStageStandingsPanel({
     <LeagueStandingsTab
       standings={table?.rows ?? []}
       highlightTeamId={highlightTeamId}
+      zones={zones}
     />
   );
 }

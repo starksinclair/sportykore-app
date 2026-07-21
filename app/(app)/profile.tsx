@@ -8,10 +8,11 @@ import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
+import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { useDoesUserHavePlayerProfile } from "@/player";
+import { useOwnPlayerProfile } from "@/player";
 import { fonts } from "@/theme/fonts";
 
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
@@ -23,9 +24,9 @@ export default function ProfileScreen() {
   const displayName = user?.name?.trim();
   const email = user?.email ?? "";
 
-  const playerProfileQuery = useDoesUserHavePlayerProfile(Boolean(user));
-  const hasPlayerProfile = playerProfileQuery.data?.hasPlayerProfile === true;
-  const playerId = playerProfileQuery.data?.playerId;
+  const playerProfileQuery = useOwnPlayerProfile(Boolean(user));
+  const playerProfile = playerProfileQuery.data;
+  const hasPlayerProfile = playerProfile?.kind === "profile";
 
   const handleSignOut = () => {
     Alert.alert(
@@ -70,26 +71,7 @@ export default function ProfileScreen() {
   const handlePlayerProfile = async () => {
     if (playerProfileQuery.isLoading) return;
 
-    if (hasPlayerProfile && user) {
-      router.push(`/player/${playerId}`);
-      return;
-    }
-
-    Alert.alert(
-      "Complete your player profile",
-      "Player profiles are created when you accept a league invite. Ask your league admin for an invite link, or open one you have already received.",
-    );
-  };
-
-  const handleRecoveryEmail = () => {
-    Alert.alert(
-      "Recovery email",
-      "Add a recovery email when you create your account. If you lose access to your primary email, use your recovery email to receive a sign-in code.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Recover account", onPress: () => router.push("/forgot") },
-      ],
-    );
+    router.push("/player/me");
   };
 
   return (
@@ -167,8 +149,8 @@ export default function ProfileScreen() {
       >
         {user ? (
           <>
-              {hasPlayerProfile && (
-                 <Section title="Player profile">
+              <Section title="Player profile">
+                {hasPlayerProfile ? (
                 <SettingsRowChevron
                 icon="person-outline"
                 title={
@@ -176,11 +158,40 @@ export default function ProfileScreen() {
                     ? "Loading profile…"
                     : "View profile"
                 }
-                subtitle={"Your player card and stats"}
+                subtitle={"Your player card, stats, and highlights"}
                 onPress={handlePlayerProfile}
               />
+                ) : (
+                  <View className="gap-3 px-4 py-4">
+                    <View className="flex-row gap-3">
+                      <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#4A148C]">
+                        <Ionicons name="person-add-outline" size={20} color="#E6A817" />
+                      </View>
+                      <View className="min-w-0 flex-1 gap-1">
+                        <Text
+                          style={{ fontFamily: fonts.bodyBold }}
+                          className="text-[15px] text-neutral-950"
+                        >
+                          Create player profile
+                        </Text>
+                        <Text
+                          style={{ fontFamily: fonts.body }}
+                          className="text-xs leading-5 text-slate-500"
+                        >
+                          A permanent profile that follows you across leagues,
+                          with your stats and highlights in one place.
+                        </Text>
+                      </View>
+                    </View>
+                    <Button
+                      variant="authPurple"
+                      label="Create profile"
+                      className="h-11"
+                      onPress={handlePlayerProfile}
+                    />
+                  </View>
+                )}
                 </Section>
-              )}
           
             <Section title="Account">
               <SettingsRowChevron
@@ -234,12 +245,12 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
 
-        <Text
+        {/* <Text
           style={{ fontFamily: fonts.body }}
           className="pb-8 text-center text-xs leading-5 text-slate-500"
         >
           Sportykore v{APP_VERSION}
-        </Text>
+        </Text> */}
       </ScrollView>
     </View>
   );

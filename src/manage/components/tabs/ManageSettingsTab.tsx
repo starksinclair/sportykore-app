@@ -5,6 +5,7 @@ import { Pressable, Text, View } from "react-native";
 import type { ApiLeague, ApiSeason, SeasonStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import { DIVISION_OPTIONS } from "@/league/league-create-constants";
 import {
@@ -124,7 +125,7 @@ export function ManageSettingsTab({
   const handleAddSeason = async () => {
     const trimmed = newSeasonName.trim();
     if (!trimmed) {
-      showInfoToast("Season name required", "e.g. 2027 — Spring");
+      showInfoToast("Season name required", "e.g. 2027 - Spring");
       return;
     }
     try {
@@ -206,25 +207,23 @@ export function ManageSettingsTab({
           <LeagueDurationProgress startDate={startDate} endDate={endDate} />
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <AuthTextField
+              <NativeDatePickerField
                 label="Start date"
                 value={startDate}
-                onChangeText={setStartDate}
-                placeholder="YYYY-MM-DD"
-                autoCapitalize="none"
-                keyboardType="numbers-and-punctuation"
-                containerClassName="[&_input]:text-neutral-900"
+                onChange={(value) => setStartDate(value ?? "")}
+                placeholder="Pick start date"
+                maximumDate={parseCalendarDate(endDate) ?? undefined}
+                labelClassName="text-white/45"
               />
             </View>
             <View className="flex-1">
-              <AuthTextField
+              <NativeDatePickerField
                 label="End date"
                 value={endDate}
-                onChangeText={setEndDate}
-                placeholder="YYYY-MM-DD"
-                autoCapitalize="none"
-                keyboardType="numbers-and-punctuation"
-                containerClassName="[&_input]:text-neutral-900"
+                onChange={(value) => setEndDate(value ?? "")}
+                placeholder="Pick end date"
+                minimumDate={parseCalendarDate(startDate) ?? undefined}
+                labelClassName="text-white/45"
               />
             </View>
           </View>
@@ -288,7 +287,7 @@ export function ManageSettingsTab({
           <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
             Active
           </Text>{" "}
-          to run it now — any other active season in this league is marked{" "}
+          to run it now - any other active season in this league is marked{" "}
           <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
             Completed
           </Text>{" "}
@@ -349,7 +348,7 @@ export function ManageSettingsTab({
           label="Season name"
           value={newSeasonName}
           onChangeText={setNewSeasonName}
-          placeholder="2027 — Spring"
+          placeholder="2027 - Spring"
           containerClassName="[&_input]:text-neutral-900"
         />
 

@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
+import { sportyToastConfig } from "@/components/ui/toast-config";
 import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
 import { TransmitProvider } from "@/lib/transmit";
@@ -79,7 +80,7 @@ export default function RootLayout() {
                     <StatusBar style="auto" />
                     <RootStack />
                     <InviteLinkCapture />
-                    <Toast />
+                    <Toast config={sportyToastConfig} topOffset={58} />
                   </ThemeProvider>
                 </AuthGateProvider>
               </AuthProvider>

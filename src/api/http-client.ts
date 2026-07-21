@@ -8,9 +8,9 @@ export type ApiAuthMode = boolean | "optional";
 export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   /**
    * Auth behaviour for the request. Default `false`.
-   * - `true` — require a Bearer token; throw if none is stored
-   * - `"optional"` — attach Bearer when a token exists; still call without one
-   * - `false` — never attach Authorization
+   * - `true` - require a Bearer token; throw if none is stored
+   * - `"optional"` - attach Bearer when a token exists; still call without one
+   * - `false` - never attach Authorization
    */
   auth?: ApiAuthMode;
   /**

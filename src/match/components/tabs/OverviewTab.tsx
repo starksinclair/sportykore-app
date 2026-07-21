@@ -31,7 +31,7 @@ export function MatchOverviewTab({ detail }: Props) {
     detail.status === "full_time" ||
     detail.status === "completed";
 
-  const venueLabel = detail.venue?.name ?? detail.venueName ?? "—";
+  const venueLabel = detail.venue?.name ?? detail.venueName ?? "-";
   const lat = detail.venue?.latitude;
   const lng = detail.venue?.longitude;
   const hasCoords =

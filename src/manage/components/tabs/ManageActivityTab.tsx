@@ -39,7 +39,7 @@ export function ManageActivityTab({ leagueId }: Props) {
         Activity
       </Text>
       <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
-        Read-only log of organizer actions — deductions, overrides, draws, and more.
+        Read-only log of organizer actions - deductions, overrides, draws, and more.
       </Text>
 
       {rows.length === 0 ? (

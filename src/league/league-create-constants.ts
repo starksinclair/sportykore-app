@@ -1,4 +1,4 @@
-/** Country option shape — populated from the home API (real DB id). */
+/** Country option shape - populated from the home API (real DB id). */
 export type CountryOption = {
   id: number;
   code: string;

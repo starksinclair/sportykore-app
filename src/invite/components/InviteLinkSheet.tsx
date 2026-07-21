@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { Pressable, Share, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
 import type { ApiTeam } from "@/api/entities";
@@ -205,46 +213,197 @@ function TeamPicker({
 }: {
   teams: ApiTeam[];
   selectedId: number | null;
-  onSelect: (id: number) => void;
+  onSelect: (id: number | null) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? teams.filter((team) => team.name.toLowerCase().includes(q))
+    : teams;
+  const selectedTeam = teams.find((team) => team.id === selectedId) ?? null;
+  const hasSelection = selectedTeam != null;
+
+  const handleSelect = (id: number) => {
+    onSelect(id);
+    setOpen(false);
+    setQuery("");
+  };
+
+  const handleClear = () => {
+    onSelect(null);
+    setOpen(false);
+    setQuery("");
+  };
+
   return (
     <View className="gap-2">
       <Text
         style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-wider text-white/45"
+        className="text-xs uppercase tracking-wide text-white/50"
       >
         Team
       </Text>
-      <View className="flex-row flex-wrap gap-2">
-        {teams.map((team) => {
-          const active = selectedId === team.id;
-          return (
-            <Pressable
-              key={team.id}
-              onPress={() => onSelect(team.id)}
-              className={[
-                "flex-row items-center gap-2 rounded-full border py-2 pl-2 pr-4",
-                active
-                  ? "border-accent-500 bg-accent-500/15"
-                  : "border-white/10 bg-white/6",
-              ].join(" ")}
-            >
+      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+        <Pressable
+          onPress={() => setOpen((current) => !current)}
+          className="flex-row items-center gap-3 px-3.5 py-3"
+          accessibilityRole="button"
+          accessibilityLabel="Choose team"
+        >
+          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+            {selectedTeam ? (
               <EntityLogo
-                logoUrl={team.logoUrl}
+                logoUrl={selectedTeam.logoUrl}
                 variant="team"
                 size="xs"
                 tone="dark"
               />
+            ) : (
+              <Ionicons name="shield-outline" size={18} color="#E6A817" />
+            )}
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text
+              style={{ fontFamily: fonts.bodySemibold }}
+              className={hasSelection ? "text-sm text-white" : "text-sm text-white/65"}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selectedTeam?.name ?? "Choose team"}
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="pt-0.5 text-xs text-white/45"
+              numberOfLines={1}
+            >
+              {hasSelection
+                ? "Invite destination"
+                : `${teams.length} team${teams.length === 1 ? "" : "s"} available`}
+            </Text>
+          </View>
+          {hasSelection ? (
+            <Pressable
+              onPress={handleClear}
+              hitSlop={10}
+              className="rounded-lg px-2 py-1"
+            >
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}
-                className={active ? "text-accent-400" : "text-white/75"}
+                className="text-xs text-white/55"
               >
-                {team.name}
+                Clear
               </Text>
             </Pressable>
-          );
-        })}
+          ) : null}
+          <Ionicons
+            name={open ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="rgba(255,255,255,0.45)"
+          />
+        </Pressable>
+
+        {open ? (
+          <View className="border-t border-white/10 bg-neutral-950/70">
+            {teams.length > 5 ? (
+              <View className="flex-row items-center gap-2 border-b border-white/10 px-3 py-2">
+                <Ionicons
+                  name="search"
+                  size={16}
+                  color="rgba(255,255,255,0.45)"
+                />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search teams"
+                  placeholderTextColor="#94a3b8"
+                  autoCorrect={false}
+                  style={{
+                    flex: 1,
+                    fontFamily: fonts.body,
+                    fontSize: 14,
+                    color: "#FFFFFF",
+                    paddingVertical: 6,
+                  }}
+                />
+                {query ? (
+                  <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                    <Ionicons
+                      name="close-circle"
+                      size={16}
+                      color="rgba(255,255,255,0.45)"
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <ScrollView
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              style={{ maxHeight: 220 }}
+            >
+              {filtered.map((team) => (
+                <TeamOptionRow
+                  key={team.id}
+                  team={team}
+                  selected={selectedId === team.id}
+                  onPress={() => handleSelect(team.id)}
+                />
+              ))}
+              {filtered.length === 0 ? (
+                <Text
+                  style={{ fontFamily: fonts.body }}
+                  className="px-4 py-4 text-sm text-white/45"
+                >
+                  {`No teams match "${query.trim()}".`}
+                </Text>
+              ) : null}
+            </ScrollView>
+          </View>
+        ) : null}
       </View>
     </View>
+  );
+}
+
+function TeamOptionRow({
+  team,
+  selected,
+  onPress,
+}: {
+  team: ApiTeam;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
+        selected ? "bg-accent-500/10" : "bg-transparent"
+      }`}
+    >
+      <EntityLogo
+        logoUrl={team.logoUrl}
+        variant="team"
+        size="xs"
+        tone="dark"
+      />
+      <View className="min-w-0 flex-1">
+        <Text
+          style={{ fontFamily: fonts.bodySemibold }}
+          className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {team.name}
+        </Text>
+      </View>
+      {selected ? (
+        <Ionicons name="checkmark-circle" size={20} color="#E6A817" />
+      ) : (
+        <View className="h-5 w-5 rounded-full border border-white/20" />
+      )}
+    </Pressable>
   );
 }

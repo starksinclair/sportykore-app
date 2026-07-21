@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import type {
@@ -46,6 +46,7 @@ type Props = {
   /** Smaller padding / title for stacked all-groups overview. */
   compact?: boolean;
   title?: string;
+  useTablePositionForZones?: boolean;
   onRowMarkerPress?: (row: ApiStanding) => void;
 };
 
@@ -56,11 +57,17 @@ export function LeagueStandingsTab({
   stageGroupId = null,
   compact = false,
   title,
+  useTablePositionForZones = false,
   onRowMarkerPress,
 }: Props) {
   const router = useRouter();
   const displayStandings = zones?.length
-    ? applyZonesToStandings(standings, zones, stageGroupId)
+    ? applyZonesToStandings(
+        standings,
+        zones,
+        stageGroupId,
+        useTablePositionForZones,
+      )
     : standings;
 
   if (!displayStandings.length) {
@@ -112,11 +119,17 @@ export function LeagueStandingsTab({
         </View>
 
         {displayStandings.map((row, index) => {
+          const displayPosition = useTablePositionForZones ? index + 1 : row.position;
           const isHighlighted =
             highlightTeamId != null && row.team?.id === highlightTeamId;
           const zoneColor = row.zone?.type
             ? ZONE_COLORS[row.zone.type]
             : "transparent";
+          const rowBackgroundColor = isHighlighted
+            ? "#E6A8171A"
+            : row.zone?.type
+              ? `${zoneColor}14`
+              : undefined;
           const zoneIcon = row.zone?.type ? ZONE_ICONS[row.zone.type] : null;
           const hasMarker =
             Boolean(row.pointsAdjustment) || Boolean(row.manuallyAdjusted);
@@ -127,10 +140,10 @@ export function LeagueStandingsTab({
               className={[
                 "flex-row items-center gap-1 px-2",
                 compact ? "py-2" : "py-3",
-                isHighlighted ? "bg-[#E6A817]/10" : "",
                 index !== displayStandings.length - 1 ? "border-b border-white/10" : "",
               ].join(" ")}
               style={{
+                backgroundColor: rowBackgroundColor,
                 borderLeftWidth: 3,
                 borderLeftColor: zoneColor,
               }}
@@ -145,7 +158,7 @@ export function LeagueStandingsTab({
                   }
                   numberOfLines={1}
                 >
-                  {row.position}
+                  {displayPosition}
                 </Text>
                 {zoneIcon ? (
                   <Ionicons name={zoneIcon} size={11} color={zoneColor} />
@@ -177,7 +190,7 @@ export function LeagueStandingsTab({
                   adjustsFontSizeToFit
                   minimumFontScale={0.82}
                 >
-                  {row.team?.name ?? "—"}
+                  {row.team?.name ?? "-"}
                 </Text>
                 {hasMarker ? (
                   <Pressable
@@ -231,13 +244,6 @@ export function LeagueStandingsTab({
               >
                 {z.label}
               </Text>
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-[9px] uppercase text-white/35"
-                numberOfLines={1}
-              >
-                {ZONE_COLORS[z.type]}
-              </Text>
             </View>
           ))}
         </View>
@@ -289,10 +295,12 @@ function applyZonesToStandings(
   rows: ApiStanding[],
   zones: ApiStandingZone[],
   stageGroupId: number | null,
+  useTablePosition: boolean,
 ): ApiStanding[] {
-  return rows.map((row) => {
+  return rows.map((row, index) => {
     if (row.zone) return row;
-    const zone = findZoneForPosition(zones, row.position, stageGroupId);
+    const position = useTablePosition ? index + 1 : row.position;
+    const zone = findZoneForPosition(zones, position, stageGroupId);
     if (!zone) return row;
     return {
       ...row,
@@ -397,6 +405,7 @@ export function GroupStandingsView({
         highlightTeamId={highlightTeamId}
         zones={zones}
         stageGroupId={ordered[0]!.stageGroupId}
+        useTablePositionForZones
       />
     );
   }
@@ -458,6 +467,7 @@ export function GroupStandingsView({
               highlightTeamId={highlightTeamId}
               zones={zones}
               stageGroupId={table.stageGroupId}
+              useTablePositionForZones
               compact
             />
           ))}
@@ -468,6 +478,7 @@ export function GroupStandingsView({
           highlightTeamId={highlightTeamId}
           zones={zones}
           stageGroupId={selected.stageGroupId}
+          useTablePositionForZones
         />
       ) : null}
     </View>

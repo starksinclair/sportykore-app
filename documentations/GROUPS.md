@@ -2,7 +2,7 @@
 
 Group stages (`stage_type = 'group'`) sit between round-robin league tables and knockout brackets. Teams are placed into named groups (A, B, C…), play round-robin fixtures within each group, and then an ordered qualifier list seeds an existing knockout via `generateKnockoutPhase` **without modifying bracket core**.
 
-Expo / mobile UI for groups is out of scope in this repo — see endpoints below and [ROUTES.md](../ROUTES.md).
+Expo / mobile UI for groups is out of scope in this repo - see endpoints below and [ROUTES.md](../ROUTES.md).
 
 Related: [KNOCKOUT.md](./KNOCKOUT.md), [MANAGE_LEAGUE.md](./MANAGE_LEAGUE.md).
 
@@ -16,7 +16,7 @@ Related: [KNOCKOUT.md](./KNOCKOUT.md), [MANAGE_LEAGUE.md](./MANAGE_LEAGUE.md).
 | `stage_groups` | Named groups A..N with `sequence` |
 | `stage_teams` | Team ↔ group assignment (`stage_group_id`, `seed`) |
 | `games` | Intra-group fixtures (`stage_id` + `stage_group_id`, no `tie_id` / `round`) |
-| `standing_adjustments` | Point deltas (deductions/bonuses) — input to live compute |
+| `standing_adjustments` | Point deltas (deductions/bonuses) - input to live compute |
 | `standing_overrides` | Manual reorder of teams tied on **points + played** (cohort-scoped) |
 | `standing_zones` | Presentation bands on positions (e.g. `qualified` 1..N) |
 | `admin_audit_logs` | Append-only owner action history |
@@ -29,12 +29,12 @@ Knockout created from groups sets `source_stage_id` on the new stage.
 
 Standings sort is **hardcoded** (not `league.tiebreaker`):
 
-1. Points desc  
-2. Goal difference desc  
-3. Goals for desc  
-4. Team name asc  
+1. Points desc
+2. Goal difference desc
+3. Goals for desc
+4. Team name asc
 
-Scoring is always 3 / 1 / 0. The `leagues.tiebreaker` column remains for legacy clients but is **not** read by standings paths — treat it as legacy.
+Scoring is always 3 / 1 / 0. The `leagues.tiebreaker` column remains for legacy clients but is **not** read by standings paths - treat it as legacy.
 
 Pure aggregation lives in `app/services/standings/compute_table.ts` (`computeTable`, `compareTableRows`, `cohortSignature`).
 
@@ -44,10 +44,10 @@ Pure aggregation lives in `app/services/standings/compute_table.ts` (`computeTab
 
 Applies to **`round_robin` and `group`** only (knockout/playoff → 422).
 
-1. Load games in `STANDING_GAME_STATUSES` scoped by `stage_id` (+ `stage_group_id` for groups).  
-2. Sum `standing_adjustments.points_delta` into points.  
-3. Fixed sort → assign positions.  
-4. Apply cohort overrides whose `cohort_signature` still matches; mark others **stale** (do not delete on read).  
+1. Load games in `STANDING_GAME_STATUSES` scoped by `stage_id` (+ `stage_group_id` for groups).
+2. Sum `standing_adjustments.points_delta` into points.
+3. Fixed sort → assign positions.
+4. Apply cohort overrides whose `cohort_signature` still matches; mark others **stale** (do not delete on read).
 5. Tag rows with zones whose position range contains the row (`stage_group_id` null = all groups).
 
 Response shape:
@@ -78,15 +78,15 @@ createGroupStage → assignTeams (manual | snake auto) → generateGroupFixtures
 
 ### Create
 
-- `POST /leagues` with `format: "group"` + optional `group: { name?, config? }`  
-- Defaults if config omitted: `group_count: 2`, `double_round_robin: false`, `per_group: 2`  
-- Creates stage + groups A..N + one `qualified` zone `1..per_group` (`stage_group_id` null)  
+- `POST /leagues` with `format: "group"` + optional `group: { name?, config? }`
+- Defaults if config omitted: `group_count: 2`, `double_round_robin: false`, `per_group: 2`
+- Creates stage + groups A..N + one `qualified` zone `1..per_group` (`stage_group_id` null)
 - **Does not** assign teams or generate fixtures (`seeded: false`)
 
 ### Assign
 
-- **Manual:** `{ mode: "manual", assignments: [{ teamId, stageGroupId }] }`  
-- **Auto:** `{ mode: "auto", teamIds, shuffle? }` — snake draw across groups (uneven sizes OK)  
+- **Manual:** `{ mode: "manual", assignments: [{ teamId, stageGroupId }] }`
+- **Auto:** `{ mode: "auto", teamIds, shuffle? }` - snake draw across groups (uneven sizes OK)
 - Refuses if `stage_teams` already exist (409)
 
 ### Fixtures
@@ -99,18 +99,18 @@ Circle-method round robin per group; doubles if `double_round_robin`. Games get 
 
 `QualifierService.resolveQualifiers`:
 
-- **Tier 1:** positions `1..per_group` from each group (automatic).  
-- **Tier 2 (thirds):** only if `targetRound` needs more than automatic count; `thirdsMode: auto|manual`. Never promote beyond one tier.  
-- Default without `targetRound`: automatic qualifiers only; bracket pads with byes (`nextPow2`).  
-- Seeding order: winners (ranked among themselves) → runners-up → thirds.  
+- **Tier 1:** positions `1..per_group` from each group (automatic).
+- **Tier 2 (thirds):** only if `targetRound` needs more than automatic count; `thirdsMode: auto|manual`. Never promote beyond one tier.
+- Default without `targetRound`: automatic qualifiers only; bracket pads with byes (`nextPow2`).
+- Seeding order: winners (ranked among themselves) → runners-up → thirds.
 - `proposedPairings` is advisory.
 
 `POST …/generate-knockout`:
 
-1. Guard incomplete games unless `force`  
-2. Use client `qualifiers[]` if provided (organizer wins)  
-3. Create knockout with `source_stage_id`, set `config.format.starting_round` from `targetRound`  
-4. Call existing `BracketService.generateKnockoutPhase` unchanged  
+1. Guard incomplete games unless `force`
+2. Use client `qualifiers[]` if provided (organizer wins)
+3. Create knockout with `source_stage_id`, set `config.format.starting_round` from `targetRound`
+4. Call existing `BracketService.generateKnockoutPhase` unchanged
 5. Mark group stage `completed`
 
 Preview: `GET …/qualifiers?dryRun=true` (no writes; incomplete games allowed).

@@ -8,7 +8,7 @@ import {
 
 /**
  * Computes the live match minute locally from period timestamps.
- * Ticks every second while the clock is running — no API polling.
+ * Ticks every second while the clock is running - no API polling.
  */
 export function useLiveMinute(game: GameClockFields | null | undefined): number {
   const [minute, setMinute] = useState(() =>

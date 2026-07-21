@@ -25,7 +25,7 @@ export async function promptBiometricGate(): Promise<boolean> {
     });
     return result.success;
   } catch {
-    // Native module missing (dev client not rebuilt) — allow through so manage
+    // Native module missing (dev client not rebuilt) - allow through so manage
     // remains usable until a fresh build includes expo-local-authentication.
     return true;
   }

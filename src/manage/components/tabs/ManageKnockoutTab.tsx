@@ -418,7 +418,7 @@ function SeedKnockoutSheet({
       title={step === "order" ? "Seed bracket" : "Preview bracket"}
       subtitle={
         step === "order"
-          ? "Top of the list is seed 1. Teams pair in list order — 1 v 2, 3 v 4 — and byes go to the top seeds."
+          ? "Top of the list is seed 1. Teams pair in list order - 1 v 2, 3 v 4 - and byes go to the top seeds."
           : "Check the matchups before you lock them in."
       }
       scrollEnabled

@@ -180,7 +180,7 @@ export function LineupPitchView({
                 <BadgeCluster badges={badgeByPlayer.get(sub.playerId)} />
               </View>
               <Text style={{ fontFamily: fonts.bodyBold }} className={["w-8", accentColor].join(" ")}>
-                {sub.jerseyNumber != null ? `#${sub.jerseyNumber}` : "—"}
+                {sub.jerseyNumber != null ? `#${sub.jerseyNumber}` : "-"}
               </Text>
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}

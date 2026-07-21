@@ -1,4 +1,4 @@
-# Manage League — React Native integration guide
+# Manage League - React Native integration guide
 
 This document describes the **Manage** flow for league owners: screens, tabs, API calls, and client-side rules. It aligns with the product spec and the current backend in [ROUTES.md](../ROUTES.md).
 
@@ -68,7 +68,7 @@ flowchart TD
       "name": "Sunday Riverside League",
       "logoUrl": null,
       "countryId": 1,
-      "activeSeason": { "id": 5, "name": "2026 — Spring", "status": "active" }
+      "activeSeason": { "id": 5, "name": "2026 - Spring", "status": "active" }
     }
   ]
 }
@@ -106,7 +106,7 @@ No API call for this step.
 GET /api/v1/leagues/:leagueId?seasonId={seasonId}
 ```
 
-Returns `{ data: { seasons, season, statTypes } }`. See [ROUTES.md — league show](../ROUTES.md).
+Returns `{ data: { seasons, season, statTypes } }`. See [ROUTES.md - league show](../ROUTES.md).
 
 **Teams (for Add Game / invite pickers):**
 
@@ -114,7 +114,7 @@ Returns `{ data: { seasons, season, statTypes } }`. See [ROUTES.md — league sh
 GET /api/v1/auth/users/leagues/:leagueId/teams
 ```
 
-Returns `{ data: Team[] }` — `id`, `name`, `logoUrl`. Only works if the user owns the league.
+Returns `{ data: Team[] }` - `id`, `name`, `logoUrl`. Only works if the user owns the league.
 
 **Season picker:** Use `data.seasons` from league show. Default `seasonId` = active season if present, else newest. **Past seasons are read-only for settings** (no edit season API); games/players still work per season.
 
@@ -160,7 +160,7 @@ After success, refetch `GET /leagues/:leagueId?seasonId=…`.
 
 **Venue picker UX** (dropdown of league venues + add venue + one-off name): see [VENUES.md](VENUES.md).
 
-### Live Now — open Match Center
+### Live Now - open Match Center
 
 Tap a live game → full-screen **Live Match Center** (busy-admin UI).
 
@@ -176,14 +176,14 @@ Returns game + `stats[]` (with `type`, `team`, `player`, `relatedPlayer`) + `lea
 
 #### Scoreboard (hybrid scoring)
 
-Use **`+` / `−`** per side — score and unaccredited goal stat stay in sync. See [hybrid-scoring-prompt.md](hybrid-scoring-prompt.md).
+Use **`+` / `−`** per side - score and unaccredited goal stat stay in sync. See [hybrid-scoring-prompt.md](hybrid-scoring-prompt.md).
 
 | Action | API |
 | --- | --- |
 | Increment score | `POST /api/v1/games/:gameId/score` `{ "team": "home" \| "away", "action": "increment" }` → returns `statId` for accredit |
-| Decrement score | `POST .../score` `{ "action": "decrement" }` — removes latest unaccredited goal for that team |
+| Decrement score | `POST .../score` `{ "action": "decrement" }` - removes latest unaccredited goal for that team |
 | Accredit goal | `PATCH /api/v1/games/:gameId/stats/:statId/accredit` `{ playerId, assistPlayerId?, isOwnGoal, minute }` |
-| Skip accredit | No API — placeholder already created on increment; reset UI only |
+| Skip accredit | No API - placeholder already created on increment; reset UI only |
 
 **SSE:** `score_updated` (scores), `stat_accredited` (refetch stats).
 
@@ -222,8 +222,8 @@ POST /api/v1/leagues/stats
 | `leagueId`, `seasonId` | From game / manage context |
 | `teamId` | Side the player represents in **this** match (home or away) |
 | `playerId` | Scorer / card recipient |
-| `statTypeId` | From `statTypes` — map UI label → `name` below |
-| `relatedPlayerId` | Assists only — assisting player |
+| `statTypeId` | From `statTypes` - map UI label → `name` below |
+| `relatedPlayerId` | Assists only - assisting player |
 | `minute`, `isStoppageTime` | Optional |
 
 **Stat type mapping** (`statTypes[].name` → UI):
@@ -283,7 +283,7 @@ Each item includes:
 
 Refetch when season changes or after invite/roster mutations.
 
-### Flow A — Invite a specific user
+### Flow A - Invite a specific user
 
 1. Search: `GET /api/v1/auth/users/search?q={query}&leagueId={leagueId}`
 2. User picks league, season, team (season from picker; teams from auth users teams endpoint).
@@ -295,7 +295,7 @@ Refetch when season changes or after invite/roster mutations.
 4. Share link (WhatsApp, SMS, etc.).
 5. Invitee flow (their app): `GET /invites/accept/:token` → maybe `POST /invites/complete-profile-and-accept/:token` with `{ name, bio? }`.
 
-### Flow B — General invite link
+### Flow B - General invite link
 
 Same as Flow A but **omit** `invitedUserId`:
 
@@ -357,7 +357,7 @@ POST /api/v1/leagues/:leagueId/seasons
 | Field | Values |
 | --- | --- |
 | `leagueId` | From URL / body |
-| `name` | e.g. `"2027 — Spring"` |
+| `name` | e.g. `"2027 - Spring"` |
 | `status` | `inactive` \| `active` \| `completed` |
 
 Response `201`: raw season object (not wrapped in `data`). After create, refetch league show and switch picker to the new season if desired.

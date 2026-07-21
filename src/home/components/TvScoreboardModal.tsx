@@ -34,7 +34,7 @@ type Props = {
 
 /**
  * Full-screen, high-contrast scoreboard intended for indoor facility displays
- * — a phone or tablet mounted on the wall so players can read the score and
+ * - a phone or tablet mounted on the wall so players can read the score and
  * clock from across the room. Opens locked to landscape; live matches poll
  * every 5 seconds while the modal is visible.
  */

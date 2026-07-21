@@ -82,7 +82,7 @@ export function EditSeasonSheet({
           label="Season name"
           value={name}
           onChangeText={setName}
-          placeholder="2026 — Spring"
+          placeholder="2026 - Spring"
           containerClassName="[&_input]:text-neutral-900"
         />
 

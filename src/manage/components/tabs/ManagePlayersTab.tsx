@@ -60,17 +60,40 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
 
   return (
     <View className="gap-6 pb-8">
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
-        Invite players to your season roster. They will create their own profile
-        when accepting the link.
-      </Text>
-
-      <Button
-        variant="authPurple"
-        label="Invite to team"
-        onPress={() => setInviteOpen(true)}
-        className="h-11"
-      />
+      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="people-outline" size={22} color="#E6A817" />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              Season roster
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-xs leading-5 text-white/50"
+              numberOfLines={2}
+            >
+              Invite players to a team and let them finish their own profile.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setInviteOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Invite to team"
+            className="h-10 flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 active:opacity-90"
+          >
+            <Ionicons name="person-add-outline" size={15} color="#171717" />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-xs text-neutral-950"
+              numberOfLines={1}
+            >
+              Invite
+            </Text>
+          </Pressable>
+        </View>
+      </View>
 
       {teams.length > 0 ? (
         <SeasonPicker

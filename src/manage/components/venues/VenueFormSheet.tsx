@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -35,6 +35,7 @@ type Props = {
   venue?: ApiVenue | null;
   /** Called after successful create/update. Create may pass the matched venue after refetch. */
   onSaved?: (venue: ApiVenue) => void;
+  variant?: "light" | "dark";
 };
 
 type FormState = {
@@ -114,8 +115,10 @@ export function VenueFormSheet({
   leagueId,
   venue = null,
   onSaved,
+  variant = "light",
 }: Props) {
   const isEdit = venue != null;
+  const isDark = variant === "dark";
   const createMutation = useCreateVenue(leagueId);
   const updateMutation = useUpdateVenue(leagueId);
   const venuesQuery = useLeagueVenues(leagueId, visible);
@@ -149,7 +152,7 @@ export function VenueFormSheet({
     setPinDraft(null);
   }, [visible, venue]);
 
-  // iOS cannot present a Modal while another is already presenting — dismiss sheet first, then open map.
+  // iOS cannot present a Modal while another is already presenting - dismiss sheet first, then open map.
   useEffect(() => {
     if (!sheetSuppressed || pinMapOpen || !visible) return;
     const timer = setTimeout(() => setPinMapOpen(true), 320);
@@ -242,7 +245,12 @@ export function VenueFormSheet({
         visible={sheetVisible}
         onClose={handleClose}
         title={isEdit ? "Edit venue" : "Add venue"}
-        subtitle="League pitches for fixtures and directions"
+        subtitle={
+          isEdit
+            ? "Update fixture location details and notes."
+            : "Choose how this fixture location should be saved."
+        }
+        variant={variant}
         scrollEnabled={mode !== "places"}
       >
         <View className="gap-4">
@@ -252,12 +260,14 @@ export function VenueFormSheet({
                 icon="search"
                 label="Search Google Places"
                 hint="Known stadiums and listed grounds"
+                dark={isDark}
                 onPress={() => setMode("places")}
               />
               <ModeButton
                 icon="locate"
                 label="Drop pin on map"
                 hint="Unlisted pitches with a real location"
+                dark={isDark}
                 onPress={() => {
                   setMode("pin");
                   openPinMap();
@@ -266,7 +276,8 @@ export function VenueFormSheet({
               <ModeButton
                 icon="text"
                 label="Name only"
-                hint="No map — valid for scheduling"
+                hint="No map - valid for scheduling"
+                dark={isDark}
                 onPress={() => setMode("name")}
               />
             </View>
@@ -282,7 +293,7 @@ export function VenueFormSheet({
             >
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-brand-700"
+                className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
               >
                 ← Change location method
               </Text>
@@ -293,14 +304,18 @@ export function VenueFormSheet({
             <View className="gap-2" style={{ zIndex: 10 }}>
               <Text
                 style={{ fontFamily: fonts.bodyBold }}
-                className="text-xs uppercase tracking-wide text-slate-500"
+                className={
+                  isDark
+                    ? "text-xs uppercase tracking-wide text-white/50"
+                    : "text-xs uppercase tracking-wide text-slate-500"
+                }
               >
                 Search places
               </Text>
               {!GOOGLE_MAPS_API_KEY ? (
                 <Text
                   style={{ fontFamily: fonts.body }}
-                  className="text-sm text-amber-700"
+                  className={isDark ? "text-sm text-accent-200" : "text-sm text-amber-700"}
                 >
                   Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to enable Places search.
                   You can still use Drop pin or Name only.
@@ -374,28 +389,36 @@ export function VenueFormSheet({
             <View className="gap-2">
               <Pressable
                 onPress={openPinMap}
-                className="flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className={
+                  isDark
+                    ? "flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3"
+                    : "flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                }
               >
-                <Ionicons name="map-outline" size={22} color="#4A148C" />
+                <Ionicons name="map-outline" size={22} color={isDark ? "#E6A817" : "#4A148C"} />
                 <View className="flex-1">
                   <Text
                     style={{ fontFamily: fonts.bodySemibold }}
-                    className="text-sm text-slate-900"
+                    className={isDark ? "text-sm text-white" : "text-sm text-slate-900"}
                   >
                     {form.latitude != null && form.longitude != null
-                      ? "Pin placed — tap to adjust"
+                      ? "Pin placed - tap to adjust"
                       : "Open map to drop pin"}
                   </Text>
                   {form.latitude != null && form.longitude != null ? (
                     <Text
                       style={{ fontFamily: fonts.body }}
-                      className="pt-0.5 text-xs text-slate-500"
+                      className={isDark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
                     >
                       {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
                     </Text>
                   ) : null}
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={isDark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+                />
               </Pressable>
             </View>
           ) : null}
@@ -414,6 +437,7 @@ export function VenueFormSheet({
                   patchForm={patchForm}
                   isEdit={isEdit}
                   isPending={isPending}
+                  dark={isDark}
                   onSave={() => void handleSave()}
                 />
               </ScrollView>
@@ -424,6 +448,7 @@ export function VenueFormSheet({
                   patchForm={patchForm}
                   isEdit={isEdit}
                   isPending={isPending}
+                  dark={isDark}
                   onSave={() => void handleSave()}
                 />
               </View>
@@ -507,36 +532,45 @@ function SharedVenueFields({
   patchForm,
   isEdit,
   isPending,
+  dark,
   onSave,
 }: {
   form: FormState;
   patchForm: (partial: Partial<FormState>) => void;
   isEdit: boolean;
   isPending: boolean;
+  dark: boolean;
   onSave: () => void;
 }) {
   return (
-    <>
+    <View className="gap-4">
+      <VenueSheetBlock title="Venue details" dark={dark}>
       <AuthTextField
         label="Name *"
+        labelClassName={dark ? "text-white/60" : undefined}
         value={form.name}
         onChangeText={(name) => patchForm({ name })}
         placeholder="Riverside Pitch 2"
       />
       <AuthTextField
         label="Address (optional)"
+        labelClassName={dark ? "text-white/60" : undefined}
         value={form.address}
         onChangeText={(address) => patchForm({ address })}
         placeholder="Street or landmark"
       />
       <AuthTextField
         label="City (optional)"
+        labelClassName={dark ? "text-white/60" : undefined}
         value={form.city}
         onChangeText={(city) => patchForm({ city })}
         placeholder="Lagos"
       />
+      </VenueSheetBlock>
+      <VenueSheetBlock title="Extras" dark={dark}>
       <AuthTextField
         label="Capacity (optional)"
+        labelClassName={dark ? "text-white/60" : undefined}
         value={form.capacity}
         onChangeText={(capacity) => patchForm({ capacity })}
         keyboardType="number-pad"
@@ -544,10 +578,12 @@ function SharedVenueFields({
       />
       <AuthTextField
         label="Notes (optional)"
+        labelClassName={dark ? "text-white/60" : undefined}
         value={form.notes}
         onChangeText={(notes) => patchForm({ notes })}
         placeholder="Astro turf, gate on Adeola St"
       />
+      </VenueSheetBlock>
       <Button
         variant="authPurple"
         label={
@@ -563,7 +599,37 @@ function SharedVenueFields({
         disabled={isPending}
         onPress={onSave}
       />
-    </>
+    </View>
+  );
+}
+
+function VenueSheetBlock({
+  title,
+  dark,
+  children,
+}: {
+  title: string;
+  dark: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <View
+      className={
+        dark
+          ? "gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3"
+          : "gap-3"
+      }
+    >
+      {dark ? (
+        <Text
+          style={{ fontFamily: fonts.bodyBold }}
+          className="text-xs uppercase tracking-wide text-white/50"
+        >
+          {title}
+        </Text>
+      ) : null}
+      {children}
+    </View>
   );
 }
 
@@ -571,36 +637,46 @@ function ModeButton({
   icon,
   label,
   hint,
+  dark = false,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   hint: string;
+  dark?: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5"
+      className={
+        dark
+          ? "flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3.5 active:bg-white/10"
+          : "flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5"
+      }
     >
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-brand-50">
-        <Ionicons name={icon} size={20} color="#4A148C" />
+      <View className={dark ? "h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15" : "h-10 w-10 items-center justify-center rounded-full bg-brand-50"}>
+        <Ionicons name={icon} size={20} color={dark ? "#E6A817" : "#4A148C"} />
       </View>
       <View className="flex-1">
         <Text
           style={{ fontFamily: fonts.bodySemibold }}
-          className="text-sm text-slate-900"
+          className={dark ? "text-sm text-white" : "text-sm text-slate-900"}
         >
           {label}
         </Text>
         <Text
           style={{ fontFamily: fonts.body }}
-          className="pt-0.5 text-xs text-slate-500"
+          className={dark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
         >
           {hint}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+      <Ionicons
+        name="chevron-forward"
+        size={18}
+        color={dark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+      />
     </Pressable>
   );
 }

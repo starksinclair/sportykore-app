@@ -1,6 +1,6 @@
 # API Routes
 
-Scope: JSON API under `/api/v1` from `start/routes.ts`. Mobile authentication (OTP) lives under `/api/v1/auth` — see [Authentication](#authentication-otp) below. Legacy email/password routes are [deprecated](#deprecated-emailpassword--google-oauth).
+Scope: JSON API under `/api/v1` from `start/routes.ts`. Mobile authentication (OTP) lives under `/api/v1/auth` - see [Authentication](#authentication-otp) below. Legacy email/password routes are [deprecated](#deprecated-emailpassword--google-oauth).
 
 ## Response wrapping
 
@@ -21,8 +21,10 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 | **Team (with admins)** | **Team** + `admins` → **TeamAdmin[]** (active only; `removed_at` null) |
 | **TeamAdmin** | `id`, `teamId`, `userId`, `leagueId`, `user` → **User** |
 | **Team (with games)** | **Team** + `homeGames`, `awayGames` → **Game[]** |
-| **Player** | `id`, `name`, `avatarUrl` (string \| null) |
+| **Player** | `id`, `name`, `avatarUrl` (string \| null), `visibility` (`active` \| `private`). **If `visibility: private`, every variant below collapses to just `{ id, name, visibility: "private" }`** - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md) |
 | **Player (with stats)** | **Player** + `stats` → **Stat[]** |
+| **Player (profile)** | **Player** + `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age` (number \| null, computed - **`dateOfBirth` is never serialized**), `country` → **Country** \| omitted, `highlights` → **PlayerHighlight[]** \| omitted |
+| **PlayerHighlight** | `id`, `videoId` (11-char YouTube ID), `title` (string \| null), `sortOrder`, `thumbnailUrl` (derived: `https://img.youtube.com/vi/{videoId}/hqdefault.jpg`) |
 | **StatType** | `id`, `name`, `displayName`, `iconName` (string \| null), `category` (string \| null) |
 | **Stat** | `id`, `minute` (number \| null), `isStoppageTime` (boolean \| null), `numericValue` (number \| null), `isUnaccredited` (boolean), `type` → **StatType** \| omitted, `team` → **Team** \| omitted, `player` → **Player** \| omitted, `relatedPlayer` → **Player** \| omitted |
 | **Standing** | `id`, `position`, `played`, `wins`, `draws`, `losses`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form` (string \| null), `team` → **Team** \| omitted |
@@ -49,7 +51,7 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 
 `scheduled` \| `first_half` \| `half_time` \| `second_half` \| `extra_time` \| `penalty_shootout` \| `full_time` \| `cancelled` \| `postponed` \| `paused`
 
-- **`currentMinute`** in API responses is **computed** from period start timestamps (`firstHalfStartedAt`, etc.) — not polled/stored every minute. See [docs/CHANGE_GAME.md](docs/CHANGE_GAME.md).
+- **`currentMinute`** in API responses is **computed** from period start timestamps (`firstHalfStartedAt`, etc.) - not polled/stored every minute. See [docs/CHANGE_GAME.md](docs/CHANGE_GAME.md).
 - **`penalty_shootout`** is a live status (Match Center clock group). Enter via `POST /games/:gameId/penalty-shootout`; complete with scores via `…/penalty-shootout/complete`. See [docs/KNOCKOUT.md](docs/KNOCKOUT.md).
 - Query param **`gameStatus=live`** on `GET /api/v1/leagues` matches any in-play status (`first_half`, `second_half`, `extra_time`, `paused`).
 
@@ -97,9 +99,9 @@ Account recovery: if the user set a `recovery_email`, **`POST /api/v1/auth/recov
 
 | Method | Path | Auth | Input | Success response | Errors / notes |
 | --- | --- | --- | --- | --- | --- |
-| `POST` | `/api/v1/auth/request-otp` | none | **Body:** `requestOtpValidator` — `email`, `name?`, `recoveryEmail?` | `200` → `{ message: "OTP sent" }` (not wrapped in `data`) | `428` new user missing `name` → `{ message, requiresSignup: true }`; `422` validation (e.g. duplicate `recoveryEmail`); rate limit: 5 / 10 min per email, 30 min block; `429` when exceeded |
-| `POST` | `/api/v1/auth/verify-otp` | none | **Body:** `verifyOtpValidator` — `email`, `code` (exactly 6 chars) | **`{ data: { auth: AuthSession } }`** | `422` validation; invalid/expired code → `401`; rate limit: 5 attempts / 10 min per email; welcome email on first signup |
-| `POST` | `/api/v1/auth/recover` | none | **Body:** `requestRecoveryValidator` — `recoveryEmail` (must exist in `users.recovery_email`) | `{ message: "Recovery OTP sent to your primary email" }` | `404` if no user with that recovery email; same rate limit as `request-otp` |
+| `POST` | `/api/v1/auth/request-otp` | none | **Body:** `requestOtpValidator` - `email`, `name?`, `recoveryEmail?` | `200` → `{ message: "OTP sent" }` (not wrapped in `data`) | `428` new user missing `name` → `{ message, requiresSignup: true }`; `422` validation (e.g. duplicate `recoveryEmail`); rate limit: 5 / 10 min per email, 30 min block; `429` when exceeded |
+| `POST` | `/api/v1/auth/verify-otp` | none | **Body:** `verifyOtpValidator` - `email`, `code` (exactly 6 chars) | **`{ data: { auth: AuthSession } }`** | `422` validation; invalid/expired code → `401`; rate limit: 5 attempts / 10 min per email; welcome email on first signup |
+| `POST` | `/api/v1/auth/recover` | none | **Body:** `requestRecoveryValidator` - `recoveryEmail` (must exist in `users.recovery_email`) | `{ message: "Recovery OTP sent to your primary email" }` | `404` if no user with that recovery email; same rate limit as `request-otp` |
 | `POST` | `/api/v1/auth/logout` | `apiAuth` | Bearer token | `204 No Content` | Invalidates current API token; `401` without token |
 | `DELETE` | `/api/v1/auth/account` | `apiAuth` | Bearer token | `{ message: "Account deleted successfully" }` | Deletes player profile, OTP codes, tokens, and user row; `401` without token |
 
@@ -125,7 +127,7 @@ Account recovery: if the user set a `recovery_email`, **`POST /api/v1/auth/recov
 
 ## Deprecated: email/password & Google OAuth
 
-> **Deprecated** — routes are **commented out** in `start/routes.ts` and are **not registered**. Kept for reference and migration from older clients. Use [OTP authentication](#authentication-otp) instead.
+> **Deprecated** - routes are **commented out** in `start/routes.ts` and are **not registered**. Kept for reference and migration from older clients. Use [OTP authentication](#authentication-otp) instead.
 
 Implementation (inactive): `app/controllers/users_controller.ts`. Former detail also in `MOBILE_AUTH_ROUTES.md`.
 
@@ -179,8 +181,8 @@ All routes require `apiAuth` (Bearer token). Responses use `{ data: ... }` unles
 
 | Method | Path | Input | Success response | Notes |
 | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/auth/users/me` | none | **`{ data: User }`** — `id`, `email`, `fullName` | Logged-in check |
-| `GET` | `/api/v1/auth/users/managed` | none | **`{ data: { ownedLeagues, adminTeams } }`** | Replaces removed `GET .../leagues` — see migration note above |
+| `GET` | `/api/v1/auth/users/me` | none | **`{ data: User }`** - `id`, `email`, `fullName` | Logged-in check |
+| `GET` | `/api/v1/auth/users/managed` | none | **`{ data: { ownedLeagues, adminTeams } }`** | Replaces removed `GET .../leagues` - see migration note above |
 | `GET` | `/api/v1/auth/users/leagues/:leagueId/teams` | **Params:** `leagueId` | **`{ data: Team (with admins)[] }`** | `403` if not league owner; `admins` lists active team admins with nested `user` for assign/remove UI |
 | `GET` | `/api/v1/auth/users/search` | **Query:** `q`, `leagueId` (required), `limit?` (1–50, default 20) | **`{ data: User[] }`** | Flow A user picker; `403` if not owner |
 
@@ -255,11 +257,11 @@ League owner only. Each team includes active admins (`removed_at` null) so the m
 
 | Method | Path | Auth | Input | Success response | Errors / notes |
 | --- | --- | --- | --- | --- | --- |
-| `GET` | `/api/v1/countries` | none | none | **`{ data: CountryRef[] }`** — `id`, `name`, `code` only | Always `200` |
-| `GET` | `/api/v1/countries/:idOrCode` | none | **Params:** numeric `id` (e.g. `1`) or ISO country `code` (e.g. `ng`) | **`{ data: CountryDetail }`** — see below | `404` country not found |
-| `GET` | `/api/v1/leagues` | none | **Query:** `countryId?`, `gameStatus?`, `gameDate?` (`YYYY-MM-DD`, default today in resolved timezone), `timeZone?` (IANA, e.g. `Africa/Lagos`; falls back to `Time-Zone` / `X-Timezone` request header; default `UTC`). Response includes `matchDay: { gameDate, timeZone }` echoing the filter applied to `matches`. `matches` filters `played_at` to that **local calendar day** converted to UTC. See [docs/TIME_AND_TIMEZONE.md](docs/TIME_AND_TIMEZONE.md). | **`{ data: { matchDay, leagues, matches } }`** — `leagues` unfiltered list; `matches` game feed | `400` invalid `gameDate` / `timeZone`; empty `matches` if no games that day |
-| `GET` | `/api/v1/leagues/:leagueId` | none | **Params:** `leagueId`. **Query:** `seasonId?` (positive integer; defaults to the league's `active` season, else the newest) | **`{ data: { seasons, season, statTypes } }`** — see below | `400` invalid `leagueId` or `seasonId`; `404` league/season not found |
-| `POST` | `/api/v1/leagues` | `apiAuth` | **Body:** `createLeagueWithSeasonValidator` — see below | **`201`** `{ message, leagueId, seasonId, stageId, format, seeded }` | Validation `422`; creates league + active season + stage by `format` (`league` → round_robin, `knockout` → knockout, `group` → group stage). Group create does not assign/fixtures (`seeded: false`). See [docs/KNOCKOUT.md](docs/KNOCKOUT.md), [docs/GROUPS.md](docs/GROUPS.md) |
+| `GET` | `/api/v1/countries` | none | none | **`{ data: CountryRef[] }`** - `id`, `name`, `code` only | Always `200` |
+| `GET` | `/api/v1/countries/:idOrCode` | none | **Params:** numeric `id` (e.g. `1`) or ISO country `code` (e.g. `ng`) | **`{ data: CountryDetail }`** - see below | `404` country not found |
+| `GET` | `/api/v1/leagues` | none | **Query:** `countryId?`, `gameStatus?`, `gameDate?` (`YYYY-MM-DD`, default today in resolved timezone), `timeZone?` (IANA, e.g. `Africa/Lagos`; falls back to `Time-Zone` / `X-Timezone` request header; default `UTC`). Response includes `matchDay: { gameDate, timeZone }` echoing the filter applied to `matches`. `matches` filters `played_at` to that **local calendar day** converted to UTC. See [docs/TIME_AND_TIMEZONE.md](docs/TIME_AND_TIMEZONE.md). | **`{ data: { matchDay, leagues, matches } }`** - `leagues` unfiltered list; `matches` game feed | `400` invalid `gameDate` / `timeZone`; empty `matches` if no games that day |
+| `GET` | `/api/v1/leagues/:leagueId` | none | **Params:** `leagueId`. **Query:** `seasonId?` (positive integer; defaults to the league's `active` season, else the newest) | **`{ data: { seasons, season, statTypes } }`** - see below | `400` invalid `leagueId` or `seasonId`; `404` league/season not found |
+| `POST` | `/api/v1/leagues` | `apiAuth` | **Body:** `createLeagueWithSeasonValidator` - see below | **`201`** `{ message, leagueId, seasonId, stageId, format, seeded }` | Validation `422`; creates league + active season + stage by `format` (`league` → round_robin, `knockout` → knockout, `group` → group stage). Group create does not assign/fixtures (`seeded: false`). See [docs/KNOCKOUT.md](docs/KNOCKOUT.md), [docs/GROUPS.md](docs/GROUPS.md) |
 | `POST` | `/api/v1/leagues/:leagueId/favorite` | `apiAuth` | **Params:** `leagueId` (positive integer; must exist in `leagues`). No body. | `{ message: "League added to favorites" }` | `401` unauthorized; `409` already favourited; `422` invalid or missing league |
 | `DELETE` | `/api/v1/leagues/:leagueId/favorite` | `apiAuth` | **Params:** `leagueId` (positive integer; must exist in `leagues`). No body. | `{ message: "League removed from favorites" }` | `401` unauthorized; `422` invalid or missing league; idempotent if not favourited |
 | `PUT` | `/api/v1/leagues/:leagueId` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`. **Body:** `updateLeagueValidator` | `{ message: "League updated successfully" }` | `400` invalid id; `403` not owner; `404` league |
@@ -269,14 +271,23 @@ League owner only. Each team includes active admins (`removed_at` null) so the m
 | `GET` | `/api/v1/formations/:id` | none | **Params:** `id` (formation id) | **`{ data: Formation }`** | `404` if formation missing |
 | `GET` | `/api/v1/games/:gameId/lineups` | none | **Params:** `gameId` | **`{ data: TeamLineupGroup[] }`** | Grouped by team; empty array if no lineups |
 | `GET` | `/api/v1/leagues/stages/:id/bracket` | none | **Params:** `id` (stage id) | **`{ data: { stage: Stage, ties: Tie[] } }`** | Knockout bracket; ties nested with teams + games. See [docs/KNOCKOUT.md](docs/KNOCKOUT.md) |
-| `GET` | `/api/v1/leagues/stages/:id/standings` | none | **Params:** `id` (stage id) | **`{ data: { stage, tables[] } }`** — per-group or single RR table with adjustments/overrides/zones | `422` if knockout/playoff. See [docs/GROUPS.md](docs/GROUPS.md) |
+| `GET` | `/api/v1/leagues/stages/:id/standings` | none | **Params:** `id` (stage id) | **`{ data: { stage, tables[] } }`** - per-group or single RR table with adjustments/overrides/zones | `422` if knockout/playoff. See [docs/GROUPS.md](docs/GROUPS.md) |
 | `GET` | `/api/v1/seasons/:seasonId/stages` | none | **Params:** `seasonId` | **`{ data: Stage[] }`** | Ordered by `sequence`, then `id` |
-| `GET` | `/api/v1/teams/:id` | none | **Params:** `id` (team id) | **`{ data: { team, leagues, statTypes } }`** — see below | `404` if team missing |
-| `GET` | `/api/v1/players/:id` | none | **Params:** `id` (player id) | **`{ data: { player, leagues, statTypes } }`** — see below | `404` if player missing |
+| `GET` | `/api/v1/teams/:id` | none | **Params:** `id` (team id) | **`{ data: { team, leagues, statTypes } }`** - see below | `404` if team missing |
+| `GET` | `/api/v1/players/:id` | none | **Params:** `id` (player id) | **`{ data: { player, leagues, statTypes } }`** - see below | `404` if player missing; stubbed if `visibility: private` (empty `leagues`/`statTypes`) |
 | `GET` | `/api/v1/players/does-user-have-player-profile` | `apiAuth` | none | `{ hasPlayerProfile: boolean, playerId: number }` (not wrapped in `data`) | `401` without Bearer token; checks whether the authenticated user has a `players` row |
+| `GET` | `/api/v1/me/player` | `apiAuth` | none | **200** `{ data: { player, completeness, missingFields, highlightsCount, membership } }` - see below | **404** `{ message }` if the user has no player profile - this is the "no profile" signal for the app CTA. See [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md) |
+| `POST` | `/api/v1/me/player` | `apiAuth` | **Body:** `createPlayerProfileValidator` | **201** `{ data: { player } }` (**Player (profile)**) | `409` if the user already has a profile; `422` validation |
+| `PUT` | `/api/v1/me/player` | `apiAuth` | **Body:** `updatePlayerProfileValidator` | `{ data: { player } }` | `404` if no profile yet; `422` validation |
+| `POST` | `/api/v1/me/player/photo` | `apiAuth` | **Body:** `multipart/form-data` - `photo` (image, max 2 MB, jpg/jpeg/png/webp) | `{ data: { player } }` | `404` if no profile yet; uploads via the existing S3 drive pipeline (`players/` prefix) |
+| `GET` | `/api/v1/me/player/highlights` | `apiAuth` | none | **`{ data: PlayerHighlight[] }`**, ordered by `sortOrder` | `404` if no profile yet |
+| `POST` | `/api/v1/me/player/highlights` | `apiAuth` | **Body:** `createHighlightValidator` (`url`, optional `title`) | **201** `{ data: PlayerHighlight }` | `422` non-YouTube URL or 11th highlight; `409` duplicate video on this profile. See [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md) |
+| `PUT` | `/api/v1/me/player/highlights/reorder` | `apiAuth` | **Body:** `reorderHighlightsValidator` (`ids: number[]`) | `{ data: PlayerHighlight[] }` in the new order | `422` if `ids` isn't exactly the caller's highlight IDs, once each |
+| `PUT` | `/api/v1/me/player/highlights/:hid` | `apiAuth` | **Params:** `hid`. **Body:** `updateHighlightValidator` (`title`) | `{ data: PlayerHighlight }` | `404` if not the caller's own highlight |
+| `DELETE` | `/api/v1/me/player/highlights/:hid` | `apiAuth` | **Params:** `hid` | `{ message: "Highlight removed successfully" }` | `404` if not the caller's own highlight |
 | `GET` | `/api/v1/invites/generate` | `apiAuth` + `leagueOwner` | **Query:** `leagueId`, `seasonId`, `teamId`, `invitedUserId?` | `{ inviteLink: string }` (not wrapped in `data`) | See [docs/PLAYER_INVITE.md](docs/PLAYER_INVITE.md) |
 | `GET` | `/api/v1/invites/accept/:token` | `apiAuth` | **Params:** `token` | If no player profile: `{ requiresProfile: true, token: string }`. Else: `{ requiresProfile: false, leagueId: number \| null }` | `401` without Bearer token; `403` wrong user; `409` already on roster; `404` invalid/expired invite |
-| `POST` | `/api/v1/invites/complete-profile-and-accept/:token` | `apiAuth` | **Params:** `token`. **Body:** `multipart/form-data` or JSON — `name` (string, required), `countryId` (required FK to `countries`), `bio?` (string, optional), `avatar?` (image file, max 2 MB, jpg/jpeg/png/webp) | `{ leagueId: number \| null }` | `409` if player profile already exists; `422` validation |
+| `POST` | `/api/v1/invites/complete-profile-and-accept/:token` | `apiAuth` | **Params:** `token`. **Body:** `multipart/form-data` or JSON - `name` (string, required), `countryId` (required FK to `countries`), `bio?` (string, optional), `avatar?` (image file, max 2 MB, jpg/jpeg/png/webp) | `{ leagueId: number \| null }` | `409` if player profile already exists; `422` validation |
 | `GET` | `/api/v1/leagues/league-player-requests` | `apiAuth` | none | **LeaguePlayerWithLeague[]** (not wrapped in `data`) | Lists `league_players` where `player_id = auth user id` and `status = pending` |
 | `POST` | `/api/v1/leagues/accept-league-player-request` | `apiAuth` | **Body:** `acceptLeaguePlayerRequestValidator` | `{ message: "League player request accepted successfully" }` | `404` row missing; `409` already active |
 | `POST` | `/api/v1/leagues/:leagueId/seasons` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`. **Body:** `createSeasonValidator` | **`201`** `{ id, leagueId, name, status, createdAt, updatedAt, stageId, format, seeded }` | Validation `422`; `format` defaults to `league`; knockout/group seasons are not auto-seeded; setting `status: active` completes other active seasons in the same league |
@@ -312,12 +323,12 @@ League owner only. Each team includes active admins (`removed_at` null) so the m
 | `PUT` | `/api/v1/leagues/stages/zones/:zid` | `apiAuth` + `leagueOwner` | **Body:** `updateStandingZoneValidator` | Zone | Ownership via zone → stage → season → league |
 | `DELETE` | `/api/v1/leagues/stages/zones/:zid` | `apiAuth` + `leagueOwner` | **Params:** `zid` | `{ message }` | |
 | `GET` | `/api/v1/leagues/:leagueId/audit-logs` | `apiAuth` + `leagueOwner` | **Query:** `page?`, `perPage?` | **`{ data: { data, meta } }`** | Append-only admin audit history |
-| `POST` | `/api/v1/leagues/games` | `apiAuth` + `leagueOwner` | **Body:** `createGameValidator` | **`201`** `{ message: "Game created successfully" }` | Auto-attaches `stage_id` to the season’s `round_robin` stage (ensures one if missing). Optional `venueId` snapshots into `venueName`. Knockout games are **not** created here — use stage seed / next-round. See [docs/VENUES.md](docs/VENUES.md), [docs/KNOCKOUT.md](docs/KNOCKOUT.md) |
+| `POST` | `/api/v1/leagues/games` | `apiAuth` + `leagueOwner` | **Body:** `createGameValidator` | **`201`** `{ message: "Game created successfully" }` | Auto-attaches `stage_id` to the season’s `round_robin` stage (ensures one if missing). Optional `venueId` snapshots into `venueName`. Knockout games are **not** created here - use stage seed / next-round. See [docs/VENUES.md](docs/VENUES.md), [docs/KNOCKOUT.md](docs/KNOCKOUT.md) |
 | `PUT` | `/api/v1/leagues/games/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (game id). **Body:** `updateGameValidator` | `{ message: "Game updated successfully" }` | `404` game; client updates scores here (not via stats); same `venueId` / `venueName` rules as create |
 | `DELETE` | `/api/v1/leagues/games/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (game id) | `{ message: "Game deleted successfully" }` | Cascades stats |
 | `POST` | `/api/v1/leagues/stats` | `apiAuth` + `leagueOwner` | **Body:** `createStatValidator` | **`201`** `{ message: "Stat created successfully" }` | Validates player on active roster + correct team side; does **not** auto-update game score. Use for goals, cards, etc. |
 | `POST` | `/api/v1/leagues/stats/substitutions` | `apiAuth` + `leagueOwner` | **Body:** `recordSubstitutionValidator` | **`201`** `{ message, statIds: number[] }` | Atomically creates paired `substitution_off` + `substitution_on` rows per swap (see below) |
-| `PUT` | `/api/v1/leagues/stats/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (stat id). **Body:** `updateStatValidator` | `{ message: "Stat updated successfully" }` | `404` stat; cannot change `playerId` / `statTypeId` — delete + recreate to change who was involved |
+| `PUT` | `/api/v1/leagues/stats/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (stat id). **Body:** `updateStatValidator` | `{ message: "Stat updated successfully" }` | `404` stat; cannot change `playerId` / `statTypeId` - delete + recreate to change who was involved |
 | `DELETE` | `/api/v1/leagues/stats/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (stat id) | `{ message: "Stat deleted successfully" }` | Recalculates standings / broadcasts game update |
 
 ### Substitutions (via stats)
@@ -358,7 +369,7 @@ Per swap the server writes:
 | `substitution_off` | player leaving | player coming on |
 | `substitution_on` | player coming on | player leaving |
 
-- **Edit players / undo a swap:** `DELETE` both paired rows, then `POST .../substitutions` again (or recreate via two generic stats POSTs). `PUT /leagues/stats/:id` can only patch `minute`, `relatedPlayerId`, etc. — not `playerId`.
+- **Edit players / undo a swap:** `DELETE` both paired rows, then `POST .../substitutions` again (or recreate via two generic stats POSTs). `PUT /leagues/stats/:id` can only patch `minute`, `relatedPlayerId`, etc. - not `playerId`.
 - **UI:** show “Player A substituted by Player B at 60'” from these stats; keep `game_lineups` for pitch display (starters / bench) only.
 
 ### Live game time (`apiAuth` + `leagueOwner`)
@@ -396,7 +407,7 @@ League owner **or** active team admin on home/away may manage lineups. `lineupMa
 | `PATCH` | `/api/v1/games/:gameId/lineups/:id` | `updateLineupValidator` | `{ message: "Lineup entry updated successfully" }` | Patch `jerseyNumber`, `slotKey`, `position`, `status` |
 | `DELETE` | `/api/v1/games/:gameId/lineups/:id` | none | `{ message: "Player removed from lineup successfully" }` | Removes one lineup row |
 
-`setLineup`, `updateLineup`, and `removePlayer` reject games with status `full_time` or `cancelled` (`409`). Lineups are **display-only** (starters / bench). Match substitutions are recorded as **stats** — see [Substitutions](#substitutions-via-stats) below.
+`setLineup`, `updateLineup`, and `removePlayer` reject games with status `full_time` or `cancelled` (`409`). Lineups are **display-only** (starters / bench). Match substitutions are recorded as **stats** - see [Substitutions](#substitutions-via-stats) below.
 
 **SSE on `games/{gameId}`:**
 
@@ -404,7 +415,7 @@ League owner **or** active team admin on home/away may manage lineups. `lineupMa
 | --- | --- |
 | `score_updated` | `{ homeScore, awayScore }` |
 | `stat_accredited` | `{ statId }` |
-| `game_updated` | `{ reason: "result", gameId }` — standings recalculated; clients should refetch league table |
+| `game_updated` | `{ reason: "result", gameId }` - standings recalculated; clients should refetch league table |
 
 Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result"`), not on stat create/update/delete or accredit.
 
@@ -465,9 +476,9 @@ Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result
 }
 ```
 
-- **`stats`** — counts scoped to the country (`players` uses `players.country_id`).
-- **`featuredPlayers`** — top 10 by goals in leagues in this country (stats aggregated across those leagues).
-- **`recentMatches`** — last 10 games in the country’s leagues; `status` is a display label (`FT`, `LIVE`, `NS`, …); `round` is `Matchday N` from season schedule order.
+- **`stats`** - counts scoped to the country (`players` uses `players.country_id`).
+- **`featuredPlayers`** - top 10 by goals in leagues in this country (stats aggregated across those leagues).
+- **`recentMatches`** - last 10 games in the country’s leagues; `status` is a display label (`FT`, `LIVE`, `NS`, …); `round` is `Matchday N` from season schedule order.
 
 ### `GET /api/v1/leagues` → `{ matchDay, leagues, matches }`
 
@@ -518,24 +529,24 @@ Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result
 }
 ```
 
-- `matchDay` — calendar day and IANA timezone used to build the `matches` feed (resolved from query params and/or `Time-Zone` / `X-Timezone` headers).
-- `leagues` — countries with league list (no game-day filter).
-- `matches` — same country shape, but only countries/leagues with games on `gameDate` in `timeZone`; leagues include `isFavourited` when the request includes a valid **`Authorization: Bearer`** token (same `api` guard as favourite routes; session cookies are not used).
+- `matchDay` - calendar day and IANA timezone used to build the `matches` feed (resolved from query params and/or `Time-Zone` / `X-Timezone` headers).
+- `leagues` - countries with league list (no game-day filter).
+- `matches` - same country shape, but only countries/leagues with games on `gameDate` in `timeZone`; leagues include `isFavourited` when the request includes a valid **`Authorization: Bearer`** token (same `api` guard as favourite routes; session cookies are not used).
 
 ### `GET /api/v1/leagues/:leagueId` → `{ seasons, season, statTypes }`
 
-- **`seasons`** — all seasons for the league (`id`, `name`, `status`), ordered active → completed → inactive, then newest first within each group. Use for the season picker.
-- **`season`** — full detail for the selected season (from `seasonId` query, or default active/newest): league, **stages**, games (home/away teams), standings (with team), stats (type, player, team, relatedPlayer). Use `stages[].stageType` to choose standings vs bracket UI — see [docs/KNOCKOUT.md](docs/KNOCKOUT.md).
-- **`season.stages`** — competition phases for that season (`Stage[]`: `round_robin`, `knockout`, …). Knockout-only seasons may omit round_robin.
-- **`season.standings`** — one row per **team in the league** for that season when a round_robin stage exists (not only teams that have played). Teams with no finished matches appear with zeroed stats (`played`, `points`, etc.). Ordered by `position` ascending. Empty/omitted relevance for pure knockout seasons.
-- **`statTypes`** — global catalog of stat types (`id`, `name`, `displayName`, `iconName`, `category`), ordered by `category` then `displayName`. Use to group or label stats in the UI.
+- **`seasons`** - all seasons for the league (`id`, `name`, `status`), ordered active → completed → inactive, then newest first within each group. Use for the season picker.
+- **`season`** - full detail for the selected season (from `seasonId` query, or default active/newest): league, **stages**, games (home/away teams), standings (with team), stats (type, player, team, relatedPlayer). Use `stages[].stageType` to choose standings vs bracket UI - see [docs/KNOCKOUT.md](docs/KNOCKOUT.md).
+- **`season.stages`** - competition phases for that season (`Stage[]`: `round_robin`, `knockout`, …). Knockout-only seasons may omit round_robin.
+- **`season.standings`** - one row per **team in the league** for that season when a round_robin stage exists (not only teams that have played). Teams with no finished matches appear with zeroed stats (`played`, `points`, etc.). Ordered by `position` ascending. Empty/omitted relevance for pure knockout seasons. **`points` folds in any `standing_adjustments` for the round_robin stage** (see [docs/GROUPS.md](docs/GROUPS.md#adjustments--overrides--zones)) - a deduction created via `POST .../standings/adjustments` is reflected here immediately, not just via `GET .../stages/:id/standings`.
+- **`statTypes`** - global catalog of stat types (`id`, `name`, `displayName`, `iconName`, `category`), ordered by `category` then `displayName`. Use to group or label stats in the UI.
 
 ```json
 {
   "data": {
     "seasons": [
-      { "id": 5, "name": "2026 — Spring", "status": "active" },
-      { "id": 4, "name": "2025 — Fall", "status": "completed" }
+      { "id": 5, "name": "2026 - Spring", "status": "active" },
+      { "id": 4, "name": "2025 - Fall", "status": "completed" }
     ],
     "statTypes": [
       {
@@ -548,7 +559,7 @@ Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result
     ],
     "season": {
     "id": 5,
-    "name": "2026 — Spring",
+    "name": "2026 - Spring",
     "status": "active",
     "league": { "id": 10, "name": "Sunday Riverside League", "logoUrl": null },
     "games": [ "…Game[]" ],
@@ -576,7 +587,7 @@ Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result
 
 ### `GET /api/v1/games/:id` → `GameDetail`
 
-**Game (detail)** — league + stats (with type, team, player, relatedPlayer) + `lineups` grouped by team (`TeamLineupGroup[]`) + nested `venue` (`Venue (for game)` when `venueId` is set; otherwise omitted) alongside `venueName` / `venueId`.
+**Game (detail)** - league + stats (with type, team, player, relatedPlayer) + `lineups` grouped by team (`TeamLineupGroup[]`) + nested `venue` (`Venue (for game)` when `venueId` is set; otherwise omitted) alongside `venueName` / `venueId`.
 
 ### `GET /api/v1/formations` → `Formation[]`
 
@@ -584,19 +595,19 @@ Active formations only (`isActive = true`), ordered by `name`.
 
 ### `GET /api/v1/games/:gameId/lineups` → `TeamLineupGroup[]`
 
-Each entry: `team`, `formation` (from starters), `starters`, `substitutes` — each lineup row includes nested `player`, `team`, `formation`.
+Each entry: `team`, `formation` (from starters), `starters`, `substitutes` - each lineup row includes nested `player`, `team`, `formation`.
 
 ### `GET /api/v1/teams/:id` → `{ team, leagues, statTypes }`
 
-- **`team`** — `id`, `name`, `logoUrl`.
-- **`leagues`** — typically one league (the team's `leagueId`), each with **`seasons`** the team participated in (games, standings row, and/or roster).
-- **`statTypes`** — global stat type catalog for grouping player stats on the roster.
+- **`team`** - `id`, `name`, `logoUrl`.
+- **`leagues`** - typically one league (the team's `leagueId`), each with **`seasons`** the team participated in (games, standings row, and/or roster).
+- **`statTypes`** - global stat type catalog for grouping player stats on the roster.
 
 Each league entry's season includes:
 
-- **`games`** — matches where this team is home or away (merged; not split into home/away arrays).
-- **`standings`** — full league table for that season (all teams in the league), ordered by `position` ascending.
-- **`players`** — roster for that season via `league_players`, with stats scoped to that season.
+- **`games`** - matches where this team is home or away (merged; not split into home/away arrays).
+- **`standings`** - full league table for that season (all teams in the league), ordered by `position` ascending. **`points` folds in any `standing_adjustments` for the round_robin stage**, same as `GET /leagues/:leagueId` above.
+- **`players`** - roster for that season via `league_players`, with stats scoped to that season.
 
 ```json
 {
@@ -613,7 +624,7 @@ Each league entry's season includes:
         "seasons": [
           {
             "id": 5,
-            "name": "2026 — Spring",
+            "name": "2026 - Spring",
             "status": "active",
             "games": [ "…Game[] with homeTeam / awayTeam" ],
             "standings": [ "…Standing[] with team" ],
@@ -638,9 +649,10 @@ Use before invite accept / profile creation to decide whether to show the player
 
 ### `GET /api/v1/players/:id` → `{ player, leagues, statTypes }`
 
-- **`player`** — `id`, `name`, `avatarUrl`, `country`.
-- **`leagues`** — leagues the player belongs to (from `league_players` and/or stats), each with **`seasons`** for filtering in the UI.
-- **`statTypes`** — global stat type catalog for grouping (same shape as league detail).
+- **`player`** - **Player (profile)**: `id`, `name`, `avatarUrl`, `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age`, `country`, `highlights`.
+- **`leagues`** - leagues the player belongs to (from `league_players` and/or stats), each with **`seasons`** for filtering in the UI.
+- **`statTypes`** - global stat type catalog for grouping (same shape as league detail).
+- If the player's `visibility` is `private`, `player` collapses to `{ id, name, visibility: "private" }` and `leagues` / `statTypes` are both returned empty - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md).
 
 Each league entry:
 
@@ -652,7 +664,7 @@ Each league entry:
   "seasons": [
     {
       "id": 5,
-      "name": "2026 — Spring",
+      "name": "2026 - Spring",
       "status": "active",
       "team": { "id": 1, "name": "Riverside United", "logoUrl": null },
       "games": [ "…Game[] with homeTeam / awayTeam" ],
@@ -662,9 +674,9 @@ Each league entry:
 }
 ```
 
-- **`seasons`** — ordered active → completed → inactive, then newest first.
-- **`games`** — matches for that season where the player's team played, plus any game linked from their stats.
-- **`stats`** — all stat events for that player in that league + season.
+- **`seasons`** - ordered active → completed → inactive, then newest first.
+- **`games`** - matches for that season where the player's team played, plus any game linked from their stats.
+- **`stats`** - all stat events for that player in that league + season.
 
 ```json
 {
@@ -673,7 +685,21 @@ Each league entry:
       "id": 1,
       "name": "Ada Player",
       "avatarUrl": null,
-      "country": { "id": 1, "name": "Nigeria", "code": "ng" }
+      "bio": "Box-to-box midfielder",
+      "primaryPosition": "midfield",
+      "secondaryPosition": null,
+      "preferredFoot": "right",
+      "heightCm": 175,
+      "city": "Lagos",
+      "state": null,
+      "nationality": "Nigerian",
+      "socialHandle": "@ada.plays",
+      "visibility": "active",
+      "age": 24,
+      "country": { "id": 1, "name": "Nigeria", "code": "ng" },
+      "highlights": [
+        { "id": 1, "videoId": "dQw4w9WgXcQ", "title": "Hat-trick vs Riverside", "sortOrder": 0, "thumbnailUrl": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg" }
+      ]
     },
     "statTypes": [
       { "id": 1, "name": "goals", "displayName": "Goals", "iconName": "soccer-ball", "category": "performance" }
@@ -682,6 +708,32 @@ Each league entry:
   }
 }
 ```
+
+### `GET /api/v1/me/player` → `{ player, completeness, missingFields, highlightsCount, membership }`
+
+The two-state CTA resolver - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md).
+`player` is the same **Player (profile)** shape as `GET /players/:id` above.
+`completeness` (0–100) and `missingFields` (checklist keys: `photo`, `bio`,
+`primaryPosition`, `preferredFoot`, `dateOfBirth`, `city`, `highlights`) are
+computed server-side so the rule lives in one place. `membership.inLeague` /
+`membership.inTeam` reflect any **active** `league_players` row.
+
+```json
+{
+  "data": {
+    "player": { "id": 1, "name": "Ada Player", "…rest of Player (profile)": "…" },
+    "completeness": 60,
+    "missingFields": ["photo", "highlights"],
+    "highlightsCount": 0,
+    "membership": { "inLeague": true, "inTeam": true }
+  }
+}
+```
+
+`GET /me/player` returns **404** (not a 200 with `null`) when the
+authenticated user has no `players` row - that 404 is the "no profile" signal
+the app's profile tab uses to show the create-profile CTA instead of parsing
+response contents.
 
 ### `GET /api/v1/search`
 
@@ -713,7 +765,7 @@ Each league entry:
 
 ### `GET /api/v1/leagues/league-player-requests`
 
-Array of **LeaguePlayer (with league)** — response is **not** wrapped in `{ data: … }`.
+Array of **LeaguePlayer (with league)** - response is **not** wrapped in `{ data: … }`.
 
 ```json
 [
@@ -732,7 +784,7 @@ Array of **LeaguePlayer (with league)** — response is **not** wrapped in `{ da
 
 `resourceId("table")` means: required positive integer that exists in that table’s `id` column.
 
-### `requestOtpValidator` — `POST /api/v1/auth/request-otp`
+### `requestOtpValidator` - `POST /api/v1/auth/request-otp`
 
 | Field | Rules |
 | --- | --- |
@@ -742,7 +794,7 @@ Array of **LeaguePlayer (with league)** — response is **not** wrapped in `{ da
 
 Server logic: existing user → send OTP (`200`); new user without `name` → `428` with `requiresSignup: true`; new user with `name` → create account, send OTP (`200`).
 
-### `verifyOtpValidator` — `POST /api/v1/auth/verify-otp`
+### `verifyOtpValidator` - `POST /api/v1/auth/verify-otp`
 
 | Field | Rules |
 | --- | --- |
@@ -751,13 +803,13 @@ Server logic: existing user → send OTP (`200`); new user without `name` → `4
 
 User must already exist (created on signup `request-otp` or from a prior login).
 
-### `requestRecoveryValidator` — `POST /api/v1/auth/recover`
+### `requestRecoveryValidator` - `POST /api/v1/auth/recover`
 
 | Field | Rules |
 | --- | --- |
 | `recoveryEmail` | required string, valid email format; must **exist** in `users.recovery_email` |
 
-### `createLeagueWithSeasonValidator` — `POST /api/v1/leagues`
+### `createLeagueWithSeasonValidator` - `POST /api/v1/leagues`
 
 | Field | Rules |
 | --- | --- |
@@ -768,20 +820,20 @@ User must already exist (created on signup `request-otp` or from a prior login).
 | `countryId` | required; must exist in `countries` |
 | `seasonName` | string, 1–120 chars, trimmed |
 | `tiebreaker` | optional enum: `goal_difference_goals_scored` (default), `goals_scored_goal_difference`, `wins_goal_difference_goals_scored`, `goal_difference_goals_conceded`, `goal_difference_goals_scored_away_goals`, `goal_difference_goals_scored_head_to_head`, `head_to_head_goal_difference_goals_scored`, `head_to_head_goals_scored_goal_difference`, `away_goals_scored_goal_difference_goals_scored` |
-| `startDate` | optional date (`YYYY-MM-DD` or ISO 8601), nullable — league duration start |
-| `endDate` | optional date (`YYYY-MM-DD` or ISO 8601), nullable — league duration end |
-| `format` | optional `league` \| `knockout` \| `group` (default `league`) — which stage to create for the first season |
-| `knockout` | required when `format` is `knockout`: `{ name?, seed?, config }` — `config` matches knockout stage config; `seed` defaults `true` (auto-seed when ≥ 2 teams, array order = seeds). See [docs/KNOCKOUT.md](docs/KNOCKOUT.md) |
-| `group` | optional when `format` is `group`: `{ name?, config? }` — defaults `group_count: 2`, `double_round_robin: false`, `per_group: 2`. No auto assign/fixtures. See [docs/GROUPS.md](docs/GROUPS.md) |
-| `teams` | optional array of `{ name: string (1–255), logo?: image file }` — each team `logo` is uploaded to Drive and stored as `logoUrl` on the team row (same as `POST /leagues/:leagueId/teams`) |
+| `startDate` | optional date (`YYYY-MM-DD` or ISO 8601), nullable - league duration start |
+| `endDate` | optional date (`YYYY-MM-DD` or ISO 8601), nullable - league duration end |
+| `format` | optional `league` \| `knockout` \| `group` (default `league`) - which stage to create for the first season |
+| `knockout` | required when `format` is `knockout`: `{ name?, seed?, config }` - `config` matches knockout stage config; `seed` defaults `true` (auto-seed when ≥ 2 teams, array order = seeds). See [docs/KNOCKOUT.md](docs/KNOCKOUT.md) |
+| `group` | optional when `format` is `group`: `{ name?, config? }` - defaults `group_count: 2`, `double_round_robin: false`, `per_group: 2`. No auto assign/fixtures. See [docs/GROUPS.md](docs/GROUPS.md) |
+| `teams` | optional array of `{ name: string (1–255), logo?: image file }` - each team `logo` is uploaded to Drive and stored as `logoUrl` on the team row (same as `POST /leagues/:leagueId/teams`) |
 
 Success body: `{ message, leagueId, seasonId, stageId, format, seeded }`.
 
-### `updateLeagueValidator` — `PUT /api/v1/leagues/:leagueId`
+### `updateLeagueValidator` - `PUT /api/v1/leagues/:leagueId`
 
 All fields optional: `name`, `description`, `gender`, `logo` (image file; stored as `logoUrl` via Drive upload), `tiebreaker` (enum; re-sorts the **active** season standings immediately when changed), `startDate`, `endDate` (dates, nullable).
 
-### `createSeasonValidator` — `POST /api/v1/leagues/:leagueId/seasons`
+### `createSeasonValidator` - `POST /api/v1/leagues/:leagueId/seasons`
 
 | Field | Rules |
 | --- | --- |
@@ -794,7 +846,7 @@ All fields optional: `name`, `description`, `gender`, `logo` (image file; stored
 
 Setting `status` to `active` marks all other `active` seasons in the same league as `completed`.
 
-### `updateSeasonValidator` — `PUT /api/v1/leagues/:leagueId/seasons/:seasonId`
+### `updateSeasonValidator` - `PUT /api/v1/leagues/:leagueId/seasons/:seasonId`
 
 | Field | Rules |
 | --- | --- |
@@ -803,7 +855,7 @@ Setting `status` to `active` marks all other `active` seasons in the same league
 
 Setting `status` to `active` marks all other `active` seasons in the same league as `completed` (excluding the season being updated).
 
-### `createTeamValidator` — `POST /api/v1/leagues/:leagueId/teams`
+### `createTeamValidator` - `POST /api/v1/leagues/:leagueId/teams`
 
 | Field | Rules |
 | --- | --- |
@@ -813,11 +865,11 @@ Setting `status` to `active` marks all other `active` seasons in the same league
 
 `addedBy` is set server-side from the authenticated user.
 
-### `updateTeamValidator` — `PUT /api/v1/leagues/:leagueId/teams/:id`
+### `updateTeamValidator` - `PUT /api/v1/leagues/:leagueId/teams/:id`
 
 Optional: `name`, `logo` (image file; stored as `logoUrl` via Drive upload).
 
-### `createLeaguePlayerValidator` — `POST /api/v1/leagues/assign-team`
+### `createLeaguePlayerValidator` - `POST /api/v1/leagues/assign-team`
 
 | Field | Rules |
 | --- | --- |
@@ -828,22 +880,54 @@ Optional: `name`, `logo` (image file; stored as `logoUrl` via Drive upload).
 | `position` | optional nullable: `attack` \| `defence` \| `midfield` \| `goalkeeper` |
 | `joinedAt`, `leftAt` | optional dates (ISO8601 or `YYYY-MM-DD` or `YYYY-MM-DD HH:mm:ss`) |
 
-### `acceptLeaguePlayerRequestValidator` — `POST /api/v1/leagues/accept-league-player-request`
+### `acceptLeaguePlayerRequestValidator` - `POST /api/v1/leagues/accept-league-player-request`
 
 Required: `playerId`, `leagueId`, `seasonId` (all must exist in DB).
 
-### `updateLeaguePlayerValidator` — `PUT /api/v1/leagues/league-players/:id`
+### `updateLeaguePlayerValidator` - `PUT /api/v1/leagues/league-players/:id`
 
 Optional: `jerseyNumber`, `status`, `isCaptain`, `position`, `joinedAt`, `leftAt`.
 
-### `generateInviteValidator` — `GET /api/v1/invites/generate`
+### `createPlayerProfileValidator` - `POST /api/v1/me/player`
+
+| Field | Rules |
+| --- | --- |
+| `name` | required, 1–255 chars |
+| `countryId` | required FK → `countries` |
+| `bio` | optional nullable, max 300 chars |
+| `primaryPosition`, `secondaryPosition` | optional nullable enum: `goalkeeper` \| `defence` \| `midfield` \| `attack` |
+| `preferredFoot` | optional nullable enum: `left` \| `right` \| `both` |
+| `heightCm` | optional nullable integer, 100–250 |
+| `dateOfBirth` | optional nullable date; server also enforces not-in-future and an implied age of 5–70 |
+| `city`, `state`, `nationality`, `socialHandle` | optional nullable, max 120 chars each |
+
+`updatePlayerProfileValidator` (`PUT /api/v1/me/player`) is the same shape
+with every field optional (including `name` / `countryId`).
+
+### `playerPhotoValidator` - `POST /api/v1/me/player/photo`
+
+`photo`: required file, max 2 MB, `jpg` \| `jpeg` \| `png` \| `webp`.
+
+### `createHighlightValidator` - `POST /api/v1/me/player/highlights`
+
+| Field | Rules |
+| --- | --- |
+| `url` | required string, max 500 chars; must parse to a valid YouTube video ID - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md) |
+| `title` | optional nullable, max 140 chars |
+
+`updateHighlightValidator` (`PUT /api/v1/me/player/highlights/:hid`): `title`
+(nullable, max 140 chars). `reorderHighlightsValidator` (`PUT
+/api/v1/me/player/highlights/reorder`): `ids` - array of positive integers,
+must be exactly the caller's own highlight IDs, each exactly once.
+
+### `generateInviteValidator` - `GET /api/v1/invites/generate`
 
 | Field | Rules |
 | --- | --- |
 | `leagueId`, `seasonId`, `teamId` | required FKs (query string) |
 | `invitedUserId` | optional FK to `users` (Flow A); omit for general invite (Flow B) |
 
-### `createGameValidator` — `POST /api/v1/leagues/games`
+### `createGameValidator` - `POST /api/v1/leagues/games`
 
 | Field | Rules |
 | --- | --- |
@@ -853,11 +937,11 @@ Optional: `jerseyNumber`, `status`, `isCaptain`, `position`, `joinedAt`, `leftAt
 | `currentMinute` | optional integer 0–130 |
 | `status` | optional game status enum |
 | `venueName` | optional string, max 255, nullable |
-| `venueId` | optional FK to `venues`, nullable — must belong to `leagueId`; when set, server copies venue name into `venueName` |
+| `venueId` | optional FK to `venues`, nullable - must belong to `leagueId`; when set, server copies venue name into `venueName` |
 
 Server sets `stage_id` to the season’s `round_robin` stage (creates one if missing). Do not send knockout `tieId` / `leg` here.
 
-### `createKnockoutStageValidator` — `POST /api/v1/leagues/:leagueId/stages`
+### `createKnockoutStageValidator` - `POST /api/v1/leagues/:leagueId/stages`
 
 | Field | Rules |
 | --- | --- |
@@ -871,29 +955,29 @@ Server sets `stage_id` to the season’s `round_robin` stage (creates one if mis
 | `config.ties.default.away_goals` | optional boolean (two_legged) |
 | `config.ties.rounds` | optional per-round overrides (same fields) |
 
-### `seedKnockoutStageValidator` — `POST /api/v1/leagues/stages/:id/seed`
+### `seedKnockoutStageValidator` - `POST /api/v1/leagues/stages/:id/seed`
 
 | Field | Rules |
 | --- | --- |
 | `seededTeams` | array of team FKs, min length 2, unique, all in the stage’s league |
 
-### `nextRoundValidator` — `POST /api/v1/leagues/stages/:id/next-round`
+### `nextRoundValidator` - `POST /api/v1/leagues/stages/:id/next-round`
 
 | Field | Rules |
 | --- | --- |
 | `completedRound` | required bracket round (`r256`…`final`, `third_place` rejected by service) |
 
-### `completePenaltyShootoutValidator` — `POST /api/v1/games/:gameId/penalty-shootout/complete`
+### `completePenaltyShootoutValidator` - `POST /api/v1/games/:gameId/penalty-shootout/complete`
 
 | Field | Rules |
 | --- | --- |
 | `homePenaltyScore`, `awayPenaltyScore` | required integers 0–50; must differ |
 
-### `updateGameValidator` — `PUT /api/v1/leagues/games/:id`
+### `updateGameValidator` - `PUT /api/v1/leagues/games/:id`
 
 Optional: `homeScore`, `awayScore`, `currentMinute`, `status`, `playedAt`, `venueName`, `venueId` (nullable to clear FK).
 
-### `createVenueValidator` — `POST /api/v1/leagues/:leagueId/venues`
+### `createVenueValidator` - `POST /api/v1/leagues/:leagueId/venues`
 
 | Field | Rules |
 | --- | --- |
@@ -906,13 +990,13 @@ Optional: `homeScore`, `awayScore`, `currentMinute`, `status`, `playedAt`, `venu
 | `city` | optional string, max 120, nullable |
 | `notes` | optional string, nullable |
 
-### `updateVenueValidator` — `PUT /api/v1/leagues/venues/:id`
+### `updateVenueValidator` - `PUT /api/v1/leagues/venues/:id`
 
 Same fields as create; all optional.
 
-### `createStatValidator` — `POST /api/v1/leagues/stats`
+### `createStatValidator` - `POST /api/v1/leagues/stats`
 
-Server also checks: `game` belongs to `leagueId`/`seasonId`; `teamId` is home or away in that game; `playerId` has active `league_players` row for that team/season. Scores are **not** updated — use `PUT /leagues/games/:id` separately.
+Server also checks: `game` belongs to `leagueId`/`seasonId`; `teamId` is home or away in that game; `playerId` has active `league_players` row for that team/season. Scores are **not** updated - use `PUT /leagues/games/:id` separately.
 
 | Field | Rules |
 | --- | --- |
@@ -923,11 +1007,11 @@ Server also checks: `game` belongs to `leagueId`/`seasonId`; `teamId` is home or
 | `value` | optional string, max 500, nullable |
 | `numericValue` | optional integer 0–999 |
 
-### `updateStatValidator` — `PUT /api/v1/leagues/stats/:id`
+### `updateStatValidator` - `PUT /api/v1/leagues/stats/:id`
 
-Optional: `relatedPlayerId`, `minute`, `isStoppageTime`, `value`, `numericValue`. Does **not** allow changing `playerId` or `statTypeId` — delete and recreate (or use `POST .../substitutions` again) to change who was involved in a substitution.
+Optional: `relatedPlayerId`, `minute`, `isStoppageTime`, `value`, `numericValue`. Does **not** allow changing `playerId` or `statTypeId` - delete and recreate (or use `POST .../substitutions` again) to change who was involved in a substitution.
 
-### `recordSubstitutionValidator` — `POST /api/v1/leagues/stats/substitutions`
+### `recordSubstitutionValidator` - `POST /api/v1/leagues/stats/substitutions`
 
 | Field | Rules |
 | --- | --- |
@@ -940,7 +1024,7 @@ Optional: `relatedPlayerId`, `minute`, `isStoppageTime`, `value`, `numericValue`
 
 Server also rejects duplicate players across the batch and players missing from the lineup.
 
-### `setLineupValidator` — `PUT /api/v1/games/:gameId/lineups`
+### `setLineupValidator` - `PUT /api/v1/games/:gameId/lineups`
 
 | Field | Rules |
 | --- | --- |
@@ -949,11 +1033,11 @@ Server also rejects duplicate players across the batch and players missing from 
 | `starters` | array, exactly 11 items: `{ playerId, slotKey, jerseyNumber? }` |
 | `substitutes` | array, max 12 items: `{ playerId, jerseyNumber? }` |
 
-### `updateLineupValidator` — `PATCH /api/v1/games/:gameId/lineups/:id`
+### `updateLineupValidator` - `PATCH /api/v1/games/:gameId/lineups/:id`
 
 Optional: `jerseyNumber` (1–99, nullable), `slotKey` (string, nullable), `position` (`LINEUP_POSITIONS`, nullable), `status` (`starter` \| `substitute` \| `did_not_play`).
 
-### `assignTeamAdminValidator` — `POST /api/v1/leagues/:leagueId/teams/:teamId/admins`
+### `assignTeamAdminValidator` - `POST /api/v1/leagues/:leagueId/teams/:teamId/admins`
 
 | Field | Rules |
 | --- | --- |
@@ -971,5 +1055,5 @@ Optional: `jerseyNumber` (1–99, nullable), `slotKey` (string, nullable), `posi
 
 ## Notes
 
-- **Favourites:** Routes use US spelling (`/favorite`); the pivot table is `favourite_leagues`. `POST` attaches the league to the authenticated user; `DELETE` detaches. No `leagueOwner` check — any logged-in user can favourite any league. `GET /api/v1/leagues` sets `isFavourited` on leagues in `matches` when a Bearer token is sent.
+- **Favourites:** Routes use US spelling (`/favorite`); the pivot table is `favourite_leagues`. `POST` attaches the league to the authenticated user; `DELETE` detaches. No `leagueOwner` check - any logged-in user can favourite any league. `GET /api/v1/leagues` sets `isFavourited` on leagues in `matches` when a Bearer token is sent.
 - Logo uploads use Drive (`moveToDisk`); league/team logos are stored and exposed as URLs in `logoUrl`.

@@ -1,8 +1,8 @@
 # Hybrid Scoring System Implementation Prompt
 
-> **Backend (this repo):** Implemented — `POST /games/:gameId/score`, `PATCH /games/:gameId/stats/:statId/accredit`, nullable `stats.player_id` for unaccredited placeholders, `StatTransformer.isUnaccredited`, SSE `score_updated` / `stat_accredited`. See [ROUTES.md](../ROUTES.md).
+> **Backend (this repo):** Implemented - `POST /games/:gameId/score`, `PATCH /games/:gameId/stats/:statId/accredit`, nullable `stats.player_id` for unaccredited placeholders, `StatTransformer.isUnaccredited`, SSE `score_updated` / `stat_accredited`. See [ROUTES.md](../ROUTES.md).
 >
-> **Mobile (React Native):** UI/hooks below are for the Expo app — not in this repository.
+> **Mobile (React Native):** UI/hooks below are for the Expo app - not in this repository.
 
 ## Context
 
@@ -28,10 +28,10 @@ We are building a soccer league management platform using AdonisJS (backend) and
 Replace the current manual score input with a **hybrid scoring system** where:
 
 - Admin increments or decrements score using `+` / `−` buttons
-- Score updates **immediately** via SSE — no page refresh
-- A player accredit section is **always visible on the same screen** — zero extra navigation or modal clicks
+- Score updates **immediately** via SSE - no page refresh
+- A player accredit section is **always visible on the same screen** - zero extra navigation or modal clicks
 - Admin selects scorer and optional assist from a combined list of both teams
-- Admin can skip accrediting — score updates but an unaccredited placeholder is stored
+- Admin can skip accrediting - score updates but an unaccredited placeholder is stored
 - Unaccredited goals can be accredited later from a Goals tab
 
 ---
@@ -54,14 +54,14 @@ Replace the current manual score input with a **hybrid scoring system** where:
 │  [ ] Elena Martinez  #5             │
 │  [ ] Tom Walsh  #9                  │
 ├─────────────────────────────────────┤
-│  ASSIST (optional) — appears after  │
+│  ASSIST (optional) - appears after  │
 │  scorer is selected                 │
 │  ── Riverside United ──             │
 │  [ ] Marcus Kim  #10                │
 │  ...                                │
 ├─────────────────────────────────────┤
 │  [ ] Own Goal          Minute: [67] │
-│  [Log Goal]   [Skip — Score Only]   │
+│  [Log Goal]   [Skip - Score Only]   │
 └─────────────────────────────────────┘
 ```
 
@@ -244,7 +244,7 @@ const playerSections = [
 ```
 
 **Scorer list rules:**
-- Always visible on screen — not in a modal
+- Always visible on screen - not in a modal
 - Dimmed/greyed with `pointerEvents="none"` when `pendingTeam` is null
 - Activates immediately when `pendingTeam` is set
 - Each player row shows: jersey number + name + checkmark when selected
@@ -281,7 +281,7 @@ const playerSections = [
   ```
 - After success → calls `resetAccredit()`
 
-**"Skip — Score Only" button:**
+**"Skip - Score Only" button:**
 - Disabled when `pendingTeam` is null
 - On press → calls `resetAccredit()` only (placeholder already created on increment)
 
@@ -290,7 +290,7 @@ const playerSections = [
 - Toggle button: "Own Goal: Yes / No"
 - When `isOwnGoal` is true:
   - Assist list is hidden
-  - Scorer can be from **either team** — do not filter by `pendingTeam`
+  - Scorer can be from **either team** - do not filter by `pendingTeam`
   - `statTypeId` switches to `OWN_GOAL_STAT_TYPE_ID` on submit
 
 ### 6. Minute Field
@@ -306,7 +306,7 @@ Add a **Goals tab** to the live game screen tabs `[Score] [Goals] [Stats] [Lineu
 - Fetches all goal stats for the game
 - Displays them in a two-column layout: home goals on left, away goals on right, minute in center
 - Unaccredited goals show `"Unaccredited"` as player name with an **"Accredit"** button
-- Tapping "Accredit" scrolls back to the Score tab and sets `pendingTeam` to that goal's team — so admin can select the player inline
+- Tapping "Accredit" scrolls back to the Score tab and sets `pendingTeam` to that goal's team - so admin can select the player inline
 - Accredited goals show: player name + assist name below if applicable
 
 ### 8. SSE Updates
@@ -328,11 +328,11 @@ case 'stat_accredited':
 
 ## What NOT to Do
 
-- Do not open a modal for accrediting — everything is on the same screen
+- Do not open a modal for accrediting - everything is on the same screen
 - Do not navigate to another screen to accredit a goal
-- Do not hide the player list until after `+` is tapped — it should always be visible but dimmed
-- Do not filter the scorer list to only the scoring team — show both teams so admin can pick own goals without extra clicks
+- Do not hide the player list until after `+` is tapped - it should always be visible but dimmed
+- Do not filter the scorer list to only the scoring team - show both teams so admin can pick own goals without extra clicks
 - Do not forget `scrollEnabled={false}` on `SectionList` components since they live inside a scrollable screen
-- Do not skip the unaccredited placeholder on increment — it keeps score and stats in sync
+- Do not skip the unaccredited placeholder on increment - it keeps score and stats in sync
 - Do not allow decrement to go below 0
 - Do not forget to fire `GameUpdated` event after score changes so standings update

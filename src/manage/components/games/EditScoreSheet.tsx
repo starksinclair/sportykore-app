@@ -84,7 +84,7 @@ export function EditScoreSheet({
           onPress={() => void handleSave()}
         />
         <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-slate-500">
-          Scores are not updated automatically when deleting stats — adjust manually if needed.
+          Scores are not updated automatically when deleting stats - adjust manually if needed.
         </Text>
       </View>
     </BottomSheetModal>

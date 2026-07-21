@@ -46,7 +46,7 @@ DataPurposeEmail addressAuthentication via one-time password (OTP)Display namePl
 
 Authentication:
 
-One-time password (OTP) sent via email — no passwords stored
+One-time password (OTP) sent via email - no passwords stored
 Future: Google Sign-In, Apple Sign-In
 
 Third party services used:
@@ -70,7 +70,7 @@ Sportykore is not responsible for disputes between league owners and players
 Users can request account deletion and data removal
 League owners can remove players from their roster
 Sportykore reserves the right to suspend accounts that abuse the platform
-Stats and standings are calculated automatically — Sportykore is not liable for calculation errors
+Stats and standings are calculated automatically - Sportykore is not liable for calculation errors
 User-uploaded content (logos, avatars) must not violate copyright or contain inappropriate material
 The platform is provided as-is for recreational use and is not an official sports governing body
 
@@ -95,11 +95,11 @@ Personal account data is deleted. Sports statistics and match records are anonym
 
 We may disclose your personal information to the following third party service providers:
 
-Resend (resend.com) — email delivery service used to send authentication codes and transactional emails
-Amazon Web Services S3 (aws.amazon.com) — cloud storage used to store profile photos, league logos, and team logos
-Neon (neon.tech) — database hosting provider that stores your account and league data
-Google Cloud Platform (cloud.google.com) — cloud infrastructure used to host and run the Sportykore API server
-Upstash (upstash.com) — Redis provider used for rate limiting and real-time event broadcasting
+Resend (resend.com) - email delivery service used to send authentication codes and transactional emails
+Amazon Web Services S3 (aws.amazon.com) - cloud storage used to store profile photos, league logos, and team logos
+Neon (neon.tech) - database hosting provider that stores your account and league data
+Google Cloud Platform (cloud.google.com) - cloud infrastructure used to host and run the Sportykore API server
+Upstash (upstash.com) - Redis provider used for rate limiting and real-time event broadcasting
 
 Each of these providers has entered into data processing agreements and is contractually obligated to protect your personal information and process it only as directed by Sportykore."
 

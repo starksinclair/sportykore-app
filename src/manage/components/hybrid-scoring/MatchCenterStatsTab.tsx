@@ -215,7 +215,7 @@ function StatRow({ stat, onDelete }: { stat: ApiStat; onDelete: () => void }) {
       <Ionicons name={icon} size={20} color={colors.accent} />
       <View className="flex-1">
         <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
-          {stat.type?.displayName ?? "Event"} — {stat.player?.name ?? "Player"}
+          {stat.type?.displayName ?? "Event"} - {stat.player?.name ?? "Player"}
         </Text>
         <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/45">
           {stat.team?.name}

@@ -1,4 +1,4 @@
-# Brand fonts for make_flyer.py (not committed — download from Google Fonts)
+# Brand fonts for make_flyer.py (not committed - download from Google Fonts)
 
 Place these files here:
 

@@ -87,7 +87,7 @@ export function ManageGroupsTab({
     }
     const buckets: Record<number, number[]> = {};
     for (const g of stageGroups) buckets[g.id] = [];
-    // Distribute empty — user moves teams
+    // Distribute empty - user moves teams
     const unassigned = teams.map((t) => t.id);
     buckets[stageGroups[0]!.id] = unassigned;
     setManualBuckets(buckets);
@@ -448,7 +448,7 @@ function GenerateKnockoutWizard({
       visible={visible}
       onClose={handleClose}
       title="Generate knockout"
-      subtitle={`Step ${step} of 5 — nothing is saved until you confirm.`}
+      subtitle={`Step ${step} of 5 - nothing is saved until you confirm.`}
       variant="dark"
     >
       <ScrollView className="max-h-[480px]" nestedScrollEnabled>
@@ -480,7 +480,7 @@ function GenerateKnockoutWizard({
                       byeCount: 0,
                       thirdsNeeded: 0,
                       feasible: true,
-                      summary: "Automatic — winners + runners-up (byes fill gaps)",
+                      summary: "Automatic - winners + runners-up (byes fill gaps)",
                     },
                   ]
               ).map((opt) => {

@@ -1,4 +1,4 @@
-# Sportykore — Waitlist site brand & UI reference
+# Sportykore - Waitlist site brand & UI reference
 
 Brief for marketing and waitlisting pages. Derived from the mobile app design system (`tailwind.config.js`, `src/components/ui/Button.tsx`, `src/theme/fonts.ts`, intro screens, pattern components).
 
@@ -9,12 +9,12 @@ Brief for marketing and waitlisting pages. Derived from the mobile app design sy
 **Name:** Sportykore
 
 **Elevator pitch (adapt from intro):**  
-Local football meets a broadcast-style feed — connect with leagues, follow live matches, and see clear stats built for organizers and fans.
+Local football meets a broadcast-style feed - connect with leagues, follow live matches, and see clear stats built for organizers and fans.
 
 **Headline variants (adapt from legacy in-app copy):**
 
 - Badge-style label: **LOCAL BALL**
-- Primary headline direction: **The gathering — where local leagues gather.**
+- Primary headline direction: **The gathering - where local leagues gather.**
 - Supporting line:
   Connect with local leagues, track live matches, and dive into broadcast-level stats.
 
@@ -22,7 +22,7 @@ Local football meets a broadcast-style feed — connect with leagues, follow liv
 
 | Style | Copy |
 |--------|------|
-| Community | Sportykore — **where local leagues gather.** |
+| Community | Sportykore - **where local leagues gather.** |
 | Action | **Local ball. Live matches. Clear stats.** |
 | Product | **Your gathering place for grassroots football.** |
 
@@ -32,7 +32,7 @@ Tune copy for geography and dialect (e.g. Africa-first, Nigerian English) as you
 
 ## Voice & tone
 
-- **Warm, direct, confident** — not corporate sportsbook.
+- **Warm, direct, confident** - not corporate sportsbook.
 - **Short sentences.** Favor verbs: gather, track, follow, organize.
 - **Inclusive** wording: local leagues, teams, fans; avoid jargon.
 
@@ -86,7 +86,7 @@ App loads via `@expo-google-fonts`. Mirror on the waitlist site with the same fa
 |------|------|---------|--------|
 | **Wordmark** | **Pacifico** | 400 | Logo / “Sportykore” script only |
 | **UI body** | **Open Sans** | 400 / 600 / 700 | Paragraphs, labels, buttons |
-| **Display** | **Playfair Display** | 400 / 700 | Optional editorial headlines — use sparingly |
+| **Display** | **Playfair Display** | 400 / 700 | Optional editorial headlines - use sparingly |
 
 **Google Fonts link (web parity):**
 
@@ -111,7 +111,7 @@ Source: `src/components/ui/Button.tsx`.
 |----------|--------|
 | **Default height** | `56px` (`h-14`) |
 | **Horizontal padding** | `28px` (`px-7`) |
-| **Border radius** | **`13px`** (`rounded-[13px]`) — canonical primary control radius |
+| **Border radius** | **`13px`** (`rounded-[13px]`) - canonical primary control radius |
 | **Icon-only** | `56×56px`, same **13px** radius |
 | **Label** | `text-base`, semibold |
 
@@ -133,7 +133,7 @@ Source: `src/components/ui/Button.tsx`.
 ## Layout & surface patterns
 
 - **Marketing hero:** Saturated purple over **real grassroots football photography**; small **pill badges** for category labels (e.g. LOCAL BALL narrative, updated for Sportykore).
-- **App-style dark chrome:** **`#121212`** + **diagonal gold stripes** — CSS approximation:
+- **App-style dark chrome:** **`#121212`** + **diagonal gold stripes** - CSS approximation:
 
 ```css
 repeating-linear-gradient(
@@ -156,7 +156,7 @@ repeating-linear-gradient(
 
 ## Footer / social one-liners (examples)
 
-- *Sportykore — local football, clearer for everyone on the continent.*
+- *Sportykore - local football, clearer for everyone on the continent.*
 - Footer: Privacy · Terms · Contact (as applicable)
 
 ---

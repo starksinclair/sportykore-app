@@ -388,7 +388,7 @@ export function MatchCenterSubstitutionPanel({
             const offName = pair.playerOff?.name ?? "Unknown";
             const onName = pair.playerOn?.name ?? "Unknown";
             const minuteLabel =
-              pair.minute != null ? `${pair.minute}'` : "—";
+              pair.minute != null ? `${pair.minute}'` : "-";
             return (
               <View
                 key={`${pair.off.id}-${pair.on.id}`}

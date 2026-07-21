@@ -1,4 +1,4 @@
-# SportyKore — Expo / React Native
+# SportyKore - Expo / React Native
 
 SportyKore is a soccer league management mobile app. The frontend is **Expo SDK 54 / React Native 0.81 / React 19** with **Expo Router**, **NativeWind v4 (Tailwind)**, and **TanStack React Query v5**. The backend is AdonisJS (separate repo); this document covers the mobile app only.
 
@@ -24,7 +24,7 @@ Expo experiments enabled in `app.json`: `typedRoutes`, `reactCompiler`.
 
 - **Node.js** LTS
 - **npm** (comes with Node)
-- **Expo CLI** — use `npx expo ...`, no global install needed
+- **Expo CLI** - use `npx expo ...`, no global install needed
 
 ### iOS (Mac only)
 
@@ -97,7 +97,7 @@ npm run lint     # ESLint via expo
 
 ```
 sportykore-app/
-├── app/                          # Expo Router pages — thin wrappers only
+├── app/                          # Expo Router pages - thin wrappers only
 │   ├── _layout.tsx               # Root layout: providers + auth guards
 │   ├── (intro)/                  # Onboarding (shown before first login)
 │   │   ├── index.tsx
@@ -127,7 +127,7 @@ sportykore-app/
 │   │   ├── config.ts             # API_BASE_URL from env
 │   │   ├── errors.ts             # ApiError class
 │   │   ├── entities.ts           # Shared API response types
-│   │   └── http-client.ts        # apiRequest<T> — single HTTP entry point
+│   │   └── http-client.ts        # apiRequest<T> - single HTTP entry point
 │   ├── auth/                     # Auth module
 │   ├── color/                    # Color-scheme hooks
 │   ├── components/ui/            # Shared presentational components
@@ -167,7 +167,7 @@ Guards live in `app/_layout.tsx` using `<Stack.Protected guard={...}>`.
 | `(auth)`  | Onboarded, not logged in     | `hasOnboarded && !user`  |
 | `(app)`   | Logged in                    | `hasOnboarded && !!user` |
 
-Page files are **thin wrappers** — extract params, render a `src/` screen component, nothing else:
+Page files are **thin wrappers** - extract params, render a `src/` screen component, nothing else:
 
 ```tsx
 // app/(app)/league/[id].tsx
@@ -317,7 +317,7 @@ Auth state lives in `src/auth/AuthProvider.tsx` and is consumed via `useAuth()`:
 const { user, signIn, signOut, hasOnboarded, hydrated } = useAuth();
 ```
 
-- `hydrated` is `false` during the initial AsyncStorage read — don't render auth-dependent UI until it's `true`.
+- `hydrated` is `false` during the initial AsyncStorage read - don't render auth-dependent UI until it's `true`.
 - 401/403 responses trigger global sign-out automatically via `src/auth/unauthorized-bus.ts`.
 - The Bearer token is stored with `expo-secure-store` and retrieved by `http-client.ts` when `auth: true` is passed.
 
@@ -327,13 +327,13 @@ Auth endpoints: `POST /api/v1/auth/login`, `POST /api/v1/auth/signup`, `POST /ap
 
 ## Styling
 
-SportyKore uses **NativeWind v4** — Tailwind class strings on React Native primitives.
+SportyKore uses **NativeWind v4** - Tailwind class strings on React Native primitives.
 
 ### Rules
 
 - Prefer `className` strings over `StyleSheet.create`. Use `StyleSheet` only for values Tailwind can't express (e.g. percentage widths, `letterSpacing`).
 - **Never hardcode hex colors** in UI. Use design tokens.
-- Set font families with `style={{ fontFamily: fonts.bodyBold }}` — NativeWind does not load custom fonts.
+- Set font families with `style={{ fontFamily: fonts.bodyBold }}` - NativeWind does not load custom fonts.
 
 ### Brand tokens (`tailwind.config.js`)
 
@@ -349,8 +349,8 @@ Usage: `className="bg-brand-500 text-accent-400"`.
 ```ts
 import { fonts } from "@/theme/fonts";
 
-fonts.brand; // Pacifico_400Regular       — logo / display
-fonts.body; // OpenSans_400Regular        — body copy
+fonts.brand; // Pacifico_400Regular       - logo / display
+fonts.body; // OpenSans_400Regular        - body copy
 fonts.bodySemibold; // OpenSans_600SemiBold
 fonts.bodyBold; // OpenSans_700Bold
 fonts.display; // PlayfairDisplay_400Regular
@@ -439,14 +439,14 @@ const { refreshing, onRefresh } = useRefresh(refetch);
 // Props: type alias, not interface
 type Props = { id: string; label?: string };
 
-// Named exports only — no default exports from component/hook files
+// Named exports only - no default exports from component/hook files
 export function MyComponent({ id }: Props) { ... }
 
 // Variant maps
 type Variant = "primary" | "secondary";
 const classes: Record<Variant, string> = { primary: "bg-brand-500", secondary: "bg-white" };
 
-// Never use `any` — use `unknown` and narrow
+// Never use `any` - use `unknown` and narrow
 ```
 
 ---
@@ -460,7 +460,7 @@ Documented in `documentations/ROUTES.md`. Two patterns:
 | `{ data: T }` | `GET` routes that call `ctx.serialize(...)`                                    |
 | Plain JSON    | `POST`/`PUT`/`DELETE` mutations returning `{ message: "..." }` or a raw object |
 
-All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`, `ApiPlayer`, `ApiSeason`, etc.). Derive feature-specific types from these — do not duplicate or invent fields.
+All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`, `ApiPlayer`, `ApiSeason`, etc.). Derive feature-specific types from these - do not duplicate or invent fields.
 
 ---
 
@@ -518,7 +518,7 @@ All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`,
 - Always set `fontFamily` via `style={{ fontFamily: fonts.* }}`.
 - Always include `staleTime`, `gcTime`, `networkMode`, and `placeholderData` on every `useQuery`.
 - Use `enabled` guard in `useQuery` whenever the query depends on a runtime param.
-- Derive all types from `src/api/entities.ts` — the API response is the single source of truth.
+- Derive all types from `src/api/entities.ts` - the API response is the single source of truth.
 - Handle all query states in every screen: loading, error, empty, success.
 
 **Don't:**
@@ -527,6 +527,6 @@ All shared response types live in `src/api/entities.ts` (`ApiLeague`, `ApiGame`,
 - Use default exports in component or hook files.
 - Hardcode hex colors or font name strings in component files.
 - Wrap a `FlatList` inside a `ScrollView`.
-- Use `any` — use `unknown` and narrow with type guards.
+- Use `any` - use `unknown` and narrow with type guards.
 - Add logic or state to `app/` page files.
-- Create duplicate types — check `src/api/entities.ts` first.
+- Create duplicate types - check `src/api/entities.ts` first.

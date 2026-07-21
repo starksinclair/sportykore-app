@@ -115,7 +115,7 @@ export async function fetchManagedHub(): Promise<ManagedHub> {
   };
 }
 
-/** @deprecated Prefer `fetchManagedHub` — kept for call sites that only need owned leagues. */
+/** @deprecated Prefer `fetchManagedHub` - kept for call sites that only need owned leagues. */
 export async function fetchOwnedLeagues(): Promise<OwnedLeague[]> {
   const hub = await fetchManagedHub();
   return hub.ownedLeagues;

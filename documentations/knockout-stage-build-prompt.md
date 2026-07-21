@@ -1,8 +1,8 @@
-# Sportykore — Knockout stage (build prompt: backend + frontend)
+# Sportykore - Knockout stage (build prompt: backend + frontend)
 
 Build the **knockout stage** as the reusable foundation for every bracketed format.
 Knockout ships first and standalone, but it must be architected so that **groups** and
-**playoffs** reuse the bracket core later with *zero changes* — the only thing that
+**playoffs** reuse the bracket core later with *zero changes* - the only thing that
 differs between those formats is **how the entry round's teams are seeded**. Everything
 from "here are N seeded teams" onward is shared.
 
@@ -23,14 +23,14 @@ must never contain seed-computation logic. Seeds are always *passed in* as an or
    bracket.
 2. **Tie formats are parameterized, not enumerated.** Don't hardcode "single / two-legged /
    best-of-3." Store a `tie_format` discriminator plus a number, and derive the win target.
-   That makes best-of-3, best-of-5, best-of-7, or any N a single code path — the user can
+   That makes best-of-3, best-of-5, best-of-7, or any N a single code path - the user can
    type a custom N (dynamic) or tap a preset (rigid), same stored shape.
 
 ## Scope of THIS build (v1)
 
 - Knockout stage, with **all three tie formats live**: `single`, `two_legged`, and dynamic
   `best_of` (any N).
-- **Byes** live — non-power-of-two entry counts are padded with byes to the top seeds.
+- **Byes** live - non-power-of-two entry counts are padded with byes to the top seeds.
 - The `stages`, `stage_groups`, `stage_teams` tables ship now (shared schema) even though
   only knockout exercises them; `stage_groups` stays unused by knockout.
 - `round_robin` becomes a real stage type via the backfill migration; standings logic is
@@ -65,7 +65,7 @@ created_at, updated_at
 index (season_id, sequence)
 ```
 
-### `stage_groups` (new — ships now, unused by knockout)
+### `stage_groups` (new - ships now, unused by knockout)
 ```
 id
 stage_id   FK stages, ON DELETE CASCADE
@@ -74,7 +74,7 @@ sequence   int NOT NULL DEFAULT 1
 index (stage_id)
 ```
 
-### `stage_teams` (new — unified enrollment for ALL formats)
+### `stage_teams` (new - unified enrollment for ALL formats)
 ```
 id
 stage_id        FK stages, ON DELETE CASCADE
@@ -85,7 +85,7 @@ unique (stage_id, team_id)
 index (stage_id, stage_group_id)
 ```
 
-### `ties` (new — the bracket unit)
+### `ties` (new - the bracket unit)
 ```
 id
 stage_id         FK stages, ON DELETE CASCADE, NOT NULL
@@ -124,7 +124,7 @@ Note: `winner_team_id` on **games** is the winner of that single game (used for 
 win-counting and as the tie winner in single-leg). `winner_team_id` on **ties** is the
 resolved winner of the whole matchup.
 
-### `games.status` (alter enum — add shootout state)
+### `games.status` (alter enum - add shootout state)
 ```
 scheduled, first_half, half_time, second_half, extra_time,
 penalty_shootout,  -- NEW: live shootout in progress
@@ -144,7 +144,7 @@ season's `games` and `standings`. No deletes.
 
 ## 2. Bracket helpers (`app/lib/bracket_rounds.ts`)
 
-Round value **is** the team count — progression is deterministic with no config lookup.
+Round value **is** the team count - progression is deterministic with no config lookup.
 ```
 ROUND_SIZE = { r256:256, r128:128, r64:64, r32:32, r16:16, qf:8, sf:4, final:2 }
 
@@ -156,7 +156,7 @@ targetWins(bestOf)    -> Math.floor(bestOf / 2) + 1     (bo3->2, bo5->3, bo7->4)
 ```
 `third_place` is a sibling of `final` (size 2), never produced by `nextRound`.
 
-## 3. Byes — bracket sizing
+## 3. Byes - bracket sizing
 
 Given `N` seeded teams:
 ```
@@ -171,13 +171,13 @@ sequentially into contested ties. A bye tie is created already resolved: `winner
 the present team`, `status='completed'`, **zero games**. So progression treats it as a
 finished tie with no special-casing downstream.
 
-If the caller enrolls exactly a power of two, `byes=0` and every entry tie is contested —
+If the caller enrolls exactly a power of two, `byes=0` and every entry tie is contested -
 the clean case.
 
 ## 4. Resolvers (the reusable core)
 
 ### `generateKnockoutPhase(stage, seededTeams, startingRound?)`
-- `seededTeams`: ordered `team_id[]`, passed in (the pluggable seam — never computed here).
+- `seededTeams`: ordered `team_id[]`, passed in (the pluggable seam - never computed here).
 - Compute `bracketSize`, `byes`, `entryRound` from `seededTeams.length`. If `startingRound`
   is supplied, validate `roundSize(startingRound) === bracketSize` (or ≥ N with byes);
   otherwise derive it.
@@ -205,14 +205,14 @@ identically with a seeded list computed from standings.
 
 This is where the three formats live. Two functions:
 
-### `createTieGames(tie)` — initial games when a tie is created
+### `createTieGames(tie)` - initial games when a tie is created
 - `single`: create 1 game, `leg=1`.
 - `two_legged`: create 2 games, `leg=1` (home first leg) and `leg=2` (venues swapped).
-- `best_of`: create 1 game, `leg=1`. (Best-of games are created **on demand** — never
+- `best_of`: create 1 game, `leg=1`. (Best-of games are created **on demand** - never
   pre-create all N, since a bo5 that goes 3–0 plays only 3.)
 Bye ties create **no** games.
 
-### `advanceTie(tie)` — called after any game in the tie reaches `full_time`
+### `advanceTie(tie)` - called after any game in the tie reaches `full_time`
 Recompute the tie's cached score and decide if it's resolved:
 - **single**: tie winner = the game's `winner_team_id` (decisive score, or penalties). Done.
 - **two_legged**: sum both legs' goals per team into `home_score_agg`/`away_score_agg`.
@@ -256,10 +256,10 @@ Knockout `config`:
 }
 ```
 - `knockoutConfigValidator`: `tie_format` in `single|two_legged|best_of`;
-  when `best_of`, require `best_of` integer in a sane range (e.g. **1–15**) — this is the
+  when `best_of`, require `best_of` integer in a sane range (e.g. **1–15**) - this is the
   dynamic knob; `target_wins` is **derived server-side**, never trusted from the client.
   `two_legged` may carry `away_goals` boolean.
-- **Presets vs custom** are a UI concern, not a schema one — the same `{tie_format,best_of}`
+- **Presets vs custom** are a UI concern, not a schema one - the same `{tie_format,best_of}`
   shape stores a preset (best-of-3) or a custom value (best-of-6). One validator covers both.
 - Even `best_of` is allowed (grassroots may want it) but triggers the even-N safeguard in
   `advanceTie`; recommend the UI nudge toward odd but not forbid even.
@@ -298,7 +298,7 @@ GET  /seasons/:seasonId/stages                   stages by sequence             
 
 # FRONTEND (React Native, Expo, React Query + persistQueryClient + AsyncStorage)
 
-Bracket components are **format-agnostic** — they render from `ties` (with nested games)
+Bracket components are **format-agnostic** - they render from `ties` (with nested games)
 grouped by `round`/`bracket_position`, so groups/playoffs reuse them unchanged.
 
 ## 1. Two-sided bracket view (public)
@@ -309,7 +309,7 @@ grouped by `round`/`bracket_position`, so groups/playoffs reuse them unchanged.
   pairing the backend already produced). Each subsequent round steps **inward**; the
   **final** sits in the middle fed by each side's last winner. `third_place` renders as a
   small detached match near the final.
-- **The left/right split is purely a UI transform** — the backend stores only sequential
+- **The left/right split is purely a UI transform** - the backend stores only sequential
   `bracket_position`; the client computes sides.
 - Each tie cell shows both teams and the **series/aggregate score** appropriate to its
   format: single → the scoreline (`2–1`, or `1–1 (4–3 pens)`); two-legged → aggregate plus
@@ -324,7 +324,7 @@ One screen: `round_robin` → standings + fixtures (existing); `knockout` → br
 stages → stage tabs in `sequence` order. Build the switch now (only round_robin + knockout
 exist today) so groups→knockout is one screen later.
 
-## 3. Match Center — penalties + series context
+## 3. Match Center - penalties + series context
 
 - Same Match Center as any game, plus: a **"go to penalties"** action available **after
   full time AND after extra time** (in addition to the existing "enter extra time"). It
@@ -337,12 +337,12 @@ exist today) so groups→knockout is one screen later.
 ## 4. Organizer stage management (manage hub)
 
 - **Create knockout stage**: name, `starting_round` (or "auto from team count" when byes
-  apply), `has_third_place` toggle, and the **tie-format control** — see below.
+  apply), `has_third_place` toggle, and the **tie-format control** - see below.
 - **Tie-format control (dynamic, not rigid)**: preset chips for the common cases
   (**Single match**, **Home & away**, **Best of 3**) *plus* a **custom** option with a
   number stepper for **Best of N** (any N in range). Optionally a per-round override list
   ("customize by round") so, e.g., the final can differ from earlier rounds. All of it
-  writes the same `{tie_format, best_of?}` config shape — presets and custom are identical
+  writes the same `{tie_format, best_of?}` config shape - presets and custom are identical
   under the hood.
 - **Seed the entry round**: manual drag-order draw now; the component API must accept an
   externally-supplied pre-seeded list so group/playoff auto-seeding feeds it later
@@ -361,20 +361,20 @@ no changes. Seed computation must never leak into the bracket UI.
 
 # Dormant hooks (ship, don't execute)
 
-- `stages.source_stage_id` — playoffs point a knockout at its feeder stage.
-- `stage_groups`, `stage_teams.stage_group_id` — used by groups, not knockout.
+- `stages.source_stage_id` - playoffs point a knockout at its feeder stage.
+- `stage_groups`, `stage_teams.stage_group_id` - used by groups, not knockout.
 
 # Deferred (out of scope for this build)
 
-- **Groups** — schema ships now; group generation, per-group standings, and the qualifier
+- **Groups** - schema ships now; group generation, per-group standings, and the qualifier
   resolver (winners + runners-up + best-thirds, auto/manual) come next.
-- **Playoffs** — a thin composition: feeder stage (`source_stage_id`) + a knockout seeded
+- **Playoffs** - a thin composition: feeder stage (`source_stage_id`) + a knockout seeded
   from its standings. Reuses everything above; only the seed source differs.
-- **Bracket auto-progression** — MVP is organizer-triggered preview-then-confirm.
+- **Bracket auto-progression** - MVP is organizer-triggered preview-then-confirm.
 
 # Now included in v1 (previously deferred)
 
-- **Byes** — power-of-two padding to the top seeds, auto-resolved bye ties.
-- **Two-legged and best-of-N ties** — all live, best-of dynamic (any N) via `{tie_format,
+- **Byes** - power-of-two padding to the top seeds, auto-resolved bye ties.
+- **Two-legged and best-of-N ties** - all live, best-of dynamic (any N) via `{tie_format,
   best_of}` with derived `target_wins`; games created on demand; even-N safeguard.
-- **Ties as the bracket unit** — `ties` table + `tie_id`/`leg` on games are live.
+- **Ties as the bracket unit** - `ties` table + `tie_id`/`leg` on games are live.

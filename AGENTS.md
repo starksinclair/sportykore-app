@@ -122,7 +122,7 @@ Pages live exclusively in `app/`. They should be **thin wrappers** – extract p
 | `(intro)`      | Onboarding flow                    | `!hasOnboarded`          |
 | `(auth)`       | Login / register / forgot password | `hasOnboarded && !user`  |
 | `(app)`        | All protected content              | `hasOnboarded && !!user` |
-| `(app)/(tabs)` | Bottom tab bar                     | —                        |
+| `(app)/(tabs)` | Bottom tab bar                     | -                        |
 
 Guards are implemented in `app/_layout.tsx` using `<Stack.Protected guard={...}>`.
 

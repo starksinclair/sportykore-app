@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -25,6 +24,7 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { CountryPicker } from "@/components/ui/country-picker";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
 import {
@@ -99,7 +99,6 @@ export default function CreateScreen() {
 
   const createLeagueMutation = useCreateLeague();
   const { requireAuth } = useAuthGate();
-  const router = useRouter();
 
   const durationError = validateLeagueDuration(startDate, endDate);
   const step1Valid =
@@ -146,7 +145,7 @@ export default function CreateScreen() {
       return;
     }
     try {
-      const result = await createLeagueMutation.mutateAsync({
+      await createLeagueMutation.mutateAsync({
         name: name.trim(),
         seasonName: season.trim(),
         countryId: selectedCountry!.id,
@@ -182,9 +181,6 @@ export default function CreateScreen() {
         })),
       });
       setCreated(true);
-      // if (result.leagueId != null) {
-      //   router.push(`/manage/${result.leagueId}`);
-      // }
     } catch (err) {
       console.error("Failed to create competition", err);
       if (err instanceof ApiError && err.status === 401) {
@@ -284,7 +280,7 @@ export default function CreateScreen() {
                 style={{ fontFamily: fonts.body }}
                 className="text-sm leading-6 text-white/70"
               >
-                Three quick steps — pick a league, groups, or knockout cup, then manage it live.
+                Three quick steps - pick a league, groups, or knockout cup, then manage it live.
               </Text>
             </View>
 
@@ -482,7 +478,7 @@ function StepBasics({
   return (
     <View className="gap-4">
       <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 1 — Competition basics
+        Step 1 - Competition basics
       </Text>
 
       <CompetitionFormatPicker
@@ -504,23 +500,21 @@ function StepBasics({
         <FormFieldLabel label="Competition duration" required />
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <AuthTextField
+            <NativeDatePickerField
               label="Start date"
-              placeholder="YYYY-MM-DD"
+              placeholder="Pick start date"
               value={startDate}
-              onChangeText={setStartDate}
-              autoCapitalize="none"
-              keyboardType="numbers-and-punctuation"
+              onChange={(value) => setStartDate(value ?? "")}
+              maximumDate={parseCalendarDate(endDate) ?? undefined}
             />
           </View>
           <View className="flex-1">
-            <AuthTextField
+            <NativeDatePickerField
               label="End date"
-              placeholder="YYYY-MM-DD"
+              placeholder="Pick end date"
               value={endDate}
-              onChangeText={setEndDate}
-              autoCapitalize="none"
-              keyboardType="numbers-and-punctuation"
+              onChange={(value) => setEndDate(value ?? "")}
+              minimumDate={parseCalendarDate(startDate) ?? undefined}
             />
           </View>
         </View>
@@ -670,7 +664,7 @@ function StepTeams({
   return (
     <View className="gap-4">
       <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 2 — Teams
+        Step 2 - Teams
       </Text>
       <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
         {format === "knockout"
@@ -786,7 +780,7 @@ function StepReview({
   return (
     <View className="gap-5">
       <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 3 — Review
+        Step 3 - Review
       </Text>
 
       <View className="gap-3 rounded-2xl bg-neutral-50 px-4 py-4">
@@ -955,10 +949,8 @@ function validateLeagueDuration(startDate: string, endDate: string): string | nu
 function formatDurationSummary(startDate: string, endDate: string): string {
   const start = startDate.trim();
   const end = endDate.trim();
-  if (!start && !end) return "—";
+  if (!start && !end) return "-";
   if (start && end) return `${start} → ${end}`;
   if (start) return `From ${start}`;
   return `Until ${end}`;
 }
-
-

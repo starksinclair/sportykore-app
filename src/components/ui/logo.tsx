@@ -20,7 +20,7 @@ export type LogoProps = Omit<TextProps, "children"> & {
   color?: string;
   fontSize?: number;
   lineHeight?: number;
-  /** Image variant size — defaults from `fontSize` when omitted */
+  /** Image variant size - defaults from `fontSize` when omitted */
   imageWidth?: number;
   imageHeight?: number;
 };
