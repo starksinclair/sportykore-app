@@ -97,6 +97,8 @@ export type ApiStat = {
   numericValue: number | null;
   /** True when a goal stat has no accredited player yet. */
   isUnaccredited?: boolean;
+  /** True when a `goals` stat was scored from a penalty kick in regular play. */
+  isPenalty?: boolean;
   type?: ApiStatType;
   team?: ApiTeam;
   player?: ApiPlayer;

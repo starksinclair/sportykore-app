@@ -127,6 +127,11 @@ function GoalCell({
         className={`text-sm text-white ${align === "end" ? "text-right" : ""}`}
       >
         {playerName}
+        {stat.isPenalty ? (
+          <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/45">
+            {" "}(pen.)
+          </Text>
+        ) : null}
       </Text>
       {assist ? (
         <Text

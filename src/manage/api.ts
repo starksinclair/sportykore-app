@@ -419,6 +419,7 @@ export type AccreditStatPayload = {
   playerId: number;
   assistPlayerId?: number | null;
   isOwnGoal: boolean;
+  isPenalty?: boolean;
   minute: number;
 };
 

@@ -21,6 +21,7 @@ type Props = {
   scorerId: number | null;
   assistId: number | null;
   isOwnGoal: boolean;
+  isPenalty: boolean;
   minute: string;
   scorePending: boolean;
   accreditPending: boolean;
@@ -29,6 +30,7 @@ type Props = {
   onSelectScorer: (playerId: number) => void;
   onSelectAssist: (playerId: number) => void;
   onToggleOwnGoal: () => void;
+  onTogglePenalty: () => void;
   onMinuteChange: (value: string) => void;
   onLogGoal: () => void;
   onSkip: () => void;
@@ -43,6 +45,7 @@ export function HybridScoringPanel({
   scorerId,
   assistId,
   isOwnGoal,
+  isPenalty,
   minute,
   scorePending,
   accreditPending,
@@ -51,6 +54,7 @@ export function HybridScoringPanel({
   onSelectScorer,
   onSelectAssist,
   onToggleOwnGoal,
+  onTogglePenalty,
   onMinuteChange,
   onLogGoal,
   onSkip,
@@ -153,19 +157,41 @@ export function HybridScoringPanel({
         )}
 
         <View className="flex-row flex-wrap items-center justify-between gap-3 pt-2">
-          <Pressable
-            onPress={onToggleOwnGoal}
-            className="flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-2"
-          >
-            <Ionicons
-              name={isOwnGoal ? "checkbox" : "square-outline"}
-              size={18}
-              color={isOwnGoal ? colors.accent : "rgba(255,255,255,0.55)"}
-            />
-            <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
-              Own goal
-            </Text>
-          </Pressable>
+          <View className="flex-row flex-wrap gap-2">
+            <Pressable
+              onPress={onToggleOwnGoal}
+              disabled={isPenalty}
+              className={`flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-2 ${
+                isPenalty ? "opacity-40" : ""
+              }`}
+            >
+              <Ionicons
+                name={isOwnGoal ? "checkbox" : "square-outline"}
+                size={18}
+                color={isOwnGoal ? colors.accent : "rgba(255,255,255,0.55)"}
+              />
+              <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+                Own goal
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={onTogglePenalty}
+              disabled={isOwnGoal}
+              className={`flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-2 ${
+                isOwnGoal ? "opacity-40" : ""
+              }`}
+            >
+              <Ionicons
+                name={isPenalty ? "checkbox" : "square-outline"}
+                size={18}
+                color={isPenalty ? colors.accent : "rgba(255,255,255,0.55)"}
+              />
+              <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+                Penalty
+              </Text>
+            </Pressable>
+          </View>
 
           <View className="w-24">
             <AuthTextField

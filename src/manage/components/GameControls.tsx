@@ -1,10 +1,18 @@
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  ActivityIndicator,
+  Pressable,
+  Text,
+  View,
+  type PressableProps,
+} from "react-native";
 
 import type { ApiGame, GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { colors } from "@/constants";
 import {
   useCompletePenaltyShootout,
   useEnterPenaltyShootout,
@@ -21,6 +29,8 @@ type Props = {
   onFullTime?: () => void;
 };
 
+type ClockActionKey = "extraTime" | "penalties" | "pause";
+
 export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
   const actions = useGameTimeActions(game.id, leagueId, seasonId);
   const enterPens = useEnterPenaltyShootout(game.id, leagueId);
@@ -28,6 +38,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
 
   const [fullTimeOpen, setFullTimeOpen] = useState(false);
   const [pensOpen, setPensOpen] = useState(false);
+  const [clockAction, setClockAction] = useState<ClockActionKey | null>(null);
   const [homeScore, setHomeScore] = useState(String(game.homeScore ?? 0));
   const [awayScore, setAwayScore] = useState(String(game.awayScore ?? 0));
   const [homePens, setHomePens] = useState("0");
@@ -65,6 +76,30 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
     }
   };
 
+  const handleClockAction = async () => {
+    if (!clockAction) return;
+    const action = clockAction;
+    setClockAction(null);
+
+    if (action === "extraTime") {
+      await run(
+        () => actions.startExtraTime.mutateAsync(),
+        "Could not start extra time",
+      );
+      return;
+    }
+
+    if (action === "penalties") {
+      await run(async () => {
+        await enterPens.mutateAsync();
+        setPensOpen(true);
+      }, "Could not start penalties");
+      return;
+    }
+
+    await run(() => actions.pause.mutateAsync(), "Could not pause match");
+  };
+
   const handleCompletePens = async () => {
     const home = Number(homePens);
     const away = Number(awayPens);
@@ -92,29 +127,44 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
 
   return (
     <>
-      <View className="gap-3 rounded-[24px] border border-brand-400/30 bg-brand-500/10 px-4 py-4">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-xs uppercase tracking-[2px] text-white/55"
-        >
-          Match clock
-        </Text>
-        <View className="gap-2">
+      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="timer-outline" size={20} color={colors.accent} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              Match clock
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-xs leading-5 text-white/50"
+              numberOfLines={2}
+            >
+              Move the game through live periods and final decisions.
+            </Text>
+          </View>
+        </View>
+
+        <View className="flex-row flex-wrap gap-2">
           {buttons.includes("startFirstHalf") ? (
-            <Button
-              variant="authPurple"
+            <MatchControlButton
+              icon="play"
               label="Start first half"
+              tone="primary"
               loading={actions.startFirstHalf.isPending}
               disabled={pending}
+              wide={buttons.length === 1}
               onPress={() =>
                 void run(() => actions.startFirstHalf.mutateAsync(), "Could not start first half")
               }
             />
           ) : null}
           {buttons.includes("halfTime") ? (
-            <Button
-              variant="accent"
+            <MatchControlButton
+              icon="pause-circle-outline"
               label="Half time"
+              tone="accent"
               loading={actions.startHalfTime.isPending}
               disabled={pending}
               onPress={() =>
@@ -123,11 +173,13 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
             />
           ) : null}
           {buttons.includes("startSecondHalf") ? (
-            <Button
-              variant="authPurple"
+            <MatchControlButton
+              icon="play"
               label="Start second half"
+              tone="primary"
               loading={actions.startSecondHalf.isPending}
               disabled={pending}
+              wide={buttons.length === 1}
               onPress={() =>
                 void run(
                   () => actions.startSecondHalf.mutateAsync(),
@@ -137,64 +189,63 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
             />
           ) : null}
           {buttons.includes("extraTime") ? (
-            <Button
-              variant="secondary"
+            <MatchControlButton
+              icon="add-circle-outline"
               label="Extra time"
+              tone="subtle"
               loading={actions.startExtraTime.isPending}
               disabled={pending}
-              onPress={() =>
-                void run(() => actions.startExtraTime.mutateAsync(), "Could not start extra time")
-              }
+              onPress={() => setClockAction("extraTime")}
             />
           ) : null}
           {buttons.includes("penalties") ? (
-            <Button
-              variant="secondary"
+            <MatchControlButton
+              icon="football-outline"
               label="Penalties"
+              tone="subtle"
               loading={enterPens.isPending}
               disabled={pending}
-              onPress={() =>
-                void run(async () => {
-                  await enterPens.mutateAsync();
-                  setPensOpen(true);
-                }, "Could not start penalties")
-              }
+              onPress={() => setClockAction("penalties")}
             />
           ) : null}
           {buttons.includes("completePens") ? (
-            <Button
-              variant="accent"
+            <MatchControlButton
+              icon="football"
               label="Enter penalty scores"
+              tone="accent"
               disabled={pending}
+              wide={buttons.length === 1}
               onPress={() => setPensOpen(true)}
             />
           ) : null}
           {buttons.includes("pause") ? (
-            <Button
-              variant="secondary"
+            <MatchControlButton
+              icon="pause"
               label="Pause"
+              tone="danger"
               loading={actions.pause.isPending}
               disabled={pending}
-              onPress={() =>
-                void run(() => actions.pause.mutateAsync(), "Could not pause match")
-              }
+              onPress={() => setClockAction("pause")}
             />
           ) : null}
           {buttons.includes("resume") ? (
-            <Button
-              variant="authPurple"
+            <MatchControlButton
+              icon="play"
               label="Resume"
+              tone="primary"
               loading={actions.resume.isPending}
               disabled={pending}
+              wide={buttons.length === 1}
               onPress={() =>
                 void run(() => actions.resume.mutateAsync(), "Could not resume match")
               }
             />
           ) : null}
           {buttons.includes("fullTime") ? (
-            <Button
-              variant="accent"
-              label="Full time"
+            <MatchControlButton
+              icon="flag"
+              label="End game"
+              tone="finish"
               disabled={pending}
               onPress={() => setFullTimeOpen(true)}
             />
@@ -205,25 +256,38 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
       <BottomSheetModal
         visible={fullTimeOpen}
         onClose={() => setFullTimeOpen(false)}
-        title="Full time"
-        subtitle="Confirm the final score before ending the match."
+        title="End game"
+        subtitle="Confirm the final score before closing the match."
+        variant="dark"
       >
         <View className="gap-4">
+          <ActionDetailCard
+            icon="flag"
+            title="What ending the game does"
+            details={[
+              "Saves the final home and away score.",
+              "Marks the match as finished on the server.",
+              "Clears any pause state and resolves the winner when the score is decisive.",
+              "If this match belongs to a knockout tie, the tie can advance after the result is saved.",
+            ]}
+          />
           <AuthTextField
             label="Home score"
+            labelClassName="text-white/60"
             value={homeScore}
             onChangeText={setHomeScore}
             keyboardType="number-pad"
           />
           <AuthTextField
             label="Away score"
+            labelClassName="text-white/60"
             value={awayScore}
             onChangeText={setAwayScore}
             keyboardType="number-pad"
           />
           <Button
             variant="authPurple"
-            label="Confirm full time"
+            label="End game"
             loading={actions.endFullTime.isPending}
             onPress={() => void handleFullTime()}
           />
@@ -231,20 +295,71 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
       </BottomSheetModal>
 
       <BottomSheetModal
+        visible={clockAction != null}
+        onClose={() => setClockAction(null)}
+        title={clockAction ? clockActionDetails[clockAction].title : "Match action"}
+        subtitle={clockAction ? clockActionDetails[clockAction].subtitle : undefined}
+        variant="dark"
+      >
+        {clockAction ? (
+          <View className="gap-4">
+            <ActionDetailCard
+              icon={clockActionDetails[clockAction].icon}
+              title={clockActionDetails[clockAction].detailTitle}
+              details={clockActionDetails[clockAction].details}
+            />
+            <Button
+              variant="authPurple"
+              label={clockActionDetails[clockAction].confirmLabel}
+              loading={
+                clockAction === "extraTime"
+                  ? actions.startExtraTime.isPending
+                  : clockAction === "penalties"
+                    ? enterPens.isPending
+                    : actions.pause.isPending
+              }
+              disabled={pending}
+              onPress={() => void handleClockAction()}
+              className={
+                clockAction === "pause"
+                  ? "border-red-300/20 bg-red-500/15"
+                  : undefined
+              }
+            />
+          </View>
+        ) : (
+          <View />
+        )}
+      </BottomSheetModal>
+
+      <BottomSheetModal
         visible={pensOpen}
         onClose={() => setPensOpen(false)}
         title="Penalty shootout"
         subtitle="Scores must differ to confirm a winner."
+        variant="dark"
       >
         <View className="gap-4">
+          <ActionDetailCard
+            icon="football"
+            title="What confirming penalties does"
+            details={[
+              "Saves the home and away penalty scores.",
+              "The scores must be different so the match has a winner.",
+              "Marks the match as finished after the winner is set.",
+              "If this match belongs to a knockout tie, the tie can advance after penalties are saved.",
+            ]}
+          />
           <AuthTextField
             label="Home penalties"
+            labelClassName="text-white/60"
             value={homePens}
             onChangeText={setHomePens}
             keyboardType="number-pad"
           />
           <AuthTextField
             label="Away penalties"
+            labelClassName="text-white/60"
             value={awayPens}
             onChangeText={setAwayPens}
             keyboardType="number-pad"
@@ -258,6 +373,167 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
         </View>
       </BottomSheetModal>
     </>
+  );
+}
+
+const clockActionDetails: Record<
+  ClockActionKey,
+  {
+    title: string;
+    subtitle: string;
+    detailTitle: string;
+    confirmLabel: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    details: string[];
+  }
+> = {
+  extraTime: {
+    title: "Start extra time",
+    subtitle: "Use this when regular time needs an extra period.",
+    detailTitle: "What extra time does",
+    confirmLabel: "Start extra time",
+    icon: "add-circle-outline",
+    details: [
+      "Moves the match from second half into extra time.",
+      "Starts the extra-time clock from now.",
+      "Clears any pause state and broadcasts the new match status.",
+    ],
+  },
+  penalties: {
+    title: "Start penalties",
+    subtitle: "Use this when the match must be decided by a shootout.",
+    detailTitle: "What penalties does",
+    confirmLabel: "Start penalties",
+    icon: "football-outline",
+    details: [
+      "Moves the match into penalty shootout.",
+      "Keeps the regular match score as it is.",
+      "After this, enter unequal penalty scores to pick the winner.",
+    ],
+  },
+  pause: {
+    title: "Pause match",
+    subtitle: "Use this when play stops and the live clock should freeze.",
+    detailTitle: "What pause does",
+    confirmLabel: "Pause match",
+    icon: "pause",
+    details: [
+      "Stores the current live period before pausing.",
+      "Freezes the clock at the current minute.",
+      "When you resume, the server shifts the period start time so the clock stays accurate.",
+    ],
+  },
+};
+
+function ActionDetailCard({
+  icon,
+  title,
+  details,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  details: string[];
+}) {
+  return (
+    <View className="gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-4">
+      <View className="flex-row items-center gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+          <Ionicons name={icon} size={19} color={colors.accent} />
+        </View>
+        <Text style={{ fontFamily: fonts.bodyBold }} className="min-w-0 flex-1 text-white">
+          {title}
+        </Text>
+      </View>
+      <View className="gap-2">
+        {details.map((detail) => (
+          <View key={detail} className="flex-row items-start gap-2">
+            <View className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-500" />
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="min-w-0 flex-1 text-sm leading-6 text-white/60"
+            >
+              {detail}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+type ControlButtonTone = "primary" | "accent" | "subtle" | "danger" | "finish";
+
+const controlButtonClass: Record<ControlButtonTone, string> = {
+  primary: "border-brand-400/35 bg-brand-500 active:bg-brand-600",
+  accent: "border-accent-400/70 bg-accent-500/20 active:bg-accent-500/25",
+  subtle: "border-white/15 bg-white/10 active:bg-white/15",
+  danger: "border-red-300/30 bg-red-500/15 active:bg-red-500/20",
+  finish: "border-accent-300 bg-accent-500 active:opacity-90",
+};
+
+const controlLabelClass: Record<ControlButtonTone, string> = {
+  primary: "text-white",
+  accent: "text-accent-100",
+  subtle: "text-white",
+  danger: "text-red-100",
+  finish: "text-neutral-950",
+};
+
+const controlIconColor: Record<ControlButtonTone, string> = {
+  primary: colors.white,
+  accent: colors.accent,
+  subtle: colors.white,
+  danger: colors.white,
+  finish: colors.darkLabel,
+};
+
+function MatchControlButton({
+  icon,
+  label,
+  tone,
+  loading,
+  disabled,
+  wide,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  tone: ControlButtonTone;
+  loading?: boolean;
+  disabled?: boolean;
+  wide?: boolean;
+  onPress: PressableProps["onPress"];
+}) {
+  const inactive = disabled || loading;
+  const indicatorColor = tone === "finish" ? colors.darkLabel : colors.white;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      disabled={inactive}
+      style={{ flexGrow: 1, minWidth: wide ? "100%" : 132 }}
+      className={`h-11 flex-row items-center justify-center gap-2 rounded-full border px-3 ${
+        controlButtonClass[tone]
+      } ${inactive ? "opacity-50" : ""}`}
+    >
+      {loading ? (
+        <ActivityIndicator color={indicatorColor} />
+      ) : (
+        <>
+          <Ionicons name={icon} size={16} color={controlIconColor[tone]} />
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className={`min-w-0 text-center text-xs ${controlLabelClass[tone]}`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }
 

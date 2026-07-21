@@ -192,7 +192,9 @@ function EventBubble({
   align: "start" | "end" | "center";
   onPlayerPress?: (playerId: number) => void;
 }) {
-  const typeName = stat.type?.displayName ?? stat.type?.name ?? "Event";
+  const typeName =
+    (stat.type?.displayName ?? stat.type?.name ?? "Event") +
+    (isGoalsStat(stat) && stat.isPenalty ? " (pen.)" : "");
   const unaccredited =
     stat.isUnaccredited || (isGoalsStat(stat) && !stat.player);
   const playerName = unaccredited

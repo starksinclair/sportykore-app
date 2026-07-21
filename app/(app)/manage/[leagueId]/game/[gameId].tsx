@@ -91,6 +91,7 @@ export default function ManageMatchCenterPage() {
   const [scorerId, setScorerId] = useState<number | null>(null);
   const [assistId, setAssistId] = useState<number | null>(null);
   const [isOwnGoal, setIsOwnGoal] = useState(false);
+  const [isPenalty, setIsPenalty] = useState(false);
   const [minute, setMinute] = useState("1");
   const [ssePatch, setSsePatch] = useState<Partial<ApiGameDetail>>({});
   const [statMinute, setStatMinute] = useState("0");
@@ -112,6 +113,7 @@ export default function ManageMatchCenterPage() {
     setScorerId(null);
     setAssistId(null);
     setIsOwnGoal(false);
+    setIsPenalty(false);
   }, []);
 
   const onGameEvent = useCallback(
@@ -294,6 +296,7 @@ export default function ManageMatchCenterPage() {
           playerId: scorerId,
           assistPlayerId: assistId,
           isOwnGoal,
+          isPenalty,
           minute: parsedMinute,
         },
       });
@@ -311,6 +314,7 @@ export default function ManageMatchCenterPage() {
     setScorerId(null);
     setAssistId(null);
     setIsOwnGoal(false);
+    setIsPenalty(false);
   };
 
   const recordInlineStat = async (
@@ -445,6 +449,7 @@ export default function ManageMatchCenterPage() {
               scorerId={scorerId}
               assistId={assistId}
               isOwnGoal={isOwnGoal}
+              isPenalty={isPenalty}
               minute={minute}
               scorePending={scoreMutation.isPending}
               accreditPending={accreditMutation.isPending}
@@ -460,6 +465,7 @@ export default function ManageMatchCenterPage() {
                 setIsOwnGoal((prev) => !prev);
                 setAssistId(null);
               }}
+              onTogglePenalty={() => setIsPenalty((prev) => !prev)}
               onMinuteChange={setMinute}
               onLogGoal={() => void handleLogGoal()}
               onSkip={resetAccredit}

@@ -27,6 +27,7 @@ import {
   useStageBracket,
   type TieFormatSelection,
 } from "@/knockout";
+import { colors } from "@/constants";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -63,28 +64,61 @@ export function ManageKnockoutTab({
 
   return (
     <View className="gap-6 pb-8">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          {hasKnockoutStage
-            ? "Seed the bracket and advance rounds for this knockout competition."
-            : "Add a cup stage, then seed teams in draw order to build the bracket."}
-        </Text>
-        <Button
-          variant="authPurple"
-          label="Add cup"
-          disabled={hasKnockoutStage}
-          onPress={() => {
-            if (hasKnockoutStage) {
-              showInfoToast(
-                "Stage already exists",
-                "Knockout competitions can only have one stage.",
-              );
-              return;
-            }
-            setCreateOpen(true);
-          }}
-          className="h-11 px-4"
-        />
+      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="trophy-outline" size={22} color={colors.accent} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              Knockout cup
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="text-xs leading-5 text-white/50"
+              numberOfLines={2}
+            >
+              {hasKnockoutStage
+                ? "Seed the bracket and advance rounds for this cup."
+                : "Add a cup stage, then seed teams in draw order."}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              if (hasKnockoutStage) {
+                showInfoToast(
+                  "Stage already exists",
+                  "Knockout competitions can only have one stage.",
+                );
+                return;
+              }
+              setCreateOpen(true);
+            }}
+            disabled={hasKnockoutStage}
+            accessibilityRole="button"
+            accessibilityLabel="Add cup"
+            className={`h-10 flex-row items-center gap-1.5 rounded-full px-3 ${
+              hasKnockoutStage
+                ? "bg-white/10 opacity-50"
+                : "bg-accent-500 active:opacity-90"
+            }`}
+          >
+            <Ionicons
+              name="add"
+              size={16}
+              color={hasKnockoutStage ? colors.white : colors.darkLabel}
+            />
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className={`text-xs ${
+                hasKnockoutStage ? "text-white" : "text-neutral-950"
+              }`}
+              numberOfLines={1}
+            >
+              Add
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {knockouts.length === 0 ? (
@@ -211,32 +245,32 @@ function KnockoutStagePanel({
     <View className="gap-4 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
       <View className="flex-row flex-wrap gap-2">
         {needsSeed ? (
-          <Button
-            variant="accent"
+          <KnockoutActionButton
+            icon="git-branch-outline"
             label="Seed bracket"
+            tone="gold"
             onPress={onOpenSeed}
-            className="h-11 px-4"
             disabled={teams.length < 2}
           />
         ) : null}
         {readyRound && readyRound !== "final" ? (
-          <Button
-            variant="authPurple"
+          <KnockoutActionButton
+            icon="play-forward-outline"
             label={
               nextRoundMutation.isPending ? "Generating…" : "Generate next round"
             }
+            tone="gold"
             onPress={handleNextRound}
             loading={nextRoundMutation.isPending}
-            className="h-11 px-4"
           />
         ) : null}
         {readyRound === "final" ? (
-          <Button
-            variant="authPurple"
+          <KnockoutActionButton
+            icon="checkmark-done-outline"
             label="Mark stage complete"
+            tone="gold"
             onPress={handleNextRound}
             loading={nextRoundMutation.isPending}
-            className="h-11 px-4"
           />
         ) : null}
       </View>
@@ -266,6 +300,65 @@ function KnockoutStagePanel({
         />
       )}
     </View>
+  );
+}
+
+function KnockoutActionButton({
+  icon,
+  label,
+  tone,
+  loading,
+  disabled,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  tone: "gold" | "subtle";
+  loading?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  const inactive = disabled || loading;
+  const gold = tone === "gold";
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={inactive}
+      accessibilityRole="button"
+      style={{ flexGrow: 1, minWidth: 148 }}
+      className={`h-10 flex-row items-center justify-center gap-1.5 rounded-full border px-3 ${
+        gold
+          ? "border-accent-400 bg-accent-500 active:opacity-90"
+          : "border-white/15 bg-white/10 active:bg-white/15"
+      } ${inactive ? "opacity-50" : ""}`}
+    >
+      {loading ? (
+        <ActivityIndicator
+          color={gold ? colors.darkLabel : colors.white}
+          size="small"
+        />
+      ) : (
+        <>
+          <Ionicons
+            name={icon}
+            size={15}
+            color={gold ? colors.darkLabel : colors.white}
+          />
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className={`min-w-0 text-center text-xs ${
+              gold ? "text-neutral-950" : "text-white"
+            }`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }
 
