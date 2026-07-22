@@ -514,44 +514,60 @@ function SeedKnockoutSheet({
           ? "Top of the list is seed 1. Teams pair in list order - 1 v 2, 3 v 4 - and byes go to the top seeds."
           : "Check the matchups before you lock them in."
       }
+      variant="dark"
       scrollEnabled
     >
       {step === "order" ? (
-        <View className="gap-3">
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-600">
-            {order.length} teams
-            {byeCount > 0
-              ? byeCount === 1
-                ? " · top seed skips round one"
-                : ` · top ${byeCount} seeds skip round one`
-              : ""}
-          </Text>
-          {order.map((team, index) => (
-            <View
-              key={team.id}
-              className="flex-row items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2"
-            >
+        <View className="gap-4">
+          <SeedSheetBlock title="Seed order">
+            <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
+              <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="w-8 text-sm text-brand-700"
+                style={{ fontFamily: fonts.body }}
+                className="min-w-0 flex-1 text-xs leading-5 text-white/60"
               >
-                {index + 1}
+                {order.length} teams
+                {byeCount > 0
+                  ? byeCount === 1
+                    ? ". Top seed skips round one."
+                    : `. Top ${byeCount} seeds skip round one.`
+                  : ". No byes needed."}
               </Text>
-              <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="flex-1 text-sm text-slate-900"
-                numberOfLines={1}
-              >
-                {team.name}
-              </Text>
-              <Pressable onPress={() => move(index, -1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-up" size={18} color="#64748b" />
-              </Pressable>
-              <Pressable onPress={() => move(index, 1)} hitSlop={8} className="p-1">
-                <Ionicons name="chevron-down" size={18} color="#64748b" />
-              </Pressable>
             </View>
-          ))}
+            {order.map((team, index) => (
+              <View
+                key={team.id}
+                className="flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-3 py-3"
+              >
+                <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+                  <Text
+                    style={{ fontFamily: fonts.bodyBold }}
+                    className="text-xs text-accent-100"
+                  >
+                    {index + 1}
+                  </Text>
+                </View>
+                <Text
+                  style={{ fontFamily: fonts.bodySemibold }}
+                  className="min-w-0 flex-1 text-sm text-white"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {team.name}
+                </Text>
+                <SeedMoveButton
+                  icon="chevron-up"
+                  disabled={index === 0}
+                  onPress={() => move(index, -1)}
+                />
+                <SeedMoveButton
+                  icon="chevron-down"
+                  disabled={index === order.length - 1}
+                  onPress={() => move(index, 1)}
+                />
+              </View>
+            ))}
+          </SeedSheetBlock>
           <Button
             variant="authPurple"
             label="Preview bracket"
@@ -560,26 +576,28 @@ function SeedKnockoutSheet({
         </View>
       ) : (
         <View className="gap-4">
-          <View style={{ marginHorizontal: -20 }}>
-            <BracketView
-              ties={previewTies}
-              tone="dark"
-              hasThirdPlace={hasThirdPlace}
-            />
-          </View>
-          {byeExplanation(order.length) ? (
+          <SeedSheetBlock title="Bracket preview">
+            <View style={{ marginHorizontal: -16 }}>
+              <BracketView
+                ties={previewTies}
+                tone="dark"
+                hasThirdPlace={hasThirdPlace}
+              />
+            </View>
+            {byeExplanation(order.length) ? (
+              <Text
+                style={{ fontFamily: fonts.body }}
+                className="text-sm leading-6 text-white/55"
+              >
+                {byeExplanation(order.length)}
+              </Text>
+            ) : null}
+          </SeedSheetBlock>
+          <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/25 bg-accent-500/10 px-3 py-3">
+            <Ionicons name="warning" size={18} color={colors.accent} />
             <Text
               style={{ fontFamily: fonts.body }}
-              className="text-sm leading-6 text-slate-600"
-            >
-              {byeExplanation(order.length)}
-            </Text>
-          ) : null}
-          <View className="flex-row items-start gap-2 rounded-xl border border-accent-200 bg-accent-50 px-3 py-3">
-            <Ionicons name="warning" size={18} color="#B88312" />
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="flex-1 text-sm leading-5 text-slate-700"
+              className="min-w-0 flex-1 text-sm leading-5 text-white/65"
             >
               Generating the bracket locks the seeding. You can&apos;t reorder
               or re-seed teams once ties and fixtures are created.
@@ -603,5 +621,54 @@ function SeedKnockoutSheet({
         </View>
       )}
     </BottomSheetModal>
+  );
+}
+
+function SeedSheetBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-xs uppercase tracking-wide text-white/50"
+      >
+        {title}
+      </Text>
+      <View className="gap-3">{children}</View>
+    </View>
+  );
+}
+
+function SeedMoveButton({
+  icon,
+  disabled,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="button"
+      className={`h-9 w-9 items-center justify-center rounded-xl border ${
+        disabled
+          ? "border-white/5 bg-white/5 opacity-35"
+          : "border-white/15 bg-white/10 active:bg-white/15"
+      }`}
+    >
+      <Ionicons
+        name={icon}
+        size={17}
+        color={disabled ? "rgba(255,255,255,0.35)" : colors.white}
+      />
+    </Pressable>
   );
 }
