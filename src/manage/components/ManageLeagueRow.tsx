@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
@@ -18,43 +18,42 @@ export function ManageLeagueRow({ league, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-4 rounded-[20px] border border-neutral-200 bg-white px-4 py-4 active:bg-neutral-50"
-      style={styles.card}
+      className="flex-row items-center gap-4 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4 active:bg-white/10"
     >
       <EntityLogo
         logoUrl={league.logoUrl}
         variant="league"
         size="md"
-        tone="brand"
+        tone="dark"
         accessibilityLabel={`${league.name} logo`}
       />
       <View className="min-w-0 flex-1 gap-1">
         <Text
           style={{ fontFamily: fonts.bodyBold }}
-          className="text-[15px] text-neutral-950"
+          className="text-[15px] text-white"
           numberOfLines={1}
         >
           {league.name}
         </Text>
         <Text
           style={{ fontFamily: fonts.body }}
-          className="text-xs text-neutral-500"
+          className="text-xs text-white/50"
           numberOfLines={1}
         >
           {seasonLabel}
         </Text>
+        <View className="self-start rounded-full bg-accent-500/15 px-2.5 py-1">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-[10px] uppercase tracking-wide text-accent-200"
+          >
+            League owner
+          </Text>
+        </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+      <View className="h-9 w-9 items-center justify-center rounded-full bg-white/8">
+        <Ionicons name="chevron-forward" size={18} color={colors.white} />
+      </View>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    shadowColor: colors.scoreboardBlack,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-});

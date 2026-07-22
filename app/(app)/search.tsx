@@ -84,20 +84,20 @@ export default function SearchScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="dark" />
+    <View className="flex-1 bg-neutral-950">
+      <StatusBar style="light" />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
           <Pressable
             onPress={() => router.back()}
             accessibilityLabel="Close search"
-            className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+            className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 active:bg-white/15"
           >
-            <Ionicons name="chevron-back" size={20} color="#111827" />
+            <Ionicons name="chevron-back" size={20} color={colors.white} />
           </Pressable>
 
-          <View className="flex-1 flex-row items-center gap-2 rounded-2xl bg-neutral-100 px-4 py-3">
-            <Ionicons name="search-outline" size={18} color="#6B7280" />
+          <View className="flex-1 flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-white/10 px-4 py-3">
+            <Ionicons name="search-outline" size={18} color={colors.accent} />
             <TextInput
               autoFocus
               value={query}
@@ -106,7 +106,7 @@ export default function SearchScreen() {
               placeholder="Players, countries, leagues, teams"
               placeholderTextColor="#9CA3AF"
               returnKeyType="search"
-              className="flex-1 p-0 text-sm text-neutral-900"
+              className="flex-1 p-0 text-sm text-white"
               style={{ fontFamily: fonts.body }}
             />
             {query.length > 0 ? (
@@ -115,7 +115,7 @@ export default function SearchScreen() {
                 accessibilityLabel="Clear search"
                 hitSlop={8}
               >
-                <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.45)" />
               </Pressable>
             ) : null}
           </View>
@@ -140,7 +140,7 @@ export default function SearchScreen() {
             />
           ) : searchQuery.isLoading && !searchQuery.data ? (
             <View className="items-center pt-12">
-              <ActivityIndicator color={colors.brand} />
+              <ActivityIndicator color={colors.accent} />
             </View>
           ) : (searchQuery.data?.results ?? []).length === 0 ? (
             <EmptyResults query={trimmed} />
@@ -185,24 +185,33 @@ function SearchErrorState({
   message?: string;
 }) {
   return (
-    <View className="rounded-[20px] border border-red-200 bg-red-50 px-5 py-8">
-      <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-base text-neutral-950"
-      >
-        Search unavailable
-      </Text>
-      <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-2 text-sm leading-6 text-slate-600"
-      >
-        {message || "Check your connection and try again."}
-      </Text>
+    <View className="gap-3 rounded-[24px] border border-red-300/25 bg-red-500/10 px-5 py-6">
+      <View className="h-12 w-12 items-center justify-center rounded-[20px] bg-red-500/15">
+        <Ionicons name="warning-outline" size={24} color={colors.white} />
+      </View>
+      <View className="gap-1">
+        <Text
+          style={{ fontFamily: fonts.bodyBold }}
+          className="text-base text-white"
+        >
+          Search unavailable
+        </Text>
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-sm leading-6 text-white/60"
+        >
+          {message || "Check your connection and try again."}
+        </Text>
+      </View>
       <Pressable
         onPress={onRetry}
-        className="mt-4 self-start rounded-xl bg-[#4A148C] px-4 py-2.5 active:opacity-80"
+        className="mt-1 h-10 flex-row items-center gap-1.5 self-start rounded-full bg-accent-500 px-4 active:opacity-90"
       >
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-sm text-white">
+        <Ionicons name="refresh" size={15} color={colors.darkLabel} />
+        <Text
+          style={{ fontFamily: fonts.bodyBold }}
+          className="text-sm text-neutral-950"
+        >
           Retry
         </Text>
       </Pressable>
@@ -221,19 +230,24 @@ function RecentsBlock({
 }) {
   if (recents.length === 0) {
     return (
-      <View className="rounded-[20px] border border-dashed border-neutral-200 bg-neutral-50 px-5 py-8">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-base text-neutral-950"
-        >
-          Nothing here yet
-        </Text>
-        <Text
-          style={{ fontFamily: fonts.body }}
-          className="pt-2 text-sm leading-6 text-slate-600"
-        >
-          Search by player, country, league, or team. Recent searches will show up here.
-        </Text>
+      <View className="items-center gap-3 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
+        <View className="h-14 w-14 items-center justify-center rounded-[22px] bg-accent-500/15">
+          <Ionicons name="search-outline" size={26} color={colors.accent} />
+        </View>
+        <View className="gap-1">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-center text-base text-white"
+          >
+            Nothing here yet
+          </Text>
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="text-center text-sm leading-6 text-white/55"
+          >
+            Search by player, country, league, or team. Recent searches will show up here.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -242,24 +256,28 @@ function RecentsBlock({
     <View className="gap-3">
       <Text
         style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-[2px] text-slate-500"
+        className="text-xs uppercase tracking-wide text-white/50"
       >
         Recent
       </Text>
-      <View className="gap-1">
+      <View className="gap-2">
         {recents.map((term) => (
           <View
             key={term}
-            className="flex-row items-center gap-2 rounded-[14px] bg-neutral-50 px-3 py-2"
+            className="flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-white/5 px-3 py-2.5"
           >
             <Pressable
               onPress={() => onPick(term)}
               className="flex-1 flex-row items-center gap-3 py-1"
             >
-              <Ionicons name="time-outline" size={18} color="#6B7280" />
+              <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+                <Ionicons name="time-outline" size={18} color={colors.accent} />
+              </View>
               <Text
                 style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-neutral-900"
+                className="min-w-0 flex-1 text-sm text-white"
+                numberOfLines={1}
+                ellipsizeMode="tail"
               >
                 {term}
               </Text>
@@ -268,9 +286,9 @@ function RecentsBlock({
               onPress={() => onRemove(term)}
               accessibilityLabel={`Remove ${term} from recents`}
               hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full active:bg-neutral-200"
+              className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
             >
-              <Ionicons name="close" size={16} color="#6B7280" />
+              <Ionicons name="close" size={16} color="rgba(255,255,255,0.55)" />
             </Pressable>
           </View>
         ))}
@@ -281,19 +299,24 @@ function RecentsBlock({
 
 function EmptyResults({ query }: { query: string }) {
   return (
-    <View className="rounded-[20px] border border-dashed border-neutral-200 bg-neutral-50 px-5 py-8">
-      <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-base text-neutral-950"
-      >
-        No matches for &ldquo;{query}&rdquo;
-      </Text>
-      <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-2 text-sm leading-6 text-slate-600"
-      >
-        Try a different spelling, or search by country or league instead.
-      </Text>
+    <View className="items-center gap-3 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
+      <View className="h-14 w-14 items-center justify-center rounded-[22px] bg-white/10">
+        <Ionicons name="search-outline" size={26} color={colors.accent} />
+      </View>
+      <View className="gap-1">
+        <Text
+          style={{ fontFamily: fonts.bodyBold }}
+          className="text-center text-base text-white"
+        >
+          No matches for &ldquo;{query}&rdquo;
+        </Text>
+        <Text
+          style={{ fontFamily: fonts.body }}
+          className="text-center text-sm leading-6 text-white/55"
+        >
+          Try a different spelling, or search by country or league instead.
+        </Text>
+      </View>
     </View>
   );
 }
@@ -306,7 +329,7 @@ function ResultsBlock({
   onPick: (result: SearchResult) => void;
 }) {
   return (
-    <View className="gap-6">
+    <View className="gap-5">
       {ENTITY_ORDER.map((type) => {
         const items = grouped[type];
         if (items.length === 0) return null;
@@ -314,26 +337,28 @@ function ResultsBlock({
         return (
           <View key={type} className="gap-3">
             <View className="flex-row items-center gap-2">
-              <Ionicons name={ENTITY_ICONS[type]} size={14} color={colors.brand} />
+              <View className="h-7 w-7 items-center justify-center rounded-xl bg-accent-500/15">
+                <Ionicons name={ENTITY_ICONS[type]} size={14} color={colors.accent} />
+              </View>
               <Text
                 style={{ fontFamily: fonts.bodyBold }}
-                className="text-[11px] uppercase tracking-[2px] text-[#4A148C]"
+                className="text-xs uppercase tracking-wide text-white/50"
               >
                 {ENTITY_LABELS[type]}
               </Text>
             </View>
 
-            <View className="overflow-hidden rounded-[16px] border border-neutral-200 bg-white">
+            <View className="overflow-hidden rounded-[22px] border border-white/10 bg-white/5">
               {items.map((result, index) => (
                 <Pressable
                   key={index}
                   onPress={() => onPick(result)}
                   className={[
-                    "flex-row items-center gap-3 px-4 py-3 active:bg-neutral-50",
-                    index !== items.length - 1 ? "border-b border-neutral-100" : "",
+                    "flex-row items-center gap-3 px-4 py-3.5 active:bg-white/10",
+                    index !== items.length - 1 ? "border-b border-white/10" : "",
                   ].join(" ")}
                 >
-                  <View className="h-9 w-9 items-center justify-center rounded-full bg-[#F3E8FF]">
+                  <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
                     {result.type === "country" && result.countryCode ? (
                       <CountryFlag code={result.countryCode} width={20} />
                     ) : result.type === "league" || result.type === "team" ? (
@@ -344,13 +369,15 @@ function ResultsBlock({
                         tone="accent"
                       />
                     ) : (
-                      <Ionicons name={ENTITY_ICONS[type]} size={16} color={colors.brand} />
+                      <Ionicons name={ENTITY_ICONS[type]} size={18} color={colors.accent} />
                     )}
                   </View>
-                  <View className="flex-1 gap-0.5">
+                  <View className="min-w-0 flex-1 gap-0.5">
                     <Text
                       style={{ fontFamily: fonts.bodyBold }}
-                      className="text-sm text-neutral-950"
+                      className="text-sm text-white"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
                     >
                       {result.label}
                     </Text>
@@ -361,14 +388,20 @@ function ResultsBlock({
                         ) : null}
                         <Text
                           style={{ fontFamily: fonts.body }}
-                          className="text-xs text-slate-500"
+                          className="min-w-0 flex-1 text-xs text-white/50"
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
                         >
                           {result.sublabel}
                         </Text>
                       </View>
                     ) : null}
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color="rgba(255,255,255,0.45)"
+                  />
                 </Pressable>
               ))}
             </View>

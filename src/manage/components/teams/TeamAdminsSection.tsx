@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { colors } from "@/constants";
 import { useSearchLeagueUsers } from "@/invite/hooks";
 import { fonts } from "@/theme/fonts";
 
@@ -17,11 +18,14 @@ import {
   useLeagueTeams,
   useRemoveTeamAdmin,
 } from "../../hooks";
+import type { TeamAdmin } from "../../types";
 
 type Props = {
   leagueId: number;
   teamId: number;
 };
+
+const EMPTY_ADMINS: TeamAdmin[] = [];
 
 export function TeamAdminsSection({ leagueId, teamId }: Props) {
   const teamsQuery = useLeagueTeams(leagueId);
@@ -34,7 +38,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
     [teamsQuery.data, teamId],
   );
 
-  const admins = team?.admins ?? [];
+  const admins = team?.admins ?? EMPTY_ADMINS;
   const assignedUserIds = useMemo(
     () => new Set(admins.map((admin) => admin.userId)),
     [admins],
@@ -86,24 +90,31 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
   const isBusy = assignMutation.isPending || removeMutation.isPending;
 
   return (
-    <View className="gap-4 border-t border-white/10 pt-5">
-      <View className="gap-1">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
-          Team admins
-        </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
-          Admins can manage lineups and match day for this team.
-        </Text>
+    <View className="gap-4 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+      <View className="flex-row items-start gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+          <Ionicons name="people-outline" size={20} color={colors.accent} />
+        </View>
+        <View className="flex-1 gap-0.5">
+          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+            Team admins
+          </Text>
+          <Text style={{ fontFamily: fonts.body }} className="text-sm leading-5 text-white/55">
+            Admins can manage lineups and match day for this team.
+          </Text>
+        </View>
       </View>
 
       {teamsQuery.isLoading && !team ? (
-        <View className="items-center py-4">
-          <ActivityIndicator color="#E6A817" />
+        <View className="items-center rounded-2xl border border-white/10 bg-white/5 py-4">
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : admins.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-          No team admins assigned yet.
-        </Text>
+        <View className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+            No team admins assigned yet.
+          </Text>
+        </View>
       ) : (
         <View className="gap-2">
           {admins.map((admin) => {
@@ -111,8 +122,11 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
             return (
               <View
                 key={admin.id}
-                className="flex-row items-center gap-3 rounded-xl bg-white/6 px-3 py-3"
+                className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
               >
+                <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
+                  <Ionicons name="person-outline" size={16} color={colors.white} />
+                </View>
                 <View className="flex-1">
                   <Text
                     style={{ fontFamily: fonts.bodySemibold }}
@@ -135,9 +149,9 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                   onPress={() => handleRemove(admin.userId, label)}
                   disabled={isBusy}
                   accessibilityLabel={`Remove ${label}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                  className="h-9 w-9 items-center justify-center rounded-full bg-white/10 active:bg-white/15"
                 >
-                  <Ionicons name="trash-outline" size={18} color="#fca5a5" />
+                  <Ionicons name="trash-outline" size={17} color={colors.white} />
                 </Pressable>
               </View>
             );
@@ -145,16 +159,20 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
         </View>
       )}
 
-      <View className="gap-3">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-[11px] uppercase tracking-wider text-white/45"
-        >
-          Assign team admin
-        </Text>
+      <View className="gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="person-add-outline" size={16} color={colors.accent} />
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-xs uppercase tracking-wide text-white/50"
+          >
+            Assign team admin
+          </Text>
+        </View>
 
         <AuthTextField
           label="Search users"
+          labelClassName="text-white/60"
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder="Email or name (min 2 characters)"
@@ -165,14 +183,16 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
 
         {searchEnabled && searchQueryResult.isLoading ? (
           <View className="items-center py-3">
-            <ActivityIndicator color="#E6A817" />
+            <ActivityIndicator color={colors.accent} />
           </View>
         ) : null}
 
         {searchEnabled && !searchQueryResult.isLoading && searchResults.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-            No users found. Try another search.
-          </Text>
+          <View className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+              No users found. Try another search.
+            </Text>
+          </View>
         ) : null}
 
         {searchResults.map((user) => {
@@ -182,31 +202,36 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
               key={user.id}
               onPress={() => void handleAssign(user.id)}
               disabled={isBusy}
-              className="flex-row items-center justify-between rounded-xl bg-white/8 px-4 py-3 active:bg-white/12"
+              className="flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-3 py-3 active:bg-white/10"
             >
-              <View className="flex-1 pr-3">
-                <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-sm text-white"
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-                {user?.fullName ? (
+              <View className="flex-1 flex-row items-center gap-3 pr-3">
+                <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
+                  <Ionicons name="person-outline" size={16} color={colors.white} />
+                </View>
+                <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.body }}
-                    className="text-xs text-white/45"
+                    style={{ fontFamily: fonts.bodySemibold }}
+                    className="text-sm text-white"
                     numberOfLines={1}
                   >
-                    {user?.email}
+                    {label}
                   </Text>
-                ) : null}
+                  {user?.fullName ? (
+                    <Text
+                      style={{ fontFamily: fonts.body }}
+                      className="text-xs text-white/45"
+                      numberOfLines={1}
+                    >
+                      {user?.email}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
-              <View className="flex-row items-center gap-1">
-                <Text style={{ fontFamily: fonts.bodyBold }} className="text-xs text-accent-300">
+              <View className="flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 py-1.5">
+                <Text style={{ fontFamily: fonts.bodyBold }} className="text-xs text-neutral-950">
                   Assign
                 </Text>
-                <Ionicons name="add-circle" size={20} color="#E6A817" />
+                <Ionicons name="add" size={15} color={colors.darkLabel} />
               </View>
             </Pressable>
           );

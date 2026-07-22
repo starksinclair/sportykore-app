@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   Share,
@@ -14,14 +15,13 @@ import type { ApiTeam } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { Button } from "@/components/ui/Button";
-import { scoreboardPattern } from "@/constants";
+import { colors, scoreboardPattern } from "@/constants";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
 import { useGenerateInvite } from "@/invite/hooks";
-import { buildInviteUrl } from "@/invite/invite-utils";
+import { buildInviteUrl, parseInviteToken } from "@/invite/invite-utils";
 
 type Props = {
   visible: boolean;
@@ -53,6 +53,7 @@ export function InviteLinkSheet({
   }, [visible, initialTeamId]);
 
   const activeTeam = teams.find((team) => team.id === teamId) ?? null;
+  const inviteCode = inviteUrl ? parseInviteToken(inviteUrl) : null;
 
   const handleClose = () => {
     setInviteUrl(null);
@@ -78,11 +79,11 @@ export function InviteLinkSheet({
     }
   };
 
-  const handleCopy = async () => {
-    if (!inviteUrl) return;
-    const result = await copyToClipboard(inviteUrl);
+  const handleCopyCode = async () => {
+    if (!inviteCode) return;
+    const result = await copyToClipboard(inviteCode);
     if (result === "clipboard") {
-      showInfoToast("Copied", "Invite link copied to clipboard.");
+      showInfoToast("Copied", "Invite code copied to clipboard.");
     }
   };
 
@@ -115,9 +116,9 @@ export function InviteLinkSheet({
           <>
             <InviteContextCard leagueName={leagueName} teamName={activeTeam?.name} />
             <TeamPicker teams={teams} selectedId={teamId} onSelect={setTeamId} />
-            <Button
-              variant="authPurple"
-              label="Generate invite link"
+            <InviteActionButton
+              icon="ticket-outline"
+              label="Generate invite code"
               onPress={() => void handleGenerate()}
               loading={generateInvite.isPending}
               disabled={teamId == null || generateInvite.isPending}
@@ -139,39 +140,113 @@ export function InviteLinkSheet({
               </View>
             </View>
 
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="w-full rounded-xl border border-white/10 bg-white/6 px-3 py-3 text-center text-xs leading-5 text-white/75"
-              selectable
-            >
-              {inviteUrl}
-            </Text>
+            <View className="gap-2 rounded-2xl border border-white/10 bg-white/6 px-4 py-4">
+              <View className="flex-row items-center justify-center gap-2">
+                <Ionicons name="key-outline" size={16} color={colors.accent} />
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-xs uppercase tracking-wide text-white/50"
+                >
+                  Invite code
+                </Text>
+              </View>
+              <Text
+                style={{ fontFamily: fonts.bodyBold }}
+                className="text-center text-base text-white"
+                selectable
+              >
+                {inviteCode}
+              </Text>
+            </View>
 
             <View className="w-full flex-row gap-3">
-              <Button
-                variant="secondary"
-                label="Copy link"
-                onPress={() => void handleCopy()}
+              <InviteActionButton
+                icon="copy-outline"
+                label="Copy code"
+                onPress={() => void handleCopyCode()}
                 className="flex-1"
               />
-              <Button
-                variant="signInYellow"
-                label="Share"
+              <InviteActionButton
+                icon="share-social-outline"
+                label="Share invite"
                 onPress={() => void handleShare()}
                 className="flex-1"
+                variant="secondary"
               />
             </View>
 
-            <Button
-              variant="secondary"
-              label="Generate new link"
+            <InviteActionButton
+              icon="refresh-outline"
+              label="Generate new code"
               onPress={() => setInviteUrl(null)}
               className="w-full border-white/10 bg-white/6"
+              variant="secondary"
             />
           </View>
         )}
       </View>
     </BottomSheetModal>
+  );
+}
+
+function InviteActionButton({
+  icon,
+  label,
+  onPress,
+  disabled = false,
+  loading = false,
+  className,
+  variant = "primary",
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  className?: string;
+  variant?: "primary" | "secondary";
+}) {
+  const isDisabled = disabled || loading;
+  const isPrimary = variant === "primary";
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={isDisabled}
+      accessibilityRole="button"
+      className={[
+        "h-12 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90",
+        isPrimary
+          ? "border-accent-400 bg-accent-500"
+          : "border-white/10 bg-white/8",
+        isDisabled ? "opacity-50" : "",
+        className ?? "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {loading ? (
+        <ActivityIndicator
+          color={isPrimary ? colors.darkLabel : colors.white}
+          size="small"
+        />
+      ) : (
+        <Ionicons
+          name={icon}
+          size={17}
+          color={isPrimary ? colors.darkLabel : colors.white}
+        />
+      )}
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className={isPrimary ? "text-sm text-neutral-950" : "text-sm text-white"}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.82}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 

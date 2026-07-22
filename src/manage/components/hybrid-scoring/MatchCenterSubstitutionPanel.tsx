@@ -4,14 +4,14 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
 import type { ApiGameDetail, GameStatus } from "@/api/entities";
-import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { calculateCurrentMinute } from "@/lib/game-time";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
@@ -41,11 +41,6 @@ type DraftRow = {
   playerOffId: number | null;
   playerOnId: number | null;
   minute: string;
-};
-
-type PickerTarget = {
-  rowKey: string;
-  role: "off" | "on";
 };
 
 type Props = {
@@ -93,12 +88,10 @@ export function MatchCenterSubstitutionPanel({
   const [drafts, setDrafts] = useState<DraftRow[]>(() => [
     newDraftRow(defaultMinute),
   ]);
-  const [picker, setPicker] = useState<PickerTarget | null>(null);
 
   useEffect(() => {
     setDrafts([newDraftRow(defaultMinute)]);
-    setPicker(null);
-  }, [teamId, game.id]);
+  }, [defaultMinute, teamId, game.id]);
 
   const teamGroup = useMemo(
     () => lineupsQuery.data?.find((g) => g.team.id === teamId),
@@ -130,18 +123,6 @@ export function MatchCenterSubstitutionPanel({
     return ids;
   }, [drafts]);
 
-  const pickerOptions = useMemo(() => {
-    if (!picker) return [];
-    const pool = picker.role === "off" ? starters : bench;
-    const taken = picker.role === "off" ? takenOffIds : takenOnIds;
-    const current = drafts.find((d) => d.key === picker.rowKey);
-    const currentId =
-      picker.role === "off" ? current?.playerOffId : current?.playerOnId;
-    return pool.filter(
-      (entry) => entry.playerId === currentId || !taken.has(entry.playerId),
-    );
-  }, [picker, starters, bench, takenOffIds, takenOnIds, drafts]);
-
   const canDraft = enabled && isLiveSubStatus(game.status);
   const isBusy = recordMutation.isPending || deleteMutation.isPending;
 
@@ -157,6 +138,18 @@ export function MatchCenterSubstitutionPanel({
       return;
     }
     setDrafts((prev) => [...prev, newDraftRow(defaultMinute)]);
+  };
+
+  const optionsForDraft = (
+    row: DraftRow,
+    role: "off" | "on",
+  ): GameLineup[] => {
+    const pool = role === "off" ? starters : bench;
+    const taken = role === "off" ? takenOffIds : takenOnIds;
+    const currentId = role === "off" ? row.playerOffId : row.playerOnId;
+    return pool.filter(
+      (entry) => entry.playerId === currentId || !taken.has(entry.playerId),
+    );
   };
 
   const handleSave = async () => {
@@ -236,14 +229,22 @@ export function MatchCenterSubstitutionPanel({
 
   return (
     <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
-      <View className="gap-1">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-xs uppercase tracking-[2px] text-white/55"
-        >
-          Substitutions
-        </Text>
-       
+      <View className="flex-row items-center gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+          <Ionicons name="swap-horizontal-outline" size={20} color={colors.accent} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            Substitutions
+          </Text>
+          <Text
+            style={{ fontFamily: fonts.body }}
+            className="text-xs leading-5 text-white/50"
+            numberOfLines={2}
+          >
+            Record player swaps from the selected team lineup.
+          </Text>
+        </View>
       </View>
 
       {canDraft ? (
@@ -267,7 +268,7 @@ export function MatchCenterSubstitutionPanel({
                 return (
                   <View
                     key={row.key}
-                    className="gap-3 rounded-xl border border-white/10 bg-white/6 px-3 py-3"
+                    className="gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] px-3 py-3"
                   >
                     <View className="flex-row items-center justify-between">
                       <Text
@@ -290,45 +291,34 @@ export function MatchCenterSubstitutionPanel({
                       ) : null}
                     </View>
 
-                    <Pressable
-                      onPress={() => setPicker({ rowKey: row.key, role: "off" })}
-                      className="rounded-xl bg-white/8 px-3 py-3 active:bg-white/12"
-                    >
-                      <Text
-                        style={{ fontFamily: fonts.body }}
-                        className="text-[11px] uppercase text-white/45"
-                      >
-                        Player off (starter)
-                      </Text>
-                      <Text
-                        style={{ fontFamily: fonts.bodySemibold }}
-                        className="pt-1 text-sm text-white"
-                      >
-                        {playerLabel(off)}
-                      </Text>
-                    </Pressable>
+                    <PlayerDropdown
+                      label="Player off"
+                      helper="Starter leaving the pitch"
+                      placeholder="Select starter"
+                      options={optionsForDraft(row, "off")}
+                      selected={off}
+                      emptyText="No starters available."
+                      onSelect={(entry) =>
+                        updateDraft(row.key, { playerOffId: entry.playerId })
+                      }
+                    />
 
-                    <Pressable
-                      onPress={() => setPicker({ rowKey: row.key, role: "on" })}
-                      className="rounded-xl bg-white/8 px-3 py-3 active:bg-white/12"
-                    >
-                      <Text
-                        style={{ fontFamily: fonts.body }}
-                        className="text-[11px] uppercase text-white/45"
-                      >
-                        Player on (bench)
-                      </Text>
-                      <Text
-                        style={{ fontFamily: fonts.bodySemibold }}
-                        className="pt-1 text-sm text-white"
-                      >
-                        {playerLabel(on)}
-                      </Text>
-                    </Pressable>
+                    <PlayerDropdown
+                      label="Player on"
+                      helper="Bench player coming on"
+                      placeholder="Select bench player"
+                      options={optionsForDraft(row, "on")}
+                      selected={on}
+                      emptyText="No bench players available."
+                      onSelect={(entry) =>
+                        updateDraft(row.key, { playerOnId: entry.playerId })
+                      }
+                    />
 
                     <View className="w-28">
                       <AuthTextField
                         label="Minute"
+                        labelClassName="text-white/60"
                         value={row.minute}
                         onChangeText={(value) =>
                           updateDraft(row.key, { minute: value })
@@ -345,22 +335,22 @@ export function MatchCenterSubstitutionPanel({
           {hasLineup ? (
             <View className="flex-row gap-2">
               <View className="flex-1">
-                <Button
-                  variant="ghost"
+                <SubstitutionActionButton
+                  icon="add"
                   label="Add substitution"
                   onPress={handleAddRow}
                   disabled={isBusy || drafts.length >= MAX_DRAFT_SUBS}
-                  className="h-11 border border-white/15"
+                  tone="subtle"
                 />
               </View>
               <View className="flex-1">
-                <Button
-                  variant="authPurple"
+                <SubstitutionActionButton
+                  icon="save-outline"
                   label="Save"
                   onPress={() => void handleSave()}
                   loading={recordMutation.isPending}
                   disabled={isBusy}
-                  className="h-11"
+                  tone="gold"
                 />
               </View>
             </View>
@@ -421,50 +411,233 @@ export function MatchCenterSubstitutionPanel({
           })
         )}
       </View>
-
-      <BottomSheetModal
-        visible={picker != null}
-        onClose={() => setPicker(null)}
-        title={picker?.role === "off" ? "Player off" : "Player on"}
-        subtitle={
-          picker?.role === "off"
-            ? "Choose a starter leaving the pitch."
-            : "Choose a bench player coming on."
-        }
-        variant="dark"
-      >
-        <View className="gap-2 pb-4">
-          {pickerOptions.length === 0 ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-              No available players.
-            </Text>
-          ) : (
-            pickerOptions.map((entry) => (
-              <Pressable
-                key={entry.id}
-                onPress={() => {
-                  if (!picker) return;
-                  updateDraft(
-                    picker.rowKey,
-                    picker.role === "off"
-                      ? { playerOffId: entry.playerId }
-                      : { playerOnId: entry.playerId },
-                  );
-                  setPicker(null);
-                }}
-                className="rounded-xl bg-white/8 px-4 py-3 active:bg-white/12"
-              >
-                <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-sm text-white"
-                >
-                  {playerLabel(entry)}
-                </Text>
-              </Pressable>
-            ))
-          )}
-        </View>
-      </BottomSheetModal>
     </View>
+  );
+}
+
+function PlayerDropdown({
+  label,
+  helper,
+  placeholder,
+  options,
+  selected,
+  emptyText,
+  onSelect,
+}: {
+  label: string;
+  helper: string;
+  placeholder: string;
+  options: GameLineup[];
+  selected?: GameLineup;
+  emptyText: string;
+  onSelect: (entry: GameLineup) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? options.filter((entry) => playerLabel(entry).toLowerCase().includes(q))
+    : options;
+
+  const handleSelect = (entry: GameLineup) => {
+    onSelect(entry);
+    setOpen(false);
+    setQuery("");
+  };
+
+  return (
+    <View className="gap-2">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-xs uppercase tracking-wide text-white/50"
+      >
+        {label}
+      </Text>
+      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+        <Pressable
+          onPress={() => setOpen((current) => !current)}
+          className="flex-row items-center gap-3 px-3.5 py-3"
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
+          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons
+              name={selected ? "person" : "person-outline"}
+              size={18}
+              color={colors.accent}
+            />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text
+              style={{ fontFamily: fonts.bodySemibold }}
+              className={selected ? "text-sm text-white" : "text-sm text-white/65"}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {selected ? playerLabel(selected) : placeholder}
+            </Text>
+            <Text
+              style={{ fontFamily: fonts.body }}
+              className="pt-0.5 text-xs text-white/45"
+              numberOfLines={1}
+            >
+              {selected ? helper : `${options.length} available`}
+            </Text>
+          </View>
+          <Ionicons
+            name={open ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="rgba(255,255,255,0.45)"
+          />
+        </Pressable>
+
+        {open ? (
+          <View className="border-t border-white/10 bg-neutral-950/70">
+            {options.length > 5 ? (
+              <View className="flex-row items-center gap-2 border-b border-white/10 px-3 py-2">
+                <Ionicons
+                  name="search"
+                  size={16}
+                  color="rgba(255,255,255,0.45)"
+                />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search players"
+                  placeholderTextColor="#94a3b8"
+                  autoCorrect={false}
+                  style={{
+                    flex: 1,
+                    fontFamily: fonts.body,
+                    fontSize: 14,
+                    color: colors.white,
+                    paddingVertical: 6,
+                  }}
+                />
+                {query ? (
+                  <Pressable onPress={() => setQuery("")} hitSlop={8}>
+                    <Ionicons
+                      name="close-circle"
+                      size={16}
+                      color="rgba(255,255,255,0.45)"
+                    />
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+
+            <ScrollView
+              nestedScrollEnabled
+              keyboardShouldPersistTaps="handled"
+              style={{ maxHeight: 220 }}
+            >
+              {filtered.map((entry) => {
+                const active = selected?.playerId === entry.playerId;
+                return (
+                  <Pressable
+                    key={entry.id}
+                    onPress={() => handleSelect(entry)}
+                    className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
+                      active ? "bg-accent-500/10" : "bg-transparent"
+                    }`}
+                  >
+                    <Text
+                      style={{ fontFamily: fonts.body }}
+                      className="w-9 text-xs text-white/45"
+                      numberOfLines={1}
+                    >
+                      {entry.jerseyNumber != null ? `#${entry.jerseyNumber}` : "-"}
+                    </Text>
+                    <Text
+                      style={{ fontFamily: fonts.bodySemibold }}
+                      className={active ? "min-w-0 flex-1 text-sm text-accent-100" : "min-w-0 flex-1 text-sm text-white"}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {entry.player?.name ?? "Unknown"}
+                    </Text>
+                    {active ? (
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={20}
+                        color={colors.accent}
+                      />
+                    ) : (
+                      <View className="h-5 w-5 rounded-full border border-white/20" />
+                    )}
+                  </Pressable>
+                );
+              })}
+              {filtered.length === 0 ? (
+                <Text
+                  style={{ fontFamily: fonts.body }}
+                  className="px-4 py-4 text-sm text-white/45"
+                >
+                  {q ? `No players match "${query.trim()}".` : emptyText}
+                </Text>
+              ) : null}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function SubstitutionActionButton({
+  icon,
+  label,
+  tone,
+  loading,
+  disabled,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  tone: "gold" | "subtle";
+  loading?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  const inactive = disabled || loading;
+  const gold = tone === "gold";
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={inactive}
+      accessibilityRole="button"
+      className={`h-11 flex-row items-center justify-center gap-1.5 rounded-full border px-3 ${
+        gold
+          ? "border-accent-400 bg-accent-500 active:opacity-90"
+          : "border-white/15 bg-white/10 active:bg-white/15"
+      } ${inactive ? "opacity-50" : ""}`}
+    >
+      {loading ? (
+        <ActivityIndicator
+          color={gold ? colors.darkLabel : colors.white}
+          size="small"
+        />
+      ) : (
+        <>
+          <Ionicons
+            name={icon}
+            size={16}
+            color={gold ? colors.darkLabel : colors.white}
+          />
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className={`min-w-0 text-center text-xs ${
+              gold ? "text-neutral-950" : "text-white"
+            }`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.82}
+          >
+            {label}
+          </Text>
+        </>
+      )}
+    </Pressable>
   );
 }

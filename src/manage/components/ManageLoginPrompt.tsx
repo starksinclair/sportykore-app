@@ -10,8 +10,8 @@ export function ManageLoginPrompt() {
 
   return (
     <View className="flex-1 items-center justify-center px-8">
-      <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-[#4A148C]">
-        <Ionicons name="shield-outline" size={28} color="#FFFFFF" />
+      <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-accent-500/15">
+        <Ionicons name="shield-outline" size={28} color={colors.accent} />
       </View>
       <Text
         style={{ fontFamily: fonts.bodyBold }}
@@ -30,12 +30,12 @@ export function ManageLoginPrompt() {
         onPress={() => router.push("/login")}
         accessibilityRole="button"
         accessibilityLabel="Log in"
-        className="mt-8 w-full max-w-[280px] items-center rounded-2xl py-4 active:opacity-90"
-        style={{ backgroundColor: colors.brand }}
+        className="mt-8 w-full max-w-[280px] flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 py-3.5 active:opacity-90"
       >
+        <Ionicons name="log-in-outline" size={17} color={colors.darkLabel} />
         <Text
           style={{ fontFamily: fonts.bodyBold }}
-          className="text-base text-white"
+          className="text-sm text-neutral-950"
         >
           Log in
         </Text>

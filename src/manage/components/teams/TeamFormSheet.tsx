@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState, type ReactNode } from "react";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { Button } from "@/components/ui/Button";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { EntityLogo } from "@/components/ui";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
+import { colors } from "@/constants";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
@@ -87,50 +88,109 @@ export function TeamFormSheet({
       }
       variant="dark"
     >
-      <View className="gap-5">
-        {isEdit && team?.logoUrl && !logo ? (
-          <View className="flex-row items-center gap-3">
-            <EntityLogo
-              logoUrl={team.logoUrl}
-              variant="team"
-              size="md"
-              tone="dark"
-            />
-            <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-              Current logo - pick a new image below to replace.
+      <View className="gap-4">
+        <TeamSheetBlock title="Team identity">
+          {isEdit && team?.logoUrl && !logo ? (
+            <View className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+              <EntityLogo
+                logoUrl={team.logoUrl}
+                variant="team"
+                size="md"
+                tone="dark"
+              />
+              <View className="flex-1 gap-0.5">
+                <Text
+                  style={{ fontFamily: fonts.bodySemibold }}
+                  className="text-sm text-white"
+                >
+                  Current logo
+                </Text>
+                <Text
+                  style={{ fontFamily: fonts.body }}
+                  className="text-xs leading-5 text-white/50"
+                >
+                  Pick a new image below to replace it.
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View className="gap-2">
+            <Text
+              style={{ fontFamily: fonts.bodyBold }}
+              className="text-[11px] uppercase tracking-wider text-white/60"
+            >
+              {isEdit ? "New logo (optional)" : "Team logo (optional)"}
             </Text>
+            <LogoImageUpload
+              hint="Optional. Square images look best."
+              value={logo}
+              onChange={setLogo}
+              size="md"
+            />
           </View>
-        ) : null}
 
-        <LogoImageUpload
-          label={isEdit ? "New logo (optional)" : "Team logo (optional)"}
-          value={logo}
-          onChange={setLogo}
-          size="md"
-        />
-
-        <AuthTextField
-          label="Team name"
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Riverside United"
-          autoCapitalize="words"
-          containerClassName="[&_input]:text-neutral-900"
-        />
+          <AuthTextField
+            label="Team name"
+            labelClassName="text-white/60"
+            value={name}
+            onChangeText={setName}
+            placeholder="e.g. Riverside United"
+            autoCapitalize="words"
+            containerClassName="[&_input]:text-neutral-900"
+          />
+        </TeamSheetBlock>
 
         {isEdit && team ? (
           <TeamAdminsSection leagueId={leagueId} teamId={team.id} />
         ) : null}
 
-        <Button
-          variant="authPurple"
-          label={isEdit ? "Save changes" : "Add team"}
+        <Pressable
           onPress={() => void handleSave()}
-          loading={isPending}
           disabled={isPending}
-          className="h-11"
-        />
+          accessibilityRole="button"
+          className={`h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+            isPending ? "opacity-50" : ""
+          }`}
+        >
+          {isPending ? (
+            <ActivityIndicator color={colors.darkLabel} size="small" />
+          ) : (
+            <Ionicons
+              name={isEdit ? "save-outline" : "add"}
+              size={17}
+              color={colors.darkLabel}
+            />
+          )}
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-sm text-neutral-950"
+            numberOfLines={1}
+          >
+            {isPending ? "Saving..." : isEdit ? "Save changes" : "Add team"}
+          </Text>
+        </Pressable>
       </View>
     </BottomSheetModal>
+  );
+}
+
+function TeamSheetBlock({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+      <Text
+        style={{ fontFamily: fonts.bodyBold }}
+        className="text-xs uppercase tracking-wide text-white/50"
+      >
+        {title}
+      </Text>
+      <View className="gap-3">{children}</View>
+    </View>
   );
 }

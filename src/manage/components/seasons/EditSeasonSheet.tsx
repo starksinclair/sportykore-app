@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiSeason, SeasonStatus } from "@/api/entities";
-import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { colors } from "@/constants";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -88,14 +89,27 @@ export function EditSeasonSheet({
 
         <SeasonStatusPicker label="Status" value={status} onChange={setStatus} />
 
-        <Button
-          variant="authPurple"
-          label={updateMutation.isPending ? "Saving…" : "Save season"}
-          loading={updateMutation.isPending}
-          disabled={updateMutation.isPending}
+        <Pressable
           onPress={() => void handleSave()}
-          className="h-11"
-        />
+          disabled={updateMutation.isPending}
+          accessibilityRole="button"
+          className={`h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+            updateMutation.isPending ? "opacity-50" : ""
+          }`}
+        >
+          {updateMutation.isPending ? (
+            <ActivityIndicator color={colors.darkLabel} size="small" />
+          ) : (
+            <Ionicons name="save-outline" size={16} color={colors.darkLabel} />
+          )}
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-sm text-neutral-950"
+            numberOfLines={1}
+          >
+            {updateMutation.isPending ? "Saving..." : "Save season"}
+          </Text>
+        </Pressable>
 
         <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-white/45">
           Use the season picker at the top of Manage to switch which season you are viewing.

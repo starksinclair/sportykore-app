@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
-import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
@@ -121,23 +120,23 @@ export default function JoinLeagueScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1" style={{ backgroundColor: colors.scoreboardBlack }}>
       <StatusBar style="light" />
+      <BlackPatternBackground
+        baseColor={scoreboardPattern().baseColor}
+        stripeColor={scoreboardPattern().stripeColor}
+      />
 
-      <View className="relative overflow-hidden bg-[#121212] px-5 pt-0">
-        <BlackPatternBackground
-          baseColor={scoreboardPattern().baseColor}
-          stripeColor={scoreboardPattern().stripeColor}
-        />
-        <SafeAreaView edges={["top", "bottom"]}>
-          <View className="flex-row items-center justify-between">
+      <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+        <View className="px-5 pt-1">
+          <View className="flex-row items-center justify-between pb-2">
             <Pressable
               onPress={() => router.replace("/profile")}
               accessibilityLabel="Back"
               accessibilityRole="button"
               className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
             >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={22} color={colors.white} />
             </Pressable>
             <Text
               style={{ fontFamily: fonts.displayBold }}
@@ -147,72 +146,118 @@ export default function JoinLeagueScreen() {
             </Text>
             <View className="h-11 w-11" />
           </View>
-        </SafeAreaView>
-      </View>
-
-      {!hydrated || loadingPrefill ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color={colors.brand} />
         </View>
-      ) : !user ? (
-        <JoinLeagueLoginPrompt />
-      ) : (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          className="flex-1"
-        >
-          <ScrollView
+
+        {!hydrated || loadingPrefill ? (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator color={colors.accent} />
+          </View>
+        ) : !user ? (
+          <JoinLeagueLoginPrompt />
+        ) : (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             className="flex-1"
-            contentContainerClassName="gap-6 px-5 pb-10 pt-6"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
           >
-            <View className="gap-2">
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-lg text-neutral-950"
-              >
-                Enter your invite
-              </Text>
-              <Text
-                style={{ fontFamily: fonts.body }}
-                className="text-sm leading-5 text-slate-500"
-              >
-                Paste the invite code or full link from your league admin.
-              </Text>
-            </View>
-
-            {leagueName || teamName ? (
-              <View className="gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4">
-                {leagueName ? (
-                  <InviteContextRow label="League" value={leagueName} />
-                ) : null}
-                {teamName ? (
-                  <InviteContextRow label="Team" value={teamName} />
-                ) : null}
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="gap-5 px-5 pb-10 pt-5"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View className="items-center gap-3">
+                <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-accent-500/15">
+                  <Ionicons name="ticket-outline" size={28} color={colors.accent} />
+                </View>
+                <View className="gap-2">
+                  <Text
+                    style={{ fontFamily: fonts.bodyBold }}
+                    className="text-center text-2xl text-white"
+                  >
+                    Join your league
+                  </Text>
+                  <Text
+                    style={{ fontFamily: fonts.body }}
+                    className="text-center text-sm leading-6 text-white/65"
+                  >
+                    Paste the invite code or full link from your league admin.
+                  </Text>
+                </View>
               </View>
-            ) : null}
 
-            <AuthTextField
-              label="Invite code or link"
-              value={input}
-              onChangeText={setInput}
-              placeholder="550e8400-e29b-41d4-a716-446655440000"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+              {leagueName || teamName ? (
+                <View className="gap-3 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
+                  <View className="flex-row items-center gap-2">
+                    <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
+                    <Text
+                      style={{ fontFamily: fonts.bodyBold }}
+                      className="text-xs uppercase tracking-wide text-white/50"
+                    >
+                      Invite details
+                    </Text>
+                  </View>
+                  {leagueName ? (
+                    <InviteContextRow label="League" value={leagueName} />
+                  ) : null}
+                  {teamName ? (
+                    <InviteContextRow label="Team" value={teamName} />
+                  ) : null}
+                </View>
+              ) : null}
 
-            <Button
-              variant="primary"
-              label="Join league"
-              onPress={() => void handleJoin()}
-              loading={loading}
-              disabled={!input.trim() || loading}
-            />
-          </ScrollView>
-        </KeyboardAvoidingView>
-      )}
+              <View className="gap-4 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
+                <View className="gap-1">
+                  <Text
+                    style={{ fontFamily: fonts.bodyBold }}
+                    className="text-base text-white"
+                  >
+                    Enter invite
+                  </Text>
+                  <Text
+                    style={{ fontFamily: fonts.body }}
+                    className="text-sm leading-5 text-white/55"
+                  >
+                    Codes and shared links both work here.
+                  </Text>
+                </View>
+
+                <AuthTextField
+                  label="Invite code or link"
+                  labelClassName="text-white/60"
+                  value={input}
+                  onChangeText={setInput}
+                  placeholder="550e8400-e29b-41d4-a716-446655440000"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  editable={!loading}
+                />
+              </View>
+
+              <Pressable
+                onPress={() => void handleJoin()}
+                disabled={!input.trim() || loading}
+                accessibilityRole="button"
+                className={`h-12 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+                  !input.trim() || loading ? "opacity-50" : ""
+                }`}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.darkLabel} size="small" />
+                ) : (
+                  <Ionicons name="enter-outline" size={17} color={colors.darkLabel} />
+                )}
+                <Text
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className="text-sm text-neutral-950"
+                  numberOfLines={1}
+                >
+                  {loading ? "Joining..." : "Join league"}
+                </Text>
+              </Pressable>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        )}
+      </SafeAreaView>
     </View>
   );
 }
@@ -222,11 +267,11 @@ function InviteContextRow({ label, value }: { label: string; value: string }) {
     <View className="gap-1">
       <Text
         style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-wider text-slate-500"
+        className="text-[11px] uppercase tracking-wider text-white/45"
       >
         {label}
       </Text>
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
         {value}
       </Text>
     </View>
