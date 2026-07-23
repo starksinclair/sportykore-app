@@ -9,10 +9,7 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "android": {
-        "buildType": "apk"
-      }
+      "distribution": "internal"
     },
     "production": {
       "autoIncrement": true
@@ -20,7 +17,10 @@
   },
   "submit": {
     "production": {
-      "autoIncrement": true
+      "android": {
+      "serviceAccountKeyPath": "./sportykore-ef754fbf3563.json",
+      "track": "internal"
+    }
     }
   }
 }
