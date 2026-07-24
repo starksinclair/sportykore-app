@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Picker } from "@react-native-picker/picker";
 import { useState } from "react";
-import { Modal, Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { colors } from "@/constants";
 import { fonts } from "@/theme/fonts";
@@ -20,10 +19,7 @@ type Props = {
   disabled?: boolean;
 };
 
-/**
- * Season picker using a native wheel picker (iOS) / dialog (Android).
- * When only one season is known, behaves like a label.
- */
+/** Compact dropdown selector for seasons, leagues, and team filters. */
 export function SeasonPicker({
   seasons,
   activeSeasonId,
@@ -36,87 +32,99 @@ export function SeasonPicker({
   const interactive = !disabled && seasons.length > 1;
 
   return (
-    <View>
+    <View className="relative z-20">
       <Pressable
         onPress={() => {
-          if (interactive) setOpen(true);
+          if (interactive) setOpen((current) => !current);
         }}
         accessibilityRole="button"
         accessibilityLabel={`${label} picker`}
-        className="flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3 active:opacity-80"
+        className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 active:opacity-80"
         style={{ opacity: interactive ? 1 : 0.85 }}
       >
-        <Text
-          style={{ fontFamily: fonts.bodySemibold }}
-          className="text-[15px] text-white"
-        >
-          {label}: {active?.name ?? "-"}
-        </Text>
+        <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+          <Ionicons name="calendar-outline" size={17} color={colors.accent} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text
+            style={{ fontFamily: fonts.bodyBold }}
+            className="text-[11px] uppercase tracking-wide text-white/45"
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+          <Text
+            style={{ fontFamily: fonts.bodySemibold }}
+            className="pt-0.5 text-[15px] text-white"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {active?.name ?? "-"}
+          </Text>
+        </View>
         {interactive ? (
-          <Ionicons name="chevron-down" size={18} color="rgba(255,255,255,0.7)" />
+          <Ionicons
+            name={open ? "chevron-up" : "chevron-down"}
+            size={18}
+            color="rgba(255,255,255,0.7)"
+          />
         ) : null}
       </Pressable>
 
-      <Modal
-        visible={open}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setOpen(false)}
-      >
-        <Pressable
-          style={{ flex: 1 }}
-          onPress={() => setOpen(false)}
-        />
-        <View
-          style={{
-            backgroundColor: "#fff",
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-            borderCurve: "continuous",
-            paddingBottom: 34,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 12,
-              borderBottomWidth: 1,
-              borderBottomColor: "rgba(0,0,0,0.08)",
-            }}
+      {open && interactive ? (
+        <View className="mt-2 overflow-hidden rounded-[18px] border border-white/10 bg-neutral-950/95">
+          <ScrollView
+            nestedScrollEnabled
+            keyboardShouldPersistTaps="handled"
+            style={{ maxHeight: 260 }}
           >
-            <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: "#1C1C1E" }}>
-              {`Choose ${label.toLowerCase()}`}
-            </Text>
-            <Pressable
-              onPress={() => setOpen(false)}
-              hitSlop={12}
-            >
-              <Text style={{ fontFamily: fonts.bodySemibold, fontSize: 15, color: colors.brand }}>
-                Done
-              </Text>
-            </Pressable>
-          </View>
-
-          <Picker
-            selectedValue={activeSeasonId}
-            onValueChange={(value) => {
-              if (value !== null) onSelect(value as number);
-            }}
-          >
-            {seasons.map((season) => (
-              <Picker.Item
-                key={season.id}
-                label={season.name}
-                value={season.id}
-                
-              />
-            ))}
-          </Picker>
+            {seasons.map((season) => {
+              const selected = season.id === activeSeasonId;
+              return (
+                <Pressable
+                  key={season.id}
+                  onPress={() => {
+                    onSelect(season.id);
+                    setOpen(false);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Select ${season.name}`}
+                  className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
+                    selected ? "bg-accent-500/10" : "bg-transparent"
+                  }`}
+                >
+                  <View className="h-8 w-8 items-center justify-center rounded-full bg-white/8">
+                    <Ionicons
+                      name={selected ? "checkmark" : "ellipse-outline"}
+                      size={16}
+                      color={selected ? colors.accent : "rgba(255,255,255,0.4)"}
+                    />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      style={{ fontFamily: fonts.bodySemibold }}
+                      className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {season.name}
+                    </Text>
+                    {season.status ? (
+                      <Text
+                        style={{ fontFamily: fonts.body }}
+                        className="pt-0.5 text-xs capitalize text-white/45"
+                        numberOfLines={1}
+                      >
+                        {season.status}
+                      </Text>
+                    ) : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
-      </Modal>
+      ) : null}
     </View>
   );
 }
