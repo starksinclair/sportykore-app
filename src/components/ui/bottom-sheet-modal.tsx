@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,8 +11,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-import { fonts } from "@/theme/fonts";
 
 type BottomSheetModalProps = {
   visible: boolean;
@@ -47,54 +47,58 @@ export function BottomSheetModal({
       <View style={styles.root}>
         <Pressable style={styles.scrim} onPress={onClose} />
         <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
-          <View style={[styles.sheet, isDark && styles.sheetDark]}>
-            <View style={[styles.handle, isDark && styles.handleDark]} />
-            <View style={styles.header}>
-              <View style={styles.headerCopy}>
-                <Text
-                  style={[
-                    styles.title,
-                    isDark && styles.titleDark,
-                    { fontFamily: fonts.bodyBold },
-                  ]}
-                  numberOfLines={2}
-                >
-                  {title}
-                </Text>
-                {subtitle ? (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.keyboardAvoiding}
+          >
+            <View style={[styles.sheet, isDark && styles.sheetDark]}>
+              <View style={[styles.handle, isDark && styles.handleDark]} />
+              <View style={styles.header}>
+                <View style={styles.headerCopy}>
                   <Text
                     style={[
-                      styles.subtitle,
-                      isDark && styles.subtitleDark,
-                      { fontFamily: fonts.body },
+                      styles.title,
+                      isDark && styles.titleDark,
                     ]}
-                    numberOfLines={3}
+                    numberOfLines={2}
                   >
-                    {subtitle}
+                    {title}
                   </Text>
-                ) : null}
+                  {subtitle ? (
+                    <Text
+                      style={[
+                        styles.subtitle,
+                        isDark && styles.subtitleDark,
+                      ]}
+                      numberOfLines={3}
+                    >
+                      {subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close modal"
+                  style={[styles.closeButton, isDark && styles.closeButtonDark]}
+                >
+                  <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
+                </Pressable>
               </View>
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close modal"
-                style={[styles.closeButton, isDark && styles.closeButtonDark]}
-              >
-                <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
-              </Pressable>
+              {scrollEnabled ? (
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="interactive"
+                  contentContainerStyle={styles.content}
+                >
+                  {children}
+                </ScrollView>
+              ) : (
+                <View style={styles.content}>{children}</View>
+              )}
             </View>
-            {scrollEnabled ? (
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={styles.content}
-              >
-                {children}
-              </ScrollView>
-            ) : (
-              <View style={styles.content}>{children}</View>
-            )}
-          </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
     </Modal>
@@ -112,6 +116,9 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     justifyContent: "flex-end",
+  },
+  keyboardAvoiding: {
+    width: "100%",
   },
   sheet: {
     maxHeight: "94%",

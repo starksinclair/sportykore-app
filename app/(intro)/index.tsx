@@ -3,13 +3,13 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button, Logo } from "@/components/ui";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 export default function LandingScreen() {
+  const insets = useSafeAreaInsets();
   return (
     <View className="flex-1 bg-[#3C096C]">
       <StatusBar style="light" />
@@ -17,9 +17,11 @@ export default function LandingScreen() {
         <SafeAreaView style={styles.flexFill} edges={["top", "bottom"]}>
           <ScrollView
             className="flex-1 px-6"
-            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            contentContainerStyle={[styles.scrollContent, {
+              paddingBottom: insets.bottom + 90
+            }]}
           >
             <View style={styles.imageCard} className="border border-brand-500">
               <Image
@@ -34,7 +36,6 @@ export default function LandingScreen() {
 
               <View style={styles.badge}>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-[11px] uppercase tracking-wider text-neutral-950"
                 >
                   LOCAL BALL
@@ -51,13 +52,12 @@ export default function LandingScreen() {
                 className="relative top-6"
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-[26px] leading-[32px] text-white"
               >
                The Gathering.{"\n"} Where Leagues Gathers.
               </Text>
               <Text
-                style={{ fontFamily: fonts.body, color: "rgba(255,255,255,0.88)" }}
+                style={{ color: "rgba(255,255,255,0.88)" }}
                 className="text-[15px] leading-[22px]"
               >
                 Connect with local leagues, track live matches, and dive into
@@ -97,7 +97,7 @@ export default function LandingScreen() {
                   Already have an account?{" "}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold, color: "#FFFFFF" }}
+                  className="font-body-semibold text-white"
                 >
                   Sign In
                 </Text>

@@ -9,7 +9,6 @@ import type {
   StandingZoneType,
 } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
-import { fonts } from "@/theme/fonts";
 
 const ZONE_COLORS: Record<StandingZoneType, string> = {
   qualified: "#22C55E",
@@ -72,7 +71,7 @@ export function LeagueStandingsTab({
 
   if (!displayStandings.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Standings not available yet.
       </Text>
     );
@@ -84,7 +83,6 @@ export function LeagueStandingsTab({
     <View className="gap-3">
       {title ? (
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-white"
         >
           {title}
@@ -98,13 +96,11 @@ export function LeagueStandingsTab({
           }`}
         >
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="w-8 text-[10px] text-white/55"
           >
             #
           </Text>
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="min-w-0 flex-1 text-[10px] uppercase tracking-[1.5px] text-white/55"
             numberOfLines={1}
           >
@@ -150,7 +146,6 @@ export function LeagueStandingsTab({
             >
               <View className="w-8 flex-row items-center gap-1">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className={
                     isHighlighted
                       ? "min-w-3 text-[12px] text-[#E6A817]"
@@ -179,7 +174,7 @@ export function LeagueStandingsTab({
                   />
                 ) : null}
                 <Text
-                  style={{ fontFamily: fonts.bodyBold, minWidth: 0 }}
+                  style={{ minWidth: 0 }}
                   className={
                     isHighlighted
                       ? "min-w-0 flex-1 text-[10px] text-[#E6A817]"
@@ -206,7 +201,6 @@ export function LeagueStandingsTab({
                     accessibilityLabel="Standing adjustment details"
                   >
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-sm text-accent-200"
                     >
                       *
@@ -238,7 +232,6 @@ export function LeagueStandingsTab({
                 color={ZONE_COLORS[z.type]}
               />
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-[10px] text-white/65"
                 numberOfLines={1}
               >
@@ -333,7 +326,6 @@ function findZoneForPosition(
 function ColHeader({ children }: { children: string }) {
   return (
     <Text
-      style={{ fontFamily: fonts.bodyBold }}
       className="w-6 text-right text-[10px] uppercase tracking-[1.2px] text-white/55"
       numberOfLines={1}
     >
@@ -345,7 +337,6 @@ function ColHeader({ children }: { children: string }) {
 function Col({ children }: { children: number }) {
   return (
     <Text
-      style={{ fontFamily: fonts.bodySemibold }}
       className="w-6 text-right text-xs text-white/65"
       numberOfLines={1}
     >
@@ -357,7 +348,6 @@ function Col({ children }: { children: number }) {
 function ColAccent({ children }: { children: number }) {
   return (
     <Text
-      style={{ fontFamily: fonts.bodyBold }}
       className="w-6 text-right text-xs text-[#E6A817]"
       numberOfLines={1}
     >
@@ -392,7 +382,7 @@ export function GroupStandingsView({
 
   if (!ordered.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Standings not available yet.
       </Text>
     );
@@ -430,7 +420,6 @@ export function GroupStandingsView({
               }`}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={active ? "text-accent-200" : "text-white/70"}
               >
                 {table.stageGroupName ?? "Table"}
@@ -448,7 +437,6 @@ export function GroupStandingsView({
             }`}
           >
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className={showAll ? "text-accent-200" : "text-white/70"}
             >
               All groups

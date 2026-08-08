@@ -1,31 +1,30 @@
-import { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiStage } from "@/api/entities";
 import { NotFound } from "@/components/not-found";
 import {
   DetailTabs,
-  type DetailTab,
   EntityLogo,
   SeasonPicker,
+  type DetailTab,
   type SeasonOption,
 } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import { hasGroupStage } from "@/groups";
-import { LeagueBracketTab } from "@/league/components/tabs/BracketTab";
-import { LeagueMatchesTab } from "@/league/components/tabs/MatchesTab";
-import { LeagueOverviewTab } from "@/league/components/tabs/OverviewTab";
-import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
-import { LeagueStatsTab } from "@/league/components/tabs/StatsTab";
-import { useLeagueDetail } from "@/league";
 import {
   hasRoundRobinStage,
   knockoutStages,
   pickPrimaryStage,
 } from "@/knockout";
-import { fonts } from "@/theme/fonts";
+import { useLeagueDetail } from "@/league";
+import { LeagueBracketTab } from "@/league/components/tabs/BracketTab";
+import { LeagueMatchesTab } from "@/league/components/tabs/MatchesTab";
+import { LeagueOverviewTab } from "@/league/components/tabs/OverviewTab";
+import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
+import { LeagueStatsTab } from "@/league/components/tabs/StatsTab";
 
 type TabKey = "overview" | "matches" | "standings" | "bracket" | "stats";
 
@@ -171,7 +170,6 @@ export default function LeagueRoute() {
                       }`}
                     >
                       <Text
-                        style={{ fontFamily: fonts.bodySemibold }}
                         className={
                           active
                             ? "text-xs text-accent-200"

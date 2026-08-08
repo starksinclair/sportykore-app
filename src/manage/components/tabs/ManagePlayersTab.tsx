@@ -4,12 +4,11 @@ import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiTeam } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
+import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { SeasonPicker } from "@/components/ui/season-picker";
-import { AuthTextField } from "@/components/ui/auth-text-field";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import {
   useRemoveLeaguePlayer,
@@ -66,11 +65,10 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
             <Ionicons name="people-outline" size={22} color="#E6A817" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Season roster
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -85,7 +83,6 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
           >
             <Ionicons name="person-add-outline" size={15} color="#171717" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-neutral-950"
               numberOfLines={1}
             >
@@ -110,7 +107,7 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
       ) : null}
 
       {!rosterQuery.isLoading && (rosterQuery.data ?? []).length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+        <Text className="text-sm text-white/45">
           No players on the roster yet. Share an invite link to get started.
         </Text>
       ) : null}
@@ -118,7 +115,7 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
       {!rosterQuery.isLoading &&
       (rosterQuery.data ?? []).length > 0 &&
       filteredRoster.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+        <Text className="text-sm text-white/45">
           {activeRosterTeam
             ? `No players on ${activeRosterTeam.name} yet.`
             : "No players for this team yet."}
@@ -207,16 +204,16 @@ function RosterRow({
       >
         <View className="flex-1 gap-1">
           <View className="flex-row items-center gap-2">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {row.player.name}
             </Text>
             {row.isCaptain ? (
-              <Text style={{ fontFamily: fonts.body }} className="text-xs text-accent-400">
+              <Text className="text-xs text-accent-400">
                 Captain
               </Text>
             ) : null}
           </View>
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/55">
+          <Text className="text-xs text-white/55">
             {[
               row.jerseyNumber ? `#${row.jerseyNumber}` : null,
               row.position ?? null,
@@ -244,7 +241,6 @@ function RosterRow({
           />
           <View className="gap-2">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs uppercase tracking-wide text-slate-500"
             >
               Position
@@ -263,7 +259,7 @@ function RosterRow({
                         : "border-neutral-200",
                     ].join(" ")}
                   >
-                    <Text style={{ fontFamily: fonts.bodySemibold }}>{pos}</Text>
+                    <Text>{pos}</Text>
                   </Pressable>
                 );
               })}
@@ -273,7 +269,7 @@ function RosterRow({
             onPress={() => setIsCaptain((value) => !value)}
             className="flex-row items-center justify-between rounded-xl border border-neutral-200 px-4 py-3"
           >
-            <Text style={{ fontFamily: fonts.bodyBold }}>Team captain</Text>
+            <Text>Team captain</Text>
             <Ionicons
               name={isCaptain ? "checkbox" : "square-outline"}
               size={22}

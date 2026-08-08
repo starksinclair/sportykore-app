@@ -28,7 +28,6 @@ import {
   showMarkerAlert,
 } from "@/league/components/tabs/StandingsTab";
 import { showInfoToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -69,11 +68,10 @@ function ToolPanel({
           <Ionicons name={icon} size={18} color="#E6A817" />
         </View>
         <View className="min-w-0 flex-1 gap-1">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             {title}
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-xs leading-5 text-white/45"
           >
             {description}
@@ -86,7 +84,6 @@ function ToolPanel({
             className="h-9 items-center justify-center rounded-full bg-white px-3 active:bg-slate-100"
           >
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-neutral-950"
               numberOfLines={1}
             >
@@ -103,7 +100,7 @@ function ToolPanel({
 function EmptyToolState({ text }: { text: string }) {
   return (
     <View className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+      <Text className="text-sm text-white/45">
         {text}
       </Text>
     </View>
@@ -120,7 +117,6 @@ function SheetBlock({
   return (
     <View className="gap-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {title}
@@ -196,7 +192,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
 
   if (!stage) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         No standings stage on this season.
       </Text>
     );
@@ -226,7 +222,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 }`}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className={active ? "text-accent-200" : "text-white/70"}
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -245,11 +240,10 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             <Ionicons name="options-outline" size={20} color="#E6A817" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Standing tools
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -270,7 +264,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               color={editMode ? "#171717" : "#FFFFFF"}
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className={`text-xs ${editMode ? "text-neutral-950" : "text-white"}`}
               numberOfLines={1}
             >
@@ -282,10 +275,10 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
 
       {stale.length > 0 ? (
         <View className="gap-2 rounded-[20px] border border-orange-400/40 bg-orange-500/10 px-4 py-3">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-sm text-orange-200">
+            <Text className="text-sm text-orange-200">
             Stale overrides
           </Text>
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/60">
+          <Text className="text-xs text-white/60">
             These no longer match a live points/played tie. Clear them or leave as history.
           </Text>
           {stale.map((o) => (
@@ -294,7 +287,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               className="flex-row items-center justify-between gap-2 py-1"
             >
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="min-w-0 flex-1 text-sm text-white/80"
                 numberOfLines={2}
               >
@@ -329,7 +321,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
           <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
             <Ionicons name="information-circle-outline" size={18} color="#E6A817" />
             <Text
-              style={{ fontFamily: fonts.body }}
               className="min-w-0 flex-1 text-xs leading-5 text-white/60"
             >
               Reordering only works for teams tied on points and games played.
@@ -356,7 +347,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               >
                 <View className="min-w-0 flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-white"
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -365,7 +355,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                     {a.pointsDelta}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-xs text-white/50"
                     numberOfLines={2}
                   >
@@ -401,7 +390,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 <View className="flex-row items-center gap-3">
                   <View className="h-9 w-9 items-center justify-center rounded-2xl bg-white/10">
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-xs text-accent-200"
                     >
                       {rows.length}
@@ -409,7 +397,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                   </View>
                   <View className="min-w-0 flex-1 gap-1">
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className="text-sm text-white"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -417,7 +404,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                       {key.replace(":", " pts · ")} played
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="text-xs text-white/45"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -440,7 +426,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 )
               }
             >
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-xs text-accent-200">
+                <Text className="text-xs text-accent-200">
                 {"Why can't I drag other rows?"}
               </Text>
             </Pressable>
@@ -479,7 +465,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                   }}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-white"
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -490,7 +475,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                       : ""}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="pt-1 text-xs text-white/45"
                     numberOfLines={1}
                   >
@@ -540,7 +524,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                   }`}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-sm text-white"
                     numberOfLines={1}
                     ellipsizeMode="tail"
@@ -614,14 +597,12 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               >
                 <View className="h-8 w-8 items-center justify-center rounded-xl bg-accent-500/15">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-xs text-accent-200"
                   >
                     {index + 1}
                   </Text>
                 </View>
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="min-w-0 flex-1 text-white"
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -720,7 +701,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 }`}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs text-white"
                   numberOfLines={1}
                 >
@@ -743,7 +723,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                   }`}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-xs text-white"
                     numberOfLines={1}
                   >
@@ -765,7 +744,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                       }`}
                     >
                       <Text
-                        style={{ fontFamily: fonts.bodySemibold }}
                         className="text-xs text-white"
                         numberOfLines={1}
                       >

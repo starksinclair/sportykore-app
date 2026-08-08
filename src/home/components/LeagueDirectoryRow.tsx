@@ -4,10 +4,9 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-import { CountryLabel } from "@/components/ui/CountryFlag";
 import { EntityLogo } from "@/components/ui";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import type { ApiCountryWithLeagues } from "../types";
 
@@ -64,7 +63,6 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
                 accessibilityLabel={`${league.name} logo`}
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="flex-1 text-[14px] text-neutral-950"
                 numberOfLines={1}
               >

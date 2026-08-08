@@ -4,7 +4,6 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { colors } from "@/constants";
 import { useAuditLogs } from "@/groups";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -27,7 +26,7 @@ export function ManageActivityTab({ leagueId }: Props) {
 
   if (query.isError) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Could not load activity.
       </Text>
     );
@@ -35,15 +34,15 @@ export function ManageActivityTab({ leagueId }: Props) {
 
   return (
     <View className="gap-4 pb-10">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+      <Text className="text-lg text-white">
         Activity
       </Text>
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Read-only log of organizer actions - deductions, overrides, draws, and more.
       </Text>
 
       {rows.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+        <Text className="text-sm text-white/45">
           No activity yet.
         </Text>
       ) : (
@@ -61,14 +60,12 @@ export function ManageActivityTab({ leagueId }: Props) {
                 className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3"
               >
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-sm text-white"
                 >
                   {entry.action}
                   {entry.targetLabel ? ` · ${entry.targetLabel}` : ""}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="pt-1 text-xs text-white/50"
                 >
                   {entry.actorName ?? "Organizer"}
@@ -77,7 +74,6 @@ export function ManageActivityTab({ leagueId }: Props) {
                 </Text>
                 {reason ? (
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="pt-2 text-sm text-white/70"
                   >
                     {reason}
@@ -98,7 +94,7 @@ export function ManageActivityTab({ leagueId }: Props) {
             className="flex-1"
             onPress={() => setPage((p) => Math.max(1, p - 1))}
           />
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+          <Text className="text-sm text-white/50">
             {page} / {lastPage}
           </Text>
           <Button
@@ -113,7 +109,7 @@ export function ManageActivityTab({ leagueId }: Props) {
 
       {query.isFetching ? (
         <Pressable disabled>
-          <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-white/35">
+          <Text className="text-center text-xs text-white/35">
             Refreshing…
           </Text>
         </Pressable>

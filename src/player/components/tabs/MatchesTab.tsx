@@ -4,9 +4,8 @@ import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame, ApiPlayerSeason } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
-import { formatPlayedAt } from "@/lib/datetime";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
-import { fonts } from "@/theme/fonts";
+import { formatPlayedAt } from "@/lib/datetime";
 
 type Props = {
   season: ApiPlayerSeason | null;
@@ -24,7 +23,7 @@ export function PlayerMatchesTab({ season }: Props) {
 
   if (!season) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Select a league and season to view fixtures.
       </Text>
     );
@@ -32,7 +31,7 @@ export function PlayerMatchesTab({ season }: Props) {
 
   if (!games.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         No fixtures recorded for {season.name} yet.
       </Text>
     );
@@ -81,10 +80,10 @@ function PlayerMatchRow({
         <View className="flex-1 gap-1.5">
           <View className="flex-row items-center gap-2">
             <EntityLogo logoUrl={teamLogoUrl} variant="team" size="xs" tone="dark" />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {teamName}
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-white/45">
+            <Text className="text-white/45">
               vs
             </Text>
             <EntityLogo
@@ -94,7 +93,6 @@ function PlayerMatchRow({
               tone="dark"
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="flex-1 text-white"
               numberOfLines={1}
             >
@@ -102,7 +100,6 @@ function PlayerMatchRow({
             </Text>
           </View>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-xs text-white/55"
           >
             {venue} · {formatPlayedAt(game.playedAt)} · {phase}
@@ -110,7 +107,6 @@ function PlayerMatchRow({
         </View>
         {game.homeScore != null && game.awayScore != null ? (
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[#E6A817]"
           >
             {game.homeScore}-{game.awayScore}

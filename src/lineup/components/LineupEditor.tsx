@@ -4,8 +4,9 @@ import { ActivityIndicator, Alert, Text, View } from "react-native";
 import type { GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/error-state";
-import { FormationChips } from "@/lineup/components/FormationChips";
+import { messageFromThrown, showSuccessToast } from "@/lib/show-error-toast";
 import { FootballPitch } from "@/lineup/components/FootballPitch";
+import { FormationChips } from "@/lineup/components/FormationChips";
 import {
   LineupPlayerPickerSheet,
   type PickerMode,
@@ -28,9 +29,7 @@ import {
   rosterToPickerPlayers,
   slotCoordinates,
 } from "@/lineup/utils";
-import { messageFromThrown, showSuccessToast } from "@/lib/show-error-toast";
 import type { LeagueRosterRow } from "@/manage/types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   gameId: number;
@@ -216,7 +215,7 @@ export function LineupEditor({
 
   if (!formationsQuery.data?.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         No formations available.
       </Text>
     );
@@ -231,7 +230,7 @@ export function LineupEditor({
     <View className={embedded ? "gap-5" : "gap-5 pb-28"}>
       {locked ? (
         <View className="rounded-xl bg-white/8 px-4 py-3">
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/70">
+          <Text className="text-sm text-white/70">
             This match is finished - lineup is read-only.
           </Text>
         </View>

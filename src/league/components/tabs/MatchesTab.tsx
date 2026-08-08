@@ -5,7 +5,6 @@ import { Pressable, Text, View } from "react-native";
 import type { ApiGame } from "@/api/entities";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   games: ApiGame[];
@@ -24,7 +23,6 @@ export function LeagueMatchesTab({ games }: Props) {
   if (!sorted.length) {
     return (
       <Text
-        style={{ fontFamily: fonts.body }}
         className="text-sm text-white/55"
       >
         No matches scheduled in this season yet.
@@ -58,7 +56,7 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {game.homeTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -69,20 +67,18 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
         </View>
         <View className="items-end gap-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[#E6A817]"
           >
             {game.homeScore ?? "-"}
           </Text>
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[#E6A817]"
           >
             {game.awayScore ?? "-"}
@@ -91,7 +87,6 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
       </View>
       <View className="flex-row flex-wrap items-center pt-3">
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs uppercase tracking-[1.5px] text-white/45"
         >
           {formatPlayedAt(game.playedAt)} ·{" "}

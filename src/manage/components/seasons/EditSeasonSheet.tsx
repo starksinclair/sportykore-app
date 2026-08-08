@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiSeason, SeasonStatus } from "@/api/entities";
@@ -7,7 +7,6 @@ import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useUpdateSeason } from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
@@ -103,7 +102,6 @@ export function EditSeasonSheet({
             <Ionicons name="save-outline" size={16} color={colors.darkLabel} />
           )}
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-sm text-neutral-950"
             numberOfLines={1}
           >
@@ -111,7 +109,7 @@ export function EditSeasonSheet({
           </Text>
         </Pressable>
 
-        <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-white/45">
+        <Text className="text-center text-xs text-white/45">
           Use the season picker at the top of Manage to switch which season you are viewing.
         </Text>
       </View>

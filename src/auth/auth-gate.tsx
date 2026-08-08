@@ -13,7 +13,6 @@ import {
 import { Modal, Pressable, Text, View } from "react-native";
 
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import { useAuth } from "./use-auth";
 
@@ -152,13 +151,12 @@ function AuthGateDialog({ prompt, onCancel, onLogin }: DialogProps) {
             </View>
           </View>
           <Text
-            style={{ fontFamily: fonts.bodyBold, color: colors.darkLabel }}
+            style={{ color: colors.darkLabel }}
             className="text-center text-[18px]"
           >
             {title}
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="pt-2 text-center text-[14px] leading-5 text-neutral-500"
           >
             {message}
@@ -172,7 +170,7 @@ function AuthGateDialog({ prompt, onCancel, onLogin }: DialogProps) {
               className="flex-1 items-center justify-center rounded-2xl border border-neutral-200 bg-white py-3 active:bg-neutral-50"
             >
               <Text
-                style={{ fontFamily: fonts.bodyBold, color: colors.darkLabel }}
+                style={{ color: colors.darkLabel }}
                 className="text-[14px]"
               >
                 Cancel
@@ -186,7 +184,6 @@ function AuthGateDialog({ prompt, onCancel, onLogin }: DialogProps) {
               style={{ backgroundColor: colors.brand }}
             >
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-[14px] text-white"
               >
                 Log in

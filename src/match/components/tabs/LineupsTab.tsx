@@ -6,7 +6,6 @@ import type { ApiStat, ApiTeam } from "@/api/entities";
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { LineupPitchView } from "@/lineup/components/LineupPitchView";
 import type { TeamLineupGroup } from "@/lineup/types";
-import { fonts } from "@/theme/fonts";
 
 type TeamSide = "home" | "away";
 
@@ -30,7 +29,7 @@ export function MatchLineupsTab({
 
   if (!homeTeam && !awayTeam) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Teams not assigned to this match yet.
       </Text>
     );
@@ -48,11 +47,10 @@ export function MatchLineupsTab({
           size={32}
           color="rgba(255,255,255,0.6)"
         />
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+        <Text className="text-lg text-white">
           Lineups not submitted yet
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-center text-sm text-white/55"
         >
           Official team sheets will appear here once managers confirm their
@@ -102,11 +100,10 @@ export function MatchLineupsTab({
 function TeamMissingLineup({ teamName }: { teamName: string }) {
   return (
     <View className="rounded-[20px] border border-dashed border-white/15 bg-white/5 px-5 py-6">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+      <Text className="text-white">
         {teamName}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-1 text-sm text-white/55"
       >
         Lineup not submitted yet.

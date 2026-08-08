@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { colors } from "@/constants";
 import { EntityLogo } from "@/components/ui";
+import { colors } from "@/constants";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAtTime } from "@/lib/datetime";
 import {
@@ -22,7 +22,6 @@ import {
   isLiveGameStatus,
 } from "@/lib/general-utils";
 import { useMatchDetail } from "@/match";
-import { fonts } from "@/theme/fonts";
 
 import type { ApiGame } from "../types";
 
@@ -110,14 +109,14 @@ function ScoreboardBody({
             <View style={styles.livePill}>
               <View style={styles.liveDot} />
               <Text
-                style={[styles.livePillText, { fontFamily: fonts.bodyBold }]}
+                style={[styles.livePillText]}
               >
                 LIVE
               </Text>
             </View>
           ) : (
             <Text
-              style={[styles.headerLabel, { fontFamily: fonts.bodySemibold }]}
+              style={[styles.headerLabel]}
             >
               SCOREBOARD
             </Text>
@@ -146,7 +145,6 @@ function ScoreboardBody({
               style={[
                 styles.phaseText,
                 {
-                  fontFamily: fonts.bodyBold,
                   color: phaseColor,
                   fontSize: metrics.phaseSize,
                   lineHeight: metrics.phaseSize * 1.1,
@@ -167,11 +165,11 @@ function ScoreboardBody({
         </View>
 
         <View style={styles.footer}>
-          <Text style={[styles.footerText, { fontFamily: fonts.body }]}>
+          <Text style={[styles.footerText]}>
             Kickoff {formatPlayedAtTime(merged.playedAt)}
           </Text>
           {merged.venueName ? (
-            <Text style={[styles.footerText, { fontFamily: fonts.body }]}>
+            <Text style={[styles.footerText]}>
               {merged.venueName}
             </Text>
           ) : null}
@@ -230,7 +228,6 @@ function TeamColumn({
         style={[
           styles.teamName,
           {
-            fontFamily: fonts.bodyBold,
             fontSize: metrics.teamNameSize,
             lineHeight: metrics.teamNameSize * 1.15,
             textAlign: align === "end" ? "right" : "left",
@@ -245,7 +242,6 @@ function TeamColumn({
           style={[
             styles.teamScore,
             {
-              fontFamily: fonts.bodyBold,
               fontSize: metrics.scoreSize,
               lineHeight: metrics.scoreSize * 1.05,
               textAlign: align === "end" ? "right" : "left",

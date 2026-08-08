@@ -12,7 +12,7 @@ import {
   TextInput,
   View
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CompetitionFormat } from "@/api/entities";
 import { ApiError } from "@/api/errors";
@@ -52,7 +52,6 @@ import {
 import { parseCalendarDate } from "@/lib/datetime";
 import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
-import { fonts } from "@/theme/fonts";
 
 const TOTAL_STEPS = 3;
 
@@ -68,7 +67,8 @@ function newTeamRow(): TeamRow {
 
 export default function CreateScreen() {
   const [step, setStep] = useState(1);
-
+  const insets = useSafeAreaInsets();
+  // const bottomInset = Math.max(insets.bottom, 10);
   const [name, setName] = useState("");
   const season = String(new Date().getFullYear());
   const [startDate, setStartDate] = useState("");
@@ -263,21 +263,22 @@ export default function CreateScreen() {
       >
         <ScrollView
           className="flex-1"
-          contentContainerClassName="px-5 pb-28 pt-4"
+          contentContainerClassName="px-5 pt-4"
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 90 
+          }}
           showsVerticalScrollIndicator={false}
         >
           <View className="gap-6">
             <View className="gap-2">
               {/* <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} /> */}
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-[26px] leading-8 text-white"
               >
                 Create a competition
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-sm leading-6 text-white/70"
               >
                 Three quick steps - pick a league, groups, or knockout cup, then manage it live.
@@ -295,9 +296,6 @@ export default function CreateScreen() {
                 {["Basics", "Teams", "Review"].map((label, i) => (
                   <Text
                     key={label}
-                    style={{
-                      fontFamily: i + 1 === step ? fonts.bodyBold : fonts.bodySemibold,
-                    }}
                     className={
                       i + 1 === step ? "text-xs text-[#E6A817]" : "text-xs text-white/45"
                     }
@@ -310,7 +308,7 @@ export default function CreateScreen() {
 
             {stepError ? (
               <View className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-                <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-red-900">
+                <Text className="text-sm text-red-900">
                   {stepError}
                 </Text>
               </View>
@@ -391,7 +389,7 @@ export default function CreateScreen() {
                     <Button
                       variant="secondary"
                       label="Back"
-                      className="flex-1"
+                      className="w-[112px]"
                       onPress={goBack}
                       disabled={createLeagueMutation.isPending}
                     />
@@ -477,7 +475,7 @@ function StepBasics({
 }) {
   return (
     <View className="gap-4">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+      <Text className="text-base text-neutral-950">
         Step 1 - Competition basics
       </Text>
 
@@ -584,7 +582,6 @@ function StepBasics({
           numberOfLines={4}
           textAlignVertical="top"
           style={{
-            fontFamily: fonts.body,
             minHeight: 100,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -636,7 +633,6 @@ function Chip({
       ].join(" ")}
     >
       <Text
-        style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
         className={selected ? "text-xs text-[#4A148C]" : "text-xs text-neutral-800"}
         numberOfLines={2}
       >
@@ -663,10 +659,10 @@ function StepTeams({
 }) {
   return (
     <View className="gap-4">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+      <Text className="text-base text-neutral-950">
         Step 2 - Teams
       </Text>
-      <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
+      <Text className="text-sm leading-6 text-slate-600">
         {format === "knockout"
           ? "Add at least two teams. List order is seeding (first listed = seed 1)."
           : format === "group"
@@ -715,7 +711,7 @@ function StepTeams({
         className="flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-[#4A148C] bg-[#FAF5FF] py-3 active:opacity-80"
       >
         <Ionicons name="add-circle-outline" size={22} color={colors.brand} />
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-sm text-[#4A148C]">
+        <Text className="text-sm text-[#4A148C]">
           Add another team
         </Text>
       </Pressable>
@@ -779,7 +775,7 @@ function StepReview({
 
   return (
     <View className="gap-5">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+      <Text className="text-base text-neutral-950">
         Step 3 - Review
       </Text>
 
@@ -793,7 +789,7 @@ function StepReview({
                 contentFit="cover"
               />
             ) : null}
-            <Text style={{ fontFamily: fonts.bodySemibold }} className="text-base text-neutral-950">
+            <Text className="text-base text-neutral-950">
               {name}
             </Text>
           </View>
@@ -832,7 +828,6 @@ function StepReview({
               name={country.name}
               flagWidth={18}
               textClassName="text-base text-neutral-950"
-              textStyle={{ fontFamily: fonts.bodySemibold }}
             />
           </SummaryLine>
         ) : null}
@@ -841,19 +836,17 @@ function StepReview({
         {description.trim() ? (
           <View className="gap-1 pt-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs uppercase tracking-wide text-slate-500"
             >
               Description
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-neutral-800">
+            <Text className="text-sm text-neutral-800">
               {description.trim()}
             </Text>
           </View>
         ) : null}
         <View className="mt-1 border-t border-neutral-200 pt-3">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="mb-2 text-xs uppercase tracking-wide text-slate-500"
           >
             Teams ({teams.length})
@@ -870,7 +863,6 @@ function StepReview({
                 <View className="h-6 w-6 rounded-lg bg-neutral-200" />
               )}
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-sm text-neutral-900"
               >
                 {team.name.trim()}
@@ -883,7 +875,7 @@ function StepReview({
       {created ? (
         <View className="flex-row gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
           <Ionicons name="checkmark-circle-outline" size={22} color="#15803d" style={{ marginTop: 2 }} />
-          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-green-950">
+          <Text className="flex-1 text-sm leading-5 text-green-950">
             Your competition is live. Open Manage to schedule games, seed a cup bracket, or
             invite players.
           </Text>
@@ -891,7 +883,7 @@ function StepReview({
       ) : (
         <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
           <Ionicons name="information-circle-outline" size={22} color={colors.brand} style={{ marginTop: 2 }} />
-          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-amber-950">
+          <Text className="flex-1 text-sm leading-5 text-amber-950">
             After creating, open Manage to invite players or finish knockout seeding if needed.
           </Text>
         </View>
@@ -912,13 +904,12 @@ function SummaryLine({
   return (
     <View className="gap-0.5">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-slate-500"
       >
         {label}
       </Text>
       {children ?? (
-        <Text style={{ fontFamily: fonts.bodySemibold }} className="text-base text-neutral-950">
+        <Text className="text-base text-neutral-950">
           {value}
         </Text>
       )}

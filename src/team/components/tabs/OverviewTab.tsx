@@ -11,7 +11,6 @@ import type {
 import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
-import { fonts } from "@/theme/fonts";
 
 import {
   deriveTeamRecord,
@@ -82,7 +81,6 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
           />
           <View className="flex-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[24px] text-white"
             >
               {team.name}
@@ -90,7 +88,6 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
             {league ? (
               <Pressable onPress={() => router.push(`/league/${league.id}`)}>
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="pt-1 text-sm text-[#E6A817]"
                 >
                   {league.name}
@@ -100,7 +97,6 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
             ) : null}
             {standing ? (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="pt-1 text-xs text-white/55"
               >
                 Position #{standing.position} · {standing.points} pts
@@ -126,7 +122,6 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
             <View className="flex-row items-center gap-4">
               <View className="h-14 w-14 items-center justify-center rounded-full bg-[#364156]">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-lg text-white"
                 >
                   {initials(topPlayer.player.name)}
@@ -134,13 +129,11 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
               </View>
               <View className="flex-1">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-white"
                 >
                   {topPlayer.player.name}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="pt-1 text-sm text-[#E6A817]"
                 >
                   {topPlayer.goals} goals · {topPlayer.assists} assists
@@ -160,14 +153,12 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
               className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
             >
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-white"
               >
                 {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
                 {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="pt-2 text-sm text-white/55"
               >
                 {formatPlayedAt(game.playedAt)}
@@ -176,7 +167,6 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
           ))
         ) : (
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-sm text-white/55"
           >
             No completed games yet.
@@ -206,7 +196,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}
@@ -229,7 +218,6 @@ function MiniCard({
     <View className="flex-1 rounded-[18px] bg-white/6 px-3 py-4">
       <Text
         style={{
-          fontFamily: fonts.bodyBold,
           color: accent ? colors.accent : "#FFFFFF",
         }}
         className="text-center text-[22px]"
@@ -237,7 +225,6 @@ function MiniCard({
         {value}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-1 text-center text-xs text-white/55"
       >
         {label}

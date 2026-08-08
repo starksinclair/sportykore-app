@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiTeam } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
@@ -18,7 +19,6 @@ import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors, scoreboardPattern } from "@/constants";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useGenerateInvite } from "@/invite/hooks";
 import { buildInviteUrl, parseInviteToken } from "@/invite/invite-utils";
@@ -144,14 +144,12 @@ export function InviteLinkSheet({
               <View className="flex-row items-center justify-center gap-2">
                 <Ionicons name="key-outline" size={16} color={colors.accent} />
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-xs uppercase tracking-wide text-white/50"
                 >
                   Invite code
                 </Text>
               </View>
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-center text-base text-white"
                 selectable
               >
@@ -238,7 +236,6 @@ function InviteActionButton({
         />
       )}
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={isPrimary ? "text-sm text-neutral-950" : "text-sm text-white"}
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -269,12 +266,11 @@ function ContextRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="gap-1">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[11px] uppercase tracking-wider text-white/45"
       >
         {label}
       </Text>
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+      <Text className="text-base text-white">
         {value}
       </Text>
     </View>
@@ -298,7 +294,7 @@ function TeamPicker({
     : teams;
   const selectedTeam = teams.find((team) => team.id === selectedId) ?? null;
   const hasSelection = selectedTeam != null;
-
+  const insets = useSafeAreaInsets();
   const handleSelect = (id: number) => {
     onSelect(id);
     setOpen(false);
@@ -314,7 +310,6 @@ function TeamPicker({
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         Team
@@ -340,7 +335,6 @@ function TeamPicker({
           </View>
           <View className="min-w-0 flex-1">
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className={hasSelection ? "text-sm text-white" : "text-sm text-white/65"}
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -348,7 +342,6 @@ function TeamPicker({
               {selectedTeam?.name ?? "Choose team"}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-0.5 text-xs text-white/45"
               numberOfLines={1}
             >
@@ -364,7 +357,6 @@ function TeamPicker({
               className="rounded-lg px-2 py-1"
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-xs text-white/55"
               >
                 Clear
@@ -395,7 +387,6 @@ function TeamPicker({
                   autoCorrect={false}
                   style={{
                     flex: 1,
-                    fontFamily: fonts.body,
                     fontSize: 14,
                     color: "#FFFFFF",
                     paddingVertical: 6,
@@ -417,6 +408,9 @@ function TeamPicker({
               nestedScrollEnabled
               keyboardShouldPersistTaps="handled"
               style={{ maxHeight: 220 }}
+              contentContainerStyle={{
+                paddingBottom: insets.bottom + 90 
+              }}
             >
               {filtered.map((team) => (
                 <TeamOptionRow
@@ -428,7 +422,6 @@ function TeamPicker({
               ))}
               {filtered.length === 0 ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="px-4 py-4 text-sm text-white/45"
                 >
                   {`No teams match "${query.trim()}".`}
@@ -466,7 +459,6 @@ function TeamOptionRow({
       />
       <View className="min-w-0 flex-1">
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
           numberOfLines={1}
           ellipsizeMode="tail"

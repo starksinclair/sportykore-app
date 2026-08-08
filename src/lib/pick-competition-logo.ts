@@ -3,6 +3,12 @@ import * as ImagePicker from "expo-image-picker";
 import type { PickedImageFile } from "@/lib/picked-image";
 
 const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED_MIME = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
 
 function mimeFromUri(uri: string): string {
   const lower = uri.toLowerCase();
@@ -12,13 +18,14 @@ function mimeFromUri(uri: string): string {
   return "image/jpeg";
 }
 
-function fileNameFromUri(uri: string): string {
+function fileNameFromUri(uri: string, mime: string): string {
+  const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
   const segment = uri.split("/").pop()?.split("?")[0];
-  if (segment && /\.png$/i.test(segment)) return segment;
-  return "logo.png";
+  if (segment && /\.(jpe?g|png|webp)$/i.test(segment)) return segment;
+  return `logo.${ext}`;
 }
 
-/** Opens the photo library for a square competition logo. PNG only, max 5 MB. */
+/** Opens the photo library for a square competition logo. JPG, PNG, or WebP, max 5 MB. */
 export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
@@ -27,7 +34,7 @@ export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
 
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ["images"],
-    allowsEditing: false,
+    allowsEditing: true,
     aspect: [1, 1],
     quality: 0.8,
   });
@@ -38,8 +45,8 @@ export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
 
   const asset = result.assets[0];
   const mime = asset.mimeType ?? mimeFromUri(asset.uri);
-  if (mime !== "image/png") {
-    throw new Error("Use a PNG image only (max 5 MB).");
+  if (!ALLOWED_MIME.has(mime)) {
+    throw new Error("Use a JPG, PNG, or WebP image (max 5 MB).");
   }
 
   if (asset.fileSize != null && asset.fileSize > MAX_BYTES) {
@@ -48,7 +55,7 @@ export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
 
   return {
     uri: asset.uri,
-    name: fileNameFromUri(asset.uri),
-    type: "image/png",
+    name: fileNameFromUri(asset.uri, mime),
+    type: mime,
   };
 }

@@ -14,7 +14,6 @@ import { openDirections } from "@/lib/maps";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { MatchEventsTimeline } from "@/match/components/MatchEventsTimeline";
 import type { MatchDetail } from "@/match/types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   detail: MatchDetail;
@@ -64,7 +63,6 @@ export function MatchOverviewTab({ detail }: Props) {
           />
           <View className="items-center">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[32px] text-white"
             >
               {showScore
@@ -73,7 +71,6 @@ export function MatchOverviewTab({ detail }: Props) {
             </Text>
             {phase ? (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className={
                   isLive
                     ? "pt-2 text-sm text-[#ba0c2f]"
@@ -165,7 +162,6 @@ function TeamColumn({
     >
       <EntityLogo logoUrl={logoUrl} variant="team" size="md" tone="dark" />
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-center text-white"
       >
         {name}
@@ -177,11 +173,10 @@ function TeamColumn({
 function FactRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="flex-row items-center justify-between py-2">
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         {label}
       </Text>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="ml-4 flex-1 text-right text-sm text-white"
         numberOfLines={2}
       >
@@ -201,7 +196,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}

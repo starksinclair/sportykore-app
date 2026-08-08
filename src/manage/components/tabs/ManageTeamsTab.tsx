@@ -5,10 +5,9 @@ import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import { EntityLogo } from "@/components/ui";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
-import type { ManagedTeam } from "../../types";
 import { useDeleteTeam } from "../../hooks";
+import type { ManagedTeam } from "../../types";
 import { TeamFormSheet } from "../teams/TeamFormSheet";
 
 type Props = {
@@ -73,11 +72,10 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
             <Ionicons name="shirt-outline" size={22} color="#E6A817" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               League teams
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -92,7 +90,6 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
           >
             <Ionicons name="add" size={16} color="#171717" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-neutral-950"
               numberOfLines={1}
             >
@@ -108,11 +105,10 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
         </View>
       ) : teams.length === 0 ? (
         <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+          <Text className="text-base text-white">
             No teams yet
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="pt-2 text-sm leading-6 text-white/55"
           >
             Add at least two teams before you can schedule games or invite players.
@@ -133,7 +129,6 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
                 accessibilityLabel={`${team.name} logo`}
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="flex-1 text-white"
                 numberOfLines={1}
               >

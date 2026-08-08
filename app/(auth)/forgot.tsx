@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 import { showErrorToast, showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 export default function RecoverAccountScreen() {
   const recoverMutation = useRecoverAccount();
@@ -63,10 +62,10 @@ export default function RecoverAccountScreen() {
           </Pressable>
 
           <View className="gap-2">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-2xl text-neutral-950">
+            <Text className="text-2xl text-neutral-950">
               Recover account
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
+            <Text className="text-sm leading-6 text-slate-600">
               Enter the recovery email you set on your account. We will send a sign-in code to your
               primary email address.
             </Text>

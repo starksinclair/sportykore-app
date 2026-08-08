@@ -6,6 +6,16 @@ import type { ApiLeague, ApiSeason, SeasonStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
+import {
+  GroupFormatConfigControl,
+  buildDefaultGroupConfig,
+  type GroupFormatFormState,
+} from "@/groups";
+import {
+  KnockoutTieFormatControl,
+  buildKnockoutConfig,
+  type TieFormatSelection,
+} from "@/knockout";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import { DIVISION_OPTIONS } from "@/league/league-create-constants";
 import {
@@ -17,18 +27,7 @@ import {
   parseCalendarDate,
   toCalendarDateString,
 } from "@/lib/datetime";
-import {
-  KnockoutTieFormatControl,
-  buildKnockoutConfig,
-  type TieFormatSelection,
-} from "@/knockout";
-import {
-  GroupFormatConfigControl,
-  buildDefaultGroupConfig,
-  type GroupFormatFormState,
-} from "@/groups";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useCreateSeason, useUpdateLeague } from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
@@ -175,10 +174,10 @@ export function ManageSettingsTab({
   return (
     <View className="gap-8 pb-10">
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+        <Text className="text-lg text-white">
           Edit league
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm text-white/55">
           Updates apply to the whole league, not just the selected season.
         </Text>
 
@@ -199,7 +198,6 @@ export function ManageSettingsTab({
 
         <View className="gap-2">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-xs uppercase tracking-wide text-white/45"
           >
             League duration
@@ -231,7 +229,6 @@ export function ManageSettingsTab({
 
         <View className="gap-2">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-xs uppercase tracking-wide text-white/45"
           >
             Division
@@ -248,7 +245,6 @@ export function ManageSettingsTab({
                   }`}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={active ? "text-white" : "text-white/70"}
                   >
                     {opt.label}
@@ -260,7 +256,7 @@ export function ManageSettingsTab({
         </View>
 
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-white/45">
+          <Text className="text-xs leading-5 text-white/45">
             Changing the tiebreaker re-sorts the active season table immediately.
           </Text>
           <TiebreakerPicker
@@ -279,16 +275,16 @@ export function ManageSettingsTab({
       </View>
 
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+        <Text className="text-lg text-white">
           Seasons
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+        <Text className="text-sm leading-6 text-white/55">
           Each season has its own fixtures, roster, and standings. Mark a season as{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          <Text className="text-white/75">
             Active
           </Text>{" "}
           to run it now - any other active season in this league is marked{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          <Text className="text-white/75">
             Completed
           </Text>{" "}
           automatically. Tap the edit icon to rename a season or change its status.
@@ -297,7 +293,6 @@ export function ManageSettingsTab({
         {seasons.length > 0 ? (
           <View className="gap-1 rounded-xl bg-white/5 px-3 py-3">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs uppercase tracking-wide text-white/40"
             >
               All seasons
@@ -305,7 +300,6 @@ export function ManageSettingsTab({
             {seasons.map((season) => (
               <View key={season.id} className="flex-row items-center gap-2 py-1">
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   numberOfLines={1}
                   className={`flex-1 text-sm ${
                     season.id === activeSeasonId ? "text-accent-300" : "text-white/75"
@@ -329,16 +323,16 @@ export function ManageSettingsTab({
       </View>
 
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+        <Text className="text-lg text-white">
           Add season
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+        <Text className="text-sm leading-6 text-white/55">
           Start a new campaign when you begin a fresh table. Use{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          <Text className="text-white/75">
             Inactive
           </Text>{" "}
           for upcoming seasons, or{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            <Text className="text-white/75">
             Active
           </Text>{" "}
           to switch straight into the new season.
@@ -360,7 +354,6 @@ export function ManageSettingsTab({
 
         <View className="gap-2">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-xs uppercase tracking-wide text-white/45"
           >
             Format
@@ -385,7 +378,6 @@ export function ManageSettingsTab({
                   }`}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={active ? "text-white" : "text-white/70"}
                   >
                     {opt.label}
@@ -441,7 +433,7 @@ function LeagueDurationProgress({
   const progress = leagueDurationProgress(startDate, endDate);
   if (progress == null) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-white/45">
+      <Text className="text-xs leading-5 text-white/45">
         Set start and end dates to track league progress.
       </Text>
     );
@@ -455,20 +447,17 @@ function LeagueDurationProgress({
     <View className="gap-2 rounded-xl bg-white/5 px-3 py-3">
       <View className="flex-row items-center justify-between gap-2">
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs text-white/50"
           numberOfLines={1}
         >
           {startDate.trim()}
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className="text-xs text-accent-300"
         >
           {statusLabel}
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-right text-xs text-white/50"
           numberOfLines={1}
         >

@@ -35,7 +35,6 @@ import {
   showInfoToast,
   showThrownAsToast,
 } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import type {
   PlayerMembership,
@@ -129,14 +128,12 @@ export function PlayerProfileView({
           <PlayerAvatar player={player} size={88} />
           <View className="min-w-0 flex-1 gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-2xl text-white"
               numberOfLines={2}
             >
               {player.name}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-sm text-white/60"
               numberOfLines={2}
             >
@@ -146,7 +143,6 @@ export function PlayerProfileView({
             </Text>
             {activeSeason?.team ? (
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-sm text-[#E6A817]"
                 numberOfLines={1}
               >
@@ -155,7 +151,6 @@ export function PlayerProfileView({
               </Text>
             ) : (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-sm text-white/45"
               >
                 Not in a league yet
@@ -166,14 +161,12 @@ export function PlayerProfileView({
 
         {player.bio ? (
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-sm leading-6 text-white/75"
           >
             {player.bio}
           </Text>
         ) : isOwner ? (
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-sm leading-6 text-white/50"
           >
             Add a short bio so league admins and teammates know your game.
@@ -223,10 +216,10 @@ export function PlayerProfileView({
         <View className="flex-row items-center gap-3 rounded-[20px] border border-accent-400/25 bg-accent-500/10 px-4 py-4">
           <Ionicons name="people-outline" size={22} color="#E6A817" />
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Join a league
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/55">
+            <Text className="text-xs text-white/55">
               Your profile will show your club status once you join a roster.
             </Text>
           </View>
@@ -235,7 +228,6 @@ export function PlayerProfileView({
             className="rounded-full bg-accent-500 px-3 py-2"
           >
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-neutral-950"
             >
               Join
@@ -296,13 +288,11 @@ export function PlayerProfileCreateState({
         </View>
         <View className="gap-2">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-center text-2xl text-white"
           >
             Create player profile
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-sm leading-6 text-white/60"
           >
             Build a permanent profile that follows you across leagues, with
@@ -344,7 +334,6 @@ function PlayerAvatar({ player, size }: { player: ApiPlayer; size: number }) {
       style={{ width: size, height: size, borderRadius: size / 3 }}
     >
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-2xl text-[#E6A817]"
       >
         {initials}
@@ -368,10 +357,10 @@ function CompletenessNudge({
     <View className="gap-3 rounded-[20px] border border-white/10 bg-white/5 px-4 py-4">
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             Profile {completeness}% complete
           </Text>
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/50">
+          <Text className="text-xs text-white/50">
             Add a little more so your player card feels finished.
           </Text>
         </View>
@@ -393,7 +382,6 @@ function CompletenessNudge({
             className="rounded-full bg-white/8 px-3 py-1.5"
           >
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className="text-xs text-white"
             >
               {MISSING_COPY[field]}
@@ -433,7 +421,6 @@ function HighlightsSection({
             className={atCap ? "opacity-45" : ""}
           >
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-accent-300"
             >
               Add
@@ -449,7 +436,7 @@ function HighlightsSection({
       ) : highlights.length ? (
         <>
           {atCap && isOwner ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/45">
+            <Text className="text-xs text-white/45">
               You have 10 highlights. Delete one before adding another.
             </Text>
           ) : null}
@@ -486,11 +473,10 @@ function HighlightsSection({
       ) : (
         <View className="items-center gap-3 rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
           <Ionicons name="play-circle-outline" size={34} color="#E6A817" />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             {isOwner ? "Add your first highlight" : "No highlights yet"}
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-sm leading-6 text-white/55"
           >
             {isOwner
@@ -547,7 +533,6 @@ function HighlightCard({
         )}
         <View className="gap-2 px-3 py-3">
           <Text
-            style={{ fontFamily: fonts.bodySemibold }}
             className="text-xs text-white"
             numberOfLines={2}
           >
@@ -580,10 +565,10 @@ function CareerStatsSection({
       <Section title="Career stats">
         <View className="items-center gap-3 rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
           <Ionicons name="stats-chart-outline" size={30} color="rgba(255,255,255,0.55)" />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             No games played yet
           </Text>
-          <Text style={{ fontFamily: fonts.body }} className="text-center text-sm text-white/50">
+          <Text className="text-center text-sm text-white/50">
             Stats will appear after this player records match minutes.
           </Text>
         </View>
@@ -624,11 +609,10 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
               key={row.label}
               className="flex-row items-center justify-between gap-3 border-b border-white/10 px-4 py-3"
             >
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+                <Text className="text-sm text-white/45">
                 {row.label}
               </Text>
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="min-w-0 flex-1 text-right text-sm text-white"
                 numberOfLines={1}
               >
@@ -638,7 +622,7 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
           ))}
         </View>
       ) : (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+        <Text className="text-sm text-white/50">
           Profile details will appear here as they are added.
         </Text>
       )}
@@ -829,7 +813,6 @@ function PlayerProfileFormSheet({
                 multiline
               />
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-right text-xs text-slate-500"
               >
                 {bio.length}/300
@@ -957,7 +940,6 @@ function HighlightFormSheet({
             placeholder="Optional"
           />
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-right text-xs text-slate-500"
           >
             {title.length}/140
@@ -1006,7 +988,7 @@ function PhotoPicker({
         ) : (
           <View className="items-center gap-1">
             <Ionicons name="camera-outline" size={26} color={colors.brand} />
-            <Text style={{ fontFamily: fonts.body }} className="text-xs text-slate-500">
+            <Text className="text-xs text-slate-500">
               Add photo
             </Text>
           </View>
@@ -1014,7 +996,7 @@ function PhotoPicker({
       </Pressable>
       {photo ? (
         <Pressable onPress={onRemove} hitSlop={8}>
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-xs text-slate-500">
+          <Text className="text-xs text-slate-500">
             Remove selected photo
           </Text>
         </Pressable>
@@ -1037,7 +1019,6 @@ function PositionPicker({
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[11px] uppercase tracking-wider text-slate-500"
       >
         {label}
@@ -1054,7 +1035,6 @@ function PositionPicker({
               }`}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={active ? "text-xs text-brand-700" : "text-xs text-slate-700"}
               >
                 {labelForPosition(position)}
@@ -1067,7 +1047,7 @@ function PositionPicker({
             onPress={() => onChange(null)}
             className="rounded-xl border border-slate-200 bg-white px-3 py-2"
           >
-            <Text style={{ fontFamily: fonts.bodySemibold }} className="text-xs text-slate-500">
+            <Text className="text-xs text-slate-500">
               None
             </Text>
           </Pressable>
@@ -1087,7 +1067,6 @@ function FootPicker({
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[11px] uppercase tracking-wider text-slate-500"
       >
         Preferred foot
@@ -1104,7 +1083,6 @@ function FootPicker({
               }`}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={active ? "text-center text-sm text-brand-700" : "text-center text-sm text-slate-700"}
               >
                 {option.label}
@@ -1121,11 +1099,10 @@ function PrivateProfileState() {
   return (
     <View className="items-center gap-3 rounded-[28px] border border-white/10 bg-white/5 px-6 py-12">
       <Ionicons name="lock-closed-outline" size={34} color="rgba(255,255,255,0.65)" />
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+      <Text className="text-lg text-white">
         {"This profile isn't public"}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="text-center text-sm leading-6 text-white/55"
       >
         This player has chosen to keep their profile private.
@@ -1147,7 +1124,6 @@ function Section({
     <View className="gap-3">
       <View className="flex-row items-center justify-between">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[12px] uppercase tracking-[2px] text-white/55"
         >
           {title}
@@ -1171,10 +1147,10 @@ function StatCard({
   return (
     <View className="min-w-[132px] flex-1 rounded-[20px] bg-white/6 px-4 py-4">
       <Ionicons name={icon} size={21} color="#E6A817" />
-      <Text style={{ fontFamily: fonts.bodyBold }} className="pt-3 text-2xl text-white">
+        <Text className="pt-3 text-2xl text-white">
         {value}
       </Text>
-      <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/55">
+      <Text className="text-xs text-white/55">
         {label}
       </Text>
     </View>

@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame, ApiStatType } from "@/api/entities";
 import { DetailTabs, type DetailTab } from "@/components/ui/detail-tabs";
-import { fonts } from "@/theme/fonts";
 
 import { partitionGames } from "../../utils/games";
 import { AddGameSheet } from "../games/AddGameSheet";
@@ -71,11 +70,10 @@ export function ManageGamesTab({
             <Ionicons name="calendar-outline" size={22} color="#E6A817" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Match schedule
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -93,7 +91,6 @@ export function ManageGamesTab({
             >
               <Ionicons name="add" size={16} color="#171717" />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-xs text-neutral-950"
                 numberOfLines={1}
               >

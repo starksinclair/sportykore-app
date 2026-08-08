@@ -3,14 +3,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { DetailTabs, type DetailTab } from "@/components/ui";
-import { EntityLogo } from "@/components/ui";
+import { DetailTabs, EntityLogo, type DetailTab } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import type { CountryMatchSummary, CountryPlayerHighlight } from "@/country";
 import { useCountryDetail } from "@/country";
 import type { TeamRef } from "@/home/types";
-import { fonts } from "@/theme/fonts";
 
 type TabKey = "teams" | "players" | "recentMatches";
 
@@ -40,7 +38,7 @@ export default function CountryRoute() {
     return (
       <DetailScreenShell title="Country">
         <View className="rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+          <Text className="text-lg text-white">
             Country not found
           </Text>
         </View>
@@ -77,7 +75,6 @@ export default function CountryRoute() {
       {leagues.length > 0 ? (
         <View className="gap-3">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[12px] uppercase tracking-[2px] text-white/55"
           >
             Leagues
@@ -96,7 +93,7 @@ export default function CountryRoute() {
                     size="sm"
                     tone="brand"
                   />
-                  <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+                  <Text className="text-white">
                     {league.name}
                   </Text>
                 </View>
@@ -142,7 +139,7 @@ function TeamsTab({ teams }: { teams: TeamRef[] }) {
               size="sm"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {team.name}
             </Text>
           </View>
@@ -170,15 +167,15 @@ function PlayersTab({ players }: { players: CountryPlayerHighlight[] }) {
         >
           <View className="flex-row items-center gap-3">
             <View className="h-12 w-12 items-center justify-center rounded-full bg-[#364156]">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+              <Text className="text-base text-white">
                 {entry.player.avatarInitials}
               </Text>
             </View>
             <View>
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 {entry.player.name}
               </Text>
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+              <Text className="text-sm text-white/55">
                 {entry.player.position}
                 {entry.goals > 0 ? ` · ${entry.goals} goals` : ""}
               </Text>
@@ -206,14 +203,14 @@ function RecentMatchesTab({ matches }: { matches: CountryMatchSummary[] }) {
           onPress={() => router.push(`/match/${match.id}`)}
           className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
         >
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             {match.homeTeam.name} {match.scoreline} {match.awayTeam.name}
           </Text>
-          <Text style={{ fontFamily: fonts.body }} className="pt-2 text-sm text-white/55">
+          <Text className="pt-2 text-sm text-white/55">
             {match.kickoffLabel} · {match.venue}
           </Text>
           {match.league?.name ? (
-            <Text style={{ fontFamily: fonts.body }} className="pt-1 text-xs text-white/40">
+            <Text className="pt-1 text-xs text-white/40">
               {match.league.name}
             </Text>
           ) : null}
@@ -225,7 +222,7 @@ function RecentMatchesTab({ matches }: { matches: CountryMatchSummary[] }) {
 
 function EmptyTab({ message }: { message: string }) {
   return (
-    <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
       {message}
     </Text>
   );
@@ -241,13 +238,11 @@ function StatRow({
       {items.map((item) => (
         <View key={item.label} className="flex-1 rounded-[22px] bg-white/6 px-3 py-4">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-center text-[24px] text-[#E6A817]"
           >
             {item.value}
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="pt-1 text-center text-xs text-white/55"
           >
             {item.label}

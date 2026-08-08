@@ -6,7 +6,6 @@ import type { CompetitionFormat } from "@/api/entities";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 const FORMAT_OPTIONS: {
   id: CompetitionFormat;
@@ -67,7 +66,6 @@ export function CompetitionFormatPicker({
         className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80"
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className="flex-1 pr-2 text-base text-neutral-950"
           numberOfLines={2}
         >
@@ -94,14 +92,12 @@ export function CompetitionFormatPicker({
                 <View className="flex-1 gap-0.5">
                   <Text
                     style={{
-                      fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold,
                     }}
                     className="text-sm text-neutral-950"
                   >
                     {option.label}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-xs leading-4 text-slate-500"
                   >
                     {option.description}

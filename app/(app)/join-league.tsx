@@ -29,7 +29,6 @@ import {
   showErrorToast,
   showSuccessToast,
 } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 function readParam(value: string | string[] | undefined): string | undefined {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -139,7 +138,6 @@ export default function JoinLeagueScreen() {
               <Ionicons name="chevron-back" size={22} color={colors.white} />
             </Pressable>
             <Text
-              style={{ fontFamily: fonts.displayBold }}
               className="text-center text-base uppercase tracking-[2px] text-white/85"
             >
               Join a league
@@ -171,13 +169,11 @@ export default function JoinLeagueScreen() {
                 </View>
                 <View className="gap-2">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-center text-2xl text-white"
                   >
                     Join your league
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-center text-sm leading-6 text-white/65"
                   >
                     Paste the invite code or full link from your league admin.
@@ -190,7 +186,6 @@ export default function JoinLeagueScreen() {
                   <View className="flex-row items-center gap-2">
                     <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-xs uppercase tracking-wide text-white/50"
                     >
                       Invite details
@@ -208,13 +203,11 @@ export default function JoinLeagueScreen() {
               <View className="gap-4 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
                 <View className="gap-1">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-base text-white"
                   >
                     Enter invite
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-sm leading-5 text-white/55"
                   >
                     Codes and shared links both work here.
@@ -247,7 +240,6 @@ export default function JoinLeagueScreen() {
                   <Ionicons name="enter-outline" size={17} color={colors.darkLabel} />
                 )}
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-neutral-950"
                   numberOfLines={1}
                 >
@@ -266,12 +258,11 @@ function InviteContextRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="gap-1">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[11px] uppercase tracking-wider text-white/45"
       >
         {label}
       </Text>
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+      <Text className="text-base text-white">
         {value}
       </Text>
     </View>

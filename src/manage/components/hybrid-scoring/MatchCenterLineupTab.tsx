@@ -4,7 +4,6 @@ import { Text, View } from "react-native";
 import type { ApiGameDetail, GameStatus } from "@/api/entities";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
 import type { LeagueRosterRow } from "@/manage/types";
-import { fonts } from "@/theme/fonts";
 
 import { MatchCenterSubstitutionPanel } from "./MatchCenterSubstitutionPanel";
 import { TeamTabs, type TeamSide } from "./TeamTabs";
@@ -67,7 +66,7 @@ export function MatchCenterLineupTab({
 
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
         {teamRoster.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+          <Text className="text-sm text-white/45">
             No players on this team for the season.
           </Text>
         ) : (

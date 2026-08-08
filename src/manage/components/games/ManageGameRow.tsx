@@ -7,7 +7,6 @@ import type { ApiGame } from "@/api/entities";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
 import { formatPlayedAt } from "@/lib/datetime";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useDeleteGame, useGameTimeActions, useUpdateGame } from "../../hooks";
 import { EditGameSheet } from "./EditGameSheet";
@@ -150,7 +149,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {game.homeTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -161,7 +160,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -169,13 +168,11 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         {showScore ? (
           <View className="items-end gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[#E6A817]"
             >
               {game.homeScore ?? "-"}
             </Text>
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
+            <Text 
               className="text-[#E6A817]"
             >
               {game.awayScore ?? "-"}
@@ -186,7 +183,6 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
 
       <View className="flex-row flex-wrap items-center pt-3">
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs uppercase tracking-[1.5px] text-white/45"
         >
           {formatPlayedAt(game.playedAt)} ·{" "}
@@ -269,7 +265,6 @@ function ActionChip({
         color={accent ? "#1a1a1a" : "rgba(255,255,255,0.85)"}
       />
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className={`text-xs ${accent ? "text-neutral-950" : "text-white/85"}`}
       >
         {label}

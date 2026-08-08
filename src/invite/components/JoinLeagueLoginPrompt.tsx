@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 export function JoinLeagueLoginPrompt() {
   const router = useRouter();
@@ -14,13 +13,11 @@ export function JoinLeagueLoginPrompt() {
         <Ionicons name="people-outline" size={28} color={colors.accent} />
       </View>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="pt-6 text-center text-[22px] text-white"
       >
         Log in to join a league
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-3 text-center text-sm leading-6 text-white/65"
       >
         Sign in to accept your invite and join your team roster.
@@ -33,7 +30,6 @@ export function JoinLeagueLoginPrompt() {
       >
         <Ionicons name="log-in-outline" size={17} color={colors.darkLabel} />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-neutral-950"
         >
           Log in

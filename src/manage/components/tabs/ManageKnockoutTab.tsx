@@ -13,6 +13,7 @@ import type { ApiStage, ApiTeam, KnockoutStageConfig } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { colors } from "@/constants";
 import {
   BracketView,
   KnockoutTieFormatControl,
@@ -27,9 +28,7 @@ import {
   useStageBracket,
   type TieFormatSelection,
 } from "@/knockout";
-import { colors } from "@/constants";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -70,11 +69,10 @@ export function ManageKnockoutTab({
             <Ionicons name="trophy-outline" size={22} color={colors.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Knockout cup
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -109,7 +107,6 @@ export function ManageKnockoutTab({
               color={hasKnockoutStage ? colors.white : colors.darkLabel}
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className={`text-xs ${
                 hasKnockoutStage ? "text-white" : "text-neutral-950"
               }`}
@@ -123,11 +120,10 @@ export function ManageKnockoutTab({
 
       {knockouts.length === 0 ? (
         <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+          <Text className="text-base text-white">
             No knockout stage
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="pt-2 text-sm leading-6 text-white/55"
           >
             Add a cup stage, then seed teams in draw order to build the bracket.
@@ -149,7 +145,6 @@ export function ManageKnockoutTab({
                   }`}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={active ? "text-accent-200" : "text-white/70"}
                   >
                     {stage.name} · {stage.status}
@@ -346,7 +341,6 @@ function KnockoutActionButton({
             color={gold ? colors.darkLabel : colors.white}
           />
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className={`min-w-0 text-center text-xs ${
               gold ? "text-neutral-950" : "text-white"
             }`}
@@ -523,7 +517,6 @@ function SeedKnockoutSheet({
             <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
               <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="min-w-0 flex-1 text-xs leading-5 text-white/60"
               >
                 {order.length} teams
@@ -541,14 +534,12 @@ function SeedKnockoutSheet({
               >
                 <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-xs text-accent-100"
                   >
                     {index + 1}
                   </Text>
                 </View>
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="min-w-0 flex-1 text-sm text-white"
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -586,7 +577,6 @@ function SeedKnockoutSheet({
             </View>
             {byeExplanation(order.length) ? (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-sm leading-6 text-white/55"
               >
                 {byeExplanation(order.length)}
@@ -596,7 +586,6 @@ function SeedKnockoutSheet({
           <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/25 bg-accent-500/10 px-3 py-3">
             <Ionicons name="warning" size={18} color={colors.accent} />
             <Text
-              style={{ fontFamily: fonts.body }}
               className="min-w-0 flex-1 text-sm leading-5 text-white/65"
             >
               Generating the bracket locks the seeding. You can&apos;t reorder
@@ -634,7 +623,6 @@ function SeedSheetBlock({
   return (
     <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {title}

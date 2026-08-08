@@ -11,7 +11,6 @@ import {
   aggregatePlayerMatchBadges,
   slotCoordinates,
 } from "@/lineup/utils";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   group: TeamLineupGroup;
@@ -60,14 +59,12 @@ export function LineupPitchView({
         />
         <View className="flex-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className={isDark ? "text-white" : "text-neutral-900"}
           >
             {group.team.name}
           </Text>
           {activeFormation ? (
             <Text
-              style={{ fontFamily: fonts.body }}
               className={isDark ? "text-xs text-white/45" : "text-xs text-neutral-500"}
             >
               {activeFormation.displayName || activeFormation.name}
@@ -108,7 +105,6 @@ export function LineupPitchView({
           ].join(" ")}
         >
           <Text
-            style={{ fontFamily: fonts.body }}
             className={isDark ? "text-sm text-white/55" : "text-sm text-neutral-500"}
           >
             Formation not set.
@@ -118,7 +114,7 @@ export function LineupPitchView({
 
       {coaches.length > 0 ? (
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.bodyBold }} className={mutedLabel}>
+          <Text className={mutedLabel}>
             {coaches.length === 1 ? "Coach" : "Coaches"}
           </Text>
           {coaches.slice(0, 1).map((admin) => {
@@ -128,12 +124,11 @@ export function LineupPitchView({
                 key={admin.id}
                 className={["flex-row items-center gap-3 rounded-xl px-3 py-2.5", rowBg].join(" ")}
               >
-                <Text style={{ fontFamily: fonts.bodyBold }} className={["w-8", accentColor].join(" ")}>
+                <Text className={["w-8", accentColor].join(" ")}>
                   C
                 </Text>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={nameColor}
                     numberOfLines={1}
                   >
@@ -141,7 +136,6 @@ export function LineupPitchView({
                   </Text>
                   {admin.user?.fullName && admin.user?.email ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className={isDark ? "text-xs text-white/45" : "text-xs text-neutral-500"}
                       numberOfLines={1}
                     >
@@ -157,7 +151,7 @@ export function LineupPitchView({
 
       {linkPlayers && group.substitutes.length > 0 ? (
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.bodyBold }} className={mutedLabel}>
+          <Text className={mutedLabel}>
             Substitutes
           </Text>
           {group.substitutes.map((sub) => (
@@ -179,11 +173,10 @@ export function LineupPitchView({
                 />
                 <BadgeCluster badges={badgeByPlayer.get(sub.playerId)} />
               </View>
-              <Text style={{ fontFamily: fonts.bodyBold }} className={["w-8", accentColor].join(" ")}>
+                <Text className={["w-8", accentColor].join(" ")}>
                 {sub.jerseyNumber != null ? `#${sub.jerseyNumber}` : "-"}
               </Text>
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={["flex-1", nameColor].join(" ")}
               >
                 {sub.player?.name ?? "Unknown"}

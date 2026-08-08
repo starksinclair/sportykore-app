@@ -11,7 +11,7 @@ import {
   View,
   type SectionListData,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
@@ -26,7 +26,6 @@ import {
   type AdminTeamManaged,
   type OwnedLeague,
 } from "@/manage";
-import { fonts } from "@/theme/fonts";
 import useRefresh from "hooks/useRefresh";
 
 type ManageListItem =
@@ -44,7 +43,7 @@ export default function ManageScreen() {
   const { user, hydrated } = useAuth();
   const query = useManagedHub(Boolean(user));
   const [refreshing, onRefresh] = useRefresh([() => query.refetch()]);
-
+  const insets = useSafeAreaInsets();
   const sections = useMemo((): ManageSection[] => {
     const owned = query.data?.ownedLeagues ?? [];
     const admin = query.data?.adminTeams ?? [];
@@ -103,13 +102,11 @@ export default function ManageScreen() {
         <View className="px-5 pb-5 pt-2">
           <View className="">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[28px] text-white"
             >
               Manage
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-1 text-sm leading-6 text-white/60"
             >
               Leagues you own and teams you admin, all in one place.
@@ -177,6 +174,9 @@ export default function ManageScreen() {
             }
             stickySectionHeadersEnabled={false}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 90 // Safely pushes the last item above the buttons
+            }}
           />
         )}
       </SafeAreaView>
@@ -225,14 +225,12 @@ function ManageCountCard({
           <Ionicons name={icon} size={18} color={colors.accent} />
         </View>
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-2xl text-white"
         >
           {value}
         </Text>
       </View>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="pt-3 text-[11px] uppercase tracking-wide text-white/50"
       >
         {label}
@@ -245,14 +243,12 @@ function ManageSectionHeader({ title, count }: { title: string; count: number })
   return (
     <View className="flex-row items-center justify-between pb-3 pt-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-[2px] text-white/45"
       >
         {title}
       </Text>
       <View className="rounded-full bg-white/8 px-2.5 py-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[11px] text-white/60"
         >
           {count}
@@ -271,13 +267,11 @@ function ManageEmptyLeagues() {
         <Ionicons name="briefcase-outline" size={28} color={colors.accent} />
       </View>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="pt-5 text-center text-lg text-white"
       >
         Nothing to manage yet
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-2 text-center text-sm leading-6 text-white/55"
       >
         Create a league from the Create tab, or wait for a league owner to assign
@@ -291,7 +285,6 @@ function ManageEmptyLeagues() {
       >
         <Ionicons name="add" size={17} color={colors.darkLabel} />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-neutral-950"
         >
           Create league
@@ -314,7 +307,6 @@ function ManageErrorState({
         <Ionicons name="warning-outline" size={28} color={colors.accent} />
       </View>
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className="pt-5 text-center text-sm leading-6 text-white/65"
       >
         {message}
@@ -327,7 +319,6 @@ function ManageErrorState({
       >
         <Ionicons name="refresh-outline" size={17} color={colors.darkLabel} />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-neutral-950"
         >
           Retry

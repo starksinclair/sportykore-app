@@ -1,11 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { openBrowserAsync } from "expo-web-browser";
 import type { ReactNode } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
 import { Button } from "@/components/ui/Button";
@@ -13,13 +12,11 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { colors, scoreboardPattern } from "@/constants";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { useOwnPlayerProfile } from "@/player";
-import { fonts } from "@/theme/fonts";
-
-const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut, deleteAccount } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const displayName = user?.name?.trim();
   const email = user?.email ?? "";
@@ -94,7 +91,6 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
             </Pressable>
             <Text
-              style={{ fontFamily: fonts.displayBold }}
               className="text-base text-center uppercase tracking-[2px] text-white/85"
             >
               Profile
@@ -107,19 +103,18 @@ export default function ProfileScreen() {
               {user ? (
                 <View className="flex-row items-center gap-4">
                   <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
-                    <Text style={{ fontFamily: fonts.bodyBold }} className="text-xl text-white">
+                    <Text className="text-xl text-white">
                       {displayName?.slice(0, 1).toUpperCase()}
                     </Text>
                   </View>
                   <View className="flex-1 gap-1">
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-lg leading-6 text-white"
                       numberOfLines={2}
                     >
                       {displayName}
                     </Text>
-                    <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/65">
+                    <Text className="text-sm text-white/65">
                       {email}
                     </Text>
                   </View>
@@ -132,7 +127,7 @@ export default function ProfileScreen() {
                   accessibilityLabel="Sign in"
                 >
                   <Ionicons name="log-in-outline" size={22} color={colors.brand} />
-                  <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-brand">
+                  <Text className="text-base text-brand">
                     Sign in
                   </Text>
                 </Pressable>
@@ -146,6 +141,10 @@ export default function ProfileScreen() {
         className="flex-1"
         contentContainerClassName="gap-6 px-5 pb-10 pt-5"
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16,
+        }}
       >
         {user ? (
           <>
@@ -169,13 +168,11 @@ export default function ProfileScreen() {
                       </View>
                       <View className="min-w-0 flex-1 gap-1">
                         <Text
-                          style={{ fontFamily: fonts.bodyBold }}
                           className="text-[15px] text-neutral-950"
                         >
                           Create player profile
                         </Text>
                         <Text
-                          style={{ fontFamily: fonts.body }}
                           className="text-xs leading-5 text-slate-500"
                         >
                           A permanent profile that follows you across leagues,
@@ -226,7 +223,7 @@ export default function ProfileScreen() {
           <Divider />
           <SettingsRowChevron
             icon="help-circle-outline"
-            title="Help centre"
+            title="Help center"
             onPress={() => openBrowserAsync("https://waitlist.sportykore.com")}
           />
         </Section>
@@ -239,17 +236,16 @@ export default function ProfileScreen() {
             accessibilityLabel="Log out"
           >
             <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
+            <Text className="text-base text-red-700">
               Log out
             </Text>
           </Pressable>
         ) : null}
 
         {/* <Text
-          style={{ fontFamily: fonts.body }}
           className="pb-8 text-center text-xs leading-5 text-slate-500"
         >
-          Sportykore v{APP_VERSION}
+          SportyKore v{APP_VERSION}
         </Text> */}
       </ScrollView>
     </View>
@@ -260,7 +256,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="px-1 text-[11px] uppercase tracking-[2px] text-slate-500"
       >
         {title}
@@ -298,11 +293,11 @@ function SettingsRowChevron({
         <Ionicons name={icon} size={20} color="#374151" />
       </View>
       <View className="flex-1 gap-0.5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-[15px] text-neutral-950">
+        <Text className="text-[15px] text-neutral-950">
           {title}
         </Text>
         {subtitle ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-slate-500">
+          <Text className="text-xs text-slate-500">
             {subtitle}
           </Text>
         ) : null}

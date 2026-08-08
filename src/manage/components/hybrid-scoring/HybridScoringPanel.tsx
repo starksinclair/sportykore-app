@@ -6,7 +6,6 @@ import type { ApiGameDetail } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import type { LeagueRosterRow } from "../../types";
 import { PlayerActionRow } from "./PlayerPickRow";
@@ -101,12 +100,11 @@ export function HybridScoringPanel({
         pointerEvents={accreditActive ? "auto" : "none"}
       >
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-xs uppercase tracking-[2px] text-white/55"
         >
           Select scorer and assist
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/40">
+        <Text className="text-xs text-white/40">
           Tap the goal or assist icon beside a player.
         </Text>
 
@@ -118,7 +116,7 @@ export function HybridScoringPanel({
         />
 
         {players.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+            <Text className="text-sm text-white/45">
             No active players on this team.
           </Text>
         ) : (
@@ -170,7 +168,7 @@ export function HybridScoringPanel({
                 size={18}
                 color={isOwnGoal ? colors.accent : "rgba(255,255,255,0.55)"}
               />
-              <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+              <Text className="text-sm text-white">
                 Own goal
               </Text>
             </Pressable>
@@ -187,7 +185,7 @@ export function HybridScoringPanel({
                 size={18}
                 color={isPenalty ? colors.accent : "rgba(255,255,255,0.55)"}
               />
-              <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+              <Text className="text-sm text-white">
                 Penalty
               </Text>
             </Pressable>
@@ -238,7 +236,6 @@ function ScoreSide({
   return (
     <View className="flex-1 items-center gap-2">
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className="text-xs uppercase tracking-wide text-white/55"
       >
         {label}

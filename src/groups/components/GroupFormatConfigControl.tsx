@@ -3,7 +3,6 @@ import { Pressable, Text, View } from "react-native";
 
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
-import { fonts } from "@/theme/fonts";
 
 /**
  * Numeric field that keeps a local text draft so the user can clear it or
@@ -109,7 +108,6 @@ export function GroupFormatConfigControl({
                 }`}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className={active ? chipTextActive : chipTextIdle}
                 >
                   {opt.label}
@@ -128,7 +126,6 @@ export function GroupFormatConfigControl({
       />
 
       <Text
-        style={{ fontFamily: fonts.body }}
         className={`text-xs leading-5 ${
           tone === "dark" ? "text-white/45" : "text-slate-500"
         }`}

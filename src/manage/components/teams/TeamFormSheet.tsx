@@ -2,18 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, type ReactNode } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { AuthTextField } from "@/components/ui/auth-text-field";
 import { EntityLogo } from "@/components/ui";
+import { AuthTextField } from "@/components/ui/auth-text-field";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { colors } from "@/constants";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
+import { useCreateTeam, useUpdateTeam } from "../../hooks";
 import type { ManagedTeam } from "../../types";
 import { TeamAdminsSection } from "./TeamAdminsSection";
-import { useCreateTeam, useUpdateTeam } from "../../hooks";
 
 type Props = {
   visible: boolean;
@@ -100,13 +99,11 @@ export function TeamFormSheet({
               />
               <View className="flex-1 gap-0.5">
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-sm text-white"
                 >
                   Current logo
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="text-xs leading-5 text-white/50"
                 >
                   Pick a new image below to replace it.
@@ -117,7 +114,6 @@ export function TeamFormSheet({
 
           <View className="gap-2">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[11px] uppercase tracking-wider text-white/60"
             >
               {isEdit ? "New logo (optional)" : "Team logo (optional)"}
@@ -163,7 +159,6 @@ export function TeamFormSheet({
             />
           )}
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-sm text-neutral-950"
             numberOfLines={1}
           >
@@ -185,7 +180,6 @@ function TeamSheetBlock({
   return (
     <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {title}

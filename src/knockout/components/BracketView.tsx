@@ -10,8 +10,8 @@ import {
 
 import type { ApiTie } from "@/api/entities";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   buildBracketScaffold,
   type BracketColumn,
@@ -50,6 +50,7 @@ export function BracketView({
   hasThirdPlace,
 }: Props) {
   const isDark = tone === "dark";
+  const insets = useSafeAreaInsets();
   const scaffold = useMemo(
     () => buildBracketScaffold(ties, { hasThirdPlace }),
     [ties, hasThirdPlace],
@@ -73,13 +74,11 @@ export function BracketView({
         }`}
       >
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className={`text-base ${isDark ? "text-white" : "text-slate-900"}`}
         >
           Bracket not ready
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className={`pt-2 text-sm leading-6 ${
             isDark ? "text-white/55" : "text-slate-600"
           }`}
@@ -102,6 +101,9 @@ export function BracketView({
         horizontal
         showsHorizontalScrollIndicator={false}
         removeClippedSubviews
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 90 
+        }}
       >
         <View style={styles.contentRow}>
           <PitchStripes height={totalHeight} />
@@ -315,7 +317,6 @@ const styles = StyleSheet.create({
   },
   roundHeader: {
     height: HEADER_H,
-    fontFamily: fonts.bodyBold,
     fontSize: 10,
     letterSpacing: 1.2,
     textTransform: "uppercase",
@@ -365,20 +366,17 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   championCaption: {
-    fontFamily: fonts.bodySemibold,
     fontSize: 10,
     letterSpacing: 1.2,
     textTransform: "uppercase",
     color: "rgba(255, 255, 255, 0.6)",
   },
   championName: {
-    fontFamily: fonts.bodyBold,
     fontSize: 14,
     color: "#F1BC2F",
     maxWidth: CENTER_W - 16,
   },
   championTbd: {
-    fontFamily: fonts.bodySemibold,
     fontSize: 11,
     color: "rgba(255, 255, 255, 0.4)",
   },
@@ -388,7 +386,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   thirdPlaceCaption: {
-    fontFamily: fonts.bodySemibold,
     fontSize: 10,
     letterSpacing: 1.2,
     textTransform: "uppercase",
@@ -405,12 +402,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   placeholderTeam: {
-    fontFamily: fonts.body,
     fontSize: 11,
     color: "rgba(255, 255, 255, 0.3)",
   },
   placeholderVs: {
-    fontFamily: fonts.bodyBold,
     fontSize: 10,
     textAlign: "center",
     paddingVertical: 2,

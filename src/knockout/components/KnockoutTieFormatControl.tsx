@@ -1,7 +1,6 @@
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import type { KnockoutStageConfig, KnockoutTieConfig, TieFormat } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
 
 export type TieFormatSelection =
   | { kind: "single" }
@@ -71,7 +70,6 @@ export function KnockoutTieFormatControl({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={`text-xs uppercase tracking-wide ${
           isDark ? "text-white/45" : "text-slate-500"
         }`}
@@ -97,7 +95,6 @@ export function KnockoutTieFormatControl({
               }`}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={
                   active
                     ? isDark
@@ -120,7 +117,6 @@ export function KnockoutTieFormatControl({
       {isCustomBestOf || activePresetId === "custom" ? (
         <View className="flex-row items-center gap-3">
           <Text
-            style={{ fontFamily: fonts.body }}
             className={isDark ? "text-sm text-white/70" : "text-sm text-slate-600"}
           >
             Best of
@@ -141,7 +137,6 @@ export function KnockoutTieFormatControl({
                 ? "border-white/15 bg-white text-neutral-900"
                 : "border-slate-200 bg-slate-50 text-slate-900"
             }`}
-            style={{ fontFamily: fonts.bodySemibold }}
           />
         </View>
       ) : null}
@@ -159,14 +154,12 @@ export function KnockoutTieFormatControl({
           }`}
         >
           <Text
-            style={{ fontFamily: fonts.body }}
             className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
             numberOfLines={1}
           >
             Away goals tiebreak
           </Text>
           <Text
-            style={{ fontFamily: fonts.bodySemibold }}
             className={
               value.awayGoals
                 ? isDark
@@ -189,14 +182,12 @@ export function KnockoutTieFormatControl({
         }`}
       >
         <Text
-          style={{ fontFamily: fonts.body }}
           className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
           numberOfLines={1}
         >
           Third-place playoff
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={
             hasThirdPlace
               ? isDark

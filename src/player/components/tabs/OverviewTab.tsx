@@ -11,7 +11,6 @@ import type {
 } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
 import { labelForPosition } from "@/lib/positions";
-import { fonts } from "@/theme/fonts";
 
 import { aggregatePlayerStats, collectAllStats, countAllGames } from "../../utils";
 
@@ -40,7 +39,6 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
       <View className="items-center gap-4 rounded-[28px] bg-white/6 px-5 py-8">
         <View className="h-28 w-28 items-center justify-center rounded-full bg-[#364156]">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[34px] text-white"
           >
             {initials(player.name)}
@@ -48,7 +46,6 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
         </View>
         <View className="items-center">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[28px] text-white"
           >
             {player.name}
@@ -56,7 +53,6 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
           {player.position ? (
             <View className="mt-2 rounded-full border border-white/10 bg-white/8 px-3 py-1">
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-[11px] uppercase tracking-[1.5px] text-white/80"
               >
                 {labelForPosition(player.position)}
@@ -75,7 +71,6 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
                 tone="dark"
               />
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-[15px] text-[#10E3B1]"
               >
                 {season.team.name}
@@ -83,8 +78,7 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
             </Pressable>
           ) : null}
           {league ? (
-            <Text
-              style={{ fontFamily: fonts.body }}
+            <Text 
               className="pt-1 text-xs text-white/55"
             >
               {league.name}
@@ -168,7 +162,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}
@@ -191,13 +184,11 @@ function StatCard({
     <View className="min-w-[140px] flex-1 rounded-[22px] bg-white/6 px-4 py-5">
       <Ionicons name={icon} size={24} color="#E6A817" />
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="pt-4 text-[28px] text-white"
       >
         {value}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-1 text-sm text-white/55"
       >
         {label}

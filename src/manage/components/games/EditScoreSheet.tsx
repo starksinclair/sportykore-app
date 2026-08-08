@@ -3,10 +3,9 @@ import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useUpdateGame } from "../../hooks";
 
@@ -83,7 +82,7 @@ export function EditScoreSheet({
           loading={updateMutation.isPending}
           onPress={() => void handleSave()}
         />
-        <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-slate-500">
+        <Text className="text-center text-xs text-slate-500">
           Scores are not updated automatically when deleting stats - adjust manually if needed.
         </Text>
       </View>

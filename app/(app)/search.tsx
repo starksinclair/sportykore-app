@@ -10,10 +10,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { CountryFlag } from "@/components/ui/CountryFlag";
 import { EntityLogo } from "@/components/ui";
+import { CountryFlag } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
 import { useSearch } from "@/home/hooks";
 import {
@@ -23,7 +23,6 @@ import {
 } from "@/home/recent-searches";
 import type { SearchEntityType, SearchResult } from "@/home/types";
 import { messageFromThrown } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 const ENTITY_ORDER: SearchEntityType[] = ["country", "league", "team", "player"];
 const ENTITY_LABELS: Record<SearchEntityType, string> = {
   country: "Countries",
@@ -42,7 +41,7 @@ export default function SearchScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
-
+  const insets = useSafeAreaInsets();
   useEffect(() => {
     let cancelled = false;
     getRecentSearches().then((value) => {
@@ -107,7 +106,6 @@ export default function SearchScreen() {
               placeholderTextColor="#9CA3AF"
               returnKeyType="search"
               className="flex-1 p-0 text-sm text-white"
-              style={{ fontFamily: fonts.body }}
             />
             {query.length > 0 ? (
               <Pressable
@@ -126,6 +124,9 @@ export default function SearchScreen() {
           contentContainerClassName="gap-6 px-5 pb-12 pt-2"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 16,
+          }}
         >
           {trimmed.length === 0 ? (
             <RecentsBlock
@@ -191,13 +192,11 @@ function SearchErrorState({
       </View>
       <View className="gap-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-base text-white"
         >
           Search unavailable
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-sm leading-6 text-white/60"
         >
           {message || "Check your connection and try again."}
@@ -209,7 +208,6 @@ function SearchErrorState({
       >
         <Ionicons name="refresh" size={15} color={colors.darkLabel} />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-neutral-950"
         >
           Retry
@@ -236,13 +234,11 @@ function RecentsBlock({
         </View>
         <View className="gap-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-center text-base text-white"
           >
             Nothing here yet
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-sm leading-6 text-white/55"
           >
             Search by player, country, league, or team. Recent searches will show up here.
@@ -255,7 +251,6 @@ function RecentsBlock({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         Recent
@@ -274,7 +269,6 @@ function RecentsBlock({
                 <Ionicons name="time-outline" size={18} color={colors.accent} />
               </View>
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="min-w-0 flex-1 text-sm text-white"
                 numberOfLines={1}
                 ellipsizeMode="tail"
@@ -305,13 +299,11 @@ function EmptyResults({ query }: { query: string }) {
       </View>
       <View className="gap-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-center text-base text-white"
         >
           No matches for &ldquo;{query}&rdquo;
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-center text-sm leading-6 text-white/55"
         >
           Try a different spelling, or search by country or league instead.
@@ -341,7 +333,6 @@ function ResultsBlock({
                 <Ionicons name={ENTITY_ICONS[type]} size={14} color={colors.accent} />
               </View>
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-xs uppercase tracking-wide text-white/50"
               >
                 {ENTITY_LABELS[type]}
@@ -374,7 +365,6 @@ function ResultsBlock({
                   </View>
                   <View className="min-w-0 flex-1 gap-0.5">
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-sm text-white"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -387,8 +377,7 @@ function ResultsBlock({
                           <CountryFlag code={result.countryCode} width={14} />
                         ) : null}
                         <Text
-                          style={{ fontFamily: fonts.body }}
-                          className="min-w-0 flex-1 text-xs text-white/50"
+                            className="min-w-0 flex-1 text-xs text-white/50"
                           numberOfLines={1}
                           ellipsizeMode="tail"
                         >

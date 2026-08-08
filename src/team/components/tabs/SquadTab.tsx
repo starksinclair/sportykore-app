@@ -10,7 +10,6 @@ import {
   type PositionGroup,
 } from "@/lib/positions";
 import { isGoalsStat } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   season: ApiTeamSeason | null;
@@ -31,7 +30,7 @@ export function TeamSquadTab({ season }: Props) {
 
   if (!season) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Select a league and season to view the squad.
       </Text>
     );
@@ -39,7 +38,7 @@ export function TeamSquadTab({ season }: Props) {
 
   if (!groups.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Squad roster not available for this season yet.
       </Text>
     );
@@ -51,13 +50,11 @@ export function TeamSquadTab({ season }: Props) {
         <View key={group.position ?? "unassigned"} className="gap-3">
           <View className="flex-row items-center justify-between">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[12px] uppercase tracking-[2px] text-white/55"
             >
               {group.label}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-[11px] text-white/45"
             >
               {group.players.length}
@@ -72,7 +69,6 @@ export function TeamSquadTab({ season }: Props) {
               >
                 <View className="h-10 w-10 items-center justify-center rounded-full bg-[#364156]">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-[11px] text-white"
                   >
                     {shortForPosition(player.position)}
@@ -80,14 +76,12 @@ export function TeamSquadTab({ season }: Props) {
                 </View>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-white"
                   >
                     {player.name}
                   </Text>
                   {player.goals > 0 || player.assists > 0 ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="pt-1 text-xs text-white/55"
                     >
                       {player.goals} goal{player.goals === 1 ? "" : "s"} ·{" "}
@@ -96,7 +90,6 @@ export function TeamSquadTab({ season }: Props) {
                     </Text>
                   ) : player.events > 0 ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="pt-1 text-xs text-white/45"
                     >
                       {player.events} event{player.events === 1 ? "" : "s"}{" "}

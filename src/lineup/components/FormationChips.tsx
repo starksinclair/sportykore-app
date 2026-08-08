@@ -1,7 +1,6 @@
-import { ScrollView, Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text } from "react-native";
 
 import type { Formation } from "@/lineup/types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   formations: Formation[];
@@ -32,7 +31,6 @@ export function FormationChips({ formations, selectedId, onSelect }: Props) {
             ].join(" ")}
           >
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className={selected ? "text-brand-900" : "text-white"}
             >
               {formation.displayName || formation.name}

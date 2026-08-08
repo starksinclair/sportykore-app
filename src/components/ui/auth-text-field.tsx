@@ -8,8 +8,6 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { fonts } from "@/theme/fonts";
-
 import { FormFieldLabel } from "./form-field-label";
 
 export type AuthTextFieldProps = TextInputProps & {
@@ -65,7 +63,6 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
             ref={ref}
             placeholderTextColor="#9CA3AF"
             className={`min-h-[22px] flex-1 px-0 py-0 text-base text-neutral-950 ${className ?? ""}`}
-            style={{ fontFamily: fonts.body }}
             editable={editable}
             {...rest}
           />
@@ -87,7 +84,6 @@ export function AuthAccessoryLink({
   return (
     <Pressable hitSlop={8} onPress={onPress} accessibilityRole="link">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs font-semibold text-[#5D2A8E]"
       >
         {label}

@@ -22,7 +22,6 @@ import {
   pairSubstitutionEvents,
   type PairedSubstitution,
 } from "@/manage/utils/stats";
-import { fonts } from "@/theme/fonts";
 
 const MAX_DRAFT_SUBS = 11;
 
@@ -234,11 +233,10 @@ export function MatchCenterSubstitutionPanel({
           <Ionicons name="swap-horizontal-outline" size={20} color={colors.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+          <Text className="text-white">
             Substitutions
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-xs leading-5 text-white/50"
             numberOfLines={2}
           >
@@ -250,7 +248,7 @@ export function MatchCenterSubstitutionPanel({
       {canDraft ? (
         <View className="gap-3">
           {!hasLineup && !lineupsQuery.isLoading ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+            <Text className="text-sm text-white/45">
               Set this team’s lineup before recording substitutions.
             </Text>
           ) : null}
@@ -272,7 +270,6 @@ export function MatchCenterSubstitutionPanel({
                   >
                     <View className="flex-row items-center justify-between">
                       <Text
-                        style={{ fontFamily: fonts.bodyBold }}
                         className="text-sm text-white"
                       >
                         Swap {index + 1}
@@ -357,20 +354,19 @@ export function MatchCenterSubstitutionPanel({
           ) : null}
         </View>
       ) : (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+          <Text className="text-sm text-white/45">
           Substitutions can be recorded while the match is live.
         </Text>
       )}
 
       <View className="gap-2 border-t border-white/10 pt-4">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[11px] uppercase tracking-wider text-white/45"
         >
           Recorded
         </Text>
         {recorded.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+          <Text className="text-sm text-white/45">
             No substitutions recorded for this team yet.
           </Text>
         ) : (
@@ -386,13 +382,11 @@ export function MatchCenterSubstitutionPanel({
               >
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-sm text-white"
                   >
                     {offName} → {onName}
                   </Text>
-                  <Text
-                    style={{ fontFamily: fonts.body }}
+                  <Text     
                     className="text-xs text-white/45"
                   >
                     {minuteLabel}
@@ -448,7 +442,6 @@ function PlayerDropdown({
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {label}
@@ -469,7 +462,6 @@ function PlayerDropdown({
           </View>
           <View className="min-w-0 flex-1">
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className={selected ? "text-sm text-white" : "text-sm text-white/65"}
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -477,7 +469,6 @@ function PlayerDropdown({
               {selected ? playerLabel(selected) : placeholder}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-0.5 text-xs text-white/45"
               numberOfLines={1}
             >
@@ -508,7 +499,6 @@ function PlayerDropdown({
                   autoCorrect={false}
                   style={{
                     flex: 1,
-                    fontFamily: fonts.body,
                     fontSize: 14,
                     color: colors.white,
                     paddingVertical: 6,
@@ -542,14 +532,12 @@ function PlayerDropdown({
                     }`}
                   >
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="w-9 text-xs text-white/45"
                       numberOfLines={1}
                     >
                       {entry.jerseyNumber != null ? `#${entry.jerseyNumber}` : "-"}
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className={active ? "min-w-0 flex-1 text-sm text-accent-100" : "min-w-0 flex-1 text-sm text-white"}
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -570,7 +558,6 @@ function PlayerDropdown({
               })}
               {filtered.length === 0 ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="px-4 py-4 text-sm text-white/45"
                 >
                   {q ? `No players match "${query.trim()}".` : emptyText}
@@ -626,7 +613,6 @@ function SubstitutionActionButton({
             color={gold ? colors.darkLabel : colors.white}
           />
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className={`min-w-0 text-center text-xs ${
               gold ? "text-neutral-950" : "text-white"
             }`}

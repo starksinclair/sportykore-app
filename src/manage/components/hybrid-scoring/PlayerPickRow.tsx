@@ -1,8 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { fonts } from "@/theme/fonts";
-
 export type PlayerRowAction = {
   key: string;
   icon: keyof typeof Ionicons.glyphMap;
@@ -32,13 +30,11 @@ export function PlayerActionRow({ name, jersey, actions }: ActionRowProps) {
     >
       <View className="mr-2 flex-1 flex-row items-center gap-3">
         <Text
-          style={{ fontFamily: fonts.body }}
           className="w-8 text-xs text-white/45"
         >
           {jersey ? `#${jersey}` : "-"}
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className="flex-1 text-sm text-white"
           numberOfLines={1}
         >
@@ -99,12 +95,11 @@ export function PlayerPickRow({
     >
       <View className="flex-row items-center gap-3">
         <Text
-          style={{ fontFamily: fonts.body }}
           className="w-8 text-xs text-white/45"
         >
           {jersey ? `#${jersey}` : "-"}
         </Text>
-        <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+        <Text className="text-sm text-white">
           {name}
         </Text>
       </View>

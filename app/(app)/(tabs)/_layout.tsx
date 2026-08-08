@@ -1,10 +1,10 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import { StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 function TabBarPattern() {
   const pattern = scoreboardPattern("strong");
@@ -19,30 +19,34 @@ function TabBarPattern() {
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, 10);
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
+        tabBarAllowFontScaling: false,
+        tabBarLabelPosition: "below-icon",
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.tabInactive,
         tabBarLabelStyle: {
-          fontFamily: fonts.bodyBold,
           fontSize: 11,
-          marginBottom: 4,
+          lineHeight: 14,
         },
         tabBarItemStyle: {
-          marginHorizontal: 6,
-          marginVertical: 8,
+          marginVertical: 7,
           borderRadius: 18,
+          paddingHorizontal: 2,
         },
         tabBarStyle: {
           backgroundColor: "transparent",
           borderTopWidth: 0,
           elevation: 0,
-          height: 78,
+          height: 64 + bottomInset,
           paddingTop: 8,
-          paddingBottom: 10,
+          paddingBottom: bottomInset,
           position: "absolute",
         },
         tabBarBackground: () => <TabBarPattern />,

@@ -24,7 +24,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useFonts } from "expo-font";
-import { useColorScheme } from "react-native";
+import { Platform, useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import Toast from "react-native-toast-message";
@@ -47,6 +47,14 @@ function RootStack() {
       SplashScreen.hideAsync();
     }
   }, [hydrated, fontsLoaded]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    // void NavigationBar.setPositionAsync("absolute");
+    // void NavigationBar.setBackgroundColorAsync("#00000000");
+    // void NavigationBar.setButtonStyleAsync("light");
+  }, []);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

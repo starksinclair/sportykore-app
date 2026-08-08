@@ -6,7 +6,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { Logo } from "@/components/ui/logo";
 import { colors, scoreboardPattern } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   title: string;
@@ -38,14 +37,12 @@ export function InviteScreenShell({
           <View className="items-center gap-3">
             <Logo variant="full" color={colors.accent} fontSize={32} lineHeight={44} />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-2xl text-white"
             >
               {title}
             </Text>
             {subtitle ? (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-center text-sm leading-6 text-white/65"
               >
                 {subtitle}
@@ -75,13 +72,11 @@ function InviteContextRow({ label, value }: { label: string; value: string }) {
   return (
     <View className="gap-1">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[11px] uppercase tracking-wider text-white/45"
       >
         {label}
       </Text>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-lg text-white"
       >
         {value}

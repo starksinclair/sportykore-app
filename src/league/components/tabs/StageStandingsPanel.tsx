@@ -2,12 +2,11 @@ import { ActivityIndicator, Text, View } from "react-native";
 
 import type { ApiStage } from "@/api/entities";
 import { colors } from "@/constants";
+import { useStageStandings, useZones } from "@/groups";
 import {
   GroupStandingsView,
   LeagueStandingsTab,
 } from "@/league/components/tabs/StandingsTab";
-import { useStageStandings, useZones } from "@/groups";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   stage: ApiStage;
@@ -44,7 +43,7 @@ export function LeagueStageStandingsPanel({
       );
     }
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         Standings not available yet.
       </Text>
     );

@@ -5,7 +5,6 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useRequestOtp, useVerifyOtp } from "@/auth/hooks";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import { OtpInputField } from "./OtpInputField";
 
@@ -66,26 +65,22 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
           </View>
           <View className="gap-2">
             <Text
-              style={{ fontFamily: fonts.displayBold }}
               className="text-center text-2xl text-neutral-950"
             >
               Check your email
             </Text>
             {recoveryMode ? (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-center text-sm leading-6 text-slate-500"
               >
                 Enter your primary email and the 6 digit code we sent.
               </Text>
             ) : (
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-center text-sm leading-6 text-slate-500"
               >
                 We sent a 6 digit code to{" "}
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-neutral-950"
                 >
                   {email}
@@ -119,7 +114,7 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
           {verifyMutation.isPending ? (
             <View className="flex-row items-center justify-center gap-2">
               <ActivityIndicator color={colors.accent} size="small" />
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+              <Text className="text-sm text-slate-500">
                 Verifying code...
               </Text>
             </View>
@@ -128,7 +123,6 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
           {verifyMutation.isError ? (
             <View className="rounded-2xl border border-red-100 bg-red-50 px-3 py-3">
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-center text-sm text-red-600"
               >
                 Invalid or expired code. Please try again.
@@ -139,7 +133,7 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
 
         <View className="items-center">
           {resendCooldown > 0 ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-400">
+            <Text className="text-sm text-slate-400">
               Resend code in {resendCooldown}s
             </Text>
           ) : (
@@ -156,7 +150,6 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
                 <Ionicons name="refresh" size={16} color={colors.darkLabel} />
               )}
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-sm text-neutral-950"
               >
                 {requestMutation.isPending ? "Sending..." : "Resend code"}

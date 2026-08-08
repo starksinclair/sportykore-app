@@ -8,7 +8,6 @@ import { colors } from "@/constants";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 type Size = "sm" | "md" | "lg";
 
@@ -86,7 +85,6 @@ export function LogoImageUpload({
           />
           {size !== "sm" ? (
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-[10px] text-slate-500"
             >
               Add logo
@@ -104,7 +102,6 @@ export function LogoImageUpload({
   const meta = value ? (
     <>
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className={`text-sm text-neutral-900 ${layout === "centered" ? "text-center" : ""}`}
         numberOfLines={1}
       >
@@ -118,7 +115,6 @@ export function LogoImageUpload({
         className={layout === "centered" ? "items-center" : undefined}
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className="text-sm text-brand"
         >
           Remove
@@ -127,7 +123,6 @@ export function LogoImageUpload({
     </>
   ) : (
     <Text
-      style={{ fontFamily: fonts.body }}
       className={`text-xs leading-5 text-slate-500 ${layout === "centered" ? "text-center" : ""}`}
     >
       {hint}

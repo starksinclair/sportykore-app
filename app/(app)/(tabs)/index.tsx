@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ApiError } from "@/api/errors";
 import { useAuth } from "@/auth";
@@ -57,7 +57,6 @@ import {
 } from "@/invite/storage";
 import { messageFromThrown } from "@/lib/show-error-toast";
 import { useOwnPlayerProfile } from "@/player";
-import { fonts } from "@/theme/fonts";
 import { StatusBar } from "expo-status-bar";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 import useRefresh from "hooks/useRefresh";
@@ -83,7 +82,7 @@ export default function HomeScreen() {
   const { isOnline } = useNetworkStatus();
   const { user } = useAuth();
   const today = useMemo(() => startOfDay(new Date()), []);
-
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<FeedTab>("matches");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -260,7 +259,6 @@ export default function HomeScreen() {
             >
               <Ionicons name="options-outline" size={18} color={colors.brand} />
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-sm text-neutral-900"
               >
                 {selectedCountry ? selectedCountry.name : "Filters"}
@@ -277,7 +275,6 @@ export default function HomeScreen() {
               >
                 <PulsingDot size={6} color="#ba0c2f" />
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-[#ba0c2f]"
                 >
                   Live
@@ -304,7 +301,6 @@ export default function HomeScreen() {
                   className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-sm text-neutral-950"
                   >
                     {selectedDate.displayLabel}
@@ -370,10 +366,10 @@ export default function HomeScreen() {
             stripeColor={scoreboardPattern().stripeColor}
           />
 
-          <Animated.View entering={FadeInDown.duration(350)} className="gap-6  px-5 pb-8 pt-4">
+          <Animated.View entering={FadeInDown.duration(350)} className="gap-6  px-5 pb-5 pt-4">
             <View className="flex-row items-center gap-3">
               <View className="shrink-0">
-                <Logo variant="full" color={colors.accent} fontSize={18} lineHeight={25} />
+                <Logo variant="image" fontSize={18} lineHeight={25} />
               </View>
 
               <Pressable
@@ -383,7 +379,7 @@ export default function HomeScreen() {
                 className="flex-1 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 active:opacity-80"
               >
                 <Ionicons name="search-outline" size={14} color="#FFFFFF" />
-                <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
+                <Text className="flex-1 text-sm text-white/55">
                   Players, leagues, teams
                 </Text>
               </Pressable>
@@ -398,7 +394,6 @@ export default function HomeScreen() {
                   <Ionicons name="person-outline" size={20} color="#FFFFFF" />
                 </Pressable>
                 {/* <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs uppercase tracking-[2px] text-white/45"
                 >
                   {selectedDate.shortDate}
@@ -412,6 +407,9 @@ export default function HomeScreen() {
           <SectionList<MatchFeedItem, MatchFeedSection>
             className="flex-1 bg-white"
             contentContainerClassName="px-5 pb-32 pt-5"
+            contentContainerStyle={{
+                paddingBottom: insets.bottom + 90,
+            }}
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={false}
             sections={showMatchFeedList ? matchSections : []}
@@ -421,7 +419,6 @@ export default function HomeScreen() {
             renderSectionHeader={({ section }) => (
               <View className="pb-2 pt-4">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-xs uppercase tracking-[1.5px] text-slate-500"
                 >
                   {section.title}
@@ -435,7 +432,6 @@ export default function HomeScreen() {
               return (
                 <View className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-sm leading-5 text-slate-600"
                   >
                     No favourite leagues yet - tap the heart on a league to pin it here.
@@ -537,9 +533,6 @@ export default function HomeScreen() {
               <Ionicons name="globe-outline" size={17} color={colors.brand} />
             </View>
             <Text
-              style={{
-                fontFamily: selectedCountry === null ? fonts.bodyBold : fonts.bodySemibold,
-              }}
               className={
                 selectedCountry === null ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"
               }
@@ -570,8 +563,7 @@ export default function HomeScreen() {
                 <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
                   <CountryFlag code={option.code} width={22} />
                 </View>
-                <Text
-                  style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
+                <Text 
                   className={selected ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"}
                 >
                   {option.name}
@@ -599,7 +591,7 @@ export default function HomeScreen() {
             >
               <Ionicons name="chevron-back" size={18} color={colors.brand} />
             </Pressable>
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+            <Text className="text-base text-neutral-950">
               {calendar.monthLabelFormat.format(calendarMonth)}
             </Text>
             <Pressable
@@ -614,7 +606,6 @@ export default function HomeScreen() {
             {calendar.weekdayLabels.map((day, index) => (
               <Text
                 key={`${day}-${index}`}
-                style={{ fontFamily: fonts.bodyBold }}
                 className="w-10 text-center text-xs uppercase tracking-[1.5px] text-slate-400"
               >
                 {day}
@@ -650,13 +641,11 @@ export default function HomeScreen() {
                     ].join(" ")}
                   >
                     <Text
-                      style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
                       className={selected ? "text-sm text-white" : "text-sm text-neutral-900"}
                     >
                       {cell.getDate()}
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className={
                         selected
                           ? "pt-1 text-[10px] text-white/70"
@@ -700,13 +689,11 @@ function PendingInviteBanner({
       </View>
       <View className="min-w-0 flex-1 gap-0.5">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-sm text-neutral-950"
         >
           Finish your invite
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs leading-5 text-neutral-700"
           numberOfLines={2}
         >

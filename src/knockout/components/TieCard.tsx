@@ -1,5 +1,4 @@
 import type { ApiTie } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
 import { memo } from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -47,7 +46,6 @@ function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props
     >
       {tie.isBye ? (
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={`text-xs ${
             isBracket || isDark ? "text-accent-300" : "text-brand-700"
           }`}
@@ -56,14 +54,12 @@ function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props
         </Text>
       ) : null}
       <Text
-        style={{ fontFamily: homeWon ? fonts.bodyBold : fonts.body }}
         className={`${isBracket ? "text-xs" : "text-sm"} ${teamClass(homeWon)}`}
         numberOfLines={1}
       >
         {homeName}
       </Text>
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={`py-1 text-center ${isBracket ? "text-xs" : "text-sm"} ${
           isBracket || isDark ? "text-accent-300" : "text-brand-700"
         }`}
@@ -71,7 +67,6 @@ function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props
         {score}
       </Text>
       <Text
-        style={{ fontFamily: awayWon ? fonts.bodyBold : fonts.body }}
         className={`${isBracket ? "text-xs" : "text-sm"} ${teamClass(awayWon)}`}
         numberOfLines={1}
       >
@@ -79,7 +74,6 @@ function TieCardBase({ tie, tone = "dark", variant = "default", onPress }: Props
       </Text>
       {tie.tieFormat === "best_of" && tie.bestOf != null ? (
         <Text
-          style={{ fontFamily: fonts.body }}
           className={`pt-1 text-[10px] ${
             isBracket || isDark ? "text-white/45" : "text-slate-500"
           }`}

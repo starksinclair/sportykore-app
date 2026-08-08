@@ -1,5 +1,5 @@
-import { useEffect, useState, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
@@ -9,7 +9,6 @@ import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useUpdateGame } from "../../hooks";
 import {
@@ -152,7 +151,6 @@ export function EditGameSheet({
         <View className="flex-row items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
           <Ionicons name="information-circle-outline" size={17} color="#E6A817" />
           <Text
-            style={{ fontFamily: fonts.body }}
             className="min-w-0 flex-1 text-xs leading-5 text-white/50"
           >
             Teams cannot be changed here. Delete and reschedule if needed.
@@ -173,7 +171,6 @@ function GameSheetBlock({
   return (
     <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {title}

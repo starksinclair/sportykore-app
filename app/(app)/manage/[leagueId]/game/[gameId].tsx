@@ -10,7 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGameDetail, ApiStat } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
@@ -21,13 +21,12 @@ import { colors } from "@/constants";
 import { useLiveMinute } from "@/hooks/useLiveMinute";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { useMatchDetail } from "@/match";
-import { fonts } from "@/theme/fonts";
 
+import { useStageBracket } from "@/knockout";
 import {
   useTransmitGameListener,
   type GameSSEPayload,
 } from "@/lib/transmit";
-import { useStageBracket } from "@/knockout";
 import { GameControls } from "@/manage/components/GameControls";
 import { MatchSeriesHeader } from "@/manage/components/MatchSeriesHeader";
 import {
@@ -66,7 +65,7 @@ export default function ManageMatchCenterPage() {
     gameId: string;
     seasonId?: string;
   }>();
-
+  const insets = useSafeAreaInsets();
   const leagueId = Number(params.leagueId);
   const gameId = Number(params.gameId);
   const seasonIdParam = Number(params.seasonId);
@@ -230,7 +229,7 @@ export default function ManageMatchCenterPage() {
   if (!game || homeTeamId == null || awayTeamId == null) {
     return (
       <View className="flex-1 items-center justify-center bg-[#0F0F10] px-6">
-        <Text style={{ fontFamily: fonts.body }} className="text-center text-white/70">
+        <Text className="text-center text-white/70">
           Match not found.
         </Text>
         <Button
@@ -373,7 +372,6 @@ export default function ManageMatchCenterPage() {
             <Ionicons name="chevron-back" size={22} color="#fff" />
           </Pressable>
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-xs uppercase tracking-[2px] text-white/50"
           >
             Live match center
@@ -384,6 +382,9 @@ export default function ManageMatchCenterPage() {
         <ScrollView
           className="flex-1 px-5"
           contentContainerClassName="gap-5 pb-10"
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 90 
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={detailQuery.isFetching} onRefresh={() => void detailQuery.refetch()} />}
         >
@@ -395,7 +396,6 @@ export default function ManageMatchCenterPage() {
                 score={game.homeScore}
               />
               <Text
-                style={{ fontFamily: fonts.displayBold }}
                 className="text-2xl text-white/30"
               >
                 –
@@ -408,14 +408,12 @@ export default function ManageMatchCenterPage() {
             </View>
             {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-sm text-accent-200"
               >
                 Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
               </Text>
             ) : game.status === "penalty_shootout" ? (
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-sm text-accent-200"
               >
                 Penalty shootout
@@ -532,14 +530,12 @@ function TeamScore({
   return (
     <View className={`flex-1 ${align === "right" ? "items-end" : "items-start"}`}>
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className="text-sm text-white/70"
         numberOfLines={2}
       >
         {name}
       </Text>
       <Text
-        style={{ fontFamily: fonts.displayBold }}
         className="pt-2 text-5xl text-[#E6A817]"
       >
         {score ?? 0}

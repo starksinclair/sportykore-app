@@ -3,15 +3,15 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
@@ -25,7 +25,6 @@ import type { PickedImageFile } from "@/invite/types";
 import { CountryOption } from "@/league/league-create-constants";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import { showSuccessToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 export default function CreatePlayerProfileRoute() {
   const router = useRouter();
@@ -37,7 +36,8 @@ export default function CreatePlayerProfileRoute() {
   const [loadingToken, setLoadingToken] = useState(true);
   const completeMutation = useCompleteProfileAndAccept();
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
-  useEffect(() => {
+  const insets = useSafeAreaInsets();
+    useEffect(() => {
     void (async () => {
       const pending = await getPendingInviteToken();
       setToken(pending);
@@ -103,13 +103,11 @@ export default function CreatePlayerProfileRoute() {
         />
         <View className="flex-1 items-center justify-center gap-6 px-6">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-center text-xl text-white"
           >
             No invite found
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-sm leading-6 text-slate-300"
           >
             Open your invite link or paste your invite code on the join league screen.
@@ -137,6 +135,9 @@ export default function CreatePlayerProfileRoute() {
         <ScrollView
           contentContainerClassName="gap-6 px-6 pb-10 pt-8"
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 90 
+          }}
         >
           <View className="items-center">
             <Logo fontSize={40} lineHeight={50} />
@@ -144,13 +145,11 @@ export default function CreatePlayerProfileRoute() {
 
           <View className="gap-2">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-xl text-white"
             >
               Create your player profile
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-center text-sm text-slate-300"
             >
               This is how you&apos;ll appear on the team sheet and match events.
@@ -207,7 +206,6 @@ function ProfileAvatarPicker({
   return (
     <View className="items-center gap-3">
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className="text-sm text-neutral-300"
       >
         Profile photo (optional)
@@ -232,7 +230,6 @@ function ProfileAvatarPicker({
           <View className="items-center gap-1">
             <Ionicons name="camera-outline" size={28} color={colors.authPurple} />
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-[11px] text-slate-500"
             >
               Add photo
@@ -249,7 +246,6 @@ function ProfileAvatarPicker({
           hitSlop={8}
         >
           <Text
-            style={{ fontFamily: fonts.bodySemibold }}
             className="text-sm text-slate-400"
           >
             Remove photo
@@ -257,7 +253,6 @@ function ProfileAvatarPicker({
         </Pressable>
       ) : (
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-center text-xs text-slate-400"
         >
           JPG, PNG

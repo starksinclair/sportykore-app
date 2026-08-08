@@ -1,11 +1,11 @@
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 
-import { fonts } from "@/theme/fonts";
+import { colors } from "@/constants";
 
 import { BottomSheetModal } from "./bottom-sheet-modal";
 import { FormFieldLabel } from "./form-field-label";
@@ -34,7 +34,11 @@ export function NativeDatePickerField({
   labelClassName,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const selectedDate = parseDateValue(value) ?? maximumDate ?? new Date();
+  const selectedDate = clampDate(
+    parseDateValue(value) ?? maximumDate ?? minimumDate ?? new Date(),
+    minimumDate,
+    maximumDate,
+  );
   const [draftDate, setDraftDate] = useState<Date>(selectedDate);
 
   const openPicker = () => {
@@ -48,7 +52,7 @@ export function NativeDatePickerField({
   ) => {
     setOpen(false);
     if (event.type === "set" && date) {
-      onChange(formatDateValue(date));
+      onChange(formatDateValue(clampDate(date, minimumDate, maximumDate)));
     }
   };
 
@@ -66,16 +70,14 @@ export function NativeDatePickerField({
         className="flex-row items-center justify-between rounded-2xl border border-transparent bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80"
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={value ? "text-base text-neutral-950" : "text-base text-[#9CA3AF]"}
         >
           {value ? formatDisplayDate(value) : placeholder}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color="#6B7280" />
+        <Ionicons name="calendar-outline" size={18} color={colors.tabInactive} />
       </Pressable>
       {helperText ? (
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs leading-5 text-slate-500"
         >
           {helperText}
@@ -108,7 +110,7 @@ export function NativeDatePickerField({
               minimumDate={minimumDate}
               maximumDate={maximumDate}
               onChange={(_event, date) => {
-                if (date) setDraftDate(date);
+                if (date) setDraftDate(clampDate(date, minimumDate, maximumDate));
               }}
             />
             <View className="flex-row gap-2">
@@ -120,7 +122,6 @@ export function NativeDatePickerField({
                 className="h-12 flex-1 items-center justify-center rounded-[13px] border border-slate-200 bg-white"
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-slate-700"
                 >
                   Clear
@@ -131,10 +132,9 @@ export function NativeDatePickerField({
                   onChange(formatDateValue(draftDate));
                   setOpen(false);
                 }}
-                className="h-12 flex-1 items-center justify-center rounded-[13px] bg-[#5D2A8E]"
+                className="h-12 flex-1 items-center justify-center rounded-[13px] bg-brand"
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-white"
                 >
                   Set date
@@ -154,6 +154,16 @@ function parseDateValue(value: string | null): Date | null {
   if (!year || !month || !day) return null;
   const date = new Date(year, month - 1, day);
   return Number.isNaN(date.valueOf()) ? null : date;
+}
+
+function clampDate(date: Date, minimumDate?: Date, maximumDate?: Date): Date {
+  if (minimumDate && date < minimumDate) {
+    return minimumDate;
+  }
+  if (maximumDate && date > maximumDate) {
+    return maximumDate;
+  }
+  return date;
 }
 
 function formatDateValue(date: Date): string {

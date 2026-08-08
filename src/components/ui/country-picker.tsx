@@ -11,8 +11,8 @@ import {
 
 import { colors } from "@/constants";
 import { useCountries } from "@/country";
-import { fonts } from "@/theme/fonts";
 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CountryFlag, CountryLabel } from "./CountryFlag";
 import { FormFieldLabel } from "./form-field-label";
 
@@ -42,6 +42,7 @@ export function CountryPicker({
   const options = countries ?? [];
 
   const close = () => setOpen(false);
+  const insets = useSafeAreaInsets();
 
   const handleSelect = (country: CountryPickerOption) => {
     onChange(country);
@@ -64,11 +65,9 @@ export function CountryPicker({
             name={value.name}
             flagWidth={20}
             textClassName="text-base text-neutral-950"
-            textStyle={{ fontFamily: fonts.bodySemibold }}
           />
         ) : (
           <Text
-            style={{ fontFamily: fonts.bodySemibold }}
             className="text-base text-[#9CA3AF]"
           >
             {placeholder}
@@ -85,7 +84,6 @@ export function CountryPicker({
           >
             <View className="mb-3 h-1 w-12 self-center rounded-full bg-neutral-300" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="mb-3 text-lg text-neutral-950"
             >
               {label}
@@ -95,7 +93,6 @@ export function CountryPicker({
               <View className="items-center py-8">
                 <ActivityIndicator color={colors.brand} />
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="mt-3 text-sm text-slate-500"
                 >
                   Loading countries…
@@ -107,6 +104,9 @@ export function CountryPicker({
                 data={options}
                 keyExtractor={(item) => item.code}
                 keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{
+                  paddingBottom: insets.bottom + 90 
+                }}
                 nestedScrollEnabled
                 renderItem={({ item }) => (
                   <Pressable
@@ -115,7 +115,6 @@ export function CountryPicker({
                   >
                     <CountryFlag code={item.code} width={24} />
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className="flex-1 text-base text-neutral-950"
                     >
                       {item.name}

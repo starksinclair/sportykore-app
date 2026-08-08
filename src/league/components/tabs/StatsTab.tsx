@@ -5,7 +5,6 @@ import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat, ApiStatType } from "@/api/entities";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   statTypes: ApiStatType[];
@@ -52,7 +51,7 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
 
   if (!groups.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         No stat events recorded for this season yet.
       </Text>
     );
@@ -65,7 +64,6 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
           <View className="flex-row items-center gap-2">
             <Ionicons name={group.icon} size={16} color="#E6A817" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[12px] uppercase tracking-[2px] text-white/55"
             >
               {group.title}
@@ -86,20 +84,17 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
                 ].join(" ")}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="w-6 text-[12px] text-white/55"
                 >
                   {index + 1}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="flex-1 text-white"
                   numberOfLines={1}
                 >
                   {entry.playerName}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-[#E6A817]"
                 >
                   {entry.total}

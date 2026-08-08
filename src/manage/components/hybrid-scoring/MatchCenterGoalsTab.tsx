@@ -1,7 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
 
 import { isUnaccreditedGoal } from "../../utils/stats";
 
@@ -26,7 +25,7 @@ export function MatchCenterGoalsTab({
 
   if (maxRows === 0) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+      <Text className="text-sm text-white/45">
         No goals recorded yet.
       </Text>
     );
@@ -36,20 +35,17 @@ export function MatchCenterGoalsTab({
     <View className="gap-4">
       <View className="flex-row items-center justify-between px-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="flex-1 text-xs uppercase tracking-wide text-white/55"
           numberOfLines={1}
         >
           {homeTeamName}
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="w-12 text-center text-xs uppercase tracking-wide text-white/35"
         >
           Min
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="flex-1 text-right text-xs uppercase tracking-wide text-white/55"
           numberOfLines={1}
         >
@@ -70,7 +66,6 @@ export function MatchCenterGoalsTab({
               onAccredit={onAccredit}
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="w-12 pt-1 text-center text-sm text-[#E6A817]"
             >
               {formatGoalMinute(home ?? away)}
@@ -123,19 +118,17 @@ function GoalCell({
   return (
     <View className={`flex-1 ${align === "end" ? "items-end" : "items-start"}`}>
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
         className={`text-sm text-white ${align === "end" ? "text-right" : ""}`}
       >
         {playerName}
         {stat.isPenalty ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/45">
+          <Text className="text-xs text-white/45">
             {" "}(pen.)
           </Text>
         ) : null}
       </Text>
       {assist ? (
         <Text
-          style={{ fontFamily: fonts.body }}
           className={`pt-0.5 text-xs text-white/45 ${align === "end" ? "text-right" : ""}`}
         >
           {assist.player?.name ?? "Assist"}
@@ -146,7 +139,7 @@ function GoalCell({
           onPress={() => onAccredit(stat, team)}
           className="mt-2 rounded-full bg-accent-500/20 px-3 py-1"
         >
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-xs text-accent-400">
+          <Text className="text-xs text-accent-400">
             Accredit
           </Text>
         </Pressable>

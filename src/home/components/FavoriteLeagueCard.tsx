@@ -3,10 +3,9 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthGate } from "@/auth";
-import { CountryLabel } from "@/components/ui/CountryFlag";
 import { EntityLogo } from "@/components/ui";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import { useFavouriteLeague, useUnfavouriteLeague } from "../hooks/useLeaguesByCountry";
 import type { FavoriteLeagueEntry } from "../partitionMatchesFeed";
@@ -41,7 +40,6 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
         <View className="min-w-0 flex-1">
           <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[13px] text-neutral-950"
               numberOfLines={1}
             >

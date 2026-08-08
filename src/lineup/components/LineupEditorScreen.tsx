@@ -2,17 +2,16 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { EntityLogo } from "@/components/ui";
+import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
 import { teamPlayersToRosterRows } from "@/lineup/utils";
 import { useMatchDetail } from "@/match";
 import { useTeamDetail } from "@/team";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -30,7 +29,7 @@ export function LineupEditorScreen({
   const router = useRouter();
   const matchQuery = useMatchDetail(gameId);
   const teamQuery = useTeamDetail(teamId);
-
+  const insets = useSafeAreaInsets();
   const seasonPlayers = useMemo(() => {
     const leagues = teamQuery.data?.leagues ?? [];
     const league =
@@ -85,7 +84,6 @@ export function LineupEditorScreen({
           </Pressable>
           <View className="flex-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xl text-white"
             >
               Set lineup
@@ -97,11 +95,11 @@ export function LineupEditorScreen({
           <View className="mb-2 flex-row items-center gap-3 px-5">
             <EntityLogo logoUrl={team.logoUrl} variant="team" size="sm" tone="dark" />
             <View className="flex-1">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 {team.name}
               </Text>
               {opponent ? (
-                <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+                <Text className="text-sm text-white/55">
                   vs {opponent.name}
                 </Text>
               ) : null}
@@ -113,6 +111,9 @@ export function LineupEditorScreen({
           className="flex-1 px-5"
           contentContainerClassName="pb-12"
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 16,
+          }}
         >
           {matchQuery.isLoading || teamQuery.isLoading ? (
             <View className="items-center py-16">

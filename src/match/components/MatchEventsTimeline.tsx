@@ -9,7 +9,6 @@ import {
   isGoalsStat,
   isOwnGoalStat,
 } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 type TeamSide = "home" | "away" | "neutral";
 
@@ -39,7 +38,7 @@ export function MatchEventsTimeline({
 
   if (!events.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm text-white/55">
         No events recorded yet.
       </Text>
     );
@@ -130,7 +129,6 @@ function EventTimelineRow({
     return (
       <View className="items-center gap-2">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-xs text-accent-400"
         >
           {minuteLabel}
@@ -160,7 +158,6 @@ function EventTimelineRow({
 
       <View className="z-10 w-12 items-center pt-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-xs text-accent-400"
         >
           {minuteLabel}
@@ -226,14 +223,12 @@ function EventBubble({
       ) : null}
       <View className={align === "end" ? "items-end" : align === "center" ? "items-center" : ""}>
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={["text-sm text-white", textAlignClass].join(" ")}
           numberOfLines={2}
         >
           {playerName}
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className={["pt-0.5 text-xs text-white/55", textAlignClass].join(" ")}
           numberOfLines={1}
         >
@@ -241,7 +236,6 @@ function EventBubble({
         </Text>
         {assist ? (
           <Text
-            style={{ fontFamily: fonts.body }}
             className={["pt-0.5 text-xs text-white/45", textAlignClass].join(" ")}
             numberOfLines={1}
           >

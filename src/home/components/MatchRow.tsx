@@ -10,7 +10,6 @@ import {
 } from "@/lib/datetime";
 import { formatLiveMinuteLabel } from "@/lib/game-time";
 import { isActivePlayStatus, isLiveGameStatus } from "@/lib/general-utils";
-import { fonts } from "@/theme/fonts";
 
 import type { ApiGame } from "../types";
 import { TvScoreboardModal } from "./TvScoreboardModal";
@@ -33,7 +32,7 @@ export function MatchRow({ game }: Props) {
       >
         <View style={styles.metaColumn}>
           <Text
-            style={[styles.timeLabel, { fontFamily: fonts.bodyBold }]}
+            style={[styles.timeLabel]}
             className="text-[11px] text-neutral-950"
           >
             {formatPlayedAtTime(game.playedAt)}
@@ -51,7 +50,6 @@ export function MatchRow({ game }: Props) {
               tone="light"
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               numberOfLines={1}
               className="flex-1 text-[14px] text-neutral-950"
             >
@@ -66,7 +64,6 @@ export function MatchRow({ game }: Props) {
               tone="light"
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               numberOfLines={1}
               className="flex-1 text-[14px] text-neutral-950"
             >
@@ -78,13 +75,13 @@ export function MatchRow({ game }: Props) {
         {showScore ? (
           <View className="min-w-[24px] items-end gap-2 pt-0.5">
             <Text
-              style={[styles.score, { fontFamily: fonts.bodyBold }]}
+              style={[styles.score]}
               className="text-[15px] text-[#ba0c2f]"
             >
               {game.homeScore ?? "0"}
             </Text>
             <Text
-              style={[styles.score, { fontFamily: fonts.bodyBold }]}
+              style={[styles.score]}
               className="text-[15px] text-[#ba0c2f]"
             >
               {game.awayScore ?? "0"}
@@ -131,7 +128,7 @@ function MatchPhaseBadge({
       <View className="mt-0.5 items-center gap-1">
         {displayMinute ? (
           <Text
-            style={[styles.phaseLabel, { fontFamily: fonts.bodySemibold }]}
+            style={[styles.phaseLabel]}
             className="text-[10px] tabular-nums text-neutral-500"
           >
             {displayMinute}'
@@ -139,7 +136,6 @@ function MatchPhaseBadge({
         ) : null}
         <View className="rounded-md bg-amber-100 px-1.5 py-0.5">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[8px] uppercase tracking-wide text-amber-900"
           >
             Paused
@@ -153,7 +149,6 @@ function MatchPhaseBadge({
     return (
       <View className="mt-0.5 rounded-md bg-neutral-100 px-1.5 py-0.5">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[8px] uppercase tracking-wide text-neutral-500"
         >
           Can
@@ -166,7 +161,6 @@ function MatchPhaseBadge({
     return (
       <View className="mt-0.5 rounded-md bg-orange-100 px-1.5 py-0.5">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[8px] uppercase tracking-wide text-orange-900"
         >
           Pst
@@ -179,7 +173,7 @@ function MatchPhaseBadge({
 
   return (
     <Text
-      style={[styles.phaseLabel, { fontFamily: fonts.bodySemibold }]}
+      style={[styles.phaseLabel]}
       numberOfLines={1}
       className={`mt-0.5 text-[10px] uppercase tracking-wide ${
         isLive ? "text-[#ba0c2f]" : "text-neutral-500"

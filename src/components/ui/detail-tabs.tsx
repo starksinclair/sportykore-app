@@ -1,7 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 export type DetailTab<T extends string> = {
   key: T;
@@ -45,7 +44,6 @@ export function DetailTabs<T extends string>({
           >
             <Text
               style={{
-                fontFamily: isActive ? fonts.bodyBold : fonts.bodySemibold,
                 color: isActive ? colors.accent : "rgba(255,255,255,0.55)",
               }}
               className="text-[14px]"

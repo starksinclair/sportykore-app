@@ -2,11 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { fonts } from "@/theme/fonts";
 import { ThemedView } from "./themed-view";
 
 type DetailScreenShellProps = {
@@ -48,30 +47,20 @@ export function DetailScreenShell({
             <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
           </Pressable>
 
-          <TouchableOpacity onPress={() => leagueId && router.push(`/league/${leagueId}`)} className="flex-1 px-3">
-            <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              numberOfLines={1}
-              className="text-center text-[18px] text-white"
+          {leagueId ? (
+            <Pressable
+              onPress={() => router.push(`/league/${leagueId}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${title} league`}
+              className="flex-1 px-3 active:opacity-80"
             >
-              {title}
-            </Text>
-            {subtitle ? (
-              <View className="items-center pt-1">
-                {typeof subtitle === "string" ? (
-                  <Text
-                    style={{ fontFamily: fonts.body }}
-                    numberOfLines={1}
-                    className="text-center text-xs text-white/55"
-                  >
-                    {subtitle}
-                  </Text>
-                ) : (
-                  subtitle
-                )}
-              </View>
-            ) : null}
-          </TouchableOpacity>
+              <HeaderTitle title={title} subtitle={subtitle} />
+            </Pressable>
+          ) : (
+            <View className="flex-1 px-3">
+              <HeaderTitle title={title} subtitle={subtitle} />
+            </View>
+          )}
 
           <View className="min-w-[44px] items-end">
             {rightAccessory ?? <View className="h-11 w-11" />}
@@ -91,5 +80,38 @@ export function DetailScreenShell({
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
+  );
+}
+
+function HeaderTitle({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+}) {
+  return (
+    <>
+      <Text
+        numberOfLines={1}
+        className="text-center text-[18px] text-white"
+      >
+        {title}
+      </Text>
+      {subtitle ? (
+        <View className="items-center pt-1">
+          {typeof subtitle === "string" ? (
+            <Text
+              numberOfLines={1}
+              className="text-center text-xs text-white/55"
+            >
+              {subtitle}
+            </Text>
+          ) : (
+            subtitle
+          )}
+        </View>
+      ) : null}
+    </>
   );
 }

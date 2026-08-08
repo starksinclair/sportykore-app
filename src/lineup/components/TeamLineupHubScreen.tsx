@@ -8,16 +8,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGame, ApiPlayerWithStats, GameStatus } from "@/api/entities";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { EntityLogo } from "@/components/ui";
+import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
 import { formatPlayedAtShortDate, formatPlayedAtTime } from "@/lib/datetime";
 import { useTeamDetail } from "@/team";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -59,7 +58,7 @@ function positionLabel(position: ApiPlayerWithStats["position"]): string {
 export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   const router = useRouter();
   const teamQuery = useTeamDetail(teamId);
-
+  const insets = useSafeAreaInsets();
   const leagueBlock = useMemo(() => {
     const leagues = teamQuery.data?.leagues ?? [];
     return (
@@ -119,14 +118,12 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
             </Pressable>
             <View className="flex-1">
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-xl text-white"
               >
                 {teamInfo?.name ?? "Team"}
               </Text>
               {leagueName ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="text-sm text-white/55"
                 >
                   {leagueName}
@@ -144,7 +141,6 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                 tone="dark"
               />
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="flex-1 text-sm text-white/55"
               >
                 Set lineups for fixtures. Roster is view-only.
@@ -156,6 +152,7 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
         <ScrollView
           className="flex-1 px-5"
           contentContainerClassName="gap-6 pb-12"
+          contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
           showsVerticalScrollIndicator={false}
         >
           {teamQuery.isLoading ? (
@@ -170,13 +167,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
           ) : !seasonBlock ? (
             <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-base text-white"
               >
                 No active season
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="pt-2 text-sm leading-6 text-white/55"
               >
                 Ask the league owner to activate a season before setting
@@ -187,7 +182,6 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
             <>
               <View className="gap-3">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-xs uppercase tracking-[2px] text-white/45"
                 >
                   Fixtures
@@ -195,13 +189,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                 {teamGames.length === 0 ? (
                   <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
                       className="text-base text-white"
                     >
                       No fixtures yet
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="pt-2 text-sm leading-6 text-white/55"
                     >
                       When the league owner schedules games for this team,
@@ -220,13 +212,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                       >
                         <View className="flex-1 gap-1">
                           <Text
-                            style={{ fontFamily: fonts.bodyBold }}
                             className="text-white"
                           >
                             vs {opponent?.name ?? "TBD"}
                           </Text>
                           <Text
-                            style={{ fontFamily: fonts.body }}
                             className="text-sm text-white/55"
                           >
                             {formatPlayedAtShortDate(game.playedAt)} ·{" "}
@@ -241,7 +231,6 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                           ].join(" ")}
                         >
                           <Text
-                            style={{ fontFamily: fonts.bodySemibold }}
                             className={
                               editable
                                 ? "text-xs text-accent-300"
@@ -264,14 +253,12 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
 
               <View className="gap-3">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-xs uppercase tracking-[2px] text-white/45"
                 >
                   Squad
                 </Text>
                 {roster.length === 0 ? (
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="text-sm text-white/45"
                   >
                     No players on this team for the season yet.
@@ -291,14 +278,12 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                       />
                       <View className="flex-1">
                         <Text
-                          style={{ fontFamily: fonts.bodySemibold }}
                           className="text-sm text-white"
                           numberOfLines={1}
                         >
                           {player.name}
                         </Text>
                         <Text
-                          style={{ fontFamily: fonts.body }}
                           className="text-xs text-white/45"
                         >
                           {positionLabel(player.position)}

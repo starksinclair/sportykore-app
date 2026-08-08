@@ -2,7 +2,6 @@ import { useMemo } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiStat } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   stats: ApiStat[];
@@ -25,7 +24,7 @@ export function MatchStatsTab({ stats, homeTeamId, awayTeamId }: Props) {
 
   if (!buckets.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm text-white/55">
         No stat events recorded for this match yet.
       </Text>
     );
@@ -41,19 +40,16 @@ export function MatchStatsTab({ stats, homeTeamId, awayTeamId }: Props) {
               className="flex-row items-center justify-between py-2"
             >
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-sm text-white"
               >
                 {bucket.homeCount}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="flex-1 text-center text-xs uppercase tracking-[1.5px] text-white/55"
               >
                 {bucket.type}
               </Text>
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
+              <Text 
                 className="text-sm text-white"
               >
                 {bucket.awayCount}
@@ -105,7 +101,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}

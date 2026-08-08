@@ -4,7 +4,6 @@ import { Pressable, Text, View } from "react-native";
 import { colors } from "@/constants";
 import type { SubAssignment } from "@/lineup/types";
 import { MAX_LINEUP_SUBSTITUTES } from "@/lineup/utils";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   subs: SubAssignment[];
@@ -26,7 +25,6 @@ export function SubstitutesSection({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={isDark ? "text-white" : "text-neutral-900"}
       >
         Substitutes
@@ -43,7 +41,6 @@ export function SubstitutesSection({
               ].join(" ")}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={isDark ? "text-sm text-white" : "text-sm text-neutral-900"}
               >
                 {sub.jerseyNumber != null ? `#${sub.jerseyNumber} ` : ""}
@@ -67,7 +64,6 @@ export function SubstitutesSection({
         </View>
       ) : (
         <Text
-          style={{ fontFamily: fonts.body }}
           className={isDark ? "text-sm text-white/45" : "text-sm text-neutral-500"}
         >
           No substitutes selected yet.
@@ -82,7 +78,7 @@ export function SubstitutesSection({
           className="flex-row items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accent-400 py-3 active:opacity-80"
         >
           <Ionicons name="add-circle" size={22} color={colors.accent} />
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-accent-300">
+          <Text className="text-accent-300">
             Add sub
           </Text>
         </Pressable>

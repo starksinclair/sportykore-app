@@ -11,7 +11,6 @@ import {
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 import { useSearchLeagueUsers } from "@/invite/hooks";
-import { fonts } from "@/theme/fonts";
 
 import {
   useAssignTeamAdmin,
@@ -96,10 +95,10 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
           <Ionicons name="people-outline" size={20} color={colors.accent} />
         </View>
         <View className="flex-1 gap-0.5">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+          <Text className="text-base text-white">
             Team admins
           </Text>
-          <Text style={{ fontFamily: fonts.body }} className="text-sm leading-5 text-white/55">
+          <Text className="text-sm leading-5 text-white/55">
             Admins can manage lineups and match day for this team.
           </Text>
         </View>
@@ -111,7 +110,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
         </View>
       ) : admins.length === 0 ? (
         <View className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+          <Text className="text-sm text-white/50">
             No team admins assigned yet.
           </Text>
         </View>
@@ -129,7 +128,6 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                 </View>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-sm text-white"
                     numberOfLines={1}
                   >
@@ -137,7 +135,6 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                   </Text>
                   {admin?.user?.fullName ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="text-xs text-white/45"
                       numberOfLines={1}
                     >
@@ -163,7 +160,6 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
         <View className="flex-row items-center gap-2">
           <Ionicons name="person-add-outline" size={16} color={colors.accent} />
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-xs uppercase tracking-wide text-white/50"
           >
             Assign team admin
@@ -189,7 +185,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
 
         {searchEnabled && !searchQueryResult.isLoading && searchResults.length === 0 ? (
           <View className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/50">
+            <Text className="text-sm text-white/50">
               No users found. Try another search.
             </Text>
           </View>
@@ -210,7 +206,6 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                 </View>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className="text-sm text-white"
                     numberOfLines={1}
                   >
@@ -218,7 +213,6 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                   </Text>
                   {user?.fullName ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="text-xs text-white/45"
                       numberOfLines={1}
                     >
@@ -228,7 +222,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                 </View>
               </View>
               <View className="flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 py-1.5">
-                <Text style={{ fontFamily: fonts.bodyBold }} className="text-xs text-neutral-950">
+                <Text className="text-xs text-neutral-950">
                   Assign
                 </Text>
                 <Ionicons name="add" size={15} color={colors.darkLabel} />

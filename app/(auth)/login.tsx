@@ -27,7 +27,6 @@ import { ExternalLink } from "@/components/ui/external-link";
 import { Logo } from "@/components/ui/logo";
 import { colors } from "@/constants";
 import { showErrorToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 const { width, height } = Dimensions.get("window");
 const heroHeight = Math.min(height * 0.5, width * 1.05);
@@ -93,17 +92,16 @@ function LoginCard() {
         {requiresSignup ? (
           <View className="gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-base text-neutral-900"
             >
               Create your account
             </Text>
             {signupHint ? (
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+              <Text className="text-sm text-slate-500">
                 {signupHint}
               </Text>
             ) : (
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+              <Text className="text-sm text-slate-500">
                 We need a few more details before we send your code.
               </Text>
             )}
@@ -162,6 +160,7 @@ function LoginCard() {
           iconPosition="right"
           className="mt-1 h-[52px] rounded-2xl shadow-md"
         />
+
       </View>
     </View>
   );
@@ -218,13 +217,11 @@ export default function LoginScreen() {
               />
             </View>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-3xl text-white"
             >
               Sign in
             </Text>
-            <Text
-              style={{ fontFamily: fonts.body }}
+            <Text 
               className="text-center text-base text-slate-400"
             >
               Enter your email to continue
@@ -236,25 +233,34 @@ export default function LoginScreen() {
           <LoginCard />
         </View>
 
-        <View className="px-6 pb-12 pt-8">
+        <View className="px-6  pt-8">
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-base text-slate-400"
           >
             By continuing, you agree to our{" "}
             <ExternalLink href="https://waitlist.sportykore.com/terms">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-[#F2A900]">
+              <Text className="text-[#F2A900]">
                 Terms of Service
               </Text>
             </ExternalLink>{" "}
             and{" "}
             <ExternalLink href="https://waitlist.sportykore.com/privacy">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-[#F2A900]">
+              <Text className="text-[#F2A900]">
                 Privacy Policy
               </Text>
             </ExternalLink>
             .
           </Text>
+        </View>
+        <View className="flex-col items-center gap-2">
+          <Text className="text-center text-base text-slate-400 py-8">Or</Text>
+
+          <Button
+            variant="signInYellow"
+            label="Continue as guest"
+            onPress={() => close()}
+            className="mt-1 h-[52px] rounded-2xl shadow-md"
+          />
         </View>
       </KeyboardAwareScrollView>
       <KeyboardToolbar />

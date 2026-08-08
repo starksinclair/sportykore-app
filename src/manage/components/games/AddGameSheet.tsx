@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,7 +16,6 @@ import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useCreateGame, useLeagueTeams } from "../../hooks";
 import {
@@ -80,7 +79,6 @@ function TeamPicker({
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {label}
@@ -101,7 +99,6 @@ function TeamPicker({
           </View>
           <View className="min-w-0 flex-1">
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className={hasSelection ? "text-sm text-white" : "text-sm text-white/65"}
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -109,7 +106,6 @@ function TeamPicker({
               {selectedTeam?.name ?? `Choose ${label.toLowerCase()}`}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-0.5 text-xs text-white/45"
               numberOfLines={1}
             >
@@ -125,7 +121,6 @@ function TeamPicker({
               className="rounded-lg px-2 py-1"
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-xs text-white/55"
               >
                 Clear
@@ -156,7 +151,6 @@ function TeamPicker({
                   autoCorrect={false}
                   style={{
                     flex: 1,
-                    fontFamily: fonts.body,
                     fontSize: 14,
                     color: "#FFFFFF",
                     paddingVertical: 6,
@@ -189,7 +183,6 @@ function TeamPicker({
               ))}
               {filtered.length === 0 ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className="px-4 py-4 text-sm text-white/45"
                 >
                   {`No teams match "${query.trim()}".`}
@@ -221,7 +214,6 @@ function TeamOptionRow({
     >
       <View className="min-w-0 flex-1">
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -331,7 +323,6 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
         <View className="items-center gap-3 rounded-[20px] border border-white/10 bg-white/5 px-4 py-6">
           <Ionicons name="people-outline" size={28} color="#E6A817" />
           <Text
-            style={{ fontFamily: fonts.body }}
             className="text-center text-sm leading-6 text-white/60"
           >
             Add at least two teams to this league before scheduling games.
@@ -429,7 +420,6 @@ function GameSheetBlock({
   return (
     <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/50"
       >
         {title}

@@ -28,7 +28,6 @@ import {
   type TieFormatSelection,
 } from "@/knockout";
 import { showInfoToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -193,7 +192,7 @@ export function ManageGroupsTab({
 
   if (!stage) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm text-white/55">
         No group stage on this season.
       </Text>
     );
@@ -202,10 +201,10 @@ export function ManageGroupsTab({
   return (
     <View className="gap-6 pb-8">
       <View className="gap-2">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+        <Text className="text-lg text-white">
           {stage.name}
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm text-white/55">
           Status: {stage.status}
           {config
             ? ` · ${config.format.group_count} groups · top ${config.advancement.per_group} advance`
@@ -214,11 +213,11 @@ export function ManageGroupsTab({
       </View>
 
       <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+        <Text className="text-base text-white">
           1. Draw
         </Text>
         {drawDone ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+          <Text className="text-sm text-white/55">
             Teams are assigned
             {stageGroups.length
               ? ` across ${stageGroups.map((g) => g.name).join(", ")}`
@@ -227,7 +226,7 @@ export function ManageGroupsTab({
           </Text>
         ) : (
           <View className="gap-2">
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+            <Text className="text-sm text-white/55">
               Uneven groups are allowed. Confirm before saving.
             </Text>
             <Button
@@ -246,7 +245,7 @@ export function ManageGroupsTab({
       </View>
 
       <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+        <Text className="text-base text-white">
           2. Fixtures
         </Text>
         <Button
@@ -259,10 +258,10 @@ export function ManageGroupsTab({
       </View>
 
       <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+        <Text className="text-base text-white">
           3. Knockout phase
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm text-white/55">
           Preview qualifiers without writing until you confirm.
         </Text>
         <Button
@@ -287,7 +286,6 @@ export function ManageGroupsTab({
               return (
                 <View key={group.id} className="gap-2">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-sm text-white"
                   >
                     {group.name} ({ids.length})
@@ -319,7 +317,6 @@ export function ManageGroupsTab({
                           className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"
                         >
                           <Text
-                            style={{ fontFamily: fonts.bodySemibold }}
                             className="text-sm text-white"
                             numberOfLines={1}
                             ellipsizeMode="tail"
@@ -454,13 +451,13 @@ function GenerateKnockoutWizard({
       <ScrollView className="max-h-[480px]" nestedScrollEnabled>
         <View className="gap-4 pb-6">
           {previewQuery.isFetching ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+            <Text className="text-sm text-white/55">
               Loading preview…
             </Text>
           ) : null}
 
           {(preview?.outstandingGames ?? 0) > 0 ? (
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-accent-200">
+            <Text className="text-sm text-accent-200">
               {preview!.outstandingGames} group games still outstanding. Confirm
               will use force if needed.
             </Text>
@@ -468,7 +465,7 @@ function GenerateKnockoutWizard({
 
           {step === 1 ? (
             <View className="gap-2">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 Choose bracket entry
               </Text>
               {(options.length
@@ -496,7 +493,6 @@ function GenerateKnockoutWizard({
                     }`}
                   >
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className="text-white"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -504,8 +500,7 @@ function GenerateKnockoutWizard({
                       {opt.label ?? opt.targetRound.toUpperCase()}
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.body }}
-                      className="pt-1 text-xs text-white/55"
+                        className="pt-1 text-xs text-white/55"
                       numberOfLines={2}
                     >
                       {opt.summary ??
@@ -529,7 +524,7 @@ function GenerateKnockoutWizard({
 
           {step === 2 ? (
             <View className="gap-3">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 Third-placed teams
               </Text>
               <View className="flex-row gap-2">
@@ -544,7 +539,6 @@ function GenerateKnockoutWizard({
                     }`}
                   >
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className="text-center capitalize text-white"
                       numberOfLines={1}
                     >
@@ -573,7 +567,6 @@ function GenerateKnockoutWizard({
                     }`}
                   >
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className="text-white"
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -615,10 +608,10 @@ function GenerateKnockoutWizard({
 
           {step === 3 ? (
             <View className="gap-3">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 Review qualifiers
               </Text>
-              <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/55">
+              <Text className="text-xs text-white/55">
                 Tap two rows to swap. Every entry is editable.
               </Text>
               <QualifierListEditor
@@ -647,7 +640,7 @@ function GenerateKnockoutWizard({
 
           {step === 4 ? (
             <View className="gap-3">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 Knockout settings
               </Text>
               <KnockoutTieFormatControl
@@ -676,10 +669,10 @@ function GenerateKnockoutWizard({
 
           {step === 5 ? (
             <View className="gap-3">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+              <Text className="text-white">
                 Confirm
               </Text>
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+              <Text className="text-sm text-white/55">
                 Creates a knockout stage seeded with {ordered.length} teams
                 {targetRound ? ` starting at ${targetRound}` : ""}.
               </Text>
@@ -753,7 +746,6 @@ function QualifierListEditor({
             }`}
           >
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className="text-white"
               numberOfLines={1}
               ellipsizeMode="tail"

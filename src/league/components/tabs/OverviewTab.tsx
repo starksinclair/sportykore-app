@@ -7,7 +7,6 @@ import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
 import { isLiveGameStatus } from "@/lib/general-utils";
 import { isGoalsStat } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   season: ApiSeasonDetail;
@@ -34,7 +33,7 @@ export function LeagueOverviewTab({ season }: Props) {
 
        {season.league.description && (
           <View className="flex-row items-center gap-3">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white text-[16px]"> {season.league.description}</Text>
+            <Text className="text-white text-[16px]"> {season.league.description}</Text>
           </View>
        ) }
 
@@ -53,7 +52,6 @@ export function LeagueOverviewTab({ season }: Props) {
             <View className="flex-row items-center gap-4">
               <View className="h-16 w-16 items-center justify-center rounded-full bg-[#364156]">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-xl text-white"
                 >
                   {initials(topScorer.player.name)}
@@ -61,13 +59,11 @@ export function LeagueOverviewTab({ season }: Props) {
               </View>
               <View className="flex-1">
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-[20px] text-white"
                 >
                   {topScorer.player.name}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="pt-2 text-sm text-[#E6A817]"
                 >
                   {topScorer.goals} goals · {topScorer.assists} assists
@@ -87,14 +83,12 @@ export function LeagueOverviewTab({ season }: Props) {
               className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
             >
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-white"
               >
                 {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
                 {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="pt-2 text-sm text-white/55"
               >
                 {formatPlayedAt(game.playedAt)}
@@ -160,13 +154,12 @@ function StatCard({ label, value }: { label: string; value: number }) {
   return (
     <View className="flex-1 rounded-[22px] bg-white/6 px-3 py-4">
       <Text
-        style={{ fontFamily: fonts.bodyBold, color: colors.accent }}
+        style={{ color: colors.accent }}
         className="text-center text-[24px]"
       >
         {value}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
         className="pt-1 text-center text-xs text-white/55"
       >
         {label}
@@ -185,7 +178,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}
@@ -198,7 +190,6 @@ function Section({
 function EmptyText({ children }: { children: string }) {
   return (
     <Text
-      style={{ fontFamily: fonts.body }}
       className="text-sm text-white/55"
     >
       {children}

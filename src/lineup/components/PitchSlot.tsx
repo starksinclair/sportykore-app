@@ -5,7 +5,6 @@ import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
 import type { PlayerMatchBadges } from "@/lineup/utils";
 import { formatPitchPlayerName, type SlotCoordinate } from "@/lineup/utils";
-import { fonts } from "@/theme/fonts";
 import { router } from "expo-router";
 
 type Props = {
@@ -86,7 +85,6 @@ export function PitchSlot({
               ) : (
                 <View className="h-11 w-11 items-center justify-center rounded-full border-2 border-accent-400 bg-brand-800">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-base text-accent-300"
                   >
                     {initial}
@@ -96,13 +94,11 @@ export function PitchSlot({
               <BadgeCluster badges={badges} />
             </View>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-[10px] text-accent-300"
             >
               {jerseyNumber != null ? `#${jerseyNumber}` : label}
             </Text>
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className="text-center text-[9px] text-white"
               // numberOfLines={1}
             >
@@ -112,13 +108,11 @@ export function PitchSlot({
         ) : filled ? (
           <View className="items-center gap-0.5">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-[10px] text-accent-300"
             >
               {jerseyNumber != null ? `#${jerseyNumber}` : label}
             </Text>
             <Text
-              style={{ fontFamily: fonts.bodySemibold }}
               className="text-center text-[9px] text-white"
               numberOfLines={2}
             >
@@ -128,7 +122,6 @@ export function PitchSlot({
         ) : (
           <View className="items-center gap-0.5">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-[11px] text-accent-200"
             >
               {label}
@@ -229,7 +222,6 @@ export function BadgeCluster({
           )}
           {item.count > 1 ? (
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="pl-0.5 text-[8px] text-neutral-900"
             >
               {item.count}

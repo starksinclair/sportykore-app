@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,15 +10,14 @@ import {
 
 import type { ApiGame, GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import {
   useCompletePenaltyShootout,
   useEnterPenaltyShootout,
 } from "@/knockout";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useGameTimeActions } from "../hooks";
 
@@ -133,11 +132,10 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
             <Ionicons name="timer-outline" size={20} color={colors.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               Match clock
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -440,7 +438,7 @@ function ActionDetailCard({
         <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
           <Ionicons name={icon} size={19} color={colors.accent} />
         </View>
-        <Text style={{ fontFamily: fonts.bodyBold }} className="min-w-0 flex-1 text-white">
+        <Text className="min-w-0 flex-1 text-white">
           {title}
         </Text>
       </View>
@@ -449,7 +447,6 @@ function ActionDetailCard({
           <View key={detail} className="flex-row items-start gap-2">
             <View className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-500" />
             <Text
-              style={{ fontFamily: fonts.body }}
               className="min-w-0 flex-1 text-sm leading-6 text-white/60"
             >
               {detail}
@@ -523,7 +520,6 @@ function MatchControlButton({
         <>
           <Ionicons name={icon} size={16} color={controlIconColor[tone]} />
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className={`min-w-0 text-center text-xs ${controlLabelClass[tone]}`}
             numberOfLines={1}
             adjustsFontSizeToFit

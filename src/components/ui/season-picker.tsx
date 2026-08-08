@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 export type SeasonOption = {
   id: number;
@@ -47,14 +46,12 @@ export function SeasonPicker({
         </View>
         <View className="min-w-0 flex-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[11px] uppercase tracking-wide text-white/45"
             numberOfLines={1}
           >
             {label}
           </Text>
           <Text
-            style={{ fontFamily: fonts.bodySemibold }}
             className="pt-0.5 text-[15px] text-white"
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -102,7 +99,6 @@ export function SeasonPicker({
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text
-                      style={{ fontFamily: fonts.bodySemibold }}
                       className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
                       numberOfLines={1}
                       ellipsizeMode="tail"
@@ -111,7 +107,6 @@ export function SeasonPicker({
                     </Text>
                     {season.status ? (
                       <Text
-                        style={{ fontFamily: fonts.body }}
                         className="pt-0.5 text-xs capitalize text-white/45"
                         numberOfLines={1}
                       >

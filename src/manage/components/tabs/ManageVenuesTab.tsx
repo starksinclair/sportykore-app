@@ -4,7 +4,6 @@ import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiVenue } from "@/api/entities";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useDeleteVenue, useLeagueVenues } from "../../hooks";
 import { VenueFormSheet } from "../venues/VenueFormSheet";
@@ -65,11 +64,10 @@ export function ManageVenuesTab({ leagueId }: Props) {
             <Ionicons name="location-outline" size={22} color="#E6A817" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text className="text-white">
               League venues
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-xs leading-5 text-white/50"
               numberOfLines={2}
             >
@@ -84,7 +82,6 @@ export function ManageVenuesTab({ leagueId }: Props) {
           >
             <Ionicons name="add" size={16} color="#171717" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-xs text-neutral-950"
               numberOfLines={1}
             >
@@ -105,13 +102,11 @@ export function ManageVenuesTab({ leagueId }: Props) {
           </View>
           <View className="gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-base text-white"
             >
               No venues yet
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="text-center text-sm leading-6 text-white/55"
             >
               Add stadiums, community pitches, or name-only grounds for scheduling.
@@ -124,7 +119,6 @@ export function ManageVenuesTab({ leagueId }: Props) {
           >
             <Ionicons name="add" size={17} color="#171717" />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-sm text-neutral-950"
             >
               Add venue
@@ -150,14 +144,12 @@ export function ManageVenuesTab({ leagueId }: Props) {
                 </View>
                 <View className="min-w-0 flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
                     className="text-base text-white"
                     numberOfLines={1}
                   >
                     {venue.name}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className="pt-0.5 text-sm text-white/50"
                     numberOfLines={1}
                   >

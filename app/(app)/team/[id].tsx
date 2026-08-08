@@ -32,7 +32,6 @@ const TABS: readonly DetailTab<TabKey>[] = [
 
 export default function TeamRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  console.log("id", id);
   const teamId = Number(id);
   const isValidId = Number.isFinite(teamId) && teamId > 0;
   const [activeTab, setActiveTab] = useState<TabKey>("overview");

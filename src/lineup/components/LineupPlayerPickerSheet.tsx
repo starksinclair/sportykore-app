@@ -4,7 +4,6 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import type { FormationSlot, RosterPickerPlayer } from "@/lineup/types";
 import { sortPlayersForSlot } from "@/lineup/utils";
-import { fonts } from "@/theme/fonts";
 
 export type PickerMode = "starter" | "substitute";
 
@@ -74,11 +73,9 @@ export function LineupPlayerPickerSheet({
             ? "bg-white/10 text-white"
             : "bg-neutral-100 text-neutral-900",
         ].join(" ")}
-        style={{ fontFamily: fonts.body }}
       />
       {filtered.length === 0 ? (
         <Text
-          style={{ fontFamily: fonts.body }}
           className={variant === "dark" ? "text-white/50" : "text-neutral-500"}
         >
           No players available.
@@ -98,14 +95,12 @@ export function LineupPlayerPickerSheet({
           >
             <View className="flex-1">
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className={variant === "dark" ? "text-white" : "text-neutral-900"}
               >
                 {player.playerName}
               </Text>
               {player.position ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className={
                     variant === "dark" ? "text-xs text-white/45" : "text-xs text-neutral-500"
                   }
@@ -116,7 +111,6 @@ export function LineupPlayerPickerSheet({
             </View>
             {player.jerseyNumber != null ? (
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className={variant === "dark" ? "text-accent-300" : "text-brand-600"}
               >
                 #{player.jerseyNumber}

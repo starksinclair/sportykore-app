@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -7,9 +8,8 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { Marker, type Region } from "react-native-maps";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import { Ionicons } from "@expo/vector-icons";
+import MapView, { Marker, type Region } from "react-native-maps";
 
 import type { ApiVenue } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,6 @@ import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { GOOGLE_MAPS_API_KEY } from "@/lib/google-maps";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import {
   useCreateVenue,
@@ -66,6 +65,10 @@ const DEFAULT_REGION: Region = {
   latitudeDelta: 0.08,
   longitudeDelta: 0.08,
 };
+
+function showVenueSuccessToast(title: string, message: string) {
+  setTimeout(() => showInfoToast(title, message), 280);
+}
 
 function venueToForm(venue: ApiVenue): FormState {
   return {
@@ -188,17 +191,17 @@ export function VenueFormSheet({
     try {
       if (isEdit && venue) {
         await updateMutation.mutateAsync({ venueId: venue.id, payload });
-        showInfoToast("Venue updated", `${payload.name} was saved.`);
         onSaved?.({ ...venue, ...payload });
         onClose();
+        showVenueSuccessToast("Venue updated", `${payload.name} was saved.`);
         return;
       }
 
       await createMutation.mutateAsync(payload);
       const created = await resolveCreatedVenue(payload);
-      showInfoToast("Venue added", `${payload.name} is ready to use.`);
       if (created) onSaved?.(created);
       onClose();
+      showVenueSuccessToast("Venue added", `${payload.name} is ready to use.`);
     } catch (err) {
       showThrownAsToast(
         err,
@@ -292,7 +295,6 @@ export function VenueFormSheet({
               className="self-start"
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
               >
                 ← Change location method
@@ -303,7 +305,6 @@ export function VenueFormSheet({
           {mode === "places" ? (
             <View className="gap-2" style={{ zIndex: 10 }}>
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className={
                   isDark
                     ? "text-xs uppercase tracking-wide text-white/50"
@@ -314,7 +315,6 @@ export function VenueFormSheet({
               </Text>
               {!GOOGLE_MAPS_API_KEY ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   className={isDark ? "text-sm text-accent-200" : "text-sm text-amber-700"}
                 >
                   Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY to enable Places search.
@@ -362,7 +362,6 @@ export function VenueFormSheet({
                       borderColor: "#e2e8f0",
                       paddingHorizontal: 14,
                       fontSize: 15,
-                      fontFamily: fonts.body,
                       color: "#0f172a",
                       backgroundColor: "#f8fafc",
                     },
@@ -375,7 +374,7 @@ export function VenueFormSheet({
                       maxHeight: 220,
                     },
                     row: { paddingVertical: 12, paddingHorizontal: 12 },
-                    description: { fontFamily: fonts.body, color: "#0f172a" },
+                    description: { color: "#0f172a" },
                   }}
                   textInputProps={{
                     placeholderTextColor: "#94a3b8",
@@ -398,7 +397,6 @@ export function VenueFormSheet({
                 <Ionicons name="map-outline" size={22} color={isDark ? "#E6A817" : "#4A148C"} />
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={isDark ? "text-sm text-white" : "text-sm text-slate-900"}
                   >
                     {form.latitude != null && form.longitude != null
@@ -407,7 +405,6 @@ export function VenueFormSheet({
                   </Text>
                   {form.latitude != null && form.longitude != null ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className={isDark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
                     >
                       {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
@@ -467,21 +464,18 @@ export function VenueFormSheet({
           <View className="flex-row items-center justify-between border-b border-slate-200 px-4 pb-3 pt-14">
             <Pressable onPress={closePinMap} hitSlop={12}>
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className="text-base text-slate-600"
               >
                 Cancel
               </Text>
             </Pressable>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-base text-slate-900"
             >
               Drop pin
             </Text>
             <Pressable onPress={confirmPin} hitSlop={12}>
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-base text-brand-700"
               >
                 Done
@@ -489,7 +483,6 @@ export function VenueFormSheet({
             </Pressable>
           </View>
           <Text
-            style={{ fontFamily: fonts.body }}
             className="px-4 py-2 text-sm text-slate-500"
           >
             Drag the pin to the pitch. You will name it on the next step.
@@ -621,8 +614,7 @@ function VenueSheetBlock({
       }
     >
       {dark ? (
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
+        <Text 
           className="text-xs uppercase tracking-wide text-white/50"
         >
           {title}
@@ -660,13 +652,11 @@ function ModeButton({
       </View>
       <View className="flex-1">
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={dark ? "text-sm text-white" : "text-sm text-slate-900"}
         >
           {label}
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className={dark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
         >
           {hint}

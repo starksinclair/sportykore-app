@@ -3,7 +3,6 @@ import { Pressable, Text, View } from "react-native";
 
 import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import type { OwnedLeague } from "../types";
 
@@ -29,14 +28,12 @@ export function ManageLeagueRow({ league, onPress }: Props) {
       />
       <View className="min-w-0 flex-1 gap-1">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-[15px] text-white"
           numberOfLines={1}
         >
           {league.name}
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-xs text-white/50"
           numberOfLines={1}
         >
@@ -44,7 +41,6 @@ export function ManageLeagueRow({ league, onPress }: Props) {
         </Text>
         <View className="self-start rounded-full bg-accent-500/15 px-2.5 py-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
             className="text-[10px] uppercase tracking-wide text-accent-200"
           >
             League owner

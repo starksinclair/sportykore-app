@@ -4,7 +4,6 @@ import { Pressable, Text, View } from "react-native";
 
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import {
   TIEBREAKER_OPTIONS,
@@ -62,7 +61,6 @@ export function TiebreakerPicker({
   return (
     <View className="gap-1.5">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={`text-[11px] uppercase tracking-wider ${styles.label}`}
       >
         {label}
@@ -75,7 +73,6 @@ export function TiebreakerPicker({
         className={`flex-row items-center justify-between ${styles.field} active:opacity-80`}
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={`flex-1 pr-2 ${styles.value}`}
           numberOfLines={2}
         >
@@ -102,13 +99,11 @@ export function TiebreakerPicker({
               >
                 <View className="flex-1 gap-0.5">
                   <Text
-                    style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
                     className={`text-sm ${styles.optionLabel}`}
                   >
                     {option.label}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className={`text-xs leading-4 ${styles.optionDescription}`}
                   >
                     {option.description}

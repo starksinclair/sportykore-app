@@ -11,7 +11,6 @@ import {
 
 import type { ApiVenue } from "@/api/entities";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { fonts } from "@/theme/fonts";
 
 import { useLeagueVenues } from "../../hooks";
 import { VenueFormSheet } from "../venues/VenueFormSheet";
@@ -108,7 +107,6 @@ export function GameVenuePicker({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={
           isDark
             ? "text-xs uppercase tracking-wide text-white/50"
@@ -141,7 +139,6 @@ export function GameVenuePicker({
               hitSlop={8}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
               >
                 Pick from league venues
@@ -149,7 +146,6 @@ export function GameVenuePicker({
             </Pressable>
             <Pressable onPress={clearSelection} hitSlop={8}>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className={isDark ? "text-sm text-white/50" : "text-sm text-slate-500"}
               >
                 Clear
@@ -184,7 +180,6 @@ export function GameVenuePicker({
             </View>
             <View className="min-w-0 flex-1">
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={isDark ? "text-sm text-white" : "text-sm text-slate-900"}
                 numberOfLines={1}
               >
@@ -193,7 +188,6 @@ export function GameVenuePicker({
                   : selectionLabel(selection)}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className={isDark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
                 numberOfLines={1}
               >
@@ -212,7 +206,6 @@ export function GameVenuePicker({
                 className="rounded-lg px-2 py-1"
               >
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className={isDark ? "text-xs text-white/55" : "text-xs text-slate-500"}
                 >
                   Clear
@@ -249,7 +242,6 @@ export function GameVenuePicker({
                     autoCorrect={false}
                     style={{
                       flex: 1,
-                      fontFamily: fonts.body,
                       fontSize: 14,
                       color: isDark ? "#FFFFFF" : "#0f172a",
                       paddingVertical: 6,
@@ -301,7 +293,6 @@ export function GameVenuePicker({
                 })}
                 {filtered.length === 0 ? (
                   <Text
-                    style={{ fontFamily: fonts.body }}
                     className={isDark ? "px-4 py-4 text-sm text-white/45" : "px-4 py-4 text-sm text-slate-500"}
                   >
                     No venues match “{query.trim()}”.
@@ -315,7 +306,6 @@ export function GameVenuePicker({
                   className="flex-1 items-center py-3"
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
                   >
                     Add venue
@@ -327,7 +317,6 @@ export function GameVenuePicker({
                   className="flex-1 items-center py-3"
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
                     className={isDark ? "text-sm text-white/60" : "text-sm text-slate-600"}
                   >
                     One-off name
@@ -383,7 +372,6 @@ function VenueOptionRow({
     >
       <View className="min-w-0 flex-1">
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
           className={
             dark
               ? selected
@@ -399,7 +387,6 @@ function VenueOptionRow({
         </Text>
         {subtitle ? (
           <Text
-            style={{ fontFamily: fonts.body }}
             className={dark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
             numberOfLines={1}
           >

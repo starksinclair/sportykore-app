@@ -10,7 +10,6 @@ import type {
 } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 import {
   distinctTeams,
@@ -32,13 +31,11 @@ export function PlayerCareerTab({ leagues, statTypes }: Props) {
       <View className="items-center gap-3 rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
         <Ionicons name="time-outline" size={32} color="rgba(255,255,255,0.6)" />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
           className="text-lg text-white"
         >
           No career history yet
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
           className="text-center text-sm text-white/55"
         >
           We&apos;ll show every club and season the player has been part of as
@@ -66,7 +63,6 @@ export function PlayerCareerTab({ leagues, statTypes }: Props) {
                   tone="dark"
                 />
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs text-white"
                 >
                   {team.name}
@@ -116,13 +112,11 @@ function LeagueBlock({
           />
           <View>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-white"
             >
               {league.name}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-0.5 text-xs text-white/55"
             >
               {league.seasons.length} season
@@ -177,13 +171,11 @@ function SeasonRow({
           />
           <View className="flex-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-white"
             >
               {season.name}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
               className="pt-0.5 text-xs text-white/55"
             >
               {season.team.name} · {season.status} · {gameCount} fixture
@@ -206,13 +198,11 @@ function SeasonRow({
                 color="#E6A817"
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
                 className="text-[11px] text-white"
               >
                 {total}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
                 className="text-[11px] text-white/55"
               >
                 {type.displayName}
@@ -235,7 +225,6 @@ function Section({
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-[12px] uppercase tracking-[2px] text-white/55"
       >
         {title}

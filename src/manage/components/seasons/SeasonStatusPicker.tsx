@@ -1,7 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 
 import type { SeasonStatus } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
 
 import { SeasonStatusEnum } from "../../types";
 
@@ -21,7 +20,6 @@ export function SeasonStatusPicker({ label, value, onChange }: Props) {
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs uppercase tracking-wide text-white/45"
       >
         {label}
@@ -38,7 +36,6 @@ export function SeasonStatusPicker({ label, value, onChange }: Props) {
               }`}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
                 className={active ? "text-accent-300" : "text-white/70"}
               >
                 {status}

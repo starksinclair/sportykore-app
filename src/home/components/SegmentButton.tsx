@@ -1,4 +1,3 @@
-import { fonts } from "@/theme/fonts";
 import { Pressable, Text } from "react-native";
 
 export function SegmentButton({
@@ -19,7 +18,6 @@ export function SegmentButton({
         ].join(" ")}
       >
         <Text
-          style={{ fontFamily: active ? fonts.bodyBold : fonts.bodySemibold }}
           className={
             active ? "text-center text-sm text-white" : "text-center text-sm text-slate-600"
           }

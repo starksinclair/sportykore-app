@@ -5,8 +5,6 @@ import type {
   ToastConfigParams,
 } from "react-native-toast-message";
 
-import { fonts } from "@/theme/fonts";
-
 type ToastTone = "success" | "error" | "info";
 
 const toastMeta: Record<
@@ -64,7 +62,7 @@ function BrandedToast({
         </View>
         <View className="min-w-0 flex-1 gap-0.5">
           <Text
-            style={[{ fontFamily: fonts.bodyBold }, params.text1Style]}
+            style={[params.text1Style]}
             className="text-sm text-neutral-950"
             numberOfLines={2}
           >
@@ -72,8 +70,8 @@ function BrandedToast({
           </Text>
           {body ? (
             <Text
-              style={[{ fontFamily: fonts.body }, params.text2Style]}
-              className="text-xs leading-5 text-neutral-950"
+              style={[params.text2Style]}
+              className="text-xs text-neutral-950 leading-5"
               numberOfLines={3}
             >
               {body}
