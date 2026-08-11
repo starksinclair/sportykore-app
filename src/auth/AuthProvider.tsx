@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import * as Sentry from "@sentry/react-native";
 import {
   useCallback,
   useLayoutEffect,
@@ -58,6 +59,7 @@ function toPersistedProfile(user: AuthUser): PersistedUserProfile {
 }
 
 function identifyUser(user: AuthUser): void {
+  Sentry.setUser({ id: user.id });
   posthog?.identify(user.id, {
     email: user.email,
     ...(user.name ? { name: user.name } : {}),
@@ -89,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryFn: () => fetchLeagues({ gameDate: today }),
       });
       posthog?.reset();
+      Sentry.setUser(null);
       setUser(null);
       showErrorToast("Session expired", "Please sign in again.");
       router.replace("/login");
@@ -158,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearSessionCredentials();
     queryClient.clear();
     posthog?.reset();
+    Sentry.setUser(null);
     setUser(null);
   }, []);
 
@@ -174,13 +178,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await clearSessionCredentials();
     queryClient.clear();
     posthog?.reset();
+    Sentry.setUser(null);
     setUser(null);
   }, []);
 
   const completeOnboarding = useCallback<AuthContextValue["completeOnboarding"]>(async () => {
     await setOnboarded(true);
     setHasOnboarded(true);
-    router.replace("/login");
+    router.replace("/(app)/(tabs)");
   }, []);
 
   const deleteOnboardingCompleted = useCallback<

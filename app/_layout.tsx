@@ -1,5 +1,7 @@
 import "../global.css";
 
+import * as Sentry from "@sentry/react-native";
+import { isRunningInExpoGo } from "expo";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -12,6 +14,7 @@ import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
 import { TransmitProvider } from "@/lib/transmit";
 import { posthog } from "@/lib/posthog";
+import { NotificationBridge } from "@/notifications";
 import {
   OpenSans_400Regular,
   OpenSans_600SemiBold,
@@ -30,6 +33,35 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { PostHogErrorBoundary, PostHogProvider } from "posthog-react-native";
 import Toast from "react-native-toast-message";
+
+const sentryDsn = process.env.EXPO_PUBLIC_SENTRY_DSN?.trim();
+const sentryEnvironment =
+  process.env.EXPO_PUBLIC_SENTRY_ENVIRONMENT?.trim() ||
+  (__DEV__ ? "development" : "production");
+const runningInExpoGo = isRunningInExpoGo();
+
+Sentry.init({
+  dsn: sentryDsn,
+  enabled: Boolean(sentryDsn),
+  environment: sentryEnvironment,
+  debug: __DEV__,
+  sendDefaultPii: false,
+  tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+  replaysOnErrorSampleRate: runningInExpoGo ? 0 : 1.0,
+  replaysSessionSampleRate: runningInExpoGo ? 0 : __DEV__ ? 1.0 : 0.05,
+  enableNativeFramesTracking: !runningInExpoGo,
+  integrations: [
+    Sentry.reactNativeTracingIntegration(),
+    ...(!runningInExpoGo
+      ? [
+          Sentry.mobileReplayIntegration({
+            maskAllImages: true,
+            maskAllText: true,
+          }),
+        ]
+      : []),
+  ],
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -88,7 +120,7 @@ function RootStack() {
     </Stack>
   );
 }
-export default function RootLayout() {
+function RootLayout() {
   const scheme = useColorScheme();
 
   return (
@@ -102,6 +134,7 @@ export default function RootLayout() {
                   <AuthGateProvider>
                     <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
                       <StatusBar style="auto" />
+                      <NotificationBridge />
                       <RootStack />
                       <InviteLinkCapture />
                       <View pointerEvents="box-none" style={styles.toastOverlay}>
@@ -118,6 +151,8 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default Sentry.wrap(RootLayout);
 
 const styles = StyleSheet.create({
   toastOverlay: {

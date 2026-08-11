@@ -27,6 +27,7 @@ import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandin
 import { LeagueStatsTab } from "@/league/components/tabs/StatsTab";
 import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { useTrackView } from "@/lib/use-track-view";
+import { LeagueNotificationToggle } from "@/notifications";
 
 type TabKey = "overview" | "matches" | "standings" | "bracket" | "stats";
 
@@ -149,12 +150,15 @@ export default function LeagueRoute() {
     <DetailScreenShell
       title={season.league.name}
       rightAccessory={
-        <EntityLogo
-          logoUrl={season.league.logoUrl}
-          variant="league"
-          size="sm"
-          tone="dark"
-        />
+        <View className="flex-row items-center gap-2">
+          <LeagueNotificationToggle leagueId={season.league.id} />
+          <EntityLogo
+            logoUrl={season.league.logoUrl}
+            variant="league"
+            size="sm"
+            tone="dark"
+          />
+        </View>
       }
       headerContent={
         <>

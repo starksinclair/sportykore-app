@@ -39,7 +39,6 @@ import {
   type FavoriteLeagueEntry,
 } from "@/home/partitionMatchesFeed";
 import type { ApiCountryWithLeagues } from "@/home/types";
-import { posthog } from "@/lib/posthog";
 import {
   addDays,
   addMonths,
@@ -56,6 +55,7 @@ import {
   getPendingInviteContext,
   getPendingInviteToken,
 } from "@/invite/storage";
+import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
 import { useOwnPlayerProfile } from "@/player";
 import { StatusBar } from "expo-status-bar";
@@ -298,7 +298,6 @@ export default function HomeScreen() {
                 </Text>
               </Pressable>
             ) : null}
-
             {activeTab === "matches" ? (
               <View
                 style={styles.dateControl}

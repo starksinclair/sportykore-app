@@ -73,6 +73,7 @@ export type SearchResponse = {
 /** Feed league row - `GET /api/v1/leagues` sets `isFavourited` when a Bearer token is sent. */
 export type ApiLeague = ApiLeagueBase & {
   isFavourited?: boolean;
+  notificationsEnabled?: boolean;
 };
 
 export interface ApiCountryWithLeagues extends ApiCountry {

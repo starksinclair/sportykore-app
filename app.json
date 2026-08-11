@@ -26,7 +26,8 @@
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
       "usesCleartextTraffic": true,
-      "package": "com.nzenwata.sportykoreapp"
+      "package": "com.nzenwata.sportykoreapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -51,6 +52,14 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow SportyKore to access your photos for your player profile picture."
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "sportykore"
         }
       ]
     ],

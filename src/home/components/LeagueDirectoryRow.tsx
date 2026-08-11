@@ -7,6 +7,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import { EntityLogo } from "@/components/ui";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
+import { LeagueNotificationToggle } from "@/notifications";
 
 import type { ApiCountryWithLeagues } from "../types";
 
@@ -68,7 +69,14 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
               >
                 {league.name}
               </Text>
-              <Ionicons name="chevron-forward" size={14} color="#9CA3AF" />
+              <View className="flex-row items-center gap-2">
+                <LeagueNotificationToggle
+                  leagueId={league.id}
+                  initialEnabled={league.notificationsEnabled}
+                  variant="icon"
+                />
+                <Ionicons name="chevron-forward" size={14} color="#9CA3AF" />
+              </View>
             </Pressable>
           ))}
         </Animated.View>

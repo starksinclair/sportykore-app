@@ -113,7 +113,6 @@ export default function OnboardingScreen() {
   const goNext = () => {
     if (index === slides.length - 1) {
       void completeOnboarding();
-      router.replace("/login");
       return;
     }
     scrollToSlide(index + 1);

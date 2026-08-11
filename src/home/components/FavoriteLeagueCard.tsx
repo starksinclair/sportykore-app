@@ -6,6 +6,7 @@ import { useAuthGate } from "@/auth";
 import { EntityLogo } from "@/components/ui";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
+import { LeagueNotificationToggle } from "@/notifications";
 
 import { useFavouriteLeague, useUnfavouriteLeague } from "../hooks/useLeaguesByCountry";
 import type { FavoriteLeagueEntry } from "../partitionMatchesFeed";
@@ -53,23 +54,32 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
             textClassName="text-[9px] text-neutral-500"
           />
         </View>
-        <Pressable
-          onPress={() =>
-            requireAuth({ action: "favourite this league" }, () => {
-              if (league.isFavourited) {
-                unfavouriteLeague(league.id);
-              } else {
-                favouriteLeague(league.id);
-              }
-            })
-          }
-        >
-          <Ionicons
-            name={league.isFavourited ? "heart" : "heart-outline"}
-            size={19}
-            color={league.isFavourited ? colors.brand : "#6B7280"}
+        <View className="flex-row items-center gap-2">
+          <LeagueNotificationToggle
+            leagueId={league.id}
+            initialEnabled={league.notificationsEnabled}
+            variant="icon"
           />
-        </Pressable>
+          <Pressable
+            hitSlop={10}
+            onPress={() =>
+              requireAuth({ action: "favourite this league" }, () => {
+                if (league.isFavourited) {
+                  unfavouriteLeague(league.id);
+                } else {
+                  favouriteLeague(league.id);
+                }
+              })
+            }
+            className="h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white"
+          >
+            <Ionicons
+              name={league.isFavourited ? "heart" : "heart-outline"}
+              size={19}
+              color={league.isFavourited ? colors.brand : "#6B7280"}
+            />
+          </Pressable>
+        </View>
       </View>
 
       {(league.games ?? []).length > 0 ? (
