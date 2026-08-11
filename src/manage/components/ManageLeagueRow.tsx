@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, type GestureResponderEvent } from "react-native";
 
 import { EntityLogo } from "@/components/ui";
 import { colors } from "@/constants";
@@ -9,10 +9,15 @@ import type { OwnedLeague } from "../types";
 type Props = {
   league: OwnedLeague;
   onPress: () => void;
+  onShare?: () => void;
 };
 
-export function ManageLeagueRow({ league, onPress }: Props) {
+export function ManageLeagueRow({ league, onPress, onShare }: Props) {
   const seasonLabel = league.activeSeason?.name ?? "No active season";
+  const handleShare = (event: GestureResponderEvent) => {
+    event.stopPropagation();
+    onShare?.();
+  };
 
   return (
     <Pressable
@@ -43,10 +48,21 @@ export function ManageLeagueRow({ league, onPress }: Props) {
           <Text
             className="text-[10px] uppercase tracking-wide text-accent-200"
           >
-            League owner
+            League admin
           </Text>
         </View>
       </View>
+      {onShare ? (
+        <Pressable
+          onPress={handleShare}
+          accessibilityRole="button"
+          accessibilityLabel={`Share invite for ${league.name}`}
+          hitSlop={8}
+          className="h-9 w-9 items-center justify-center rounded-full bg-accent-500/15 active:bg-accent-500/25"
+        >
+          <Ionicons name="share-social-outline" size={17} color={colors.accent} />
+        </Pressable>
+      ) : null}
       <View className="h-9 w-9 items-center justify-center rounded-full bg-white/8">
         <Ionicons name="chevron-forward" size={18} color={colors.white} />
       </View>

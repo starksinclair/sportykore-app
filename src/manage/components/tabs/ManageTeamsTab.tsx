@@ -39,6 +39,7 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
   };
 
   const handleDelete = (team: ManagedTeam) => {
+    if (deleteMutation.isPending) return;
     const fewTeamsWarning =
       teams.length <= 2
         ? "\n\nYou need at least two teams to schedule new games."
@@ -156,7 +157,9 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
                 onPress={() => handleDelete(team)}
                 disabled={deleteMutation.isPending}
                 accessibilityLabel={`Delete ${team.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                className={`h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15 ${
+                  deleteMutation.isPending ? "opacity-45" : ""
+                }`}
               >
                 <Ionicons name="trash-outline" size={18} color="#fca5a5" />
               </Pressable>

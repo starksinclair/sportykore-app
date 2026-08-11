@@ -29,7 +29,7 @@ export function extractJsonObjects(raw: string): string[] {
     JSON.parse(trimmed);
     return [trimmed];
   } catch {
-    // fall through — may be concatenated or partial
+    // fall through, may be concatenated or partial
   }
 
   const objects: string[] = [];

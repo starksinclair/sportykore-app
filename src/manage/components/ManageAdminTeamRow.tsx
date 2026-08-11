@@ -43,7 +43,7 @@ export function ManageAdminTeamRow({ team, onPress }: Props) {
           <Text
             className="text-[10px] uppercase tracking-wide text-white"
           >
-            Team admin
+            Team manager
           </Text>
         </View>
       </View>

@@ -3,9 +3,10 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { useState } from "react";
-import { Platform, Pressable, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
 import { colors } from "@/constants";
+import { fonts } from "@/theme/fonts";
 
 import { BottomSheetModal } from "./bottom-sheet-modal";
 import { FormFieldLabel } from "./form-field-label";
@@ -20,6 +21,7 @@ type Props = {
   maximumDate?: Date;
   required?: boolean;
   labelClassName?: string;
+  variant?: "light" | "dark";
 };
 
 export function NativeDatePickerField({
@@ -32,7 +34,9 @@ export function NativeDatePickerField({
   maximumDate,
   required = false,
   labelClassName,
+  variant = "light",
 }: Props) {
+  const isDark = variant === "dark";
   const [open, setOpen] = useState(false);
   const selectedDate = clampDate(
     parseDateValue(value) ?? maximumDate ?? minimumDate ?? new Date(),
@@ -56,6 +60,26 @@ export function NativeDatePickerField({
     }
   };
 
+  const triggerClassName = isDark
+    ? "flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3.5 py-3.5 active:opacity-80"
+    : "flex-row items-center justify-between rounded-2xl border border-transparent bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80";
+  const valueClassName = value
+    ? isDark
+      ? "text-base text-white"
+      : "text-base text-neutral-950"
+    : isDark
+      ? "text-base text-white/40"
+      : "text-base text-[#9CA3AF]";
+  const helperClassName = isDark
+    ? "text-xs leading-5 text-white/45"
+    : "text-xs leading-5 text-slate-500";
+  const clearButtonClassName = isDark
+    ? "h-12 flex-1 items-center justify-center rounded-[13px] border border-white/10 bg-white/10"
+    : "h-12 flex-1 items-center justify-center rounded-[13px] border border-slate-200 bg-white";
+  const clearTextClassName = isDark
+    ? "text-sm text-white/80"
+    : "text-sm text-slate-700";
+
   return (
     <View className="gap-1.5">
       <FormFieldLabel
@@ -67,18 +91,24 @@ export function NativeDatePickerField({
         accessibilityRole="button"
         accessibilityLabel={value ? `${label}: ${value}` : placeholder}
         onPress={openPicker}
-        className="flex-row items-center justify-between rounded-2xl border border-transparent bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80"
+        className={triggerClassName}
       >
         <Text
-          className={value ? "text-base text-neutral-950" : "text-base text-[#9CA3AF]"}
+          style={{ fontFamily: fonts.bodySemibold }}
+          className={valueClassName}
         >
           {value ? formatDisplayDate(value) : placeholder}
         </Text>
-        <Ionicons name="calendar-outline" size={18} color={colors.tabInactive} />
+        <Ionicons
+          name="calendar-outline"
+          size={18}
+          color={isDark ? "rgba(255,255,255,0.58)" : colors.tabInactive}
+        />
       </Pressable>
       {helperText ? (
         <Text
-          className="text-xs leading-5 text-slate-500"
+          style={{ fontFamily: fonts.body }}
+          className={helperClassName}
         >
           {helperText}
         </Text>
@@ -101,28 +131,43 @@ export function NativeDatePickerField({
           onClose={() => setOpen(false)}
           title={label}
           subtitle={helperText}
+          variant={variant}
+          scrollEnabled={false}
         >
-          <View className="gap-4">
-            <DateTimePicker
-              value={draftDate}
-              mode="date"
-              display="spinner"
-              minimumDate={minimumDate}
-              maximumDate={maximumDate}
-              onChange={(_event, date) => {
-                if (date) setDraftDate(clampDate(date, minimumDate, maximumDate));
-              }}
-            />
+          <View className="gap-4 pb-6">
+            <View
+              className={
+                isDark
+                  ? "overflow-hidden rounded-[18px] border border-white/10 bg-white/5"
+                  : "overflow-hidden rounded-[18px] border border-slate-100 bg-slate-50"
+              }
+            >
+              <DateTimePicker
+                value={draftDate}
+                mode="date"
+                display="spinner"
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+                accentColor={colors.accent}
+                themeVariant={isDark ? "dark" : "light"}
+                textColor={isDark ? colors.white : colors.darkLabel}
+                style={styles.iosPicker}
+                onChange={(_event, date) => {
+                  if (date) setDraftDate(clampDate(date, minimumDate, maximumDate));
+                }}
+              />
+            </View>
             <View className="flex-row gap-2">
               <Pressable
                 onPress={() => {
                   onChange(null);
                   setOpen(false);
                 }}
-                className="h-12 flex-1 items-center justify-center rounded-[13px] border border-slate-200 bg-white"
+                className={clearButtonClassName}
               >
                 <Text
-                  className="text-sm text-slate-700"
+                  style={{ fontFamily: fonts.bodyBold }}
+                  className={clearTextClassName}
                 >
                   Clear
                 </Text>
@@ -135,6 +180,7 @@ export function NativeDatePickerField({
                 className="h-12 flex-1 items-center justify-center rounded-[13px] bg-brand"
               >
                 <Text
+                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-white"
                 >
                   Set date
@@ -147,6 +193,12 @@ export function NativeDatePickerField({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  iosPicker: {
+    height: 236,
+  },
+});
 
 function parseDateValue(value: string | null): Date | null {
   if (!value) return null;

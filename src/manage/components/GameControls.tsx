@@ -17,6 +17,7 @@ import {
   useCompletePenaltyShootout,
   useEnterPenaltyShootout,
 } from "@/knockout";
+import { posthog } from "@/lib/posthog";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useGameTimeActions } from "../hooks";
@@ -68,6 +69,14 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
     }
     try {
       await actions.endFullTime.mutateAsync({ homeScore: home, awayScore: away });
+      posthog?.capture("match_completed", {
+        league_id: leagueId,
+        season_id: seasonId,
+        game_id: game.id,
+        completion_method: "full_time",
+        score_difference: Math.abs(home - away),
+        is_draw: home === away,
+      });
       setFullTimeOpen(false);
       onFullTime?.();
     } catch (err) {
@@ -113,6 +122,11 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
       await completePens.mutateAsync({
         homePenaltyScore: home,
         awayPenaltyScore: away,
+      });
+      posthog?.capture("penalty_shootout_completed", {
+        league_id: leagueId,
+        game_id: game.id,
+        score_difference: Math.abs(home - away),
       });
       setPensOpen(false);
       onFullTime?.();

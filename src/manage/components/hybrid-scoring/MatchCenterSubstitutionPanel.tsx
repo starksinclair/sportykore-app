@@ -14,6 +14,7 @@ import type { ApiGameDetail, GameStatus } from "@/api/entities";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 import { calculateCurrentMinute } from "@/lib/game-time";
+import { posthog } from "@/lib/posthog";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 import { useGameLineups } from "@/lineup/hooks";
 import type { GameLineup } from "@/lineup/types";
@@ -187,6 +188,12 @@ export function MatchCenterSubstitutionPanel({
         seasonId,
         teamId,
         substitutions,
+      });
+      posthog?.capture("substitutions_recorded", {
+        league_id: leagueId,
+        season_id: seasonId,
+        game_id: game.id,
+        substitution_count: substitutions.length,
       });
       setDrafts([newDraftRow(defaultMinute)]);
     } catch {

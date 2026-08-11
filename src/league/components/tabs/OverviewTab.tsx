@@ -7,6 +7,7 @@ import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
 import { isLiveGameStatus } from "@/lib/general-utils";
 import { isGoalsStat } from "@/lib/stat-types";
+import { SeasonFormatBanner } from "../SeasonFormatBanner";
 
 type Props = {
   season: ApiSeasonDetail;
@@ -31,11 +32,13 @@ export function LeagueOverviewTab({ season }: Props) {
   return (
     <View className="gap-6">
 
-       {season.league.description && (
+      {season.league.description && (
           <View className="flex-row items-center gap-3">
             <Text className="text-white text-[16px]"> {season.league.description}</Text>
           </View>
        ) }
+
+      <SeasonFormatBanner stages={season.stages ?? []} />
 
       <View className="flex-row gap-3">
         <StatCard label="Teams" value={counts.teams} />

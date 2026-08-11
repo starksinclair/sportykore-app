@@ -72,14 +72,15 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-neutral-950">
       <StatusBar style="light" />
+      <BlackPatternBackground
+        baseColor={scoreboardPattern().baseColor}
+        stripeColor="rgba(230, 168, 23, 0.045)"
+      />
+      <View className="absolute inset-0 bg-black/35" pointerEvents="none" />
 
-      <View className="relative overflow-hidden bg-[#121212] px-5  pt-0">
-        <BlackPatternBackground
-          baseColor={scoreboardPattern().baseColor}
-          stripeColor={scoreboardPattern().stripeColor}
-        />
+      <View className="relative overflow-hidden px-5 pt-0">
         <SafeAreaView edges={["top", "bottom"]}>
           <View className="flex-row items-center justify-between">
             <Pressable
@@ -98,8 +99,8 @@ export default function ProfileScreen() {
             <View className="h-11 w-11" />
           </View>
 
-          <View className="gap-5">
-            <View className="bg-white/8 px-4 py-4">
+          <View className="gap-5 mt-5">
+            <View className="rounded-[22px] border border-white/10 bg-white/[0.06] px-4 py-4">
               {user ? (
                 <View className="flex-row items-center gap-4">
                   <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
@@ -122,12 +123,12 @@ export default function ProfileScreen() {
               ) : (
                 <Pressable
                   onPress={() => router.push("/login")}
-                  className="flex-row items-center justify-center gap-2 rounded-[14px] border-2 border-brand bg-brand-50 py-4 active:opacity-80"
+                  className="flex-row items-center justify-center gap-2 rounded-[14px] border border-accent-400 bg-accent-500 py-4 active:opacity-90"
                   accessibilityRole="button"
                   accessibilityLabel="Sign in"
                 >
-                  <Ionicons name="log-in-outline" size={22} color={colors.brand} />
-                  <Text className="text-base text-brand">
+                  <Ionicons name="log-in-outline" size={22} color={colors.darkLabel} />
+                  <Text className="text-base text-neutral-950">
                     Sign in
                   </Text>
                 </Pressable>
@@ -148,62 +149,58 @@ export default function ProfileScreen() {
       >
         {user ? (
           <>
-              <Section title="Player profile">
-                {hasPlayerProfile ? (
+            <Section title="Player profile">
+              {hasPlayerProfile ? (
                 <SettingsRowChevron
-                icon="person-outline"
-                title={
-                  playerProfileQuery.isLoading
-                    ? "Loading profile…"
-                    : "View profile"
-                }
-                subtitle={"Your player card, stats, and highlights"}
-                onPress={handlePlayerProfile}
-              />
-                ) : (
-                  <View className="gap-3 px-4 py-4">
-                    <View className="flex-row gap-3">
-                      <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#4A148C]">
-                        <Ionicons name="person-add-outline" size={20} color="#E6A817" />
-                      </View>
-                      <View className="min-w-0 flex-1 gap-1">
-                        <Text
-                          className="text-[15px] text-neutral-950"
-                        >
-                          Create player profile
-                        </Text>
-                        <Text
-                          className="text-xs leading-5 text-slate-500"
-                        >
-                          A permanent profile that follows you across leagues,
-                          with your stats and highlights in one place.
-                        </Text>
-                      </View>
+                  icon="person-outline"
+                  title={
+                    playerProfileQuery.isLoading
+                      ? "Loading profile…"
+                      : "View profile"
+                  }
+                  subtitle={"Your player card, stats, and highlights"}
+                  onPress={handlePlayerProfile}
+                />
+              ) : (
+                <View className="gap-3 px-4 py-4">
+                  <View className="flex-row gap-3">
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15">
+                      <Ionicons name="person-add-outline" size={20} color={colors.accent} />
                     </View>
-                    <Button
-                      variant="authPurple"
-                      label="Create profile"
-                      className="h-11"
-                      onPress={handlePlayerProfile}
-                    />
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text className="text-[15px] text-white">
+                        Create player profile
+                      </Text>
+                      <Text className="text-xs leading-5 text-white/60">
+                        A permanent profile that follows you across leagues,
+                        with your stats and highlights in one place.
+                      </Text>
+                    </View>
                   </View>
-                )}
-                </Section>
-          
+                  <Button
+                    variant="signInYellow"
+                    label="Create profile"
+                    className="h-11 rounded-full"
+                    onPress={handlePlayerProfile}
+                  />
+                </View>
+              )}
+            </Section>
+
             <Section title="Account">
               <SettingsRowChevron
                 icon="people-outline"
                 title="Join a league"
-                subtitle="Paste an invite code from your admin"
+                subtitle="Paste an invite code from your league admin"
                 onPress={() => router.push("/join-league")}
               />
               <Divider />
-              <SettingsRowChevron
+              {/* <SettingsRowChevron
                 icon="trash-outline"
                 title="Delete account"
                 subtitle="Permanently delete your account"
                 onPress={handleDeleteAccount}
-              />
+              /> */}
             </Section>
           </>
         ) : null}
@@ -224,19 +221,20 @@ export default function ProfileScreen() {
           <SettingsRowChevron
             icon="help-circle-outline"
             title="Help center"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com")}
+            subtitle="FAQs for leagues, roles, invites, and Match Center"
+            onPress={() => router.push("/help-center")}
           />
         </Section>
 
         {user ? (
           <Pressable
             onPress={handleSignOut}
-            className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
+            className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300/30 bg-red-500/10 py-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel="Log out"
           >
-            <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
-            <Text className="text-base text-red-700">
+            <Ionicons name="log-out-outline" size={22} color="#FCA5A5" />
+            <Text className="text-base text-red-200">
               Log out
             </Text>
           </Pressable>
@@ -256,11 +254,11 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <View className="gap-2">
       <Text
-        className="px-1 text-[11px] uppercase tracking-[2px] text-slate-500"
+        className="px-1 text-[11px] uppercase tracking-[2px] text-white/50"
       >
         {title}
       </Text>
-      <View className="overflow-hidden rounded-[16px] border border-neutral-200 bg-white">
+      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.06]">
         {children}
       </View>
     </View>
@@ -268,7 +266,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function Divider() {
-  return <View className="ml-14 h-px bg-neutral-100" />;
+  return <View className="ml-14 h-px bg-white/10" />;
 }
 
 function SettingsRowChevron({
@@ -285,24 +283,24 @@ function SettingsRowChevron({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 px-4 py-3 active:bg-neutral-50"
+      className="flex-row items-center gap-3 px-4 py-3 active:bg-white/5"
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <View className="h-10 w-10 items-center justify-center rounded-xl bg-neutral-100">
-        <Ionicons name={icon} size={20} color="#374151" />
+      <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+        <Ionicons name={icon} size={20} color={colors.accent} />
       </View>
       <View className="flex-1 gap-0.5">
-        <Text className="text-[15px] text-neutral-950">
+        <Text className="text-[15px] text-white">
           {title}
         </Text>
         {subtitle ? (
-          <Text className="text-xs text-slate-500">
+          <Text className="text-xs text-white/55">
             {subtitle}
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
     </Pressable>
   );
 }

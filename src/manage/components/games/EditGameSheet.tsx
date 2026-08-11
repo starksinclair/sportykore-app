@@ -122,6 +122,7 @@ export function EditGameSheet({
             onChange={(value) => setDateStr(value ?? "")}
             placeholder="Pick fixture date"
             labelClassName="text-white/60"
+            variant="dark"
             required
           />
           <AuthTextField

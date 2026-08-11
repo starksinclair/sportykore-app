@@ -65,7 +65,7 @@ Key things to cover in Terms:
 
 Users must be 13+ (or 18+ if you want to keep it simple) to create an account
 League owners are responsible for the accuracy of match data and stats they enter
-Player invite links are single-use and expire after 7 days
+Player invite links can be reused until they expire after 7 days
 Sportykore is not responsible for disputes between league owners and players
 Users can request account deletion and data removal
 League owners can remove players from their roster

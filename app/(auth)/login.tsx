@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   Pressable,
@@ -17,6 +17,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { isRequiresSignupError, messageFromBackendBody } from "@/api/errors";
 import { useRequestOtp } from "@/auth";
+import {
+  getPendingOtpAttempt,
+  setPendingOtpAttempt,
+  type PendingOtpAttempt,
+} from "@/auth/storage";
 import { Button } from "@/components/ui/Button";
 import {
   AuthAccessoryLink,
@@ -38,7 +43,18 @@ function LoginCard() {
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [requiresSignup, setRequiresSignup] = useState(false);
   const [signupHint, setSignupHint] = useState<string | null>(null);
+  const [pendingOtp, setPendingOtp] = useState<PendingOtpAttempt | null>(null);
   const requestMutation = useRequestOtp();
+
+  useEffect(() => {
+    let cancelled = false;
+    getPendingOtpAttempt().then((attempt) => {
+      if (!cancelled) setPendingOtp(attempt);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goToOtp = (trimmedEmail: string) => {
     router.push({
@@ -66,6 +82,7 @@ function LoginCard() {
           name: trimmedName,
           ...(recoveryEmail.trim() ? { recoveryEmail: recoveryEmail.trim() } : {}),
         });
+        await setPendingOtpAttempt(trimmedEmail);
         goToOtp(trimmedEmail);
       } catch (e) {
         showThrownAsToast(e, "Could not send code");
@@ -75,6 +92,7 @@ function LoginCard() {
 
     try {
       await requestMutation.mutateAsync({ email: trimmedEmail });
+      await setPendingOtpAttempt(trimmedEmail);
       goToOtp(trimmedEmail);
     } catch (e) {
       if (isRequiresSignupError(e)) {
@@ -160,6 +178,29 @@ function LoginCard() {
           iconPosition="right"
           className="mt-1 h-[52px] rounded-2xl shadow-md"
         />
+
+        {pendingOtp ? (
+          <Pressable
+            onPress={() => goToOtp(pendingOtp.email)}
+            accessibilityRole="button"
+            className="flex-row items-start gap-3 rounded-2xl border border-accent-300 bg-accent-50 px-4 py-3 active:opacity-85"
+          >
+            <Ionicons
+              name="keypad-outline"
+              size={20}
+              color={colors.darkLabel}
+              style={{ marginTop: 2 }}
+            />
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm text-neutral-950">
+                Already have a code?
+              </Text>
+              <Text className="pt-1 text-xs leading-5 text-neutral-700">
+                Continue entering the code sent to {pendingOtp.email}.
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
 
       </View>
     </View>

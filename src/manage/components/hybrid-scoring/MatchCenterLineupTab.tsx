@@ -1,8 +1,13 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import type { ApiGameDetail, GameStatus } from "@/api/entities";
+import type { ApiGameDetail, ApiPlayerAward, GameStatus } from "@/api/entities";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { EntityLogo } from "@/components/ui/entity-logo";
+import { colors } from "@/constants";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
+import { useSetMotmAward } from "@/manage/hooks";
 import type { LeagueRosterRow } from "@/manage/types";
 
 import { MatchCenterSubstitutionPanel } from "./MatchCenterSubstitutionPanel";
@@ -25,6 +30,17 @@ type Props = {
   homeTeamId: number;
   awayTeamId: number;
   roster: LeagueRosterRow[];
+  onMotmSaved?: (award: ApiPlayerAward) => void;
+};
+
+type MotmCandidate = {
+  playerId: number;
+  name: string;
+  avatarUrl?: string | null;
+  teamId: number;
+  teamName: string;
+  jerseyNumber: number | null;
+  role: "Starter" | "Substitute";
 };
 
 export function MatchCenterLineupTab({
@@ -34,8 +50,10 @@ export function MatchCenterLineupTab({
   homeTeamId,
   awayTeamId,
   roster,
+  onMotmSaved,
 }: Props) {
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
+  const motmMutation = useSetMotmAward(game.id, leagueId, seasonId);
   const activeTeamId = activeSide === "home" ? homeTeamId : awayTeamId;
 
   const teamRoster = useMemo(
@@ -44,9 +62,49 @@ export function MatchCenterLineupTab({
   );
 
   const subEnabled = LIVE_SUB_STATUSES.has(game.status);
+  const motmCandidates = useMemo(() => {
+    const candidates: MotmCandidate[] = [];
+    for (const group of game.lineups ?? []) {
+      for (const entry of [...group.starters, ...group.substitutes]) {
+        if (entry.status !== "starter" && entry.status !== "substitute") {
+          continue;
+        }
+        candidates.push({
+          playerId: entry.playerId,
+          name: entry.player.name,
+          avatarUrl: entry.player.avatarUrl,
+          teamId: entry.teamId,
+          teamName: group.team.name,
+          jerseyNumber: entry.jerseyNumber,
+          role: entry.status === "starter" ? "Starter" : "Substitute",
+        });
+      }
+    }
+    return candidates.sort((a, b) => {
+      const byTeam = a.teamName.localeCompare(b.teamName);
+      if (byTeam !== 0) return byTeam;
+      return (a.jerseyNumber ?? 999) - (b.jerseyNumber ?? 999);
+    });
+  }, [game.lineups]);
+
+  const handleSetMotm = async (playerId: number) => {
+    try {
+      const award = await motmMutation.mutateAsync(playerId);
+      onMotmSaved?.(award);
+    } catch {
+      /* Toasted by hook. */
+    }
+  };
 
   return (
     <View className="gap-4">
+      <MotmAwardCard
+        award={game.awards?.find((row) => row.awardType === "motm") ?? null}
+        candidates={motmCandidates}
+        pending={motmMutation.isPending}
+        onSelect={(playerId) => void handleSetMotm(playerId)}
+      />
+
       <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
         <TeamTabs
           homeLabel={game.homeTeam?.name ?? "Home"}
@@ -80,5 +138,144 @@ export function MatchCenterLineupTab({
         )}
       </View>
     </View>
+  );
+}
+
+function MotmAwardCard({
+  award,
+  candidates,
+  pending,
+  onSelect,
+}: {
+  award: ApiPlayerAward | null;
+  candidates: MotmCandidate[];
+  pending: boolean;
+  onSelect: (playerId: number) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const currentPlayer = award?.player;
+  const currentName =
+    currentPlayer?.name ??
+    candidates.find((candidate) => candidate.playerId === award?.playerId)?.name ??
+    null;
+  const hasCandidates = candidates.length > 0;
+
+  const handlePick = (playerId: number) => {
+    setPickerOpen(false);
+    onSelect(playerId);
+  };
+
+  return (
+    <>
+      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+        <View className="flex-row items-start gap-3">
+          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+            <Ionicons name="star-outline" size={19} color={colors.accent} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-white">
+              Man of the match
+            </Text>
+            <Text className="pt-1 text-xs leading-5 text-white/50">
+              Pick from the submitted lineups for this game.
+            </Text>
+          </View>
+        </View>
+
+        <View className="flex-row items-center gap-3 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
+          <EntityLogo
+            logoUrl={currentPlayer?.avatarUrl}
+            variant="player"
+            size="sm"
+            tone="dark"
+          />
+          <View className="min-w-0 flex-1">
+            <Text className="text-sm text-accent-100">
+              {currentName ?? "Not selected yet"}
+            </Text>
+            <Text className="pt-0.5 text-xs text-accent-100/65">
+              {currentName
+                ? "Shown on the match page and player profile."
+                : hasCandidates
+                  ? "Choose the standout player after the match."
+                  : "Submit at least one lineup before choosing MOTM."}
+            </Text>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => setPickerOpen(true)}
+          disabled={!hasCandidates || pending}
+          accessibilityRole="button"
+          accessibilityLabel="Choose man of the match"
+          className={`h-12 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+            !hasCandidates || pending ? "opacity-45" : ""
+          }`}
+        >
+          {pending ? (
+            <ActivityIndicator color={colors.darkLabel} />
+          ) : (
+            <Ionicons name="star" size={17} color={colors.darkLabel} />
+          )}
+          <Text className="text-sm text-neutral-950">
+            {currentName ? "Change MOTM" : "Choose MOTM"}
+          </Text>
+        </Pressable>
+      </View>
+
+      <BottomSheetModal
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Choose MOTM"
+        subtitle="Only players from submitted lineups are available."
+        variant="dark"
+      >
+        <View className="gap-2">
+          {candidates.map((candidate) => {
+            const selected = candidate.playerId === award?.playerId;
+            return (
+              <Pressable
+                key={`${candidate.teamId}-${candidate.playerId}`}
+                onPress={() => handlePick(candidate.playerId)}
+                disabled={pending}
+                accessibilityRole="button"
+                accessibilityLabel={`Choose ${candidate.name} as man of the match`}
+                className={`flex-row items-center gap-3 rounded-2xl border px-3 py-3 active:opacity-85 ${
+                  selected
+                    ? "border-accent-400/60 bg-accent-500/15"
+                    : "border-white/10 bg-white/[0.04]"
+                }`}
+              >
+                <EntityLogo
+                  logoUrl={candidate.avatarUrl}
+                  variant="player"
+                  size="sm"
+                  tone="dark"
+                />
+                <View className="min-w-0 flex-1">
+                  <Text className="text-sm text-white" numberOfLines={1}>
+                    {candidate.name}
+                  </Text>
+                  <Text className="pt-0.5 text-xs text-white/45" numberOfLines={1}>
+                    {[
+                      candidate.teamName,
+                      candidate.role,
+                      candidate.jerseyNumber != null
+                        ? `#${candidate.jerseyNumber}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </Text>
+                </View>
+                {selected ? (
+                  <Ionicons name="checkmark-circle" size={21} color={colors.accent} />
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+      </BottomSheetModal>
+    </>
   );
 }

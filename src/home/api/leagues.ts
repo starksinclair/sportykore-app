@@ -45,6 +45,7 @@ export async function favoriteLeague(leagueId: number) {
   await apiRequest<void>(`/api/v1/leagues/${leagueId}/favorite`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
@@ -52,5 +53,6 @@ export async function unfavoriteLeague(leagueId: number) {
   await apiRequest<void>(`/api/v1/leagues/${leagueId}/favorite`, {
     method: "DELETE",
     auth: true,
+    idempotencyKey: true,
   });
 }

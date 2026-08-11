@@ -49,7 +49,12 @@ import {
   tiebreakerLabel,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import {
+  COMPETITION_FORMAT_COPY,
+  competitionFormatLabel,
+} from "@/league/competition-format-copy";
 import { parseCalendarDate } from "@/lib/datetime";
+import { posthog } from "@/lib/posthog";
 import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
 
@@ -180,6 +185,13 @@ export default function CreateScreen() {
           logo: team.logo ?? undefined,
         })),
       });
+      posthog?.capture("competition_created", {
+        competition_format: format,
+        team_count: namedTeams.length,
+        has_logo: leagueLogo !== null,
+        has_description: Boolean(description.trim()),
+        division: divisionId,
+      });
       setCreated(true);
     } catch (err) {
       console.error("Failed to create competition", err);
@@ -281,7 +293,8 @@ export default function CreateScreen() {
               <Text
                 className="text-sm leading-6 text-white/70"
               >
-                Three quick steps - pick a league, groups, or knockout cup, then manage it live.
+                Three quick steps to choose the season structure, add teams,
+                and review before it goes live.
               </Text>
             </View>
 
@@ -484,6 +497,7 @@ function StepBasics({
         onChange={setFormat}
         required
       />
+      <FormatHelpCard format={format} />
 
       <AuthTextField
         label="Competition name"
@@ -599,7 +613,7 @@ function StepBasics({
         size="lg"
         layout="centered"
         onPick={pickCompetitionLogo}
-        hint="Recommend image: 150x150 px, png only, max 5mb, keep logo centered, clear background"
+        hint="Recommend image: 150x150 px, JPG, PNG, or WebP, max 5 MB, keep logo centered"
         accessibilityLabel="Competition logo"
       />
     </View>
@@ -642,6 +656,30 @@ function Chip({
   );
 }
 
+function FormatHelpCard({ format }: { format: CompetitionFormat }) {
+  const copy = COMPETITION_FORMAT_COPY[format];
+  return (
+    <View className="gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+      <View className="flex-row items-start gap-2">
+        <Ionicons
+          name="information-circle-outline"
+          size={18}
+          color={colors.brand}
+          style={{ marginTop: 2 }}
+        />
+        <View className="min-w-0 flex-1 gap-1">
+          <Text className="text-sm text-amber-950">
+            {copy.label}
+          </Text>
+          <Text className="text-xs leading-5 text-amber-900">
+            {copy.description} {copy.lockedHint}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function StepTeams({
   teams,
   format,
@@ -664,9 +702,9 @@ function StepTeams({
       </Text>
       <Text className="text-sm leading-6 text-slate-600">
         {format === "knockout"
-          ? "Add at least two teams. List order is seeding (first listed = seed 1)."
+          ? "Add at least two teams. List order becomes cup seeding, so the first team is seed 1."
           : format === "group"
-            ? "Add enrolled teams. You’ll assign them to groups from Manage → Groups."
+            ? "Add enrolled teams. You will assign them to groups from Manage after the competition is created."
             : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
@@ -762,15 +800,15 @@ function StepReview({
   const durationLabel = formatDurationSummary(startDate, endDate);
   const formatLabel =
     format === "knockout"
-      ? "Knockouts"
+      ? competitionFormatLabel("knockout")
       : format === "group"
-        ? "Groups"
-        : "League (round-robin)";
+        ? competitionFormatLabel("group")
+        : competitionFormatLabel("league");
   const tieFormatLabel =
     tieFormat.kind === "single"
       ? "Single match"
       : tieFormat.kind === "two_legged"
-        ? "Home & away"
+        ? "Two-legged tie"
         : `Best of ${tieFormat.bestOf}`;
 
   return (
@@ -810,7 +848,7 @@ function StepReview({
             <SummaryLine label="Groups" value={String(groupForm.groupCount)} />
             <SummaryLine
               label="Round robin"
-              value={groupForm.doubleRoundRobin ? "Home & away" : "Single"}
+              value={groupForm.doubleRoundRobin ? "Double round-robin" : "Single"}
             />
             <SummaryLine
               label="Advance per group"

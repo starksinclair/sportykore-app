@@ -5,6 +5,7 @@ import type { GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/error-state";
 import { messageFromThrown, showSuccessToast } from "@/lib/show-error-toast";
+import { posthog } from "@/lib/posthog";
 import { FootballPitch } from "@/lineup/components/FootballPitch";
 import { FormationChips } from "@/lineup/components/FormationChips";
 import {
@@ -183,6 +184,13 @@ export function LineupEditor({
     try {
       const payload = buildSetLineupPayload(teamId, selectedFormation, slots, subs);
       await saveMutation.mutateAsync(payload);
+      posthog?.capture("lineup_saved", {
+        game_id: gameId,
+        team_id: teamId,
+        formation: selectedFormation.name,
+        starter_count: Object.keys(slots).length,
+        substitute_count: subs.length,
+      });
       showSuccessToast("Lineup saved", "Your team sheet has been confirmed.");
       onSaved?.();
     } catch (err) {

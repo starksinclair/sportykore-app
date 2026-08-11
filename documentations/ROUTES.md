@@ -23,13 +23,14 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 | **Team (with games)** | **Team** + `homeGames`, `awayGames` → **Game[]** |
 | **Player** | `id`, `name`, `avatarUrl` (string \| null), `visibility` (`active` \| `private`). **If `visibility: private`, every variant below collapses to just `{ id, name, visibility: "private" }`** - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md) |
 | **Player (with stats)** | **Player** + `stats` → **Stat[]** |
-| **Player (profile)** | **Player** + `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age` (number \| null, computed - **`dateOfBirth` is never serialized**), `country` → **Country** \| omitted, `highlights` → **PlayerHighlight[]** \| omitted |
+| **Player (profile)** | **Player** + `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age` (number \| null, computed - **`dateOfBirth` is never serialized**), `country` → **Country** \| omitted, `highlights` → **PlayerHighlight[]** \| omitted, `awards` → **PlayerAward[]** \| omitted |
 | **PlayerHighlight** | `id`, `videoId` (11-char YouTube ID), `title` (string \| null), `sortOrder`, `thumbnailUrl` (derived: `https://img.youtube.com/vi/{videoId}/hqdefault.jpg`) |
+| **PlayerAward** | `id`, `gameId`, `playerId` (number \| null), `awardType` (`motm`), `awardedBy` (number \| null), optional `player` → **Player**, optional `game` → **Game**, optional `awardedByUser` → **User** |
 | **StatType** | `id`, `name`, `displayName`, `iconName` (string \| null), `category` (string \| null) |
-| **Stat** | `id`, `minute` (number \| null), `isStoppageTime` (boolean \| null), `numericValue` (number \| null), `isUnaccredited` (boolean), `type` → **StatType** \| omitted, `team` → **Team** \| omitted, `player` → **Player** \| omitted, `relatedPlayer` → **Player** \| omitted |
+| **Stat** | `id`, `minute` (number \| null), `isStoppageTime` (boolean \| null), `numericValue` (number \| null), `clientEventId` (string \| null), `qualifiers` (object), `isUnaccredited` (boolean), `type` → **StatType** \| omitted, `team` → **Team** \| omitted, `player` → **Player** \| omitted, `relatedPlayer` → **Player** \| omitted |
 | **Standing** | `id`, `position`, `played`, `wins`, `draws`, `losses`, `goalsFor`, `goalsAgainst`, `goalDifference`, `points`, `form` (string \| null), `team` → **Team** \| omitted |
-| **Game** | `id`, `status`, `playedAt`, `homeScore`, `awayScore`, `venueName`, `venueId`, `venue` → **Venue (for game)** \| omitted, `currentMinute`, `stageId`, `tieId`, `leg`, `round`, `bracketPosition`, `homePenaltyScore`, `awayPenaltyScore`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted, `winnerTeam` → **Team** \| omitted |
-| **Game (detail)** | **Game** + `league` → **League** \| omitted, `stats` → **Stat[]**, `lineups` → **TeamLineupGroup[]** |
+| **Game** | `id`, `status`, `playedAt`, `homeScore`, `awayScore`, `venueName`, `venueId`, `venue` → **Venue (for game)** \| omitted, `currentMinute`, `stageId`, `tieId`, `leg`, `round`, `bracketPosition`, `homePenaltyScore`, `awayPenaltyScore`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted, `winnerTeam` → **Team** \| omitted, `awards` → **PlayerAward[]** \| omitted |
+| **Game (detail)** | **Game** + `league` → **League** \| omitted, `stats` → **Stat[]**, `tracking` → derived possession/pass/shot metrics, `lineups` → **TeamLineupGroup[]** |
 | **Stage** | `id`, `seasonId`, `name`, `stageType` (`round_robin` \| `group` \| `knockout` \| `playoff`), `sequence`, `status` (`upcoming` \| `active` \| `completed`), `sourceStageId`, `config` (object) |
 | **Tie** | `id`, `stageId`, `round`, `bracketPosition`, `tieFormat`, `bestOf`, `targetWins`, `awayGoals`, `isBye`, `homeScoreAgg`, `awayScoreAgg`, `status`, `homeTeam` → **Team** \| omitted, `awayTeam` → **Team** \| omitted, `winnerTeam` → **Team** \| omitted, `games` → **Game[]** \| omitted |
 | **Venue** | `id`, `name`, `address`, `latitude`, `longitude`, `googlePlaceId`, `capacity`, `city`, `notes` (coords number \| null) |
@@ -69,7 +70,7 @@ Types below reflect **transformer output** (`app/transformers/*`). Nullable DB f
 
 ### Stat type `name` values (seeded)
 
-Includes `goals`, `own_goal`, `assists`, `yellow_card`, `red_card`, `saves`, `shots_on_target`, `fouls_conceded`, `substitution_on`, `substitution_off`.
+Includes `goals`, `own_goal`, `assists`, `pass`, `shot`, `yellow_card`, `red_card`, `saves`, `shots_on_target`, `fouls_conceded`, `substitution_on`, `substitution_off`.
 
 `substitution_on` / `substitution_off` are the **historical match-event record** for substitutions (timeline). See [Substitutions (via stats)](#substitutions-via-stats).
 
@@ -266,6 +267,9 @@ League owner only. Each team includes active admins (`removed_at` null) so the m
 | `DELETE` | `/api/v1/leagues/:leagueId/favorite` | `apiAuth` | **Params:** `leagueId` (positive integer; must exist in `leagues`). No body. | `{ message: "League removed from favorites" }` | `401` unauthorized; `422` invalid or missing league; idempotent if not favourited |
 | `PUT` | `/api/v1/leagues/:leagueId` | `apiAuth` + `leagueOwner` | **Params:** `leagueId`. **Body:** `updateLeagueValidator` | `{ message: "League updated successfully" }` | `400` invalid id; `403` not owner; `404` league |
 | `GET` | `/api/v1/search` | none | **Query:** `q` (string, trimmed; empty → no search), `limit?` (number 1–100, default 24) | **`{ data: { query: string, results: SearchHit[] } }`** | Always `200`; empty `q` → `results: []` |
+| `GET` | `/api/v1/support/faqs` | none | Reads Google Sheets tab `faq` | `{ data: { articles: SupportFaqArticle[] } }` | App falls back to bundled FAQ if unavailable |
+| `POST` | `/api/v1/support/bug-reports` | optional Bearer | **Body:** `bugReportValidator` | `201` `{ message, report: { id, createdAt } }` | Appends to Google Sheets tab `bugs`; captures `auth.user` when present |
+| `POST` | `/api/v1/support/faqs/seed` | `apiAuth` | none; in production requires `x-support-seed-token` matching `SUPPORT_SEED_TOKEN` | `{ message, inserted, skipped }` | Creates/updates header and appends bundled launch FAQ rows not already in the sheet |
 | `GET` | `/api/v1/games/:id` | none | **Params:** `id` (game id) | **`{ data: GameDetail }`** | `404` if game missing |
 | `GET` | `/api/v1/formations` | none | none | **`{ data: Formation[] }`** | Active formations only, ordered by `name` |
 | `GET` | `/api/v1/formations/:id` | none | **Params:** `id` (formation id) | **`{ data: Formation }`** | `404` if formation missing |
@@ -328,6 +332,7 @@ League owner only. Each team includes active admins (`removed_at` null) so the m
 | `DELETE` | `/api/v1/leagues/games/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (game id) | `{ message: "Game deleted successfully" }` | Cascades stats |
 | `POST` | `/api/v1/leagues/stats` | `apiAuth` + `leagueOwner` | **Body:** `createStatValidator` | **`201`** `{ message: "Stat created successfully" }` | Validates player on active roster + correct team side; does **not** auto-update game score. Use for goals, cards, etc. |
 | `POST` | `/api/v1/leagues/stats/substitutions` | `apiAuth` + `leagueOwner` | **Body:** `recordSubstitutionValidator` | **`201`** `{ message, statIds: number[] }` | Atomically creates paired `substitution_off` + `substitution_on` rows per swap (see below) |
+| `POST` | `/api/v1/games/:gameId/tracking-events` | `apiAuth` + `leagueOwner` | **Body:** `recordTrackingEventsValidator` | **`201`** `{ message, accepted, skipped }` | Batch ingest for `pass` and `shot` stats. Dedupe uses `clientEventId`; players must be in the submitted lineup when that team has one, or on the active roster when no lineup has been submitted for that team |
 | `PUT` | `/api/v1/leagues/stats/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (stat id). **Body:** `updateStatValidator` | `{ message: "Stat updated successfully" }` | `404` stat; cannot change `playerId` / `statTypeId` - delete + recreate to change who was involved |
 | `DELETE` | `/api/v1/leagues/stats/:id` | `apiAuth` + `leagueOwner` | **Params:** `id` (stat id) | `{ message: "Stat deleted successfully" }` | Recalculates standings / broadcasts game update |
 
@@ -396,6 +401,14 @@ Live match score +/- with unaccredited goal placeholders. See [docs/hybrid-scori
 | --- | --- | --- | --- | --- |
 | `POST` | `/api/v1/games/:gameId/score` | `{ team: "home" \| "away", action: "increment" \| "decrement" }` | `{ message, homeScore, awayScore, statId }` | Updates game score → `GameUpdated` (`result`) → standings recalc + SSE `game_updated`; also SSE `score_updated` |
 | `PATCH` | `/api/v1/games/:gameId/stats/:statId/accredit` | `{ playerId, assistPlayerId?, isOwnGoal, minute }` | `{ message: "Goal accredited", statId }` | Updates placeholder only; SSE `stat_accredited` (no standings recalc) |
+
+### Match awards (`apiAuth` + `leagueOwner`)
+
+Match Center can set one man-of-the-match award per game. Backed by `player_awards` with `unique(game_id, award_type)`.
+
+| Method | Path | Body | Success | Notes |
+| --- | --- | --- | --- | --- |
+| `PUT` | `/api/v1/games/:gameId/awards/motm` | `{ playerId }` | **`{ data: PlayerAward }`** | Creates or replaces the game's `motm`; `playerId` must belong to a submitted lineup row for the game with `status` `starter` or `substitute`; stores `awardedBy` as the league admin user id |
 
 ### Game lineups (`apiAuth` + `lineupManager`)
 
@@ -587,7 +600,7 @@ Standings recalc runs on **game row saves** (`GameUpdated` with `reason: "result
 
 ### `GET /api/v1/games/:id` → `GameDetail`
 
-**Game (detail)** - league + stats (with type, team, player, relatedPlayer) + `lineups` grouped by team (`TeamLineupGroup[]`) + nested `venue` (`Venue (for game)` when `venueId` is set; otherwise omitted) alongside `venueName` / `venueId`.
+**Game (detail)** - league + stats (with type, team, player, relatedPlayer) + `lineups` grouped by team (`TeamLineupGroup[]`) + `awards` (`PlayerAward[]`, currently `motm`) + nested `venue` (`Venue (for game)` when `venueId` is set; otherwise omitted) alongside `venueName` / `venueId`.
 
 ### `GET /api/v1/formations` → `Formation[]`
 
@@ -649,7 +662,7 @@ Use before invite accept / profile creation to decide whether to show the player
 
 ### `GET /api/v1/players/:id` → `{ player, leagues, statTypes }`
 
-- **`player`** - **Player (profile)**: `id`, `name`, `avatarUrl`, `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age`, `country`, `highlights`.
+- **`player`** - **Player (profile)**: `id`, `name`, `avatarUrl`, `bio`, `primaryPosition`, `secondaryPosition`, `preferredFoot`, `heightCm`, `city`, `state`, `nationality`, `socialHandle`, `age`, `country`, `highlights`, `awards`.
 - **`leagues`** - leagues the player belongs to (from `league_players` and/or stats), each with **`seasons`** for filtering in the UI.
 - **`statTypes`** - global stat type catalog for grouping (same shape as league detail).
 - If the player's `visibility` is `private`, `player` collapses to `{ id, name, visibility: "private" }` and `leagues` / `statTypes` are both returned empty - see [docs/PLAYER_PROFILE.md](docs/PLAYER_PROFILE.md).
@@ -699,6 +712,16 @@ Each league entry:
       "country": { "id": 1, "name": "Nigeria", "code": "ng" },
       "highlights": [
         { "id": 1, "videoId": "dQw4w9WgXcQ", "title": "Hat-trick vs Riverside", "sortOrder": 0, "thumbnailUrl": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg" }
+      ],
+      "awards": [
+        {
+          "id": 1,
+          "gameId": 99,
+          "playerId": 1,
+          "awardType": "motm",
+          "awardedBy": 7,
+          "game": { "id": 99, "status": "full_time", "homeScore": 2, "awayScore": 1 }
+        }
       ]
     },
     "statTypes": [
@@ -808,6 +831,46 @@ User must already exist (created on signup `request-otp` or from a prior login).
 | Field | Rules |
 | --- | --- |
 | `recoveryEmail` | required string, valid email format; must **exist** in `users.recovery_email` |
+
+### Google Sheets support content
+
+Set `SUPPORT_SHEETS_SPREADSHEET_ID` in the API environment. The existing aliases `GOOGLE_SHEETS_SPREADSHEET_ID`, `GOOGLE_SHEETS_FAQ_NAME`, and `GOOGLE_SHEETS_BUGS_NAME` are also supported. The service account email must have edit access to the spreadsheet. By default, the API uses sheet tabs named `faq` and `bugs`; override with `SUPPORT_FAQ_SHEET_NAME` and `SUPPORT_BUGS_SHEET_NAME` if needed.
+
+Supported auth env:
+
+| Env | Meaning |
+| --- | --- |
+| `SUPPORT_GOOGLE_CLIENT_EMAIL` + `SUPPORT_GOOGLE_PRIVATE_KEY` | Inline service account credentials. Escaped `\n` is converted automatically. Existing aliases `GOOGLE_CLIENT_EMAIL` + `GOOGLE_PRIVATE_KEY` are supported. |
+| `SUPPORT_GOOGLE_SERVICE_ACCOUNT_KEY` | Raw service account JSON. Existing alias `GOOGLE_SERVICE_ACCOUNT` is supported. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to service account JSON. |
+| `GCS_KEY` | Existing file path fallback, if it is a service account JSON with Sheets access. |
+| `SUPPORT_SEED_TOKEN` | Production-only guard for `POST /api/v1/support/faqs/seed` via `x-support-seed-token`. |
+
+`faq` tab columns:
+
+| Column | Meaning |
+| --- | --- |
+| `id` | Stable article id, e.g. `match-day-flow`. |
+| `category` | One of `getting-started`, `player-profile`, `league-admin`, `team-manager`, `match-center`, `standings`, `invites`, `account`. |
+| `question` | FAQ title. |
+| `answer` | FAQ body. |
+| `tags` | Comma-separated search tags. |
+| `related_label` | Optional CTA label. |
+| `related_route` | Optional app route, e.g. `/join-league`. |
+| `sort_order` | Number used for display order. |
+| `published` | Blank/TRUE/yes means visible; FALSE/0/no hides the row. |
+| `updated_at` | Optional editorial timestamp. |
+
+`bugs` tab columns:
+
+| Column | Meaning |
+| --- | --- |
+| `id`, `created_at` | Generated by the API. |
+| `type` | `bug`, `confusing_flow`, `feature_request`, `account_access`, or `other`. |
+| `title`, `description`, `expected` | User-submitted report fields. |
+| `email`, `user_id` | User context when available. |
+| `route`, `app_version`, `platform`, `os_version`, `device_model` | App/device context from the client. |
+| `status` | Starts as `new`; update manually in Sheets. |
 
 ### `createLeagueWithSeasonValidator` - `POST /api/v1/leagues`
 
@@ -1024,6 +1087,30 @@ Optional: `relatedPlayerId`, `minute`, `isStoppageTime`, `value`, `numericValue`
 
 Server also rejects duplicate players across the batch and players missing from the lineup.
 
+### `recordTrackingEventsValidator` - `POST /api/v1/games/:gameId/tracking-events`
+
+Passes and shots are stored as atomic `stats` rows. Attempted counts are derived from row count, not stored separately.
+
+| Field | Rules |
+| --- | --- |
+| `events` | array, 1–250 items |
+| `events[].clientEventId` | required UUID; unique retry key used for dedupe |
+| `events[].type` | `pass` or `shot` |
+| `events[].teamId` | required FK → `teams`; must be home or away team for the game |
+| `events[].playerId` | required FK → `players`; must be in submitted starter/substitute lineup for that team, or on the active roster when that team has no submitted lineup |
+| `events[].minute` | optional integer 0–130, nullable |
+| `events[].isStoppageTime` | optional boolean |
+| `events[].completed` | required boolean for `pass`; stored in `qualifiers.completed` |
+| `events[].onTarget` | required boolean for `shot`; stored in `qualifiers.on_target` |
+
+Derived metrics on game detail:
+
+| Metric | Rule |
+| --- | --- |
+| Possession | team pass rows / total pass rows across both teams. When no passes exist, possession is `0` and `possessionTracked` is `false`. |
+| Pass completion | completed pass rows / all pass rows. |
+| Shot accuracy | on-target shot rows / all shot rows. |
+
 ### `setLineupValidator` - `PUT /api/v1/games/:gameId/lineups`
 
 | Field | Rules |
@@ -1036,6 +1123,12 @@ Server also rejects duplicate players across the batch and players missing from 
 ### `updateLineupValidator` - `PATCH /api/v1/games/:gameId/lineups/:id`
 
 Optional: `jerseyNumber` (1–99, nullable), `slotKey` (string, nullable), `position` (`LINEUP_POSITIONS`, nullable), `status` (`starter` \| `substitute` \| `did_not_play`).
+
+### `setMotmAwardValidator` - `PUT /api/v1/games/:gameId/awards/motm`
+
+| Field | Rules |
+| --- | --- |
+| `playerId` | required FK → `players`; must already be in the game's submitted lineup as `starter` or `substitute` |
 
 ### `assignTeamAdminValidator` - `POST /api/v1/leagues/:leagueId/teams/:teamId/admins`
 

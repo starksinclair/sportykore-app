@@ -10,7 +10,7 @@ export function ErrorState({ onRetry, message }: { onRetry?: () => void, message
         </Text>
         <Pressable
           onPress={onRetry}
-          className="rounded-2xl bg-[#4A148C] px-6 py-3 active:bg-[#3a0f6e]"
+          className="rounded-2xl bg-brand-800 px-6 py-3 active:bg-brand-900"
         >
           <Text className="text-sm text-white">
             Retry

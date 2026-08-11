@@ -4,6 +4,8 @@ import { useAuth } from "@/auth";
 import { NotFound } from "@/components/not-found";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import { useOwnPlayerProfile, usePlayerDetail } from "@/player";
 import {
   PlayerProfileCreateState,
@@ -18,6 +20,19 @@ export default function OwnPlayerProfileRoute() {
     ownResult?.kind === "profile" ? ownResult.data.player.id : 0;
   const detailQuery = usePlayerDetail(playerId);
   const detail = detailQuery.data;
+  const player = detail?.player ?? (ownResult?.kind === "profile" ? ownResult.data.player : null);
+
+  useTrackView(
+    "player_viewed",
+    player ? player.id : null,
+    player
+      ? {
+          player_id: player.id,
+          player_name: player.name,
+          is_owner: true,
+        }
+      : undefined,
+  );
 
   if (ownQuery.isLoading && !ownResult) {
     return (
@@ -32,7 +47,9 @@ export default function OwnPlayerProfileRoute() {
   if (ownQuery.isError) {
     return (
       <DetailScreenShell title="Player profile">
-        <NotFound message="Could not load your player profile" />
+        <NotFound
+          message={messageForResourceLoad(ownQuery.error, "Player profile")}
+        />
       </DetailScreenShell>
     );
   }
@@ -45,12 +62,12 @@ export default function OwnPlayerProfileRoute() {
     );
   }
 
-  const player = detail?.player ?? ownResult.data.player;
+  const profilePlayer = detail?.player ?? ownResult.data.player;
 
   return (
-    <DetailScreenShell title={player.name} subtitle="Your player profile">
+    <DetailScreenShell title={profilePlayer.name} subtitle="Your player profile">
       <PlayerProfileView
-        player={player}
+        player={profilePlayer}
         leagues={detail?.leagues ?? []}
         statTypes={detail?.statTypes ?? []}
         isOwner

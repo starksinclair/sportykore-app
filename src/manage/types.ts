@@ -9,6 +9,7 @@ import type {
   PlayerPosition,
   SeasonStatus,
 } from "@/api/entities";
+import type { TiebreakerRule } from "@/league/tiebreaker-options";
 
 export type OwnedLeague = {
   id: number;
@@ -55,7 +56,7 @@ export type TeamAdminUser = {
   fullName: string | null;
 };
 
-/** Active team admin row from `GET /api/v1/auth/users/leagues/:leagueId/teams`. */
+/** Active team manager row from `GET /api/v1/auth/users/leagues/:leagueId/teams`. */
 export type TeamAdmin = {
   id: number;
   teamId: number;
@@ -157,7 +158,28 @@ export type RecordSubstitutionsResult = {
   statIds: number[];
 };
 
-import type { TiebreakerRule } from "@/league/tiebreaker-options";
+export type TrackingEventType = "pass" | "shot";
+
+export type TrackingEventPayload = {
+  clientEventId: string;
+  type: TrackingEventType;
+  teamId: number;
+  playerId: number;
+  minute?: number | null;
+  isStoppageTime?: boolean;
+  completed?: boolean;
+  onTarget?: boolean;
+};
+
+export type RecordTrackingEventsPayload = {
+  events: TrackingEventPayload[];
+};
+
+export type RecordTrackingEventsResult = {
+  message: string;
+  accepted: number;
+  skipped: number;
+};
 
 export type UpdateLeaguePayload = {
   name?: string;

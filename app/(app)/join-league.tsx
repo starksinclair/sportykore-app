@@ -25,6 +25,7 @@ import {
   setPendingInviteToken,
 } from "@/invite";
 import { JoinLeagueLoginPrompt } from "@/invite/components/JoinLeagueLoginPrompt";
+import { posthog } from "@/lib/posthog";
 import {
   showErrorToast,
   showSuccessToast,
@@ -107,6 +108,9 @@ export default function JoinLeagueScreen() {
       }
 
       if (result.kind === "joined") {
+        posthog?.capture("league_joined", {
+          has_prefilled_invite: Boolean(params.token),
+        });
         showSuccessToast("You're in!", "Welcome to the league.");
         router.replace("/profile");
         return;

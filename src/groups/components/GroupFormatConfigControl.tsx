@@ -93,7 +93,7 @@ export function GroupFormatConfigControl({
           {(
             [
               { id: false, label: "Single" },
-              { id: true, label: "Home & away" },
+              { id: true, label: "Double round-robin" },
             ] as const
           ).map((opt) => {
             const active = value.doubleRoundRobin === opt.id;
@@ -130,8 +130,9 @@ export function GroupFormatConfigControl({
           tone === "dark" ? "text-white/45" : "text-slate-500"
         }`}
       >
-        Scoring is fixed at 3/1/0. Standings sort by points, then goal difference,
-        goals for, then name.
+        Single means each team plays the others in its group once. Double
+        round-robin means each matchup is played twice, usually home and away.
+        Scoring is fixed at 3/1/0.
       </Text>
     </View>
   );

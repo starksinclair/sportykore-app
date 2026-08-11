@@ -15,6 +15,7 @@ import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
+import { posthog } from "@/lib/posthog";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useCreateGame, useLeagueTeams } from "../../hooks";
@@ -302,6 +303,13 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
         firstHalfDuration,
         secondHalfDuration,
       });
+      posthog?.capture("game_scheduled", {
+        league_id: leagueId,
+        season_id: seasonId,
+        has_venue: venueSelection.kind !== "none",
+        first_half_minutes: firstHalfDuration,
+        second_half_minutes: secondHalfDuration,
+      });
       showInfoToast("Game scheduled", "The fixture was added to upcoming.");
       resetAndClose();
     } catch (err) {
@@ -353,6 +361,7 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
               onChange={(value) => setDateStr(value ?? "")}
               placeholder="Pick fixture date"
               labelClassName="text-white/60"
+              variant="dark"
               required
             />
             <AuthTextField

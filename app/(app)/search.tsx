@@ -22,6 +22,7 @@ import {
   removeRecentSearch,
 } from "@/home/recent-searches";
 import type { SearchEntityType, SearchResult } from "@/home/types";
+import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
 const ENTITY_ORDER: SearchEntityType[] = ["country", "league", "team", "player"];
 const ENTITY_LABELS: Record<SearchEntityType, string> = {
@@ -60,6 +61,34 @@ export default function SearchScreen() {
     [searchQuery.data],
   );
 
+  useEffect(() => {
+    if (
+      !trimmed ||
+      !searchQuery.isSuccess ||
+      searchQuery.isFetching ||
+      searchQuery.isPlaceholderData ||
+      !searchQuery.data
+    ) {
+      return;
+    }
+    const results = searchQuery.data.results ?? [];
+    posthog?.capture("search_performed", {
+      query_length: trimmed.length,
+      result_count: results.length,
+      country_count: results.filter((r) => r.type === "country").length,
+      league_count: results.filter((r) => r.type === "league").length,
+      team_count: results.filter((r) => r.type === "team").length,
+      player_count: results.filter((r) => r.type === "player").length,
+    });
+  }, [
+    searchQuery.data,
+    searchQuery.dataUpdatedAt,
+    searchQuery.isFetching,
+    searchQuery.isPlaceholderData,
+    searchQuery.isSuccess,
+    trimmed,
+  ]);
+
   const handleSubmit = async () => {
     if (!trimmed) return;
     const next = await pushRecentSearch(trimmed);
@@ -78,6 +107,10 @@ export default function SearchScreen() {
   const handleResult = async (result: SearchResult) => {
     const next = await pushRecentSearch(result.label);
     setRecents(next);
+    posthog?.capture("search_result_clicked", {
+      result_type: result.type,
+      query_length: trimmed.length,
+    });
     const route = searchResultRoute(result);
     if (route) router.push(route as Href);
   };

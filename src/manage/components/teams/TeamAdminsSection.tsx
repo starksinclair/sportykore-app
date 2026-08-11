@@ -67,8 +67,8 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
 
   const handleRemove = (userId: number, label: string) => {
     Alert.alert(
-      "Remove team admin",
-      `Remove ${label} as admin for this team?`,
+      "Remove team manager",
+      `Remove ${label} as manager for this team?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -96,10 +96,10 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
         </View>
         <View className="flex-1 gap-0.5">
           <Text className="text-base text-white">
-            Team admins
+            Team managers
           </Text>
           <Text className="text-sm leading-5 text-white/55">
-            Admins can manage lineups and match day for this team.
+            Team managers can set lineups for this team.
           </Text>
         </View>
       </View>
@@ -111,7 +111,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
       ) : admins.length === 0 ? (
         <View className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
           <Text className="text-sm text-white/50">
-            No team admins assigned yet.
+            No team managers assigned yet.
           </Text>
         </View>
       ) : (
@@ -162,7 +162,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
           <Text
             className="text-xs uppercase tracking-wide text-white/50"
           >
-            Assign team admin
+            Assign team manager
           </Text>
         </View>
 

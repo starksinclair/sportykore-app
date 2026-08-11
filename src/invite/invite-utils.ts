@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 
 import { ApiError, messageFromBackendBody } from "@/api/errors";
+import { posthog } from "@/lib/posthog";
 
 import { acceptInvite } from "./api";
 import type { PendingInviteContext } from "./storage";
@@ -123,6 +124,10 @@ export async function persistInviteFromUrl(url: string): Promise<boolean> {
   if (!captured) return false;
 
   await setPendingInviteToken(captured.token, captured.context);
+  posthog?.capture("invite_link_opened", {
+    has_league_name: Boolean(captured.context.leagueName),
+    has_team_name: Boolean(captured.context.teamName),
+  });
   return true;
 }
 

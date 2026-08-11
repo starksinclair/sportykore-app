@@ -9,6 +9,7 @@ import { colors } from "@/constants";
 import type { CountryMatchSummary, CountryPlayerHighlight } from "@/country";
 import { useCountryDetail } from "@/country";
 import type { TeamRef } from "@/home/types";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 
 type TabKey = "teams" | "players" | "recentMatches";
 
@@ -39,7 +40,9 @@ export default function CountryRoute() {
       <DetailScreenShell title="Country">
         <View className="rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
           <Text className="text-lg text-white">
-            Country not found
+            {query.isError
+              ? messageForResourceLoad(query.error, "Country")
+              : "Country not found."}
           </Text>
         </View>
       </DetailScreenShell>

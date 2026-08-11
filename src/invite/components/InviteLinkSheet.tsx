@@ -18,6 +18,7 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors, scoreboardPattern } from "@/constants";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
+import { posthog } from "@/lib/posthog";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useGenerateInvite } from "@/invite/hooks";
@@ -84,6 +85,12 @@ export function InviteLinkSheet({
     const result = await copyToClipboard(inviteCode);
     if (result === "clipboard") {
       showInfoToast("Copied", "Invite code copied to clipboard.");
+      posthog?.capture("invite_link_shared", {
+        league_id: leagueId,
+        season_id: seasonId,
+        team_id: teamId,
+        method: "copy_code",
+      });
     }
   };
 
@@ -93,6 +100,12 @@ export function InviteLinkSheet({
       const teamLabel = activeTeam?.name ?? "your team";
       await Share.share({
         message: `Join ${teamLabel} in ${leagueName} on SportyKore:\n${inviteUrl}`,
+      });
+      posthog?.capture("invite_link_shared", {
+        league_id: leagueId,
+        season_id: seasonId,
+        team_id: teamId,
+        method: "share_sheet",
       });
     } catch {
       // User dismissed share sheet.
@@ -116,6 +129,7 @@ export function InviteLinkSheet({
           <>
             <InviteContextCard leagueName={leagueName} teamName={activeTeam?.name} />
             <TeamPicker teams={teams} selectedId={teamId} onSelect={setTeamId} />
+            <InviteExpiryNote />
             <InviteActionButton
               icon="ticket-outline"
               label="Generate invite code"
@@ -157,6 +171,8 @@ export function InviteLinkSheet({
               </Text>
             </View>
 
+            <InviteExpiryNote />
+
             <View className="w-full flex-row gap-3">
               <InviteActionButton
                 icon="copy-outline"
@@ -184,6 +200,17 @@ export function InviteLinkSheet({
         )}
       </View>
     </BottomSheetModal>
+  );
+}
+
+function InviteExpiryNote() {
+  return (
+    <View className="flex-row gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-4 py-3">
+      <Ionicons name="time-outline" size={17} color={colors.accent} />
+      <Text className="min-w-0 flex-1 text-sm leading-5 text-white/70">
+        Invite codes expire after 7 days and can be reused until then.
+      </Text>
+    </View>
   );
 }
 

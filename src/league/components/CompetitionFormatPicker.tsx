@@ -6,6 +6,10 @@ import type { CompetitionFormat } from "@/api/entities";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { colors } from "@/constants";
+import {
+  COMPETITION_FORMAT_COPY,
+  competitionFormatLabel,
+} from "../competition-format-copy";
 
 const FORMAT_OPTIONS: {
   id: CompetitionFormat;
@@ -14,23 +18,26 @@ const FORMAT_OPTIONS: {
 }[] = [
   {
     id: "league",
-    label: "League (round-robin)",
-    description: "Table standings from fixtures - round-robin.",
+    label: COMPETITION_FORMAT_COPY.league.label,
+    description:
+      "Best for a table season. Fixtures create standings, and the table decides the winner.",
   },
   {
     id: "knockout",
-    label: "Knockouts",
-    description: "Cup bracket. Team order on the next step becomes seeding.",
+    label: COMPETITION_FORMAT_COPY.knockout.label,
+    description:
+      "Best for a cup. Teams are seeded into a bracket and losers are eliminated.",
   },
   {
     id: "group",
-    label: "Groups",
-    description: "Split teams into groups, then advance to a knockout.",
+    label: COMPETITION_FORMAT_COPY.group.label,
+    description:
+      "Best when teams play in smaller groups before qualifiers advance.",
   },
 ];
 
 function formatLabel(format: CompetitionFormat): string {
-  return FORMAT_OPTIONS.find((o) => o.id === format)?.label ?? format;
+  return competitionFormatLabel(format);
 }
 
 type Props = {
@@ -73,6 +80,10 @@ export function CompetitionFormatPicker({
         </Text>
         <Ionicons name="chevron-down" size={18} color="#6B7280" />
       </Pressable>
+      <Text className="text-xs leading-5 text-slate-500">
+        This format is locked after the season is created. You can create a new
+        season later if you need a different structure.
+      </Text>
 
       <BottomSheetModal
         visible={open}

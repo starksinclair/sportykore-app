@@ -8,6 +8,7 @@ import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
 import { teamPlayersToRosterRows } from "@/lineup/utils";
 import { useMatchDetail } from "@/match";
@@ -121,12 +122,16 @@ export function LineupEditorScreen({
             </View>
           ) : matchQuery.isError || !game ? (
             <ErrorState
-              message="Could not load match."
+              message={
+                matchQuery.isError
+                  ? messageForResourceLoad(matchQuery.error, "Match")
+                  : "Match not found."
+              }
               onRetry={() => matchQuery.refetch()}
             />
           ) : teamQuery.isError ? (
             <ErrorState
-              message="Could not load squad."
+              message={messageForResourceLoad(teamQuery.error, "Team")}
               onRetry={() => teamQuery.refetch()}
             />
           ) : (

@@ -39,6 +39,7 @@ export async function completeProfileAndAccept(
       method: "POST",
       auth: true,
       muteGlobalUnauthorized: true,
+      idempotencyKey: true,
       jsonBody: form,
     });
   }
@@ -47,6 +48,7 @@ export async function completeProfileAndAccept(
     method: "POST",
     auth: true,
     muteGlobalUnauthorized: true,
+    idempotencyKey: true,
     jsonBody: {
       name: payload.name,
       countryId: payload.countryId,

@@ -131,7 +131,7 @@ function MatchPhaseBadge({
             style={[styles.phaseLabel]}
             className="text-[10px] tabular-nums text-neutral-500"
           >
-            {displayMinute}'
+            {`${displayMinute}'`}
           </Text>
         ) : null}
         <View className="rounded-md bg-amber-100 px-1.5 py-0.5">

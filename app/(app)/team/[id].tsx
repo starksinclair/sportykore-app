@@ -15,6 +15,8 @@ import { colors } from "@/constants";
 import { standingStages, useStageStandings } from "@/groups";
 import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
 import { LeagueStandingsTab } from "@/league/components/tabs/StandingsTab";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import { useSeasonStages } from "@/knockout";
 import { useTeamDetail } from "@/team";
 import { TeamMatchesTab } from "@/team/components/tabs/MatchesTab";
@@ -40,6 +42,17 @@ export default function TeamRoute() {
 
   const query = useTeamDetail(isValidId ? teamId : 0);
   const detail = query.data ?? null;
+
+  useTrackView(
+    "team_viewed",
+    detail ? teamId : null,
+    detail
+      ? {
+          team_id: detail.team.id,
+          team_name: detail.team.name,
+        }
+      : undefined,
+  );
 
 
   const selectedLeague = useMemo(() => {
@@ -114,7 +127,13 @@ export default function TeamRoute() {
   if (query.isError || !detail) {
     return (
       <DetailScreenShell title="Team">
-        <NotFound message="Team not found" />
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "Team")
+              : "Team not found."
+          }
+        />
       </DetailScreenShell>
     );
   }

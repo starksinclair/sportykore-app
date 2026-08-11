@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { ApiGameDetail } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
@@ -8,14 +8,18 @@ import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 
 import type { LeagueRosterRow } from "../../types";
+import { AdvancedTrackingPanel } from "./AdvancedTrackingPanel";
 import { PlayerActionRow } from "./PlayerPickRow";
 import { TeamTabs, type TeamSide } from "./TeamTabs";
 
 type Props = {
   game: ApiGameDetail;
+  leagueId: number;
+  seasonId: number;
   homeTeamId: number;
   awayTeamId: number;
   roster: LeagueRosterRow[];
+  liveMinute: number;
   pendingTeam: "home" | "away" | null;
   scorerId: number | null;
   assistId: number | null;
@@ -37,9 +41,12 @@ type Props = {
 
 export function HybridScoringPanel({
   game,
+  leagueId,
+  seasonId,
   homeTeamId,
   awayTeamId,
   roster,
+  liveMinute,
   pendingTeam,
   scorerId,
   assistId,
@@ -92,21 +99,32 @@ export function HybridScoringPanel({
       </View>
 
       <View
-        className={`gap-4 rounded-[24px] border px-4 py-4 ${
+        className={`gap-3 rounded-[22px] border px-3 py-3 ${
           accreditActive
             ? "border-brand-400/40 bg-brand-500/10"
             : "border-white/10 bg-white/4 opacity-60"
         }`}
         pointerEvents={accreditActive ? "auto" : "none"}
       >
-        <Text
-          className="text-xs uppercase tracking-[2px] text-white/55"
-        >
-          Select scorer and assist
-        </Text>
-        <Text className="text-xs text-white/40">
-          Tap the goal or assist icon beside a player.
-        </Text>
+        <View className="flex-row items-start justify-between gap-3">
+          <View className="min-w-0 flex-1">
+            <Text
+              className="text-xs uppercase tracking-[1.4px] text-white/55"
+            >
+              Select scorer and assist
+            </Text>
+            <Text className="pt-1 text-xs leading-5 text-white/40">
+              Choose a scorer, then optional assist.
+            </Text>
+          </View>
+          {accreditActive ? (
+            <View className="rounded-full bg-accent-500/15 px-2.5 py-1">
+              <Text className="text-[10px] uppercase text-accent-100">
+                Goal pending
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
         <TeamTabs
           homeLabel={game.homeTeam?.name ?? "Home"}
@@ -116,59 +134,79 @@ export function HybridScoringPanel({
         />
 
         {players.length === 0 ? (
-            <Text className="text-sm text-white/45">
+          <Text className="text-sm text-white/45">
             No active players on this team.
           </Text>
         ) : (
-          players.map((row) => {
-            const playerId = row.player.id;
-            const assistDisabled =
-              !scorerId || isOwnGoal || playerId === scorerId;
+          <View className="overflow-hidden rounded-2xl border border-white/10 bg-black/10">
+            <View className="flex-row items-center justify-end gap-2 border-b border-white/10 px-2.5 py-2">
+              <Text className="w-16 text-center text-[10px] uppercase text-white/35">
+                Goal
+              </Text>
+              <Text className="w-16 text-center text-[10px] uppercase text-white/35">
+                Assist
+              </Text>
+            </View>
+            <ScrollView
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              style={{ maxHeight: 260 }}
+              contentContainerClassName="px-2 py-2"
+            >
+              {players.map((row) => {
+                const playerId = row.player.id;
+                const assistDisabled =
+                  !scorerId || isOwnGoal || playerId === scorerId;
 
-            return (
-              <PlayerActionRow
-                key={row.id}
-                name={row.player.name}
-                jersey={row.jerseyNumber}
-                actions={[
-                  {
-                    key: "goal",
-                    icon: "football-outline",
-                    color: colors.accent,
-                    selected: scorerId === playerId,
-                    onPress: () => onSelectScorer(playerId),
-                    accessibilityLabel: `Select ${row.player.name} as scorer`,
-                  },
-                  {
-                    key: "assist",
-                    icon: "git-merge-outline",
-                    color: colors.accent,
-                    selected: assistId === playerId,
-                    disabled: assistDisabled,
-                    onPress: () => onSelectAssist(playerId),
-                    accessibilityLabel: `Select ${row.player.name} as assist`,
-                  },
-                ]}
-              />
-            );
-          })
+                return (
+                  <PlayerActionRow
+                    key={row.id}
+                    name={row.player.name}
+                    jersey={row.jerseyNumber}
+                    density="compact"
+                    actions={[
+                      {
+                        key: "goal",
+                        icon: "football-outline",
+                        label: "Goal",
+                        color: colors.accent,
+                        selected: scorerId === playerId,
+                        onPress: () => onSelectScorer(playerId),
+                        accessibilityLabel: `Select ${row.player.name} as scorer`,
+                      },
+                      {
+                        key: "assist",
+                        icon: "git-merge-outline",
+                        label: "Assist",
+                        color: colors.accent,
+                        selected: assistId === playerId,
+                        disabled: assistDisabled,
+                        onPress: () => onSelectAssist(playerId),
+                        accessibilityLabel: `Select ${row.player.name} as assist`,
+                      },
+                    ]}
+                  />
+                );
+              })}
+            </ScrollView>
+          </View>
         )}
 
-        <View className="flex-row flex-wrap items-center justify-between gap-3 pt-2">
-          <View className="flex-row flex-wrap gap-2">
+        <View className="flex-row items-end justify-between gap-2">
+          <View className="min-w-0 flex-1 flex-row flex-wrap gap-1.5">
             <Pressable
               onPress={onToggleOwnGoal}
               disabled={isPenalty}
-              className={`flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-2 ${
+              className={`h-9 flex-row items-center gap-1.5 rounded-full bg-white/10 px-2.5 ${
                 isPenalty ? "opacity-40" : ""
               }`}
             >
               <Ionicons
                 name={isOwnGoal ? "checkbox" : "square-outline"}
-                size={18}
+                size={16}
                 color={isOwnGoal ? colors.accent : "rgba(255,255,255,0.55)"}
               />
-              <Text className="text-sm text-white">
+              <Text className="text-xs text-white">
                 Own goal
               </Text>
             </Pressable>
@@ -176,22 +214,22 @@ export function HybridScoringPanel({
             <Pressable
               onPress={onTogglePenalty}
               disabled={isOwnGoal}
-              className={`flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-2 ${
+              className={`h-9 flex-row items-center gap-1.5 rounded-full bg-white/10 px-2.5 ${
                 isOwnGoal ? "opacity-40" : ""
               }`}
             >
               <Ionicons
                 name={isPenalty ? "checkbox" : "square-outline"}
-                size={18}
+                size={16}
                 color={isPenalty ? colors.accent : "rgba(255,255,255,0.55)"}
               />
-              <Text className="text-sm text-white">
+              <Text className="text-xs text-white">
                 Penalty
               </Text>
             </Pressable>
           </View>
 
-          <View className="w-24">
+          <View className="w-20">
             <AuthTextField
               label="Min"
               value={minute}
@@ -202,22 +240,32 @@ export function HybridScoringPanel({
           </View>
         </View>
 
-        <View className="gap-2 pt-2">
+        <View className="flex-row gap-2 pt-1">
           <Button
             variant="authPurple"
             label="Log goal"
+            className="h-11 flex-1 px-3"
             disabled={!accreditActive || scorerId == null}
             loading={accreditPending}
             onPress={onLogGoal}
           />
           <Button
             variant="ghost"
-            label="Skip - score only"
+            label="Score only"
+            className="h-11 flex-1 px-3"
             disabled={!accreditActive}
             onPress={onSkip}
           />
         </View>
       </View>
+
+      <AdvancedTrackingPanel
+        game={game}
+        leagueId={leagueId}
+        seasonId={seasonId}
+        roster={roster}
+        liveMinute={liveMinute}
+      />
     </View>
   );
 }

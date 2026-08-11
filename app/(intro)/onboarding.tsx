@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  Dimensions,
   FlatList,
   Image,
   Pressable,
@@ -9,6 +9,7 @@ import {
   View,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,10 +18,6 @@ import { Button, Logo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
 import { colors } from "@/constants";
-import { router } from "expo-router";
-
-const { width, height } = Dimensions.get("window");
-const HEADER_HEIGHT = height * 0.49;
 
 type SlideMatch = {
   league: string;
@@ -42,9 +39,9 @@ type Slide = {
 const slides: Slide[] = [
   {
     key: "realtime",
-    title: "Real-time match data.",
+    title: "Run your league from the pitch.",
     description:
-      "Stay locked to every kick. Live minutes, scorelines, and momentum the instant they happen.",
+      "Create fixtures, manage teams, and keep scores moving while everyone follows along.",
     match: {
       league: "Lagos Premier League",
       liveMinute: 41,
@@ -57,9 +54,9 @@ const slides: Slide[] = [
   },
   {
     key: "speed",
-    title: "Speed-first.\nData-rich insights.",
+    title: "Live scores without the spreadsheet.",
     description:
-      "Sunlight-proof UI built for the pitch side. Follow your local teams, study player heatmaps, and never miss a goal.",
+      "Start a match, record goals, handle substitutions, and update the table in real time.",
     match: {
       league: "Lagos Premier League",
       liveMinute: 78,
@@ -72,9 +69,9 @@ const slides: Slide[] = [
   },
   {
     key: "goal",
-    title: "Never miss a goal.",
+    title: "Profiles that follow every player.",
     description:
-      "Goal alerts, lineup leaks, and post-match recaps land in your pocket the moment they break.",
+      "Players can join leagues, build profiles, and keep their stats and highlights in one place.",
     match: {
       league: "Lagos Premier League",
       liveMinute: 90,
@@ -89,6 +86,8 @@ const slides: Slide[] = [
 
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
+  const { width, height } = useWindowDimensions();
+  const headerHeight = height * 0.49;
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Slide>>(null);
 
@@ -97,9 +96,18 @@ export default function OnboardingScreen() {
     if (next !== index) setIndex(next);
   };
 
-  const goPrev = () => {
-    const target = Math.max(0, index - 1);
+  const scrollToSlide = (target: number) => {
     listRef.current?.scrollToIndex({ index: target, animated: true });
+    setIndex(target);
+  };
+
+  const goPrev = () => {
+    if (index === 0) {
+      router.back();
+      return;
+    }
+    const target = Math.max(0, index - 1);
+    scrollToSlide(target);
   };
 
   const goNext = () => {
@@ -108,7 +116,7 @@ export default function OnboardingScreen() {
       router.replace("/login");
       return;
     }
-    listRef.current?.scrollToIndex({ index: index + 1, animated: true });
+    scrollToSlide(index + 1);
   };
 
   const isLast = index === slides.length - 1;
@@ -117,7 +125,7 @@ export default function OnboardingScreen() {
     <View className="flex-1 bg-slate-50">
       <View
         className="absolute top-0 left-0 right-0 overflow-hidden"
-        style={{ height: HEADER_HEIGHT }}
+        style={{ height: headerHeight }}
         pointerEvents="none"
       >
         <BlackPatternBackground />
@@ -148,7 +156,7 @@ export default function OnboardingScreen() {
           showsHorizontalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          renderItem={({ item }) => <SlideContent slide={item} />}
+          renderItem={({ item }) => <SlideContent slide={item} width={width} />}
           getItemLayout={(_, i) => ({
             length: width,
             offset: width * i,
@@ -159,12 +167,21 @@ export default function OnboardingScreen() {
 
         <View className="flex-row gap-2 justify-start pb-6 px-6">
           {slides.map((slide, i) => (
-            <View
+            <Pressable
               key={slide.key}
-              className={`h-2 rounded-full ${
-                i === index ? "w-8 bg-brand-500" : "w-2 bg-slate-300"
-              }`}
-            />
+              accessibilityRole="button"
+              accessibilityLabel={`Show onboarding step ${i + 1}`}
+              accessibilityState={{ selected: i === index }}
+              hitSlop={10}
+              onPress={() => scrollToSlide(i)}
+              className="py-2"
+            >
+              <View
+                className={`h-2 rounded-full ${
+                  i === index ? "w-8 bg-brand-500" : "w-2 bg-slate-300"
+                }`}
+              />
+            </Pressable>
           ))}
         </View>
 
@@ -174,7 +191,7 @@ export default function OnboardingScreen() {
             size="icon"
             icon={<Ionicons name="arrow-back-sharp" size={22} color="#000" />}
             onPress={goPrev}
-            disabled={index === 0}
+            accessibilityLabel={index === 0 ? "Back to welcome" : "Previous step"}
             className="border border-[#D1D5DB]"
           />
           <Button
@@ -196,7 +213,7 @@ export default function OnboardingScreen() {
   );
 }
 
-function SlideContent({ slide }: { slide: Slide }) {
+function SlideContent({ slide, width }: { slide: Slide; width: number }) {
   return (
     <View style={{ width }} className="flex-1">
       <View className="px-6 pt-4">

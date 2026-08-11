@@ -45,6 +45,7 @@ export async function createKnockoutStage(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
       jsonBody: payload,
     },
   );
@@ -59,6 +60,7 @@ export async function seedKnockoutStage(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
       jsonBody: { seededTeams },
     },
   );
@@ -73,6 +75,7 @@ export async function generateNextRound(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
       jsonBody: { completedRound },
     },
   );
@@ -81,7 +84,7 @@ export async function generateNextRound(
 export async function enterPenaltyShootout(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/games/${gameId}/penalty-shootout`,
-    { method: "POST", auth: true },
+    { method: "POST", auth: true, idempotencyKey: true },
   );
 }
 
@@ -95,6 +98,7 @@ export async function completePenaltyShootout(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
       jsonBody: { homePenaltyScore, awayPenaltyScore },
     },
   );

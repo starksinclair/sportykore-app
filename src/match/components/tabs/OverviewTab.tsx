@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
@@ -38,6 +39,7 @@ export function MatchOverviewTab({ detail }: Props) {
     typeof lng === "number" &&
     Number.isFinite(lat) &&
     Number.isFinite(lng);
+  const motm = detail.awards?.find((award) => award.awardType === "motm") ?? null;
 
   const handleDirections = async () => {
     if (!hasCoords || lat == null || lng == null) return;
@@ -102,6 +104,33 @@ export function MatchOverviewTab({ detail }: Props) {
           ) : null}
         </View>
       </Section>
+
+      {motm?.player ? (
+        <Section title="Man of the match">
+          <Pressable
+            onPress={() => motm.player?.id && router.push(`/player/${motm.player.id}`)}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${motm.player.name} profile`}
+            className="flex-row items-center gap-3 rounded-[24px] border border-accent-400/20 bg-accent-500/10 px-4 py-4 active:opacity-90"
+          >
+            <EntityLogo
+              logoUrl={motm.player.avatarUrl}
+              variant="player"
+              size="md"
+              tone="dark"
+            />
+            <View className="min-w-0 flex-1">
+              <Text className="text-white" numberOfLines={1}>
+                {motm.player.name}
+              </Text>
+              <Text className="pt-1 text-xs text-accent-100/70">
+                Man of the match
+              </Text>
+            </View>
+            <Ionicons name="star" size={20} color="#E6A817" />
+          </Pressable>
+        </Section>
+      ) : null}
 
       {hasCoords && lat != null && lng != null ? (
         <Section title="Location">

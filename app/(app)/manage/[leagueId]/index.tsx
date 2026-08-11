@@ -13,6 +13,9 @@ import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import { hasGroupStage, standingStages } from "@/groups";
 import { hasRoundRobinStage, knockoutStages } from "@/knockout";
+import { SeasonFormatBanner } from "@/league";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import {
   ManageActivityTab,
   ManageGamesTab,
@@ -47,6 +50,19 @@ export default function ManageLeagueRoute() {
 
   const query = useManageLeagueDetail(isValidId ? leagueId : 0, seasonId);
   const teamsQuery = useLeagueTeams(leagueId, isValidId);
+
+  useTrackView(
+    "manage_hub_opened",
+    query.data ? leagueId : null,
+    query.data
+      ? {
+          league_id: leagueId,
+          league_name: query.data.season.league.name,
+          season_id: query.data.season.id,
+          format: query.data.season.stages?.[0]?.stageType,
+        }
+      : undefined,
+  );
 
   useEffect(() => {
     if (query.data?.season.id != null && seasonId === null) {
@@ -108,7 +124,13 @@ export default function ManageLeagueRoute() {
   if (query.isError || !query.data) {
     return (
       <DetailScreenShell title="Manage">
-        <NotFound message="League not found or you do not have access" />
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "League")
+              : "League not found."
+          }
+        />
       </DetailScreenShell>
     );
   }
@@ -133,6 +155,7 @@ export default function ManageLeagueRoute() {
             activeSeasonId={activeSeasonId}
             onSelect={setSeasonId}
           />
+          <SeasonFormatBanner stages={stages} compact />
           <DetailTabs
             tabs={tabs}
             activeTab={activeTab}

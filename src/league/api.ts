@@ -153,6 +153,7 @@ export async function createLeague(
   const res = await apiRequest<unknown>("/api/v1/leagues", {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: needsMultipart(payload) ? buildCreateLeagueFormData(payload) : payload,
   });
 

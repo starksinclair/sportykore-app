@@ -7,6 +7,8 @@ import { DetailTabs, type DetailTab } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import { useGameLineups } from "@/lineup";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import { useMatchDetail } from "@/match";
 import { MatchLineupsTab } from "@/match/components/tabs/LineupsTab";
 import { MatchOverviewTab } from "@/match/components/tabs/OverviewTab";
@@ -32,6 +34,23 @@ export default function MatchRoute() {
     isValidId && activeTab === "lineups",
   );
 
+  useTrackView(
+    "match_viewed",
+    query.data ? gameId : null,
+    query.data
+      ? {
+          game_id: query.data.id,
+          league_id: query.data.league?.id,
+          league_name: query.data.league?.name,
+          home_team_id: query.data.homeTeam?.id,
+          home_team_name: query.data.homeTeam?.name,
+          away_team_id: query.data.awayTeam?.id,
+          away_team_name: query.data.awayTeam?.name,
+          status: query.data.status,
+        }
+      : undefined,
+  );
+
   if (!isValidId) {
     return (
       <DetailScreenShell title="Match">
@@ -53,7 +72,13 @@ export default function MatchRoute() {
   if (query.isError || !query.data) {
     return (
       <DetailScreenShell title="Match">
-        <NotFound message="Match not found" />
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "Match")
+              : "Match not found."
+          }
+        />
       </DetailScreenShell>
     );
   }
@@ -101,6 +126,7 @@ export default function MatchRoute() {
       {activeTab === "stats" ? (
         <MatchStatsTab
           stats={detail.stats}
+          tracking={detail.tracking}
           homeTeamId={detail.homeTeam?.id}
           awayTeamId={detail.awayTeam?.id}
         />

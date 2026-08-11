@@ -39,6 +39,7 @@ import {
   type FavoriteLeagueEntry,
 } from "@/home/partitionMatchesFeed";
 import type { ApiCountryWithLeagues } from "@/home/types";
+import { posthog } from "@/lib/posthog";
 import {
   addDays,
   addMonths,
@@ -239,12 +240,20 @@ export default function HomeScreen() {
             <SegmentButton
               label="Matches"
               active={activeTab === "matches"}
-              onPress={() => setActiveTab("matches")}
+              onPress={() => {
+                if (activeTab === "matches") return;
+                setActiveTab("matches");
+                posthog?.capture("home_segment_changed", { segment: "matches" });
+              }}
             />
             <SegmentButton
               label="Leagues"
               active={activeTab === "leagues"}
-              onPress={() => setActiveTab("leagues")}
+              onPress={() => {
+                if (activeTab === "leagues") return;
+                setActiveTab("leagues");
+                posthog?.capture("home_segment_changed", { segment: "leagues" });
+              }}
             />
           </View>
         </View>
@@ -267,7 +276,15 @@ export default function HomeScreen() {
 
             {activeTab === "matches" ? (
               <Pressable
-                onPress={() => setLiveOnly((v) => !v)}
+                onPress={() => {
+                  setLiveOnly((v) => {
+                    const next = !v;
+                    posthog?.capture("home_live_filter_toggled", {
+                      live_only: next,
+                    });
+                    return next;
+                  });
+                }}
                 className={[
                   "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
                   liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
@@ -345,10 +362,12 @@ export default function HomeScreen() {
     }
     if (matches.length === 0) {
       return (
-        <EmptyState
+       <View className="py-5">
+         <EmptyState
           title={matchesEmptyCopy.title}
           body={matchesEmptyCopy.body}
         />
+       </View>
       );
     }
     return null;

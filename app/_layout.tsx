@@ -3,7 +3,7 @@ import "../global.css";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
@@ -11,6 +11,7 @@ import { sportyToastConfig } from "@/components/ui/toast-config";
 import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
 import { TransmitProvider } from "@/lib/transmit";
+import { posthog } from "@/lib/posthog";
 import {
   OpenSans_400Regular,
   OpenSans_600SemiBold,
@@ -24,12 +25,26 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useFonts } from "expo-font";
-import { Platform, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import { PostHogErrorBoundary, PostHogProvider } from "posthog-react-native";
 import Toast from "react-native-toast-message";
 
 SplashScreen.preventAutoHideAsync();
+
+function AnalyticsProvider({ children }: { children: ReactNode }) {
+  if (!posthog) return children;
+
+  return (
+    <PostHogProvider
+      client={posthog}
+      autocapture={{ captureScreens: false, captureTouches: true }}
+    >
+      <PostHogErrorBoundary>{children}</PostHogErrorBoundary>
+    </PostHogProvider>
+  );
+}
 
 function RootStack() {
   const { user, hasOnboarded, hydrated } = useAuth();
@@ -82,16 +97,20 @@ export default function RootLayout() {
         <PersistQueryClientProvider persistOptions={{ persister }} client={queryClient}>
           <TransmitProvider>
             <SafeAreaProvider>
-              <AuthProvider>
-                <AuthGateProvider>
-                  <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
-                    <StatusBar style="auto" />
-                    <RootStack />
-                    <InviteLinkCapture />
-                    <Toast config={sportyToastConfig} topOffset={58} />
-                  </ThemeProvider>
-                </AuthGateProvider>
-              </AuthProvider>
+              <AnalyticsProvider>
+                <AuthProvider>
+                  <AuthGateProvider>
+                    <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
+                      <StatusBar style="auto" />
+                      <RootStack />
+                      <InviteLinkCapture />
+                      <View pointerEvents="box-none" style={styles.toastOverlay}>
+                        <Toast config={sportyToastConfig} topOffset={58} />
+                      </View>
+                    </ThemeProvider>
+                  </AuthGateProvider>
+                </AuthProvider>
+              </AnalyticsProvider>
             </SafeAreaProvider>
           </TransmitProvider>
         </PersistQueryClientProvider>
@@ -99,3 +118,11 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  toastOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    elevation: 999,
+    zIndex: 999,
+  },
+});

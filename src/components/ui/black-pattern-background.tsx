@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Dimensions, StyleSheet, View, type ViewStyle } from "react-native";
 
 const BASE_COLOR = "#0a0a0a";
-const STRIPE_COLOR = "rgba(255, 179, 0, 0.08)";
+const STRIPE_COLOR = "rgba(230, 168, 23, 0.045)";
 
 export type BlackPatternBackgroundProps = {
   baseColor?: string;

@@ -161,6 +161,7 @@ function RosterRow({
   const [isCaptain, setIsCaptain] = useState(row.isCaptain);
 
   const handleRemove = () => {
+    if (removeMutation.isPending) return;
     Alert.alert(
       "Remove player",
       `Remove ${row.player.name} from the roster?`,
@@ -180,6 +181,7 @@ function RosterRow({
   };
 
   const handleSave = async () => {
+    if (updateMutation.isPending) return;
     try {
       await updateMutation.mutateAsync({
         leaguePlayerId: row.id,
@@ -281,11 +283,14 @@ function RosterRow({
             label="Save"
             onPress={() => void handleSave()}
             loading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
           />
           <Button
             variant="secondary"
             label="Remove from roster"
             onPress={handleRemove}
+            loading={removeMutation.isPending}
+            disabled={removeMutation.isPending}
           />
         </View>
       </BottomSheetModal>

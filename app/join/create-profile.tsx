@@ -1,115 +1,112 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { ActivityIndicator, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAuth } from "@/auth";
+import type { ApiPlayer } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
-import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { CountryPicker } from "@/components/ui/country-picker";
-import { Logo } from "@/components/ui/logo";
 import { colors, scoreboardPattern } from "@/constants";
-import { useCompleteProfileAndAccept } from "@/invite/hooks";
-import { clearPendingInviteToken, getPendingInviteToken } from "@/invite/storage";
-import type { PickedImageFile } from "@/invite/types";
-import { CountryOption } from "@/league/league-create-constants";
-import { pickProfileImage } from "@/lib/pick-profile-image";
-import { showSuccessToast, showThrownAsToast } from "@/lib/show-error-toast";
+import {
+  getPendingInviteContext,
+  getPendingInviteToken,
+  runAcceptInviteFlow,
+  type PendingInviteContext,
+} from "@/invite";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "@/lib/show-error-toast";
+import { PlayerProfileCreateState } from "@/player/components/PlayerProfileSurface";
 
 export default function CreatePlayerProfileRoute() {
   const router = useRouter();
+  const { user } = useAuth();
   const [token, setToken] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [avatar, setAvatar] = useState<PickedImageFile | null>(null);
-  const [pickingAvatar, setPickingAvatar] = useState(false);
+  const [context, setContext] = useState<PendingInviteContext>({});
   const [loadingToken, setLoadingToken] = useState(true);
-  const completeMutation = useCompleteProfileAndAccept();
-  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
-  const insets = useSafeAreaInsets();
-    useEffect(() => {
+  const [joining, setJoining] = useState(false);
+
+  useEffect(() => {
     void (async () => {
-      const pending = await getPendingInviteToken();
-      setToken(pending);
+      const [pendingToken, pendingContext] = await Promise.all([
+        getPendingInviteToken(),
+        getPendingInviteContext(),
+      ]);
+      setToken(pendingToken);
+      setContext(pendingContext);
       setLoadingToken(false);
     })();
   }, []);
 
-  const handlePickAvatar = async () => {
-    setPickingAvatar(true);
-    try {
-      const picked = await pickProfileImage();
-      if (picked) setAvatar(picked);
-    } catch (error) {
-      showThrownAsToast(error, "Could not pick photo");
-    } finally {
-      setPickingAvatar(false);
-    }
-  };
+  const handleProfileCreated = async (_player: ApiPlayer) => {
+    if (!token) return;
 
-  const handleRemoveAvatar = () => {
-    setAvatar(null);
-  };
+    setJoining(true);
+    const result = await runAcceptInviteFlow(token);
+    setJoining(false);
 
-  const onSubmit = async () => {
-    if (!token || !name.trim() || !selectedCountry) return;
-    try {
-       await completeMutation.mutateAsync({
-        token,
-        payload: {
-          name: name.trim(),
-          bio: bio.trim() || undefined,
-          avatar: avatar ?? undefined,
-          countryId: selectedCountry.id,
-        },
-      });
-      await clearPendingInviteToken();
-      showSuccessToast("Profile created", "You've joined the league.");
+    if (result.kind === "joined") {
+      showSuccessToast("You're in!", "Your player profile is ready.");
       router.replace("/profile");
-    } catch (error) {
-      if ((error as { status?: number })?.status === 409) {
-        await clearPendingInviteToken();
-        router.replace("/");
-        return;
-      }
-      showThrownAsToast(error, "Could not create profile");
+      return;
     }
+
+    if (result.kind === "requires_profile") {
+      showErrorToast(
+        "Could not join league",
+        "Your profile was created, but the invite still needs to be accepted.",
+      );
+      return;
+    }
+
+    if (result.status === 401) {
+      showErrorToast("Sign in required", result.message);
+      router.push("/login");
+      return;
+    }
+
+    showErrorToast("Could not join league", result.message);
   };
 
   if (loadingToken) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color={colors.brand} />
+      <View className="flex-1 items-center justify-center bg-[#121212]">
+        <ActivityIndicator color={colors.accent} />
       </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <InviteProfileShell>
+        <View className="flex-1 items-center justify-center gap-5 px-6">
+          <Text className="text-center text-xl text-white">
+            Sign in to finish joining
+          </Text>
+          <Text className="text-center text-sm leading-6 text-white/60">
+            Your invite is saved. Sign in, then create your player profile.
+          </Text>
+          <Button
+            variant="signInYellow"
+            label="Sign in"
+            onPress={() => router.push("/login")}
+          />
+        </View>
+      </InviteProfileShell>
     );
   }
 
   if (!token) {
     return (
-      <SafeAreaView className="flex-1 bg-[#121212]" edges={["top", "bottom"]}>
-        <BlackPatternBackground
-          baseColor={scoreboardPattern().baseColor}
-          stripeColor={scoreboardPattern().stripeColor}
-        />
+      <InviteProfileShell>
         <View className="flex-1 items-center justify-center gap-6 px-6">
-          <Text
-            className="text-center text-xl text-white"
-          >
+          <Text className="text-center text-xl text-white">
             No invite found
           </Text>
-          <Text
-            className="text-center text-sm leading-6 text-slate-300"
-          >
+          <Text className="text-center text-sm leading-6 text-white/60">
             Open your invite link or paste your invite code on the join league screen.
           </Text>
           <Button
@@ -118,146 +115,41 @@ export default function CreatePlayerProfileRoute() {
             onPress={() => router.replace("/join-league")}
           />
         </View>
-      </SafeAreaView>
+      </InviteProfileShell>
     );
   }
 
+  const inviteLabel = [context.teamName, context.leagueName]
+    .filter(Boolean)
+    .join(" in ");
+
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top", "bottom"]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
-      >
-          <BlackPatternBackground
-              baseColor={scoreboardPattern().baseColor}
-              stripeColor={scoreboardPattern().stripeColor}
-          />
-        <ScrollView
-          contentContainerClassName="gap-6 px-6 pb-10 pt-8"
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            paddingBottom: insets.bottom + 90 
-          }}
-        >
-          <View className="items-center">
-            <Logo fontSize={40} lineHeight={50} />
-          </View>
-
-          <View className="gap-2">
-            <Text
-              className="text-center text-xl text-white"
-            >
-              Create your player profile
-            </Text>
-            <Text
-              className="text-center text-sm text-slate-300"
-            >
-              This is how you&apos;ll appear on the team sheet and match events.
-            </Text>
-          </View>
-
-          <ProfileAvatarPicker
-            avatar={avatar}
-            picking={pickingAvatar}
-            onPick={() => void handlePickAvatar()}
-            onRemove={handleRemoveAvatar}
-          />
-
-          <AuthTextField
-            label="Display name"
-            value={name}
-            onChangeText={setName}
-            placeholder="Alex Morgan"
-            autoCapitalize="words"
-          />
-           <CountryPicker value={selectedCountry} onChange={setSelectedCountry} />
-          <AuthTextField
-            label="Bio (optional)"
-            value={bio}
-            onChangeText={setBio}
-            placeholder="A few words about your game"
-            multiline
-          />
-
-          <Button
-            variant="authPurple"
-            label="Join league"
-            onPress={() => void onSubmit()}
-            loading={completeMutation.isPending}
-            disabled={!name.trim() || !selectedCountry || completeMutation.isPending}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <InviteProfileShell>
+      <View className="flex-1 justify-center px-5">
+        <PlayerProfileCreateState
+          viewerName={user.name}
+          title="Create your player profile"
+          description={
+            inviteLabel
+              ? `Complete your profile to join ${inviteLabel}. Your stats and highlights will follow you across leagues.`
+              : "Complete your profile to join this league. Your stats and highlights will follow you across leagues."
+          }
+          ctaLabel={joining ? "Joining..." : "Create profile and join"}
+          onCreated={handleProfileCreated}
+        />
+      </View>
+    </InviteProfileShell>
   );
 }
 
-function ProfileAvatarPicker({
-  avatar,
-  picking,
-  onPick,
-  onRemove,
-}: {
-  avatar: PickedImageFile | null;
-  picking: boolean;
-  onPick: () => void;
-  onRemove: () => void;
-}) {
+function InviteProfileShell({ children }: { children: ReactNode }) {
   return (
-    <View className="items-center gap-3">
-      <Text
-        className="text-sm text-neutral-300"
-      >
-        Profile photo (optional)
-      </Text>
-
-      <Pressable
-        onPress={onPick}
-        disabled={picking}
-        accessibilityRole="button"
-        accessibilityLabel={avatar ? "Change profile photo" : "Add profile photo"}
-        className="h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-neutral-300 bg-neutral-50 active:opacity-80"
-      >
-        {picking ? (
-          <ActivityIndicator color={colors.brand} />
-        ) : avatar ? (
-          <Image
-            source={{ uri: avatar.uri }}
-            style={{ width: "100%", height: "100%" }}
-            contentFit="cover"
-          />
-        ) : (
-          <View className="items-center gap-1">
-            <Ionicons name="camera-outline" size={28} color={colors.authPurple} />
-            <Text
-              className="text-[11px] text-slate-500"
-            >
-              Add photo
-            </Text>
-          </View>
-        )}
-      </Pressable>
-
-      {avatar ? (
-        <Pressable
-          onPress={onRemove}
-          accessibilityRole="button"
-          accessibilityLabel="Remove profile photo"
-          hitSlop={8}
-        >
-          <Text
-            className="text-sm text-slate-400"
-          >
-            Remove photo
-          </Text>
-        </Pressable>
-      ) : (
-        <Text
-          className="text-center text-xs text-slate-400"
-        >
-          JPG, PNG
-        </Text>
-      )}
-    </View>
+    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top", "bottom"]}>
+      <BlackPatternBackground
+        baseColor={scoreboardPattern().baseColor}
+        stripeColor={scoreboardPattern().stripeColor}
+      />
+      {children}
+    </SafeAreaView>
   );
 }

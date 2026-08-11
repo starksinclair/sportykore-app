@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 export type PlayerRowAction = {
   key: string;
   icon: keyof typeof Ionicons.glyphMap;
+  label?: string;
   color: string;
   selected?: boolean;
   disabled?: boolean;
@@ -16,50 +17,82 @@ type ActionRowProps = {
   name: string;
   jersey: string | null;
   actions: PlayerRowAction[];
+  density?: "normal" | "compact";
 };
 
 /** Player row with icon action buttons on the right (goal, assist, cards, save). */
-export function PlayerActionRow({ name, jersey, actions }: ActionRowProps) {
+export function PlayerActionRow({
+  name,
+  jersey,
+  actions,
+  density = "normal",
+}: ActionRowProps) {
   const anySelected = actions.some((a) => a.selected);
+  const compact = density === "compact";
 
   return (
     <View
-      className={`mb-2 flex-row items-center justify-between rounded-xl px-3 py-3 ${
+      className={`${compact ? "mb-1.5 rounded-lg px-2.5 py-2" : "mb-2 rounded-xl px-3 py-3"} flex-row items-center justify-between ${
         anySelected ? "bg-brand-500/20" : "bg-white/8"
       }`}
     >
-      <View className="mr-2 flex-1 flex-row items-center gap-3">
+      <View className="mr-2 min-w-0 flex-1 flex-row items-center gap-2">
         <Text
-          className="w-8 text-xs text-white/45"
+          className={`${compact ? "w-7" : "w-8"} text-xs text-white/45`}
         >
           {jersey ? `#${jersey}` : "-"}
         </Text>
         <Text
-          className="flex-1 text-sm text-white"
+          className={`${compact ? "text-[13px]" : "text-sm"} min-w-0 flex-1 text-white`}
           numberOfLines={1}
         >
           {name}
         </Text>
       </View>
-      <View className="flex-row items-center gap-1.5">
-        {actions.map((action) => (
-          <Pressable
-            key={action.key}
-            onPress={action.onPress}
-            disabled={action.disabled || action.loading}
-            accessibilityRole="button"
-            accessibilityLabel={action.accessibilityLabel}
-            className={`h-9 w-9 items-center justify-center rounded-lg ${
-              action.selected ? "bg-accent-500/30" : "bg-white/10"
-            } ${action.disabled ? "opacity-35" : ""}`}
-          >
-            {action.loading ? (
-              <ActivityIndicator size="small" color={action.color} />
-            ) : (
-              <Ionicons name={action.icon} size={20} color={action.color} />
-            )}
-          </Pressable>
-        ))}
+      <View className={`flex-row items-center ${compact ? "gap-1" : "gap-1.5"}`}>
+        {actions.map((action) => {
+          const selected = Boolean(action.selected);
+          const disabled = Boolean(action.disabled);
+          return (
+            <Pressable
+              key={action.key}
+              onPress={action.onPress}
+              disabled={disabled || action.loading}
+              accessibilityRole="button"
+              accessibilityLabel={action.accessibilityLabel}
+              className={`flex-row items-center justify-center gap-1 rounded-full ${
+                compact && action.label ? "h-8 min-w-[4rem] px-2" : "h-9 w-9"
+              } ${selected ? "bg-accent-500" : "bg-white/10"} ${
+                disabled ? "opacity-35" : ""
+              }`}
+            >
+              {action.loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={selected ? "#111827" : action.color}
+                />
+              ) : (
+                <>
+                  <Ionicons
+                    name={action.icon}
+                    size={compact ? 15 : 20}
+                    color={selected ? "#111827" : action.color}
+                  />
+                  {action.label ? (
+                    <Text
+                      className={`text-[11px] ${
+                        selected ? "text-neutral-950" : "text-white/75"
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {action.label}
+                    </Text>
+                  ) : null}
+                </>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );

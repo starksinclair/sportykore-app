@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { colors } from "@/constants";
 import { useAuditLogs } from "@/groups";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 
 type Props = {
   leagueId: number;
@@ -27,7 +28,7 @@ export function ManageActivityTab({ leagueId }: Props) {
   if (query.isError) {
     return (
       <Text className="text-sm text-white/55">
-        Could not load activity.
+        {messageForResourceLoad(query.error, "Activity")}
       </Text>
     );
   }

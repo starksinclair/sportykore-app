@@ -192,7 +192,7 @@ export async function createGroupStage(
 ): Promise<CreateGroupStageResult> {
   return apiRequest<CreateGroupStageResult>(
     `/api/v1/leagues/${leagueId}/stages`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
@@ -202,7 +202,7 @@ export async function assignGroupTeams(
 ): Promise<AssignGroupTeamsResult> {
   return apiRequest<AssignGroupTeamsResult>(
     `/api/v1/leagues/stages/${stageId}/groups/assign`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
@@ -211,7 +211,7 @@ export async function generateGroupFixtures(
 ): Promise<{ message: string; count: number }> {
   return apiRequest<{ message: string; count: number }>(
     `/api/v1/leagues/stages/${stageId}/fixtures`,
-    { method: "POST", auth: true },
+    { method: "POST", auth: true, idempotencyKey: true },
   );
 }
 
@@ -240,7 +240,7 @@ export async function generateKnockoutFromGroup(
 ): Promise<GenerateKnockoutFromGroupResult> {
   return apiRequest<GenerateKnockoutFromGroupResult>(
     `/api/v1/leagues/stages/${stageId}/generate-knockout`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
@@ -259,7 +259,7 @@ export async function createAdjustment(
 ): Promise<ApiStandingAdjustment> {
   return apiRequest<ApiStandingAdjustment>(
     `/api/v1/leagues/stages/${stageId}/standings/adjustments`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
@@ -269,14 +269,14 @@ export async function updateAdjustment(
 ): Promise<ApiStandingAdjustment> {
   return apiRequest<ApiStandingAdjustment>(
     `/api/v1/leagues/stages/adjustments/${adjustmentId}`,
-    { method: "PUT", auth: true, jsonBody: payload },
+    { method: "PUT", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
 export async function deleteAdjustment(adjustmentId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/leagues/stages/adjustments/${adjustmentId}`,
-    { method: "DELETE", auth: true },
+    { method: "DELETE", auth: true, idempotencyKey: true },
   );
 }
 
@@ -286,7 +286,7 @@ export async function createStandingOverride(
 ): Promise<{ overrides: ApiStandingOverride[] }> {
   return apiRequest<{ overrides: ApiStandingOverride[] }>(
     `/api/v1/leagues/stages/${stageId}/standings/overrides`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
 }
 
@@ -296,7 +296,7 @@ export async function deleteStandingOverride(
 ): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/leagues/stages/${stageId}/standings/overrides/${overrideId}`,
-    { method: "DELETE", auth: true },
+    { method: "DELETE", auth: true, idempotencyKey: true },
   );
 }
 
@@ -313,7 +313,7 @@ export async function createZone(
 ): Promise<ApiStandingZone> {
   return apiRequest<ApiStandingZone>(
     `/api/v1/leagues/stages/${stageId}/zones`,
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   ).then(normalizeZone);
 }
 
@@ -323,7 +323,7 @@ export async function updateZone(
 ): Promise<ApiStandingZone> {
   return apiRequest<ApiStandingZone>(
     `/api/v1/leagues/stages/zones/${zoneId}`,
-    { method: "PUT", auth: true, jsonBody: payload },
+    { method: "PUT", auth: true, idempotencyKey: true, jsonBody: payload },
   ).then(normalizeZone);
 }
 
@@ -338,7 +338,7 @@ function normalizeZone(zone: WireStandingZone): ApiStandingZone {
 export async function deleteZone(zoneId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/leagues/stages/zones/${zoneId}`,
-    { method: "DELETE", auth: true },
+    { method: "DELETE", auth: true, idempotencyKey: true },
   );
 }
 

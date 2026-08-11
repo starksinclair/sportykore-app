@@ -32,7 +32,7 @@ Only the user whose `id` matches `invitedUserId` can accept. Anyone else gets `4
 
 ## Flow B - General invite link
 
-Same as Flow A, but **omit** `invitedUserId` when generating the link. Anyone authenticated can accept (first successful accept consumes the token - see [Single-use tokens](#single-use-tokens)).
+Same as Flow A, but **omit** `invitedUserId` when generating the link. Anyone authenticated can accept while the invite is still valid.
 
 1. Admin picks season + team → `GET /api/v1/invites/generate?leagueId=&seasonId=&teamId=`
 2. Admin shares link (WhatsApp, SMS, etc.)
@@ -65,11 +65,11 @@ There is no separate “confirm invite” API. Joining is automatic once accept 
 | `token`                             | UUID in the shareable link            |
 | `league_id`, `season_id`, `team_id` | Roster placement on accept            |
 | `invited_user_id`                   | Flow A: required user. Flow B: `null` |
-| `status`                            | `pending` → `accepted` (or `expired`) |
+| `status`                            | `pending` until first accept, then `accepted` while still reusable until expiry |
 | `expires_at`                        | 7 days from generation                |
-| `accepted_at`                       | Set when consumed                     |
+| `accepted_at`                       | Updated when accepted                 |
 
-The `invites` row is **not** a player record. It is a one-time ticket that drives `players` + `league_players` creation on accept.
+The `invites` row is **not** a player record. It is a reusable ticket that drives `players` + `league_players` creation on accept until the invite expires.
 
 ---
 
@@ -260,9 +260,9 @@ Auth routes used by invitees: `POST /api/v1/auth/signup`, `POST /api/v1/auth/log
 
 ---
 
-## Single-use tokens
+## Reusable tokens
 
-Each successful accept sets `status: accepted`. The same link cannot be used again. For Flow B links shared in group chats, only the **first** person to complete accept gets the slot; others need a new link from the admin.
+Each successful accept keeps the invite usable until `expires_at`. The backend still blocks the same player from joining the same season/team twice, but a general Flow B link can add multiple different players before it expires.
 
 ---
 

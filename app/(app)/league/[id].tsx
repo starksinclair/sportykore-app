@@ -25,6 +25,8 @@ import { LeagueMatchesTab } from "@/league/components/tabs/MatchesTab";
 import { LeagueOverviewTab } from "@/league/components/tabs/OverviewTab";
 import { LeagueStageStandingsPanel } from "@/league/components/tabs/StageStandingsPanel";
 import { LeagueStatsTab } from "@/league/components/tabs/StatsTab";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 
 type TabKey = "overview" | "matches" | "standings" | "bracket" | "stats";
 
@@ -37,6 +39,19 @@ export default function LeagueRoute() {
   const [activeStageId, setActiveStageId] = useState<number | null>(null);
 
   const query = useLeagueDetail(isValidId ? leagueId : 0, seasonId);
+
+  useTrackView(
+    "league_viewed",
+    query.data ? leagueId : null,
+    query.data
+      ? {
+          league_id: query.data.season.league.id,
+          league_name: query.data.season.league.name,
+          season_id: query.data.season.id,
+          season_name: query.data.season.name,
+        }
+      : undefined,
+  );
 
   const stages = query.data?.season.stages ?? [];
   const primary = pickPrimaryStage(stages);
@@ -102,7 +117,13 @@ export default function LeagueRoute() {
   if (query.isError || !query.data) {
     return (
       <DetailScreenShell title="Competition">
-        <NotFound message="Competition not found" />
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "Competition")
+              : "Competition not found."
+          }
+        />
       </DetailScreenShell>
     );
   }

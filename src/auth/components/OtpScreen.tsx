@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { useRequestOtp, useVerifyOtp } from "@/auth/hooks";
+import {
+  clearPendingOtpAttempt,
+  getPendingOtpAttempt,
+  setPendingOtpAttempt,
+} from "@/auth/storage";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 
@@ -21,7 +26,25 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
   const verifyMutation = useVerifyOtp();
   const requestMutation = useRequestOtp();
 
-  const email = recoveryMode ? primaryEmail.trim() : initialEmail.trim();
+  const email = primaryEmail.trim();
+  const showEmailField = recoveryMode || !initialEmail.trim();
+
+  useEffect(() => {
+    setPrimaryEmail(initialEmail);
+  }, [initialEmail]);
+
+  useEffect(() => {
+    if (recoveryMode || initialEmail.trim()) return;
+    let cancelled = false;
+    getPendingOtpAttempt().then((attempt) => {
+      if (!cancelled && attempt?.email) {
+        setPrimaryEmail(attempt.email);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialEmail, recoveryMode]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -38,6 +61,7 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
         email,
         code: otpCode,
       });
+      await clearPendingOtpAttempt();
       await onSuccess();
     } catch {
       otpKeyRef.current += 1;
@@ -48,6 +72,7 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
     if (!email) return;
     try {
       await requestMutation.mutateAsync({ email });
+      await setPendingOtpAttempt(email);
       setResendCooldown(60);
       otpKeyRef.current += 1;
       verifyMutation.reset();
@@ -83,16 +108,16 @@ export function OtpScreen({ email: initialEmail, recoveryMode, onSuccess }: Prop
                 <Text
                   className="text-neutral-950"
                 >
-                  {email}
+                  {email || "your email"}
                 </Text>
               </Text>
             )}
           </View>
         </View>
 
-        {recoveryMode ? (
+        {showEmailField ? (
           <AuthTextField
-            label="Primary email address"
+            label={recoveryMode ? "Primary email address" : "Email address"}
             placeholder="you@pitch.com"
             autoCapitalize="none"
             autoComplete="email"

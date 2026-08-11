@@ -20,7 +20,7 @@ export function ManageLoginPrompt() {
       <Text
         className="pt-3 text-center text-sm leading-6 text-white/65"
       >
-        League owners can schedule games, run live match centers, and manage
+        League admins can schedule games, run live match centers, and manage
         rosters from here once you sign in.
       </Text>
       <Pressable

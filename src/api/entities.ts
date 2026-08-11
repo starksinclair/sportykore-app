@@ -72,6 +72,7 @@ export type ApiPlayer = {
   age?: number | null;
   country?: ApiCountry | null;
   highlights?: ApiPlayerHighlight[];
+  awards?: ApiPlayerAward[];
 };
 
 export type ApiPlayerHighlight = {
@@ -80,6 +81,20 @@ export type ApiPlayerHighlight = {
   title?: string | null;
   sortOrder: number;
   thumbnailUrl?: string | null;
+};
+
+export type PlayerAwardType = "motm";
+
+export type ApiPlayerAward = {
+  id: number;
+  gameId: number;
+  playerId: number | null;
+  awardType: PlayerAwardType;
+  awardedBy?: number | null;
+  player?: ApiPlayer;
+  game?: ApiGame;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export type ApiStatType = {
@@ -95,6 +110,8 @@ export type ApiStat = {
   minute: number | null;
   isStoppageTime: boolean | null;
   numericValue: number | null;
+  clientEventId?: string | null;
+  qualifiers?: Record<string, unknown>;
   /** True when a goal stat has no accredited player yet. */
   isUnaccredited?: boolean;
   /** True when a `goals` stat was scored from a penalty kick in regular play. */
@@ -103,6 +120,25 @@ export type ApiStat = {
   team?: ApiTeam;
   player?: ApiPlayer;
   relatedPlayer?: ApiPlayer;
+};
+
+export type ApiTrackingTeamMetrics = {
+  teamId: number;
+  passesAttempted: number;
+  passesCompleted: number;
+  passCompletionPct: number;
+  possessionPct: number;
+  shotsAttempted: number;
+  shotsOnTarget: number;
+  shotAccuracyPct: number;
+};
+
+export type ApiMatchTrackingMetrics = {
+  possessionTracked: boolean;
+  teams: {
+    home: ApiTrackingTeamMetrics;
+    away: ApiTrackingTeamMetrics;
+  };
 };
 
 export type ApiPlayerWithStats = ApiPlayer & {
@@ -337,11 +373,13 @@ export type ApiGame = {
   homeTeam?: ApiTeam;
   awayTeam?: ApiTeam;
   winnerTeam?: ApiTeam | null;
+  awards?: ApiPlayerAward[];
 };
 
 export type ApiGameDetail = ApiGame & {
   league?: ApiLeague;
   stats: ApiStat[];
+  tracking?: ApiMatchTrackingMetrics;
   lineups?: TeamLineupGroup[];
 };
 

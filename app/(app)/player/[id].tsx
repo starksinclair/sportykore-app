@@ -4,6 +4,8 @@ import { ActivityIndicator, View } from "react-native";
 import { NotFound } from "@/components/not-found";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import { usePlayerDetail } from "@/player";
 import { PlayerProfileView } from "@/player/components/PlayerProfileSurface";
 
@@ -13,6 +15,18 @@ export default function PlayerRoute() {
   const isValidId = Number.isFinite(playerId) && playerId > 0;
   const query = usePlayerDetail(isValidId ? playerId : 0);
   const detail = query.data ?? null;
+
+  useTrackView(
+    "player_viewed",
+    detail ? playerId : null,
+    detail
+      ? {
+          player_id: detail.player.id,
+          player_name: detail.player.name,
+          is_owner: false,
+        }
+      : undefined,
+  );
 
   if (!isValidId) {
     return (
@@ -35,7 +49,13 @@ export default function PlayerRoute() {
   if (query.isError || !detail) {
     return (
       <DetailScreenShell title="Player">
-        <NotFound message="Player not found" />
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "Player")
+              : "Player not found."
+          }
+        />
       </DetailScreenShell>
     );
   }

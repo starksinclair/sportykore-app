@@ -103,7 +103,7 @@ export async function createPlayerProfile(
 ): Promise<ApiPlayer> {
   const res = await apiRequest<{ data: { player: ApiPlayer } }>(
     "/api/v1/me/player",
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
   return res.data.player;
 }
@@ -113,7 +113,7 @@ export async function updatePlayerProfile(
 ): Promise<ApiPlayer> {
   const res = await apiRequest<{ data: { player: ApiPlayer } }>(
     "/api/v1/me/player",
-    { method: "PUT", auth: true, jsonBody: payload },
+    { method: "PUT", auth: true, idempotencyKey: true, jsonBody: payload },
   );
   return res.data.player;
 }
@@ -128,7 +128,7 @@ export async function uploadPlayerPhoto(file: PickedImageFile): Promise<ApiPlaye
 
   const res = await apiRequest<{ data: { player: ApiPlayer } }>(
     "/api/v1/me/player/photo",
-    { method: "POST", auth: true, jsonBody: form },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: form },
   );
   return res.data.player;
 }
@@ -146,7 +146,7 @@ export async function createHighlight(
 ): Promise<ApiPlayerHighlight> {
   const res = await apiRequest<{ data: ApiPlayerHighlight }>(
     "/api/v1/me/player/highlights",
-    { method: "POST", auth: true, jsonBody: payload },
+    { method: "POST", auth: true, idempotencyKey: true, jsonBody: payload },
   );
   return res.data;
 }
@@ -157,7 +157,7 @@ export async function updateHighlight(
 ): Promise<ApiPlayerHighlight> {
   const res = await apiRequest<{ data: ApiPlayerHighlight }>(
     `/api/v1/me/player/highlights/${highlightId}`,
-    { method: "PUT", auth: true, jsonBody: payload },
+    { method: "PUT", auth: true, idempotencyKey: true, jsonBody: payload },
   );
   return res.data;
 }
@@ -165,6 +165,6 @@ export async function updateHighlight(
 export async function deleteHighlight(highlightId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/me/player/highlights/${highlightId}`,
-    { method: "DELETE", auth: true },
+    { method: "DELETE", auth: true, idempotencyKey: true },
   );
 }

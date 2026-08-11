@@ -16,6 +16,7 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
 import { formatPlayedAtShortDate, formatPlayedAtTime } from "@/lib/datetime";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { useTeamDetail } from "@/team";
 
 type Props = {
@@ -161,7 +162,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
             </View>
           ) : teamQuery.isError || !teamQuery.data ? (
             <ErrorState
-              message="Could not load team."
+              message={
+                teamQuery.isError
+                  ? messageForResourceLoad(teamQuery.error, "Team")
+                  : "Team not found."
+              }
               onRetry={() => teamQuery.refetch()}
             />
           ) : !seasonBlock ? (
@@ -174,7 +179,7 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
               <Text
                 className="pt-2 text-sm leading-6 text-white/55"
               >
-                Ask the league owner to activate a season before setting
+                Ask the league admin to activate a season before setting
                 lineups.
               </Text>
             </View>
@@ -196,7 +201,7 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                     <Text
                       className="pt-2 text-sm leading-6 text-white/55"
                     >
-                      When the league owner schedules games for this team,
+                      When the league admin schedules games for this team,
                       they will show up here for lineup setup.
                     </Text>
                   </View>

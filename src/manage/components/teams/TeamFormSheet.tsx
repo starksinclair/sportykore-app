@@ -82,7 +82,7 @@ export function TeamFormSheet({
       title={isEdit ? "Edit team" : "Add team"}
       subtitle={
         isEdit
-          ? "Update the team name, logo, or assign team admins."
+          ? "Update the team name, logo, or assign team managers."
           : "Teams are shared across all seasons in this league."
       }
       variant="dark"

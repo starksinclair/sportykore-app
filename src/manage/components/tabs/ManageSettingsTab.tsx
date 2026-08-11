@@ -212,6 +212,7 @@ export function ManageSettingsTab({
                 placeholder="Pick start date"
                 maximumDate={parseCalendarDate(endDate) ?? undefined}
                 labelClassName="text-white/45"
+                variant="dark"
               />
             </View>
             <View className="flex-1">
@@ -222,6 +223,7 @@ export function ManageSettingsTab({
                 placeholder="Pick end date"
                 minimumDate={parseCalendarDate(startDate) ?? undefined}
                 labelClassName="text-white/45"
+                variant="dark"
               />
             </View>
           </View>

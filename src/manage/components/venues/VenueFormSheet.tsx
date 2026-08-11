@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Modal,
@@ -15,12 +15,19 @@ import type { ApiVenue } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
+import { useCountries } from "@/country";
+import {
+  resolveCountryMapRegion,
+  staticCountryMapRegion,
+  type CountryMapRegion,
+} from "@/lib/country-map-region";
 import { GOOGLE_MAPS_API_KEY } from "@/lib/google-maps";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import {
   useCreateVenue,
   useLeagueVenues,
+  useManagedHub,
   useUpdateVenue,
 } from "../../hooks";
 import type { CreateVenuePayload } from "../../types";
@@ -125,15 +132,31 @@ export function VenueFormSheet({
   const createMutation = useCreateVenue(leagueId);
   const updateMutation = useUpdateVenue(leagueId);
   const venuesQuery = useLeagueVenues(leagueId, visible);
+  const managedHubQuery = useManagedHub(visible);
+  const countriesQuery = useCountries();
 
   const [mode, setMode] = useState<LocationMode>(isEdit ? "name" : "choose");
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [pinMapOpen, setPinMapOpen] = useState(false);
   const [sheetSuppressed, setSheetSuppressed] = useState(false);
+  const [countryRegion, setCountryRegion] = useState<CountryMapRegion | null>(null);
+  const [pinRegion, setPinRegion] = useState<Region | null>(null);
+  const [pinTouched, setPinTouched] = useState(false);
   const [pinDraft, setPinDraft] = useState<{
     latitude: number;
     longitude: number;
   } | null>(null);
+  const leagueCountry = useMemo(() => {
+    const ownedLeague = managedHubQuery.data?.ownedLeagues.find(
+      (league) => league.id === leagueId,
+    );
+    if (!ownedLeague) return null;
+    return (
+      countriesQuery.data?.find((country) => country.id === ownedLeague.countryId) ??
+      null
+    );
+  }, [countriesQuery.data, leagueId, managedHubQuery.data?.ownedLeagues]);
+  const fallbackRegion = countryRegion ?? DEFAULT_REGION;
 
   useEffect(() => {
     if (!visible) return;
@@ -153,7 +176,46 @@ export function VenueFormSheet({
     setPinMapOpen(false);
     setSheetSuppressed(false);
     setPinDraft(null);
+    setPinRegion(null);
+    setPinTouched(false);
   }, [visible, venue]);
+
+  useEffect(() => {
+    if (!visible || !leagueCountry) {
+      setCountryRegion(null);
+      return;
+    }
+
+    let cancelled = false;
+    const staticRegion = staticCountryMapRegion(leagueCountry);
+    setCountryRegion(staticRegion);
+
+    void resolveCountryMapRegion(leagueCountry, GOOGLE_MAPS_API_KEY).then((region) => {
+      if (!cancelled) setCountryRegion(region ?? staticRegion);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [leagueCountry, visible]);
+
+  useEffect(() => {
+    if (
+      !pinMapOpen ||
+      pinTouched ||
+      !countryRegion ||
+      form.latitude != null ||
+      form.longitude != null
+    ) {
+      return;
+    }
+
+    setPinRegion(countryRegion);
+    setPinDraft({
+      latitude: countryRegion.latitude,
+      longitude: countryRegion.longitude,
+    });
+  }, [countryRegion, form.latitude, form.longitude, pinMapOpen, pinTouched]);
 
   // iOS cannot present a Modal while another is already presenting - dismiss sheet first, then open map.
   useEffect(() => {
@@ -211,15 +273,29 @@ export function VenueFormSheet({
   };
 
   const openPinMap = () => {
+    const hasSavedPin = form.latitude != null && form.longitude != null;
+    const nextRegion: Region = hasSavedPin
+      ? {
+          ...fallbackRegion,
+          latitude: form.latitude!,
+          longitude: form.longitude!,
+          latitudeDelta: 0.08,
+          longitudeDelta: 0.08,
+        }
+      : fallbackRegion;
+    setPinRegion(nextRegion);
+    setPinTouched(false);
     setPinDraft({
-      latitude: form.latitude ?? DEFAULT_REGION.latitude,
-      longitude: form.longitude ?? DEFAULT_REGION.longitude,
+      latitude: nextRegion.latitude,
+      longitude: nextRegion.longitude,
     });
     setSheetSuppressed(true);
   };
 
   const closePinMap = () => {
     setPinMapOpen(false);
+    setPinRegion(null);
+    setPinTouched(false);
     setTimeout(() => setSheetSuppressed(false), 320);
   };
 
@@ -232,6 +308,8 @@ export function VenueFormSheet({
     });
     setMode("pin");
     setPinMapOpen(false);
+    setPinRegion(null);
+    setPinTouched(false);
     setTimeout(() => setSheetSuppressed(false), 320);
     if (!form.name.trim()) {
       showInfoToast("Name the pitch", "Enter a name for this location.");
@@ -331,6 +409,9 @@ export function VenueFormSheet({
                   query={{
                     key: GOOGLE_MAPS_API_KEY,
                     language: "en",
+                    ...(leagueCountry?.code
+                      ? { components: `country:${leagueCountry.code.toLowerCase()}` }
+                      : {}),
                   }}
                   onPress={(data, details) => {
                     const loc = details?.geometry?.location;
@@ -489,15 +570,21 @@ export function VenueFormSheet({
           </Text>
           {pinDraft ? (
             <MapView
+              key={
+                pinRegion
+                  ? `${pinRegion.latitude}:${pinRegion.longitude}`
+                  : "default-region"
+              }
               style={{ flex: 1 }}
               initialRegion={{
-                ...DEFAULT_REGION,
+                ...(pinRegion ?? DEFAULT_REGION),
                 latitude: pinDraft.latitude,
                 longitude: pinDraft.longitude,
               }}
               onPress={(e) => {
                 const { latitude, longitude } = e.nativeEvent.coordinate;
                 setPinDraft({ latitude, longitude });
+                setPinTouched(true);
               }}
             >
               <Marker
@@ -506,6 +593,7 @@ export function VenueFormSheet({
                 onDragEnd={(e) => {
                   const { latitude, longitude } = e.nativeEvent.coordinate;
                   setPinDraft({ latitude, longitude });
+                  setPinTouched(true);
                 }}
               />
             </MapView>

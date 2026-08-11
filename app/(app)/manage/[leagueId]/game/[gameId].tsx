@@ -12,14 +12,18 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import type { ApiGameDetail, ApiStat } from "@/api/entities";
+import type { ApiGameDetail, ApiPlayerAward, ApiStat, GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { LiveMinute } from "@/components/ui/live-minute";
 import { colors } from "@/constants";
 import { useLiveMinute } from "@/hooks/useLiveMinute";
-import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
+import {
+  messageForResourceLoad,
+  showInfoToast,
+  showThrownAsToast,
+} from "@/lib/show-error-toast";
 import { useMatchDetail } from "@/match";
 
 import { useStageBracket } from "@/knockout";
@@ -94,6 +98,7 @@ export default function ManageMatchCenterPage() {
   const [minute, setMinute] = useState("1");
   const [ssePatch, setSsePatch] = useState<Partial<ApiGameDetail>>({});
   const [statMinute, setStatMinute] = useState("0");
+  const [flowGuideOpen, setFlowGuideOpen] = useState(false);
   const [recording, setRecording] = useState<{
     eventKey: MatchEventKey;
     playerId: number;
@@ -158,6 +163,7 @@ export default function ManageMatchCenterPage() {
           }));
           break;
         case "stat_accredited":
+        case "tracking_updated":
           void queryClient.invalidateQueries({ queryKey: ["match", gameId] });
           void queryClient.invalidateQueries({
             queryKey: ["manage", "league", leagueId],
@@ -230,7 +236,9 @@ export default function ManageMatchCenterPage() {
     return (
       <View className="flex-1 items-center justify-center bg-[#0F0F10] px-6">
         <Text className="text-center text-white/70">
-          Match not found.
+          {detailQuery.isError
+            ? messageForResourceLoad(detailQuery.error, "Match")
+            : "Match not found."}
         </Text>
         <Button
           variant="secondary"
@@ -242,7 +250,38 @@ export default function ManageMatchCenterPage() {
     );
   }
 
+  const applyOptimisticScore = (
+    team: "home" | "away",
+    action: "increment" | "decrement",
+  ) => {
+    const previous = {
+      homeScore: game.homeScore ?? 0,
+      awayScore: game.awayScore ?? 0,
+    };
+    const next = { ...previous };
+
+    if (team === "home") {
+      next.homeScore =
+        action === "increment"
+          ? previous.homeScore + 1
+          : Math.max(0, previous.homeScore - 1);
+    } else {
+      next.awayScore =
+        action === "increment"
+          ? previous.awayScore + 1
+          : Math.max(0, previous.awayScore - 1);
+    }
+
+    setSsePatch((prev) => ({ ...prev, ...next }));
+    return previous;
+  };
+
+  const restoreScore = (score: { homeScore: number; awayScore: number }) => {
+    setSsePatch((prev) => ({ ...prev, ...score }));
+  };
+
   const handleIncrement = async (team: "home" | "away") => {
+    const previousScore = applyOptimisticScore(team, "increment");
     try {
       const res = await scoreMutation.mutateAsync({ team, action: "increment" });
       setSsePatch((prev) => ({
@@ -262,11 +301,14 @@ export default function ManageMatchCenterPage() {
         await detailQuery.refetch();
       }
     } catch (err) {
+      restoreScore(previousScore);
+      resetAccredit();
       showThrownAsToast(err, "Could not update score");
     }
   };
 
   const handleDecrement = async (team: "home" | "away") => {
+    const previousScore = applyOptimisticScore(team, "decrement");
     try {
       const res = await scoreMutation.mutateAsync({ team, action: "decrement" });
       setSsePatch((prev) => ({
@@ -277,6 +319,7 @@ export default function ManageMatchCenterPage() {
       if (pendingTeam === team) resetAccredit();
       await detailQuery.refetch();
     } catch (err) {
+      restoreScore(previousScore);
       showThrownAsToast(err, "Could not update score");
     }
   };
@@ -356,6 +399,10 @@ export default function ManageMatchCenterPage() {
     router.back();
   };
 
+  const handleMotmSaved = (award: ApiPlayerAward) => {
+    setSsePatch((prev) => ({ ...prev, awards: [award] }));
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-[#0F0F10]" edges={["top", "bottom"]}>
@@ -423,6 +470,12 @@ export default function ManageMatchCenterPage() {
 
           <MatchSeriesHeader game={game} tie={seriesTie} />
 
+          <MatchDayFlowGuide
+            game={game}
+            expanded={flowGuideOpen}
+            onToggle={() => setFlowGuideOpen((prev) => !prev)}
+          />
+
           <GameControls
             game={game}
             leagueId={leagueId}
@@ -440,9 +493,12 @@ export default function ManageMatchCenterPage() {
           {activeTab === "score" ? (
             <HybridScoringPanel
               game={game}
+              leagueId={leagueId}
+              seasonId={seasonId}
               homeTeamId={homeTeamId}
               awayTeamId={awayTeamId}
               roster={rosterQuery.data ?? []}
+              liveMinute={liveMinute}
               pendingTeam={pendingTeam}
               scorerId={scorerId}
               assistId={assistId}
@@ -509,12 +565,240 @@ export default function ManageMatchCenterPage() {
               homeTeamId={homeTeamId}
               awayTeamId={awayTeamId}
               roster={rosterQuery.data ?? []}
+              onMotmSaved={handleMotmSaved}
             />
           ) : null}
         </ScrollView>
       {/* </SafeAreaView> */}
     </SafeAreaView>
     </SafeAreaProvider>
+  );
+}
+
+type MatchFlowStep = {
+  key: string;
+  title: string;
+  helper: string;
+  statuses: GameStatus[];
+};
+
+const MATCH_FLOW_STEPS: MatchFlowStep[] = [
+  {
+    key: "setup",
+    title: "Lineups",
+    helper: "Set squads before kickoff.",
+    statuses: ["scheduled", "postponed"],
+  },
+  {
+    key: "firstHalf",
+    title: "First half",
+    helper: "Start the clock and record events.",
+    statuses: ["first_half", "live"],
+  },
+  {
+    key: "halfTime",
+    title: "Half time",
+    helper: "Pause before the second half.",
+    statuses: ["half_time", "break"],
+  },
+  {
+    key: "secondHalf",
+    title: "Second half",
+    helper: "Finish normal time or choose a decider.",
+    statuses: ["second_half", "extra_time", "penalty_shootout", "paused"],
+  },
+  {
+    key: "finished",
+    title: "End game",
+    helper: "Save the final result.",
+    statuses: ["full_time", "completed", "cancelled"],
+  },
+];
+
+const matchStatusGuidance: Partial<
+  Record<GameStatus, { title: string; detail: string }>
+> = {
+  scheduled: {
+    title: "Next: start first half",
+    detail: "Lineups can still be set, then start the match clock from Match clock.",
+  },
+  postponed: {
+    title: "Next: start first half",
+    detail: "Use this once the match is ready to be played.",
+  },
+  first_half: {
+    title: "Now: first half is live",
+    detail: "Use Score for goals and Stats for cards, saves, fouls, and substitutions.",
+  },
+  live: {
+    title: "Now: first half is live",
+    detail: "Use Score for goals and Stats for cards, saves, fouls, and substitutions.",
+  },
+  half_time: {
+    title: "Next: start second half",
+    detail: "The clock is stopped until you start the second half.",
+  },
+  break: {
+    title: "Next: start second half",
+    detail: "The clock is stopped until you start the second half.",
+  },
+  second_half: {
+    title: "Next: end game or choose a decider",
+    detail: "End the game for a final result, or move to extra time or penalties when rules require it.",
+  },
+  extra_time: {
+    title: "Now: extra time is live",
+    detail: "Keep recording events, then end the game or move to penalties.",
+  },
+  penalty_shootout: {
+    title: "Next: enter penalty scores",
+    detail: "Confirm unequal penalty scores so SportyKore can close the match with a winner.",
+  },
+  paused: {
+    title: "Next: resume match",
+    detail: "Resume returns the game to the period it was in before the pause.",
+  },
+  full_time: {
+    title: "Match finished",
+    detail: "The final score is saved and the match is read-only for lineup changes.",
+  },
+  completed: {
+    title: "Match finished",
+    detail: "The final score is saved and the match is read-only for lineup changes.",
+  },
+  cancelled: {
+    title: "Match cancelled",
+    detail: "This match is closed and no live actions are available.",
+  },
+};
+
+function flowStatusForGame(game: ApiGameDetail): GameStatus {
+  if (game.status !== "paused") return game.status;
+  if (game.pausedFromStatus === "first_half" || game.pausedFromStatus === "live") {
+    return "first_half";
+  }
+  if (game.pausedFromStatus === "extra_time") return "extra_time";
+  if (game.pausedFromStatus === "penalty_shootout") return "penalty_shootout";
+  return "second_half";
+}
+
+function MatchDayFlowGuide({
+  game,
+  expanded,
+  onToggle,
+}: {
+  game: ApiGameDetail;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const status = game.status;
+  const flowStatus = flowStatusForGame(game);
+  const activeIndex = Math.max(
+    0,
+    MATCH_FLOW_STEPS.findIndex((step) => step.statuses.includes(flowStatus)),
+  );
+  const guidance =
+    matchStatusGuidance[status] ??
+    matchStatusGuidance.scheduled!;
+
+  return (
+    <View className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={expanded ? "Hide match day flow" : "Show match day flow"}
+        className="flex-row items-start gap-3 px-4 py-4 active:bg-white/5"
+      >
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
+          <Ionicons name="map-outline" size={19} color={colors.accent} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text className="text-white">
+            Match day flow
+          </Text>
+          <Text className="pt-1 text-xs leading-5 text-white/50">
+            {guidance.title}
+          </Text>
+        </View>
+        {status === "paused" ? (
+          <View className="rounded-full bg-white/10 px-2.5 py-1">
+            <Text className="text-[10px] uppercase text-white/60">
+              Paused
+            </Text>
+          </View>
+        ) : null}
+        <Ionicons
+          name={expanded ? "chevron-up" : "chevron-down"}
+          size={18}
+          color="rgba(255,255,255,0.65)"
+        />
+      </Pressable>
+
+      {expanded ? (
+        <View className="gap-4 border-t border-white/10 px-4 pb-4 pt-4">
+          <View className="gap-2">
+            {MATCH_FLOW_STEPS.map((step, index) => {
+              const isActive = index === activeIndex;
+              const isDone = index < activeIndex;
+              return (
+                <View
+                  key={step.key}
+                  className={`flex-row items-center gap-3 rounded-2xl border px-3 py-3 ${
+                    isActive
+                      ? "border-accent-400/60 bg-accent-500/15"
+                      : "border-white/10 bg-white/[0.03]"
+                  }`}
+                >
+                  <View
+                    className={`h-8 w-8 items-center justify-center rounded-full ${
+                      isActive
+                        ? "bg-accent-500"
+                        : isDone
+                          ? "bg-brand-500"
+                          : "bg-white/10"
+                    }`}
+                  >
+                    <Ionicons
+                      name={isDone ? "checkmark" : isActive ? "ellipse" : "ellipse-outline"}
+                      size={15}
+                      color={isActive ? colors.darkLabel : colors.white}
+                    />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text
+                      className={isActive ? "text-sm text-accent-100" : "text-sm text-white"}
+                      numberOfLines={1}
+                    >
+                      {step.title}
+                    </Text>
+                    <Text
+                      className="pt-0.5 text-xs leading-5 text-white/50"
+                      numberOfLines={2}
+                    >
+                      {step.helper}
+                    </Text>
+                  </View>
+                  {isActive ? (
+                    <View className="rounded-full bg-accent-500 px-2.5 py-1">
+                      <Text className="text-[10px] uppercase text-neutral-950">
+                        Now
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+
+          <View className="rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
+            <Text className="text-sm leading-6 text-accent-100">
+              {guidance.detail}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -543,4 +827,3 @@ function TeamScore({
     </View>
   );
 }
-

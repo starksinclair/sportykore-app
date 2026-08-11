@@ -13,6 +13,7 @@ import YoutubePlayer from "react-native-youtube-iframe";
 
 import type {
   ApiPlayer,
+  ApiPlayerAward,
   ApiPlayerHighlight,
   ApiPlayerLeague,
   ApiStatType,
@@ -29,6 +30,7 @@ import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
+import { posthog } from "@/lib/posthog";
 import { labelForPosition } from "@/lib/positions";
 import {
   messageFromThrown,
@@ -251,6 +253,8 @@ export function PlayerProfileView({
         gamesPlayed={gamesPlayed}
       />
 
+      <AwardsSection awards={player.awards ?? []} />
+
       <DetailsSection player={player} />
 
       {isOwner ? (
@@ -276,8 +280,16 @@ export function PlayerProfileView({
 
 export function PlayerProfileCreateState({
   viewerName,
+  title = "Create player profile",
+  description = "Build a permanent profile that follows you across leagues, with your stats, clubs, and highlights in one place.",
+  ctaLabel = "Create profile",
+  onCreated,
 }: {
   viewerName?: string;
+  title?: string;
+  description?: string;
+  ctaLabel?: string;
+  onCreated?: (player: ApiPlayer) => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -290,18 +302,17 @@ export function PlayerProfileCreateState({
           <Text
             className="text-center text-2xl text-white"
           >
-            Create player profile
+            {title}
           </Text>
           <Text
             className="text-center text-sm leading-6 text-white/60"
           >
-            Build a permanent profile that follows you across leagues, with
-            your stats, clubs, and highlights in one place.
+            {description}
           </Text>
         </View>
         <Button
           variant="accent"
-          label="Create profile"
+          label={ctaLabel}
           className="w-full"
           onPress={() => setOpen(true)}
         />
@@ -312,6 +323,7 @@ export function PlayerProfileCreateState({
         viewerName={viewerName}
         initialStep={1}
         onClose={() => setOpen(false)}
+        onSaved={onCreated}
       />
     </View>
   );
@@ -409,6 +421,7 @@ function HighlightsSection({
   const [playingId, setPlayingId] = useState<number | null>(null);
   const mutations = useHighlightMutations(playerId);
   const atCap = highlights.length >= 10;
+  const deletePending = mutations.remove.isPending;
 
   return (
     <Section
@@ -453,6 +466,7 @@ function HighlightsSection({
                   )
                 }
                 onDelete={() => {
+                  if (deletePending) return;
                   Alert.alert(
                     "Delete highlight",
                     "Remove this highlight from your profile?",
@@ -466,6 +480,7 @@ function HighlightsSection({
                     ],
                   );
                 }}
+                deletePending={deletePending}
               />
             ))}
           </View>
@@ -503,12 +518,14 @@ function HighlightCard({
   playing,
   onPlay,
   onDelete,
+  deletePending,
 }: {
   item: ApiPlayerHighlight;
   isOwner: boolean;
   playing: boolean;
   onPlay: () => void;
   onDelete: () => void;
+  deletePending: boolean;
 }) {
   const thumbnail =
     item.thumbnailUrl ?? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
@@ -540,7 +557,12 @@ function HighlightCard({
           </Text>
           {isOwner ? (
             <View className="flex-row justify-end">
-              <IconButton icon="trash-outline" onPress={onDelete} danger />
+              <IconButton
+                icon="trash-outline"
+                onPress={onDelete}
+                danger
+                disabled={deletePending}
+              />
             </View>
           ) : null}
         </View>
@@ -588,10 +610,62 @@ function CareerStatsSection({
   );
 }
 
+function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
+  const router = useRouter();
+  const motmAwards = awards.filter((award) => award.awardType === "motm");
+
+  if (motmAwards.length === 0) {
+    return null;
+  }
+
+  return (
+    <Section title="Awards">
+      <View className="gap-3 rounded-[22px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500">
+            <Ionicons name="star" size={21} color={colors.darkLabel} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-white">
+              {motmAwards.length === 1
+                ? "1 man of the match"
+                : `${motmAwards.length} man of the match awards`}
+            </Text>
+            <Text className="pt-1 text-xs text-accent-100/70">
+              Awarded from official Match Center selections.
+            </Text>
+          </View>
+        </View>
+
+        {motmAwards.slice(0, 4).map((award) => (
+          <Pressable
+            key={award.id}
+            onPress={() => award.gameId && router.push(`/match/${award.gameId}`)}
+            accessibilityRole="button"
+            accessibilityLabel="Open match"
+            className="flex-row items-center justify-between gap-3 rounded-2xl bg-black/15 px-3 py-3 active:opacity-90"
+          >
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm text-accent-100" numberOfLines={1}>
+                {award.game?.homeTeam?.name ?? "Home"} vs{" "}
+                {award.game?.awayTeam?.name ?? "Away"}
+              </Text>
+              <Text className="pt-1 text-xs text-accent-100/60">
+                Man of the match
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={17} color={colors.accent} />
+          </Pressable>
+        ))}
+      </View>
+    </Section>
+  );
+}
+
 function DetailsSection({ player }: { player: ApiPlayer }) {
   const rows = [
     { label: "Preferred foot", value: player.preferredFoot },
-    { label: "Height", value: player.heightCm ? `${player.heightCm} cm` : null },
+    { label: "Height", value: formatHeight(player.heightCm) },
     {
       label: "Location",
       value: [player.city, player.state].filter(Boolean).join(", ") || null,
@@ -637,6 +711,7 @@ function PlayerProfileFormSheet({
   viewerName,
   initialStep,
   onClose,
+  onSaved,
 }: {
   visible: boolean;
   mode: "create" | "edit";
@@ -644,6 +719,7 @@ function PlayerProfileFormSheet({
   viewerName?: string;
   initialStep: 1 | 2;
   onClose: () => void;
+  onSaved?: (player: ApiPlayer) => void | Promise<void>;
 }) {
   const mutations = usePlayerProfileMutations();
   const [step, setStep] = useState<1 | 2>(initialStep);
@@ -709,8 +785,8 @@ function PlayerProfileFormSheet({
 
   const handleSave = async () => {
     const parsedHeight = heightCm.trim() ? Number(heightCm.trim()) : null;
-    if (parsedHeight != null && (!Number.isFinite(parsedHeight) || parsedHeight < 100 || parsedHeight > 250)) {
-      showInfoToast("Check height", "Use a height between 100 and 250 cm.");
+    if (parsedHeight != null && (!Number.isFinite(parsedHeight) || parsedHeight < 50 || parsedHeight > 250)) {
+      showInfoToast("Check height", "Use a height between 50 and 250 cm.");
       return;
     }
     if (mode === "create" && (!name.trim() || !country)) {
@@ -734,18 +810,30 @@ function PlayerProfileFormSheet({
     };
 
     try {
+      let savedPlayer: ApiPlayer;
       if (mode === "create") {
-        await mutations.create.mutateAsync({
+        savedPlayer = await mutations.create.mutateAsync({
           ...payload,
           name: name.trim(),
           countryId: country!.id,
         });
       } else {
-        await mutations.update.mutateAsync(payload);
+        savedPlayer = await mutations.update.mutateAsync(payload);
       }
       if (photo) {
-        await mutations.photo.mutateAsync(photo);
+        savedPlayer = await mutations.photo.mutateAsync(photo);
       }
+      posthog?.capture(
+        mode === "create" ? "player_profile_created" : "player_profile_updated",
+        {
+          has_photo: photo !== null,
+          has_bio: Boolean(bio.trim()),
+          has_primary_position: primaryPosition !== null,
+          has_secondary_position: secondaryPosition !== null,
+          has_preferred_foot: preferredFoot !== null,
+        },
+      );
+      await onSaved?.(savedPlayer);
       onClose();
     } catch {
       /* toasted in hooks */
@@ -818,13 +906,20 @@ function PlayerProfileFormSheet({
                 {bio.length}/300
               </Text>
             </View>
-            <AuthTextField
-              label="Height (cm)"
-              value={heightCm}
-              onChangeText={(text) => setHeightCm(text.replace(/[^\d]/g, ""))}
-              keyboardType="number-pad"
-              placeholder="175"
-            />
+            <View className="gap-1">
+              <AuthTextField
+                label="Height (cm)"
+                value={heightCm}
+                onChangeText={(text) => setHeightCm(text.replace(/[^\d]/g, ""))}
+                keyboardType="number-pad"
+                placeholder="175"
+              />
+              <Text className="text-xs leading-5 text-slate-500">
+                {heightCm
+                  ? formatHeight(Number(heightCm))
+                  : "Optional. You can leave this blank."}
+              </Text>
+            </View>
             <AuthTextField
               label="City"
               value={city}
@@ -883,6 +978,14 @@ function PlayerProfileFormSheet({
       </View>
     </BottomSheetModal>
   );
+}
+
+function formatHeight(heightCm?: number | null): string | null {
+  if (!heightCm || !Number.isFinite(heightCm)) return null;
+  const totalInches = Math.round(heightCm / 2.54);
+  const feet = Math.floor(totalInches / 12);
+  const inches = totalInches % 12;
+  return `${heightCm} cm (${feet} ft ${inches} in)`;
 }
 
 function HighlightFormSheet({
@@ -1161,15 +1264,20 @@ function IconButton({
   icon,
   onPress,
   danger = false,
+  disabled = false,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className="h-8 w-8 items-center justify-center rounded-full bg-white/8"
+      disabled={disabled}
+      className={`h-8 w-8 items-center justify-center rounded-full bg-white/8 ${
+        disabled ? "opacity-45" : ""
+      }`}
     >
       <Ionicons
         name={icon}

@@ -16,7 +16,7 @@ export const colors = {
   darkLabel: "#171717",
   white: "#FFFFFF",
   tabInactive: "#9AA3B2",
-  patternStripe: "rgba(230, 168, 23, 0.08)",
+  patternStripe: "rgba(230, 168, 23, 0.045)",
   patternStripeStrong: "rgba(230, 168, 23, 0.1)",
 } as const;
 

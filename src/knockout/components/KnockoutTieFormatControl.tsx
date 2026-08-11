@@ -19,7 +19,7 @@ const PRESETS: { id: string; label: string; selection: TieFormatSelection }[] = 
   { id: "single", label: "Single match", selection: { kind: "single" } },
   {
     id: "two",
-    label: "Home & away",
+    label: "Two-legged tie",
     selection: { kind: "two_legged", awayGoals: false },
   },
   { id: "bo3", label: "Best of 3", selection: { kind: "best_of", bestOf: 3 } },
@@ -142,37 +142,51 @@ export function KnockoutTieFormatControl({
       ) : null}
 
       {value.kind === "two_legged" ? (
-        <Pressable
-          onPress={() =>
-            onChange({
-              kind: "two_legged",
-              awayGoals: !(value.awayGoals ?? false),
-            })
-          }
-          className={`flex-row items-center justify-between gap-3 rounded-xl border px-3 py-3 ${
-            isDark ? "border-white/15 bg-white/5" : "border-slate-200 bg-slate-50"
-          }`}
-        >
+        <View className="gap-2">
           <Text
-            className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
-            numberOfLines={1}
+            className={isDark ? "text-xs leading-5 text-white/55" : "text-xs leading-5 text-slate-500"}
           >
-            Away goals tiebreak
+            Two-legged tie means each matchup has two games, one hosted by each
+            team. The aggregate score decides who advances.
           </Text>
-          <Text
-            className={
-              value.awayGoals
-                ? isDark
-                  ? "text-accent-300"
-                  : "text-brand-700"
-                : isDark
-                  ? "text-white/45"
-                  : "text-slate-400"
+          <Pressable
+            onPress={() =>
+              onChange({
+                kind: "two_legged",
+                awayGoals: !(value.awayGoals ?? false),
+              })
             }
+            className={`flex-row items-center justify-between gap-3 rounded-xl border px-3 py-3 ${
+              isDark ? "border-white/15 bg-white/5" : "border-slate-200 bg-slate-50"
+            }`}
           >
-            {value.awayGoals ? "On" : "Off"}
-          </Text>
-        </Pressable>
+            <View className="min-w-0 flex-1">
+              <Text
+                className={isDark ? "text-sm text-white/80" : "text-sm text-slate-800"}
+              >
+                Away goals tiebreak
+              </Text>
+              <Text
+                className={isDark ? "pt-1 text-xs text-white/45" : "pt-1 text-xs text-slate-500"}
+              >
+                Use away goals only if your competition rules need it.
+              </Text>
+            </View>
+            <Text
+              className={
+                value.awayGoals
+                  ? isDark
+                    ? "text-accent-300"
+                    : "text-brand-700"
+                  : isDark
+                    ? "text-white/45"
+                    : "text-slate-400"
+              }
+            >
+              {value.awayGoals ? "On" : "Off"}
+            </Text>
+          </Pressable>
+        </View>
       ) : null}
 
       <Pressable

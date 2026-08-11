@@ -3,6 +3,7 @@ import { ActivityIndicator, Text, View } from "react-native";
 import type { ApiStage } from "@/api/entities";
 import { colors } from "@/constants";
 import { useStageStandings, useZones } from "@/groups";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 import {
   GroupStandingsView,
   LeagueStandingsTab,
@@ -32,7 +33,24 @@ export function LeagueStageStandingsPanel({
     );
   }
 
-  if (query.isError || !query.data?.tables?.length) {
+  if (query.isError) {
+    if (fallbackStandings?.length) {
+      return (
+        <LeagueStandingsTab
+          standings={fallbackStandings}
+          highlightTeamId={highlightTeamId}
+          zones={zones}
+        />
+      );
+    }
+    return (
+      <Text className="text-sm text-white/55">
+        {messageForResourceLoad(query.error, "Standings")}
+      </Text>
+    );
+  }
+
+  if (!query.data?.tables?.length) {
     if (fallbackStandings?.length) {
       return (
         <LeagueStandingsTab

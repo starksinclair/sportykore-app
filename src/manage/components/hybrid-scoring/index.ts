@@ -1,3 +1,4 @@
+export { AdvancedTrackingPanel } from "./AdvancedTrackingPanel";
 export { HybridScoringPanel } from "./HybridScoringPanel";
 export { PlayerActionRow, PlayerPickRow } from "./PlayerPickRow";
 export type { PlayerRowAction } from "./PlayerPickRow";

@@ -36,6 +36,7 @@ export function ManageVenuesTab({ leagueId }: Props) {
   };
 
   const handleDelete = (venue: ApiVenue) => {
+    if (deleteMutation.isPending) return;
     Alert.alert(
       "Delete venue",
       `Remove "${venue.name}" from this league? Past games keep the venue name but lose the map link.`,
@@ -168,10 +169,13 @@ export function ManageVenuesTab({ leagueId }: Props) {
                 </Pressable>
                 <Pressable
                   onPress={() => handleDelete(venue)}
+                  disabled={deleteMutation.isPending}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${venue.name}`}
-                  className="h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 active:bg-red-500/15"
+                  className={`h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 active:bg-red-500/15 ${
+                    deleteMutation.isPending ? "opacity-45" : ""
+                  }`}
                 >
                   <Ionicons name="trash-outline" size={18} color="#f87171" />
                 </Pressable>

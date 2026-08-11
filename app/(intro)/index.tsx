@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Button, Logo } from "@/components/ui";
@@ -54,14 +54,14 @@ export default function LandingScreen() {
               <Text
                 className="text-[26px] leading-[32px] text-white"
               >
-               The Gathering.{"\n"} Where Leagues Gathers.
+               Create and run your football league.
               </Text>
               <Text
                 style={{ color: "rgba(255,255,255,0.88)" }}
                 className="text-[15px] leading-[22px]"
               >
-                Connect with local leagues, track live matches, and dive into
-                broadcast-level stats.
+                Schedule matches, invite players, update live scores, and keep
+                every table in sync.
               </Text>
             </View>
 
@@ -83,7 +83,7 @@ export default function LandingScreen() {
               className="rounded-2xl h-[52px]"
             />
 
-            <Pressable
+            {/* <Pressable
               onPress={() => router.push("/login")}
               className="items-center pt-3 pb-2 active:opacity-80"
               accessibilityRole="link"
@@ -102,7 +102,7 @@ export default function LandingScreen() {
                   Sign In
                 </Text>
               </Text>
-            </Pressable>
+            </Pressable> */}
           </View>
           </ScrollView>
         </SafeAreaView>
