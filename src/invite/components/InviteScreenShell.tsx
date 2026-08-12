@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { Logo } from "@/components/ui/logo";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 type Props = {
   title: string;
@@ -22,6 +23,7 @@ export function InviteScreenShell({
   teamName,
   children,
 }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const hasContext = Boolean(leagueName?.trim() || teamName?.trim());
 
   return (
@@ -33,7 +35,14 @@ export function InviteScreenShell({
           stripeColor={scoreboardPattern().stripeColor}
         />
 
-        <View className="flex-1 justify-center gap-8 px-6">
+        <View
+          className="w-full flex-1 justify-center gap-8 px-6"
+          style={
+            isTablet
+              ? { alignSelf: "center", maxWidth: 620, width: "100%" }
+              : undefined
+          }
+        >
           <View className="items-center gap-3">
             <Logo variant="full" color={colors.accent} fontSize={32} lineHeight={44} />
             <Text

@@ -15,6 +15,7 @@ import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAtShortDate, formatPlayedAtTime } from "@/lib/datetime";
 import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { useTeamDetail } from "@/team";
@@ -60,6 +61,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   const router = useRouter();
   const teamQuery = useTeamDetail(teamId);
   const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const leagueBlock = useMemo(() => {
     const leagues = teamQuery.data?.leagues ?? [];
     return (
@@ -109,6 +115,7 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
         />
 
         <View className="px-5 pb-2">
+          <View style={tabletFrameStyle}>
           <View className="flex-row items-center gap-3 pb-4 pt-2">
             <Pressable
               onPress={() => router.back()}
@@ -148,14 +155,19 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
               </Text>
             </View>
           ) : null}
+          </View>
         </View>
 
         <ScrollView
           className="flex-1 px-5"
           contentContainerClassName="gap-6 pb-12"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 90 }}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 90,
+            ...(isTablet ? { alignItems: "center" as const } : null),
+          }}
           showsVerticalScrollIndicator={false}
         >
+          <View className="w-full" style={tabletFrameStyle}>
           {teamQuery.isLoading ? (
             <View className="items-center py-16">
               <ActivityIndicator color={colors.accent} />
@@ -184,124 +196,136 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
               </Text>
             </View>
           ) : (
-            <>
-              <View className="gap-3">
-                <Text
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                >
-                  Fixtures
-                </Text>
-                {teamGames.length === 0 ? (
-                  <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-                    <Text
-                      className="text-base text-white"
-                    >
-                      No fixtures yet
-                    </Text>
-                    <Text
-                      className="pt-2 text-sm leading-6 text-white/55"
-                    >
-                      When the league admin schedules games for this team,
-                      they will show up here for lineup setup.
-                    </Text>
-                  </View>
-                ) : (
-                  teamGames.map((game) => {
-                    const opponent = opponentFor(game, teamId);
-                    const editable = EDITABLE_STATUSES.includes(game.status);
-                    return (
-                      <Pressable
-                        key={game.id}
-                        onPress={() => openLineup(game.id)}
-                        className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-4 active:bg-white/10"
-                      >
-                        <View className="flex-1 gap-1">
-                          <Text
-                            className="text-white"
-                          >
-                            vs {opponent?.name ?? "TBD"}
-                          </Text>
-                          <Text
-                            className="text-sm text-white/55"
-                          >
-                            {formatPlayedAtShortDate(game.playedAt)} ·{" "}
-                            {formatPlayedAtTime(game.playedAt)}
-                            {game.venueName ? ` · ${game.venueName}` : ""}
-                          </Text>
-                        </View>
-                        <View
-                          className={[
-                            "rounded-full px-2.5 py-1",
-                            editable ? "bg-accent-400/20" : "bg-white/10",
-                          ].join(" ")}
-                        >
-                          <Text
-                            className={
-                              editable
-                                ? "text-xs text-accent-300"
-                                : "text-xs text-white/55"
-                            }
-                          >
-                            {statusLabel(game.status)}
-                          </Text>
-                        </View>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={18}
-                          color="rgba(255,255,255,0.45)"
-                        />
-                      </Pressable>
-                    );
-                  })
-                )}
+            <View className={isTablet ? "flex-row items-start gap-5" : "gap-6"}>
+              <View className="gap-3" style={isTablet ? { flex: 1.25 } : undefined}>
+                <FixturesList
+                  games={teamGames}
+                  teamId={teamId}
+                  onOpenLineup={openLineup}
+                />
               </View>
-
-              <View className="gap-3">
-                <Text
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                >
-                  Squad
-                </Text>
-                {roster.length === 0 ? (
-                  <Text
-                    className="text-sm text-white/45"
-                  >
-                    No players on this team for the season yet.
-                  </Text>
-                ) : (
-                  roster.map((player) => (
-                    <View
-                      key={player.id}
-                      className="flex-row items-center gap-3 rounded-[16px] bg-white/6 px-4 py-3"
-                    >
-                      <EntityLogo
-                        logoUrl={player.avatarUrl}
-                        variant="player"
-                        size="sm"
-                        tone="brand"
-                        accessibilityLabel={player.name}
-                      />
-                      <View className="flex-1">
-                        <Text
-                          className="text-sm text-white"
-                          numberOfLines={1}
-                        >
-                          {player.name}
-                        </Text>
-                        <Text
-                          className="text-xs text-white/45"
-                        >
-                          {positionLabel(player.position)}
-                        </Text>
-                      </View>
-                    </View>
-                  ))
-                )}
+              <View className="gap-3" style={isTablet ? { flex: 1 } : undefined}>
+                <SquadList roster={roster} />
               </View>
-            </>
+            </View>
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
+  );
+}
+
+function FixturesList({
+  games,
+  teamId,
+  onOpenLineup,
+}: {
+  games: ApiGame[];
+  teamId: number;
+  onOpenLineup: (gameId: number) => void;
+}) {
+  return (
+    <>
+      <Text className="text-xs uppercase tracking-[2px] text-white/45">
+        Fixtures
+      </Text>
+      {games.length === 0 ? (
+        <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
+          <Text className="text-base text-white">
+            No fixtures yet
+          </Text>
+          <Text className="pt-2 text-sm leading-6 text-white/55">
+            When the league admin schedules games for this team, they will show
+            up here for lineup setup.
+          </Text>
+        </View>
+      ) : (
+        games.map((game) => {
+          const opponent = opponentFor(game, teamId);
+          const editable = EDITABLE_STATUSES.includes(game.status);
+          return (
+            <Pressable
+              key={game.id}
+              onPress={() => onOpenLineup(game.id)}
+              className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-4 active:bg-white/10"
+            >
+              <View className="flex-1 gap-1">
+                <Text className="text-white">
+                  vs {opponent?.name ?? "TBD"}
+                </Text>
+                <Text className="text-sm text-white/55">
+                  {formatPlayedAtShortDate(game.playedAt)} ·{" "}
+                  {formatPlayedAtTime(game.playedAt)}
+                  {game.venueName ? ` · ${game.venueName}` : ""}
+                </Text>
+              </View>
+              <View
+                className={[
+                  "rounded-full px-2.5 py-1",
+                  editable ? "bg-accent-400/20" : "bg-white/10",
+                ].join(" ")}
+              >
+                <Text
+                  className={
+                    editable
+                      ? "text-xs text-accent-300"
+                      : "text-xs text-white/55"
+                  }
+                >
+                  {statusLabel(game.status)}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color="rgba(255,255,255,0.45)"
+              />
+            </Pressable>
+          );
+        })
+      )}
+    </>
+  );
+}
+
+function SquadList({ roster }: { roster: ApiPlayerWithStats[] }) {
+  return (
+    <>
+      <Text className="text-xs uppercase tracking-[2px] text-white/45">
+        Squad
+      </Text>
+      {roster.length === 0 ? (
+        <Text className="text-sm text-white/45">
+          No players on this team for the season yet.
+        </Text>
+      ) : (
+        roster.map((player) => (
+          <View
+            key={player.id}
+            className="flex-row items-center gap-3 rounded-[16px] bg-white/6 px-4 py-3"
+          >
+            <EntityLogo
+              logoUrl={player.avatarUrl}
+              variant="player"
+              size="sm"
+              tone="brand"
+              accessibilityLabel={player.name}
+            />
+            <View className="flex-1">
+              <Text
+                className="text-sm text-white"
+                numberOfLines={1}
+              >
+                {player.name}
+              </Text>
+              <Text className="text-xs text-white/45">
+                {positionLabel(player.position)}
+              </Text>
+            </View>
+          </View>
+        ))
+      )}
+    </>
   );
 }

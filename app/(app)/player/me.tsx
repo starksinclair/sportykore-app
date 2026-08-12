@@ -36,7 +36,7 @@ export default function OwnPlayerProfileRoute() {
 
   if (ownQuery.isLoading && !ownResult) {
     return (
-      <DetailScreenShell title="Player profile">
+      <DetailScreenShell title="Player profile" tabletMaxWidth={1040}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -46,7 +46,7 @@ export default function OwnPlayerProfileRoute() {
 
   if (ownQuery.isError) {
     return (
-      <DetailScreenShell title="Player profile">
+      <DetailScreenShell title="Player profile" tabletMaxWidth={1040}>
         <NotFound
           message={messageForResourceLoad(ownQuery.error, "Player profile")}
         />
@@ -56,7 +56,7 @@ export default function OwnPlayerProfileRoute() {
 
   if (!ownResult || ownResult.kind === "missing") {
     return (
-      <DetailScreenShell title="Player profile">
+      <DetailScreenShell title="Player profile" tabletMaxWidth={1040}>
         <PlayerProfileCreateState viewerName={user?.name} />
       </DetailScreenShell>
     );
@@ -65,7 +65,11 @@ export default function OwnPlayerProfileRoute() {
   const profilePlayer = detail?.player ?? ownResult.data.player;
 
   return (
-    <DetailScreenShell title={profilePlayer.name} subtitle="Your player profile">
+    <DetailScreenShell
+      title={profilePlayer.name}
+      subtitle="Your player profile"
+      tabletMaxWidth={1040}
+    >
       <PlayerProfileView
         player={profilePlayer}
         leagues={detail?.leagues ?? []}

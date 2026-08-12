@@ -6,6 +6,7 @@ import type { ApiGameDetail } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 import type { LeagueRosterRow } from "../../types";
 import { AdvancedTrackingPanel } from "./AdvancedTrackingPanel";
@@ -65,6 +66,7 @@ export function HybridScoringPanel({
   onLogGoal,
   onSkip,
 }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
   const accreditActive = pendingTeam != null;
 
@@ -81,8 +83,7 @@ export function HybridScoringPanel({
     [roster, activeTeamId],
   );
 
-  return (
-    <View className="gap-5">
+  const scoreControls = (
       <View className="flex-row justify-between gap-4 rounded-[24px] bg-white/6 px-4 py-4">
         <ScoreSide
           label="Home"
@@ -97,7 +98,9 @@ export function HybridScoringPanel({
           disabled={scorePending}
         />
       </View>
+  );
 
+  const accreditationCard = (
       <View
         className={`gap-3 rounded-[22px] border px-3 py-3 ${
           accreditActive
@@ -258,14 +261,37 @@ export function HybridScoringPanel({
           />
         </View>
       </View>
+  );
 
-      <AdvancedTrackingPanel
-        game={game}
-        leagueId={leagueId}
-        seasonId={seasonId}
-        roster={roster}
-        liveMinute={liveMinute}
-      />
+  const tracker = (
+    <AdvancedTrackingPanel
+      game={game}
+      leagueId={leagueId}
+      seasonId={seasonId}
+      roster={roster}
+      liveMinute={liveMinute}
+    />
+  );
+
+  if (isTablet) {
+    return (
+      <View className="flex-row items-start gap-5">
+        <View className="min-w-0 flex-1 gap-5">
+          {scoreControls}
+          {accreditationCard}
+        </View>
+        <View className="min-w-0 flex-1">
+          {tracker}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-5">
+      {scoreControls}
+      {accreditationCard}
+      {tracker}
     </View>
   );
 }

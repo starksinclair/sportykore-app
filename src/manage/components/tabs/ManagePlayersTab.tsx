@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { SeasonPicker } from "@/components/ui/season-picker";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
@@ -26,6 +27,7 @@ type Props = {
 };
 
 export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const rosterQuery = useSeasonRoster(leagueId, seasonId);
   const [rosterTeamId, setRosterTeamId] = useState<number | null>(
     teams[0]?.id ?? null,
@@ -122,14 +124,22 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
         </Text>
       ) : null}
 
-      {filteredRoster.map((row) => (
-        <RosterRow
-          key={row.id}
-          row={row}
-          leagueId={leagueId}
-          seasonId={seasonId}
-        />
-      ))}
+      {filteredRoster.length > 0 ? (
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-6"}>
+          {filteredRoster.map((row) => (
+            <View
+              key={row.id}
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <RosterRow
+                row={row}
+                leagueId={leagueId}
+                seasonId={seasonId}
+              />
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <InviteLinkSheet
         visible={inviteOpen}

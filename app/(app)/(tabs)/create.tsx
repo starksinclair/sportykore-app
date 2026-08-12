@@ -27,6 +27,7 @@ import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { OfflineBanner } from "@/components/ui/offline-banner";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import {
   GroupFormatConfigControl,
   buildDefaultGroupConfig,
@@ -73,6 +74,8 @@ function newTeamRow(): TeamRow {
 export default function CreateScreen() {
   const [step, setStep] = useState(1);
   const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
   // const bottomInset = Math.max(insets.bottom, 10);
   const [name, setName] = useState("");
   const season = String(new Date().getFullYear());
@@ -282,7 +285,10 @@ export default function CreateScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-6">
+          <View
+            className="gap-6"
+            style={isTablet ? { alignSelf: "center", width: "100%", maxWidth: tabletMaxWidth } : undefined}
+          >
             <View className="gap-2">
               {/* <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} /> */}
               <Text
@@ -486,19 +492,21 @@ function StepBasics({
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
-  return (
-    <View className="gap-4">
-      <Text className="text-base text-neutral-950">
-        Step 1 - Competition basics
-      </Text>
+  const { isTablet } = useAdaptiveLayout();
 
+  const formatFields = (
+    <>
       <CompetitionFormatPicker
         value={format}
         onChange={setFormat}
         required
       />
       <FormatHelpCard format={format} />
+    </>
+  );
 
+  const identityFields = (
+    <>
       <AuthTextField
         label="Competition name"
         required
@@ -545,7 +553,11 @@ function StepBasics({
         onChangeText={setCity}
         autoCapitalize="words"
       />
+    </>
+  );
 
+  const rulesFields = (
+    <>
       <LabelBlock label="Division / band">
         <View className="flex-row flex-wrap gap-2">
           {DIVISION_OPTIONS.map((opt) => (
@@ -584,7 +596,11 @@ function StepBasics({
       ) : (
         <GroupFormatConfigControl value={groupForm} onChange={setGroupForm} />
       )}
+    </>
+  );
 
+  const descriptionAndLogo = (
+    <>
       <View className="gap-1.5">
         <FormFieldLabel label="Description" />
         <TextInput
@@ -616,6 +632,34 @@ function StepBasics({
         hint="Recommend image: 150x150 px, JPG, PNG, or WebP, max 5 MB, keep logo centered"
         accessibilityLabel="Competition logo"
       />
+    </>
+  );
+
+  return (
+    <View className="gap-4">
+      <Text className="text-base text-neutral-950">
+        Step 1 - Competition basics
+      </Text>
+
+      {isTablet ? (
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1 gap-4">
+            {formatFields}
+            {identityFields}
+          </View>
+          <View className="min-w-0 flex-1 gap-4">
+            {rulesFields}
+            {descriptionAndLogo}
+          </View>
+        </View>
+      ) : (
+        <>
+          {formatFields}
+          {identityFields}
+          {rulesFields}
+          {descriptionAndLogo}
+        </>
+      )}
     </View>
   );
 }
@@ -695,6 +739,8 @@ function StepTeams({
   onAdd: () => void;
   onRemove: (id: string) => void;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+
   return (
     <View className="gap-4">
       <Text className="text-base text-neutral-950">
@@ -708,9 +754,13 @@ function StepTeams({
             : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
-      <View className="gap-3">
+      <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
         {teams.map((row, index) => (
-          <View key={row.id} className="flex-row items-center gap-2">
+          <View
+            key={row.id}
+            className="flex-row items-center gap-2"
+            style={isTablet ? { width: "48%" } : undefined}
+          >
             <View className="mt-7">
               <LogoImageUpload
                 value={row.logo}
@@ -794,6 +844,7 @@ function StepReview({
   teams: TeamRow[];
   created: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const divisionLabel =
     DIVISION_OPTIONS.find((d) => d.id === divisionId)?.label ?? divisionId;
 
@@ -889,24 +940,31 @@ function StepReview({
           >
             Teams ({teams.length})
           </Text>
-          {teams.map((team) => (
-            <View key={team.id} className="flex-row items-center gap-2 py-0.5">
-              {team.logo ? (
-                <Image
-                  source={{ uri: team.logo.uri }}
-                  style={{ width: 24, height: 24, borderRadius: 8 }}
-                  contentFit="cover"
-                />
-              ) : (
-                <View className="h-6 w-6 rounded-lg bg-neutral-200" />
-              )}
-              <Text
-                className="text-sm text-neutral-900"
+          <View className={isTablet ? "flex-row flex-wrap gap-2" : ""}>
+            {teams.map((team) => (
+              <View
+                key={team.id}
+                className="flex-row items-center gap-2 py-0.5"
+                style={isTablet ? { width: "48%" } : undefined}
               >
-                {team.name.trim()}
-              </Text>
-            </View>
-          ))}
+                {team.logo ? (
+                  <Image
+                    source={{ uri: team.logo.uri }}
+                    style={{ width: 24, height: 24, borderRadius: 8 }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View className="h-6 w-6 rounded-lg bg-neutral-200" />
+                )}
+                <Text
+                  className="min-w-0 flex-1 text-sm text-neutral-900"
+                  numberOfLines={1}
+                >
+                  {team.name.trim()}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 

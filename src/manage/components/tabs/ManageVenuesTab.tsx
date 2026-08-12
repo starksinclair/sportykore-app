@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiVenue } from "@/api/entities";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useDeleteVenue, useLeagueVenues } from "../../hooks";
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export function ManageVenuesTab({ leagueId }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const venuesQuery = useLeagueVenues(leagueId);
   const deleteMutation = useDeleteVenue(leagueId);
   const [formOpen, setFormOpen] = useState(false);
@@ -127,13 +129,14 @@ export function ManageVenuesTab({ leagueId }: Props) {
           </Pressable>
         </View>
       ) : (
-        <View className="gap-3">
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
           {venues.map((venue) => {
             const hasPin =
               venue.latitude != null && venue.longitude != null;
             return (
               <View
                 key={venue.id}
+                style={isTablet ? { width: "48%" } : undefined}
                 className="flex-row items-center gap-3 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4"
               >
                 <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">

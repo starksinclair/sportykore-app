@@ -15,6 +15,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { EntityLogo } from "@/components/ui";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useSearch } from "@/home/hooks";
 import {
   getRecentSearches,
@@ -40,9 +41,14 @@ const ENTITY_ICONS: Record<SearchEntityType, keyof typeof Ionicons.glyphMap> = {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
   const [query, setQuery] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
   const insets = useSafeAreaInsets();
+  const tabletMaxWidth = isWideTablet ? 1080 : 860;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   useEffect(() => {
     let cancelled = false;
     getRecentSearches().then((value) => {
@@ -119,7 +125,10 @@ export default function SearchScreen() {
     <View className="flex-1 bg-neutral-950">
       <StatusBar style="light" />
       <SafeAreaView className="flex-1" edges={["top"]}>
-        <View className="flex-row items-center gap-3 px-5 pb-3 pt-2">
+        <View
+          className="flex-row items-center gap-3 px-5 pb-3 pt-2"
+          style={tabletFrameStyle}
+        >
           <Pressable
             onPress={() => router.back()}
             accessibilityLabel="Close search"
@@ -159,28 +168,31 @@ export default function SearchScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: insets.bottom + 16,
+            ...(isTablet ? { alignItems: "center" as const } : null),
           }}
         >
-          {trimmed.length === 0 ? (
-            <RecentsBlock
-              recents={recents}
-              onPick={handlePickRecent}
-              onRemove={handleRemoveRecent}
-            />
-          ) : searchQuery.isError ? (
-            <SearchErrorState
-              message={messageFromThrown(searchQuery.error)}
-              onRetry={() => searchQuery.refetch()}
-            />
-          ) : searchQuery.isLoading && !searchQuery.data ? (
-            <View className="items-center pt-12">
-              <ActivityIndicator color={colors.accent} />
-            </View>
-          ) : (searchQuery.data?.results ?? []).length === 0 ? (
-            <EmptyResults query={trimmed} />
-          ) : (
-            <ResultsBlock grouped={grouped} onPick={handleResult} />
-          )}
+          <View className="w-full" style={tabletFrameStyle}>
+            {trimmed.length === 0 ? (
+              <RecentsBlock
+                recents={recents}
+                onPick={handlePickRecent}
+                onRemove={handleRemoveRecent}
+              />
+            ) : searchQuery.isError ? (
+              <SearchErrorState
+                message={messageFromThrown(searchQuery.error)}
+                onRetry={() => searchQuery.refetch()}
+              />
+            ) : searchQuery.isLoading && !searchQuery.data ? (
+              <View className="items-center pt-12">
+                <ActivityIndicator color={colors.accent} />
+              </View>
+            ) : (searchQuery.data?.results ?? []).length === 0 ? (
+              <EmptyResults query={trimmed} />
+            ) : (
+              <ResultsBlock grouped={grouped} onPick={handleResult} />
+            )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -353,14 +365,20 @@ function ResultsBlock({
   grouped: Record<SearchEntityType, SearchResult[]>;
   onPick: (result: SearchResult) => void;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+
   return (
-    <View className="gap-5">
+    <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-5"}>
       {ENTITY_ORDER.map((type) => {
         const items = grouped[type];
         if (items.length === 0) return null;
 
         return (
-          <View key={type} className="gap-3">
+          <View
+            key={type}
+            className="gap-3"
+            style={isTablet ? { width: "48%" } : undefined}
+          >
             <View className="flex-row items-center gap-2">
               <View className="h-7 w-7 items-center justify-center rounded-xl bg-accent-500/15">
                 <Ionicons name={ENTITY_ICONS[type]} size={14} color={colors.accent} />

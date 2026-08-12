@@ -18,6 +18,7 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { LiveMinute } from "@/components/ui/live-minute";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useLiveMinute } from "@/hooks/useLiveMinute";
 import {
   messageForResourceLoad,
@@ -70,6 +71,7 @@ export default function ManageMatchCenterPage() {
     seasonId?: string;
   }>();
   const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
   const leagueId = Number(params.leagueId);
   const gameId = Number(params.gameId);
   const seasonIdParam = Number(params.seasonId);
@@ -403,6 +405,145 @@ export default function ManageMatchCenterPage() {
     setSsePatch((prev) => ({ ...prev, awards: [award] }));
   };
 
+  const roster = rosterQuery.data ?? [];
+  const tabletMaxWidth = isWideTablet ? 1180 : 960;
+
+  const scoreCard = (
+    <View className="items-center gap-2 rounded-[28px] border border-white/10 bg-white/5 px-4 py-6">
+      <LiveMinute game={game} />
+      <View className="w-full flex-row items-center justify-between gap-4">
+        <TeamScore
+          name={game.homeTeam?.name ?? "Home"}
+          score={game.homeScore}
+        />
+        <Text
+          className="text-2xl text-white/30"
+        >
+          –
+        </Text>
+        <TeamScore
+          name={game.awayTeam?.name ?? "Away"}
+          score={game.awayScore}
+          align="right"
+        />
+      </View>
+      {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
+        <Text
+          className="text-sm text-accent-200"
+        >
+          Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
+        </Text>
+      ) : game.status === "penalty_shootout" ? (
+        <Text
+          className="text-sm text-accent-200"
+        >
+          Penalty shootout
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const clockControls = (
+    <GameControls
+      game={game}
+      leagueId={leagueId}
+      seasonId={seasonId}
+      onFullTime={handleFullTimeComplete}
+    />
+  );
+
+  const tabBar = (
+    <DetailTabs
+      tabs={TABS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      scrollable
+    />
+  );
+
+  const activeTabContent = (
+    <>
+      {activeTab === "score" ? (
+        <HybridScoringPanel
+          game={game}
+          leagueId={leagueId}
+          seasonId={seasonId}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          liveMinute={liveMinute}
+          pendingTeam={pendingTeam}
+          scorerId={scorerId}
+          assistId={assistId}
+          isOwnGoal={isOwnGoal}
+          isPenalty={isPenalty}
+          minute={minute}
+          scorePending={scoreMutation.isPending}
+          accreditPending={accreditMutation.isPending}
+          onIncrement={(team) => void handleIncrement(team)}
+          onDecrement={(team) => void handleDecrement(team)}
+          onSelectScorer={(id) =>
+            setScorerId((prev) => (prev === id ? null : id))
+          }
+          onSelectAssist={(id) =>
+            setAssistId((prev) => (prev === id ? null : id))
+          }
+          onToggleOwnGoal={() => {
+            setIsOwnGoal((prev) => !prev);
+            setAssistId(null);
+          }}
+          onTogglePenalty={() => setIsPenalty((prev) => !prev)}
+          onMinuteChange={setMinute}
+          onLogGoal={() => void handleLogGoal()}
+          onSkip={resetAccredit}
+        />
+      ) : null}
+
+      {activeTab === "goals" ? (
+        <MatchCenterGoalsTab
+          homeGoals={goalPartition.home}
+          awayGoals={goalPartition.away}
+          homeTeamName={game.homeTeam?.name ?? "Home"}
+          awayTeamName={game.awayTeam?.name ?? "Away"}
+          assistsByGoalPlayer={goalPartition.assistsByGoalPlayer}
+          onAccredit={handleAccreditFromGoals}
+        />
+      ) : null}
+
+      {activeTab === "stats" ? (
+        <MatchCenterStatsTab
+          game={game}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          statMinute={statMinute}
+          onStatMinuteChange={setStatMinute}
+          recording={recording}
+          onRecordStat={(eventKey, row) => void recordInlineStat(eventKey, row)}
+          onDeleteStat={async (statId) => {
+            try {
+              await deleteStatMutation.mutateAsync({ statId, gameId });
+            } catch (err) {
+              showThrownAsToast(err);
+            }
+          }}
+        />
+      ) : null}
+
+      {activeTab === "lineup" ? (
+        <MatchCenterLineupTab
+          game={game}
+          leagueId={leagueId}
+          seasonId={seasonId}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          onMotmSaved={handleMotmSaved}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <SafeAreaProvider>
       <SafeAreaView className="flex-1 bg-[#0F0F10]" edges={["top", "bottom"]}>
@@ -411,7 +552,14 @@ export default function ManageMatchCenterPage() {
         stripeColor="rgba(230, 168, 23, 0.06)"
       />
       {/* <SafeAreaView className="flex-1" edges={["top", "bottom"]}> */}
-        <View className="flex-row items-center justify-between px-5 pb-2 pt-1">
+        <View
+          className="flex-row items-center justify-between px-5 pb-2 pt-1"
+          style={
+            isTablet
+              ? { alignSelf: "center", width: "100%", maxWidth: tabletMaxWidth }
+              : undefined
+          }
+        >
           <Pressable
             onPress={() => router.back()}
             className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
@@ -427,147 +575,50 @@ export default function ManageMatchCenterPage() {
         </View>
 
         <ScrollView
-          className="flex-1 px-5"
+          className={isTablet ? "flex-1" : "flex-1 px-5"}
           contentContainerClassName="gap-5 pb-10"
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 90 
+            paddingBottom: insets.bottom + (isTablet ? 48 : 90),
+            ...(isTablet
+              ? { alignItems: "center", paddingHorizontal: 24, paddingTop: 4 }
+              : null),
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={detailQuery.isFetching} onRefresh={() => void detailQuery.refetch()} />}
         >
-          <View className="items-center gap-2 rounded-[28px] border border-white/10 bg-white/5 px-4 py-6">
-            <LiveMinute game={game} />
-            <View className="w-full flex-row items-center justify-between gap-4">
-              <TeamScore
-                name={game.homeTeam?.name ?? "Home"}
-                score={game.homeScore}
-              />
-              <Text
-                className="text-2xl text-white/30"
-              >
-                –
-              </Text>
-              <TeamScore
-                name={game.awayTeam?.name ?? "Away"}
-                score={game.awayScore}
-                align="right"
-              />
+          {isTablet ? (
+            <View style={{ width: "100%", maxWidth: tabletMaxWidth, gap: 20 }}>
+              <View className="flex-row items-start gap-5">
+                <View className="min-w-0 flex-1 gap-5">
+                  {scoreCard}
+                  <MatchSeriesHeader game={game} tie={seriesTie} />
+                </View>
+                <View className="min-w-0 flex-1 gap-5">
+                  {clockControls}
+                  <MatchDayFlowGuide
+                    game={game}
+                    expanded={flowGuideOpen}
+                    onToggle={() => setFlowGuideOpen((prev) => !prev)}
+                  />
+                </View>
+              </View>
+              {tabBar}
+              {activeTabContent}
             </View>
-            {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
-              <Text
-                className="text-sm text-accent-200"
-              >
-                Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
-              </Text>
-            ) : game.status === "penalty_shootout" ? (
-              <Text
-                className="text-sm text-accent-200"
-              >
-                Penalty shootout
-              </Text>
-            ) : null}
-          </View>
-
-          <MatchSeriesHeader game={game} tie={seriesTie} />
-
-          <MatchDayFlowGuide
-            game={game}
-            expanded={flowGuideOpen}
-            onToggle={() => setFlowGuideOpen((prev) => !prev)}
-          />
-
-          <GameControls
-            game={game}
-            leagueId={leagueId}
-            seasonId={seasonId}
-            onFullTime={handleFullTimeComplete}
-          />
-
-          <DetailTabs
-            tabs={TABS}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            scrollable
-          />
-
-          {activeTab === "score" ? (
-            <HybridScoringPanel
-              game={game}
-              leagueId={leagueId}
-              seasonId={seasonId}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              liveMinute={liveMinute}
-              pendingTeam={pendingTeam}
-              scorerId={scorerId}
-              assistId={assistId}
-              isOwnGoal={isOwnGoal}
-              isPenalty={isPenalty}
-              minute={minute}
-              scorePending={scoreMutation.isPending}
-              accreditPending={accreditMutation.isPending}
-              onIncrement={(team) => void handleIncrement(team)}
-              onDecrement={(team) => void handleDecrement(team)}
-              onSelectScorer={(id) =>
-                setScorerId((prev) => (prev === id ? null : id))
-              }
-              onSelectAssist={(id) =>
-                setAssistId((prev) => (prev === id ? null : id))
-              }
-              onToggleOwnGoal={() => {
-                setIsOwnGoal((prev) => !prev);
-                setAssistId(null);
-              }}
-              onTogglePenalty={() => setIsPenalty((prev) => !prev)}
-              onMinuteChange={setMinute}
-              onLogGoal={() => void handleLogGoal()}
-              onSkip={resetAccredit}
-            />
-          ) : null}
-
-          {activeTab === "goals" ? (
-            <MatchCenterGoalsTab
-              homeGoals={goalPartition.home}
-              awayGoals={goalPartition.away}
-              homeTeamName={game.homeTeam?.name ?? "Home"}
-              awayTeamName={game.awayTeam?.name ?? "Away"}
-              assistsByGoalPlayer={goalPartition.assistsByGoalPlayer}
-              onAccredit={handleAccreditFromGoals}
-            />
-          ) : null}
-
-          {activeTab === "stats" ? (
-            <MatchCenterStatsTab
-              game={game}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              statMinute={statMinute}
-              onStatMinuteChange={setStatMinute}
-              recording={recording}
-              onRecordStat={(eventKey, row) => void recordInlineStat(eventKey, row)}
-              onDeleteStat={async (statId) => {
-                try {
-                  await deleteStatMutation.mutateAsync({ statId, gameId });
-                } catch (err) {
-                  showThrownAsToast(err);
-                }
-              }}
-            />
-          ) : null}
-
-          {activeTab === "lineup" ? (
-            <MatchCenterLineupTab
-              game={game}
-              leagueId={leagueId}
-              seasonId={seasonId}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              onMotmSaved={handleMotmSaved}
-            />
-          ) : null}
+          ) : (
+            <>
+              {scoreCard}
+              <MatchSeriesHeader game={game} tie={seriesTie} />
+              <MatchDayFlowGuide
+                game={game}
+                expanded={flowGuideOpen}
+                onToggle={() => setFlowGuideOpen((prev) => !prev)}
+              />
+              {clockControls}
+              {tabBar}
+              {activeTabContent}
+            </>
+          )}
         </ScrollView>
       {/* </SafeAreaView> */}
     </SafeAreaView>

@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  ScrollView,
   SectionList,
   Text,
   View,
@@ -18,6 +19,7 @@ import { useAuth } from "@/auth";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
 import { messageFromThrown, showInfoToast } from "@/lib/show-error-toast";
 import {
@@ -58,6 +60,11 @@ export default function ManageScreen() {
   const [refreshing, onRefresh] = useRefresh([() => query.refetch()]);
   const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
   const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const inviteTeamsQuery = useLeagueTeams(
     inviteTarget?.leagueId ?? 0,
     Boolean(inviteTarget?.needsTeamFetch),
@@ -133,6 +140,8 @@ export default function ManageScreen() {
   const bothEmpty =
     (query.data?.ownedLeagues.length ?? 0) === 0 &&
     (query.data?.adminTeams.length ?? 0) === 0;
+  const ownedLeagues = query.data?.ownedLeagues ?? [];
+  const adminTeams = query.data?.adminTeams ?? [];
   const ownedCount = query.data?.ownedLeagues.length ?? 0;
   const adminCount = query.data?.adminTeams.length ?? 0;
 
@@ -147,16 +156,18 @@ export default function ManageScreen() {
 
         <View className="px-5 pb-5 pt-2">
           <View className="">
-            <Text
-              className="text-[28px] text-white"
-            >
-              Manage
-            </Text>
-            <Text
-              className="pt-1 text-sm leading-6 text-white/60"
-            >
-              Leagues you run and teams you manage, all in one place.
-            </Text>
+            <View style={tabletFrameStyle}>
+              <Text
+                className="text-[28px] text-white"
+              >
+                Manage
+              </Text>
+              <Text
+                className="pt-1 text-sm leading-6 text-white/60"
+              >
+                Leagues you run and teams you manage, all in one place.
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -171,12 +182,87 @@ export default function ManageScreen() {
             <ActivityIndicator color={colors.accent} />
           </View>
         ) : query.isError ? (
-          <View className="flex-1 px-5">
+          <View className="flex-1 px-5" style={tabletFrameStyle}>
             <ManageErrorState
               message={messageFromThrown(query.error)}
               onRetry={() => query.refetch()}
             />
           </View>
+        ) : isTablet ? (
+          <ScrollView
+            className="flex-1 px-5"
+            contentContainerClassName="grow pb-[10rem]"
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 90,
+              alignItems: "center",
+            }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.accent}
+              />
+            }
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="w-full gap-5" style={tabletFrameStyle}>
+              {!bothEmpty ? (
+                <ManageOverview
+                  ownedCount={ownedCount}
+                  adminCount={adminCount}
+                />
+              ) : null}
+
+              {bothEmpty ? (
+                <ManageEmptyLeagues />
+              ) : (
+                <View className="flex-row items-start gap-5">
+                  <ManageTabletColumn
+                    title="Leagues you run"
+                    count={ownedLeagues.length}
+                  >
+                    {ownedLeagues.length > 0 ? (
+                      ownedLeagues.map((league) => (
+                        <ManageLeagueRow
+                          key={league.id}
+                          league={league}
+                          onPress={() => handleOpenLeague(league.id)}
+                          onShare={() => void handleShareOwnedLeague(league)}
+                        />
+                      ))
+                    ) : (
+                      <ManageColumnEmptyState
+                        icon="trophy-outline"
+                        title="No leagues yet"
+                        body="Create a league when you are ready to run a competition."
+                      />
+                    )}
+                  </ManageTabletColumn>
+
+                  <ManageTabletColumn
+                    title="Teams you manage"
+                    count={adminTeams.length}
+                  >
+                    {adminTeams.length > 0 ? (
+                      adminTeams.map((team) => (
+                        <ManageAdminTeamRow
+                          key={team.id}
+                          team={team}
+                          onPress={() => handleOpenAdminTeam(team)}
+                        />
+                      ))
+                    ) : (
+                      <ManageColumnEmptyState
+                        icon="shield-checkmark-outline"
+                        title="No teams yet"
+                        body="Teams will appear here when a league admin adds you as manager."
+                      />
+                    )}
+                  </ManageTabletColumn>
+                </View>
+              )}
+            </View>
+          </ScrollView>
         ) : (
           <SectionList
             className="flex-1 px-5"
@@ -187,28 +273,44 @@ export default function ManageScreen() {
                 : `admin-${item.team.id}`
             }
             renderSectionHeader={({ section }) => (
-              <ManageSectionHeader title={section.title} count={section.data.length} />
+              <View className="w-full" style={tabletFrameStyle}>
+                <ManageSectionHeader title={section.title} count={section.data.length} />
+              </View>
             )}
             renderItem={({ item }) =>
               item.kind === "owned" ? (
-                <ManageLeagueRow
-                  league={item.league}
-                  onPress={() => handleOpenLeague(item.league.id)}
-                  onShare={() => void handleShareOwnedLeague(item.league)}
-                />
+                <View className="w-full" style={tabletFrameStyle}>
+                  <ManageLeagueRow
+                    league={item.league}
+                    onPress={() => handleOpenLeague(item.league.id)}
+                    onShare={() => void handleShareOwnedLeague(item.league)}
+                  />
+                </View>
               ) : (
-                <ManageAdminTeamRow
-                  team={item.team}
-                  onPress={() => handleOpenAdminTeam(item.team)}
-                />
+                <View className="w-full" style={tabletFrameStyle}>
+                  <ManageAdminTeamRow
+                    team={item.team}
+                    onPress={() => handleOpenAdminTeam(item.team)}
+                  />
+                </View>
               )
             }
             ItemSeparatorComponent={() => <View className="h-3" />}
             SectionSeparatorComponent={() => <View className="h-4" />}
-            ListEmptyComponent={bothEmpty ? ManageEmptyLeagues : null}
+            ListEmptyComponent={
+              bothEmpty
+                ? () => (
+                    <View className="w-full" style={tabletFrameStyle}>
+                      <ManageEmptyLeagues />
+                    </View>
+                  )
+                : null
+            }
             ListHeaderComponent={
               !bothEmpty ? (
-                <ManageOverview ownedCount={ownedCount} adminCount={adminCount} />
+                <View className="w-full" style={tabletFrameStyle}>
+                  <ManageOverview ownedCount={ownedCount} adminCount={adminCount} />
+                </View>
               ) : null
             }
             contentContainerClassName="grow pb-[10rem]"
@@ -222,7 +324,8 @@ export default function ManageScreen() {
             stickySectionHeadersEnabled={false}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingBottom: insets.bottom + 90 // Safely pushes the last item above the buttons
+              paddingBottom: insets.bottom + 90,
+              ...(isTablet ? { alignItems: "center" as const } : null),
             }}
           />
         )}
@@ -587,6 +690,49 @@ function ManageSectionHeader({ title, count }: { title: string; count: number })
           {count}
         </Text>
       </View>
+    </View>
+  );
+}
+
+function ManageTabletColumn({
+  title,
+  count,
+  children,
+}: {
+  title: string;
+  count: number;
+  children: ReactNode;
+}) {
+  return (
+    <View className="min-w-0 flex-1 gap-3">
+      <ManageSectionHeader title={title} count={count} />
+      <View className="gap-3">
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function ManageColumnEmptyState({
+  icon,
+  title,
+  body,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  body: string;
+}) {
+  return (
+    <View className="rounded-[22px] border border-dashed border-white/15 bg-white/[0.04] px-4 py-6">
+      <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+        <Ionicons name={icon} size={20} color={colors.accent} />
+      </View>
+      <Text className="pt-4 text-sm text-white">
+        {title}
+      </Text>
+      <Text className="pt-2 text-xs leading-5 text-white/50">
+        {body}
+      </Text>
     </View>
   );
 }

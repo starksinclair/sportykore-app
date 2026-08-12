@@ -18,6 +18,7 @@ import { Button, Logo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 type SlideMatch = {
   league: string;
@@ -87,7 +88,12 @@ const slides: Slide[] = [
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
   const { width, height } = useWindowDimensions();
-  const headerHeight = height * 0.49;
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const headerHeight = isTablet ? Math.min(height * 0.43, 430) : height * 0.49;
+  const tabletMaxWidth = isWideTablet ? 880 : 760;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<Slide>>(null);
 
@@ -139,7 +145,10 @@ export default function OnboardingScreen() {
       />
 
       <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
-        <View className="px-6 pt-5 pb-5 flex-row items-center justify-between">
+        <View
+          className="px-6 pt-5 pb-5 flex-row items-center justify-between"
+          style={tabletFrameStyle}
+        >
           <Logo variant="full" color={colors.accent} fontSize={24} lineHeight={44} />
           <Pressable hitSlop={10} onPress={() => void completeOnboarding()}>
             <Text className="text-base text-[#D1D5DB] font-medium">Skip</Text>
@@ -155,7 +164,13 @@ export default function OnboardingScreen() {
           showsHorizontalScrollIndicator={false}
           onScroll={onScroll}
           scrollEventThrottle={16}
-          renderItem={({ item }) => <SlideContent slide={item} width={width} />}
+          renderItem={({ item }) => (
+            <SlideContent
+              slide={item}
+              width={width}
+              tabletFrameStyle={tabletFrameStyle}
+            />
+          )}
           getItemLayout={(_, i) => ({
             length: width,
             offset: width * i,
@@ -164,7 +179,10 @@ export default function OnboardingScreen() {
           className="flex-1"
         />
 
-        <View className="flex-row gap-2 justify-start pb-6 px-6">
+        <View
+          className="flex-row gap-2 justify-start pb-6 px-6"
+          style={tabletFrameStyle}
+        >
           {slides.map((slide, i) => (
             <Pressable
               key={slide.key}
@@ -184,7 +202,10 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        <View className="flex-row gap-3 px-6 pb-4">
+        <View
+          className="flex-row gap-3 px-6 pb-4"
+          style={tabletFrameStyle}
+        >
           <Button
             variant="secondary"
             size="icon"
@@ -212,14 +233,25 @@ export default function OnboardingScreen() {
   );
 }
 
-function SlideContent({ slide, width }: { slide: Slide; width: number }) {
+function SlideContent({
+  slide,
+  width,
+  tabletFrameStyle,
+}: {
+  slide: Slide;
+  width: number;
+  tabletFrameStyle?: { alignSelf: "center"; width: "100%"; maxWidth: number };
+}) {
   return (
     <View style={{ width }} className="flex-1">
-      <View className="px-6 pt-4">
+      <View className="px-6 pt-4" style={tabletFrameStyle}>
         <MatchCard match={slide.match} />
       </View>
 
-      <View className="flex-1 px-6 justify-end pb-7 gap-3">
+      <View
+        className="flex-1 px-6 justify-end pb-7 gap-3"
+        style={tabletFrameStyle}
+      >
         <Text className="text-5xl font-bold text-slate-900 leading-snug">
           {slide.title}
         </Text>

@@ -99,7 +99,7 @@ export default function LeagueRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <NotFound message="Invalid competition id" />
       </DetailScreenShell>
     );
@@ -107,7 +107,7 @@ export default function LeagueRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -117,7 +117,7 @@ export default function LeagueRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <NotFound
           message={
             query.isError
@@ -149,6 +149,7 @@ export default function LeagueRoute() {
   return (
     <DetailScreenShell
       title={season.league.name}
+      tabletMaxWidth={1120}
       rightAccessory={
         <View className="flex-row items-center gap-2">
           <LeagueNotificationToggle leagueId={season.league.id} />

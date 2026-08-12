@@ -27,7 +27,7 @@ export default function CountryRoute() {
 
   if (query.isLoading) {
     return (
-      <DetailScreenShell title="Country">
+      <DetailScreenShell title="Country" tabletMaxWidth={1040}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -37,7 +37,7 @@ export default function CountryRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Country">
+      <DetailScreenShell title="Country" tabletMaxWidth={1040}>
         <View className="rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
           <Text className="text-lg text-white">
             {query.isError
@@ -56,6 +56,7 @@ export default function CountryRoute() {
     <DetailScreenShell
       title={country.name}
       subtitle="Country overview"
+      tabletMaxWidth={1040}
       headerContent={
         <DetailTabs
           tabs={TABS}

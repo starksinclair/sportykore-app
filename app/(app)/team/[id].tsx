@@ -108,7 +108,7 @@ export default function TeamRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Team">
+      <DetailScreenShell title="Team" tabletMaxWidth={1120}>
         <NotFound message="Invalid team id" />
       </DetailScreenShell>
     );
@@ -116,7 +116,7 @@ export default function TeamRoute() {
 
   if (query.isLoading && !detail) {
     return (
-      <DetailScreenShell title="Team">
+      <DetailScreenShell title="Team" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -126,7 +126,7 @@ export default function TeamRoute() {
 
   if (query.isError || !detail) {
     return (
-      <DetailScreenShell title="Team">
+      <DetailScreenShell title="Team" tabletMaxWidth={1120}>
         <NotFound
           message={
             query.isError
@@ -152,6 +152,7 @@ export default function TeamRoute() {
     <DetailScreenShell
       title={team.name}
       subtitle={selectedLeague?.name}
+      tabletMaxWidth={1120}
       rightAccessory={
         <EntityLogo
           logoUrl={team.logoUrl}

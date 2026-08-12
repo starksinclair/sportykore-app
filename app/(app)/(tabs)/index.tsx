@@ -59,6 +59,7 @@ import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
 import { useOwnPlayerProfile } from "@/player";
 import { StatusBar } from "expo-status-bar";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 import useRefresh from "hooks/useRefresh";
 
@@ -82,8 +83,10 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
   const { user } = useAuth();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
   const today = useMemo(() => startOfDay(new Date()), []);
   const insets = useSafeAreaInsets();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
   const [activeTab, setActiveTab] = useState<FeedTab>("matches");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -342,31 +345,42 @@ export default function HomeScreen() {
       ) : null}
     </>
   );
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
+
+  const renderFeedControls = (
+    <View className="w-full gap-5" style={tabletFrameStyle}>
+      {feedControls}
+    </View>
+  );
 
   const matchListEmpty = () => {
     if (leagueResponseError) {
       return (
-        <ErrorState
-          message={feedErrorMessage}
-          onRetry={() => refetchLeagueResponse()}
-        />
+        <View className="w-full" style={tabletFrameStyle}>
+          <ErrorState
+            message={feedErrorMessage}
+            onRetry={() => refetchLeagueResponse()}
+          />
+        </View>
       );
     }
     if (leagueResponseLoading && matches.length === 0) {
       return (
-        <View className="items-center py-10">
+        <View className="w-full items-center py-10" style={tabletFrameStyle}>
           <ActivityIndicator color={colors.brand} />
         </View>
       );
     }
     if (matches.length === 0) {
       return (
-       <View className="py-5">
-         <EmptyState
-          title={matchesEmptyCopy.title}
-          body={matchesEmptyCopy.body}
-        />
-       </View>
+        <View className="w-full py-5" style={tabletFrameStyle}>
+          <EmptyState
+            title={matchesEmptyCopy.title}
+            body={matchesEmptyCopy.body}
+          />
+        </View>
       );
     }
     return null;
@@ -384,7 +398,11 @@ export default function HomeScreen() {
             stripeColor={scoreboardPattern().stripeColor}
           />
 
-          <Animated.View entering={FadeInDown.duration(350)} className="gap-6  px-5 pb-5 pt-4">
+          <Animated.View
+            entering={FadeInDown.duration(350)}
+            className="gap-6 px-5 pb-5 pt-4"
+            style={tabletFrameStyle}
+          >
             <View className="flex-row items-center gap-3">
               <View className="shrink-0">
                 <Logo variant="image" fontSize={18} lineHeight={25} />
@@ -424,9 +442,12 @@ export default function HomeScreen() {
         {activeTab === "matches" ? (
           <SectionList<MatchFeedItem, MatchFeedSection>
             className="flex-1 bg-white"
+            ListHeaderComponentStyle={
+              isTablet ? styles.tabletListCell : undefined
+            }
             contentContainerClassName="px-5 pb-32 pt-5"
             contentContainerStyle={{
-                paddingBottom: insets.bottom + 90,
+              paddingBottom: insets.bottom + 90,
             }}
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={false}
@@ -435,7 +456,7 @@ export default function HomeScreen() {
               isFavoriteLeagueEntry(item) ? item.key : String(item.id ?? index)
             }
             renderSectionHeader={({ section }) => (
-              <View className="pb-2 pt-4">
+              <View className="w-full pb-2 pt-4" style={tabletFrameStyle}>
                 <Text
                   className="text-xs uppercase tracking-[1.5px] text-slate-500"
                 >
@@ -448,7 +469,10 @@ export default function HomeScreen() {
                 return null;
               }
               return (
-                <View className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                <View
+                  className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3"
+                  style={tabletFrameStyle}
+                >
                   <Text
                     className="text-sm leading-5 text-slate-600"
                   >
@@ -459,18 +483,24 @@ export default function HomeScreen() {
             }}
             renderItem={({ item, section }) => {
               if (section.key === "favourites" && isFavoriteLeagueEntry(item)) {
-                return <FavoriteLeagueCard entry={item} params={leagueParams} />;
+                return (
+                  <View className="w-full" style={tabletFrameStyle}>
+                    <FavoriteLeagueCard entry={item} params={leagueParams} />
+                  </View>
+                );
               }
               return (
-                <CountryAccordion
-                  entry={item as ApiCountryWithLeagues}
-                  defaultOpen={false}
-                  params={leagueParams}
-                />
+                <View className="w-full" style={tabletFrameStyle}>
+                  <CountryAccordion
+                    entry={item as ApiCountryWithLeagues}
+                    defaultOpen={false}
+                    params={leagueParams}
+                  />
+                </View>
               );
             }}
             ItemSeparatorComponent={() => <View className="h-4" />}
-            ListHeaderComponent={<View className="gap-5">{feedControls}</View>}
+            ListHeaderComponent={renderFeedControls}
             ListEmptyComponent={matchListEmpty}
             refreshControl={
               <RefreshControl
@@ -485,6 +515,7 @@ export default function HomeScreen() {
         <ScrollView
           className="flex-1 bg-white"
           contentContainerClassName="gap-5 px-5 pb-32 pt-5"
+          contentContainerStyle={isTablet ? { alignItems: "center" } : undefined}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -495,9 +526,13 @@ export default function HomeScreen() {
             />
           }
         >
-          {feedControls}
+          {renderFeedControls}
 
-          <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(350)}
+            className={isTablet ? "flex-row flex-wrap gap-4" : "gap-4"}
+            style={tabletFrameStyle}
+          >
               {leagueResponseError ? (
                 <ErrorState
                   message={feedErrorMessage}
@@ -509,7 +544,12 @@ export default function HomeScreen() {
                 </View>
               ) : (leagues ?? []).length ? (
                 (leagues ?? []).map((entry, index) => (
-                  <LeagueDirectoryRow key={entry.id} entry={entry} defaultOpen={index === 0} />
+                  <View
+                    key={entry.id}
+                    style={isTablet ? { width: "48%" } : undefined}
+                  >
+                    <LeagueDirectoryRow entry={entry} defaultOpen={index === 0} />
+                  </View>
                 ))
               ) : (
                 <EmptyState
@@ -730,4 +770,8 @@ function PendingInviteBanner({
 const styles = StyleSheet.create({
   calendarCell: { width: "14.2857%" },
   dateControl: { flex: 1.35 },
+  tabletListCell: {
+    width: "100%",
+    alignItems: "center",
+  },
 });

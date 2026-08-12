@@ -10,13 +10,19 @@ import { useAuth } from "@/auth";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
-import { showThrownAsToast } from "@/lib/show-error-toast";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useOwnPlayerProfile } from "@/player";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut, deleteAccount } = useAuth();
+  const { user, signOut } = useAuth();
   const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const deleteAccountUrl = "https://www.sportykore.com/delete-account";
+  const tabletMaxWidth = isWideTablet ? 1040 : 880;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
 
   const displayName = user?.name?.trim();
   const email = user?.email ?? "";
@@ -43,28 +49,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "This will permanently delete your account, player profile, and all associated data. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Account",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              router.replace("/login");
-            } catch (err) {
-              showThrownAsToast(err, "Could not delete account");
-            }
-          },
-        },
-      ],
-    );
-  };
-
   const handlePlayerProfile = async () => {
     if (playerProfileQuery.isLoading) return;
 
@@ -82,7 +66,10 @@ export default function ProfileScreen() {
 
       <View className="relative overflow-hidden px-5 pt-0">
         <SafeAreaView edges={["top", "bottom"]}>
-          <View className="flex-row items-center justify-between">
+          <View
+            className="flex-row items-center justify-between"
+            style={tabletFrameStyle}
+          >
             <Pressable
               onPress={() => router.replace("/(app)/(tabs)")}
               accessibilityLabel="Back"
@@ -99,7 +86,7 @@ export default function ProfileScreen() {
             <View className="h-11 w-11" />
           </View>
 
-          <View className="gap-5 mt-5">
+          <View className="mt-5 gap-5" style={tabletFrameStyle}>
             <View className="rounded-[22px] border border-white/10 bg-white/[0.06] px-4 py-4">
               {user ? (
                 <View className="flex-row items-center gap-4">
@@ -145,100 +132,65 @@ export default function ProfileScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           paddingBottom: insets.bottom + 16,
+          ...(isTablet ? { alignItems: "center" as const } : null),
         }}
       >
-        {user ? (
-          <>
-            <Section title="Player profile">
-              {hasPlayerProfile ? (
-                <SettingsRowChevron
-                  icon="person-outline"
-                  title={
-                    playerProfileQuery.isLoading
-                      ? "Loading profile…"
-                      : "View profile"
-                  }
-                  subtitle={"Your player card, stats, and highlights"}
-                  onPress={handlePlayerProfile}
+        <View
+          className={isTablet ? "w-full gap-6" : "gap-6"}
+          style={tabletFrameStyle}
+        >
+          {isTablet ? (
+            <View className="flex-row items-start gap-5">
+              <View className="flex-1 gap-6">
+                {user ? (
+                  <>
+                    <PlayerProfileSection
+                      hasPlayerProfile={hasPlayerProfile}
+                      loading={playerProfileQuery.isLoading}
+                      onPress={handlePlayerProfile}
+                    />
+                    <AccountSection
+                      onJoinLeague={() => router.push("/join-league")}
+                      onDeleteAccount={() => openBrowserAsync(deleteAccountUrl)}
+                    />
+                  </>
+                ) : null}
+              </View>
+              <View className="flex-1 gap-6">
+                <SupportSection
+                  onTerms={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
+                  onPrivacy={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
+                  onHelpCenter={() => router.push("/help-center")}
                 />
-              ) : (
-                <View className="gap-3 px-4 py-4">
-                  <View className="flex-row gap-3">
-                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15">
-                      <Ionicons name="person-add-outline" size={20} color={colors.accent} />
-                    </View>
-                    <View className="min-w-0 flex-1 gap-1">
-                      <Text className="text-[15px] text-white">
-                        Create player profile
-                      </Text>
-                      <Text className="text-xs leading-5 text-white/60">
-                        A permanent profile that follows you across leagues,
-                        with your stats and highlights in one place.
-                      </Text>
-                    </View>
-                  </View>
-                  <Button
-                    variant="signInYellow"
-                    label="Create profile"
-                    className="h-11 rounded-full"
+                {user ? <LogoutButton onPress={handleSignOut} /> : null}
+              </View>
+            </View>
+          ) : (
+            <>
+              {user ? (
+                <>
+                  <PlayerProfileSection
+                    hasPlayerProfile={hasPlayerProfile}
+                    loading={playerProfileQuery.isLoading}
                     onPress={handlePlayerProfile}
                   />
-                </View>
-              )}
-            </Section>
+                  <AccountSection
+                    onJoinLeague={() => router.push("/join-league")}
+                    onDeleteAccount={() => openBrowserAsync(deleteAccountUrl)}
+                  />
+                </>
+              ) : null}
 
-            <Section title="Account">
-              <SettingsRowChevron
-                icon="people-outline"
-                title="Join a league"
-                subtitle="Paste an invite code from your league admin"
-                onPress={() => router.push("/join-league")}
+              <SupportSection
+                onTerms={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
+                onPrivacy={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
+                onHelpCenter={() => router.push("/help-center")}
               />
-              <Divider />
-              {/* <SettingsRowChevron
-                icon="trash-outline"
-                title="Delete account"
-                subtitle="Permanently delete your account"
-                onPress={handleDeleteAccount}
-              /> */}
-            </Section>
-          </>
-        ) : null}
 
-        <Section title="Support">
-          <SettingsRowChevron
-            icon="document-text-outline"
-            title="Terms of service"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="shield-checkmark-outline"
-            title="Privacy policy"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="help-circle-outline"
-            title="Help center"
-            subtitle="FAQs for leagues, roles, invites, and Match Center"
-            onPress={() => router.push("/help-center")}
-          />
-        </Section>
-
-        {user ? (
-          <Pressable
-            onPress={handleSignOut}
-            className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300/30 bg-red-500/10 py-4 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel="Log out"
-          >
-            <Ionicons name="log-out-outline" size={22} color="#FCA5A5" />
-            <Text className="text-base text-red-200">
-              Log out
-            </Text>
-          </Pressable>
-        ) : null}
+              {user ? <LogoutButton onPress={handleSignOut} /> : null}
+            </>
+          )}
+        </View>
 
         {/* <Text
           className="pb-8 text-center text-xs leading-5 text-slate-500"
@@ -247,6 +199,127 @@ export default function ProfileScreen() {
         </Text> */}
       </ScrollView>
     </View>
+  );
+}
+
+function PlayerProfileSection({
+  hasPlayerProfile,
+  loading,
+  onPress,
+}: {
+  hasPlayerProfile: boolean;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Section title="Player profile">
+      {hasPlayerProfile ? (
+        <SettingsRowChevron
+          icon="person-outline"
+          title={loading ? "Loading profile…" : "View profile"}
+          subtitle="Your player card, stats, and highlights"
+          onPress={onPress}
+        />
+      ) : (
+        <View className="gap-3 px-4 py-4">
+          <View className="flex-row gap-3">
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15">
+              <Ionicons name="person-add-outline" size={20} color={colors.accent} />
+            </View>
+            <View className="min-w-0 flex-1 gap-1">
+              <Text className="text-[15px] text-white">
+                Create player profile
+              </Text>
+              <Text className="text-xs leading-5 text-white/60">
+                A permanent profile that follows you across leagues,
+                with your stats and highlights in one place.
+              </Text>
+            </View>
+          </View>
+          <Button
+            variant="signInYellow"
+            label="Create profile"
+            className="h-11 rounded-full"
+            onPress={onPress}
+          />
+        </View>
+      )}
+    </Section>
+  );
+}
+
+function AccountSection({
+  onJoinLeague,
+  onDeleteAccount,
+}: {
+  onJoinLeague: () => void;
+  onDeleteAccount: () => void;
+}) {
+  return (
+    <Section title="Account">
+      <SettingsRowChevron
+        icon="people-outline"
+        title="Join a league"
+        subtitle="Paste an invite code from your league admin"
+        onPress={onJoinLeague}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="trash-outline"
+        title="Delete account"
+        subtitle="Open the account deletion page"
+        onPress={onDeleteAccount}
+      />
+    </Section>
+  );
+}
+
+function SupportSection({
+  onTerms,
+  onPrivacy,
+  onHelpCenter,
+}: {
+  onTerms: () => void;
+  onPrivacy: () => void;
+  onHelpCenter: () => void;
+}) {
+  return (
+    <Section title="Support">
+      <SettingsRowChevron
+        icon="document-text-outline"
+        title="Terms of service"
+        onPress={onTerms}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="shield-checkmark-outline"
+        title="Privacy policy"
+        onPress={onPrivacy}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="help-circle-outline"
+        title="Help center"
+        subtitle="FAQs for leagues, roles, invites, and Match Center"
+        onPress={onHelpCenter}
+      />
+    </Section>
+  );
+}
+
+function LogoutButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300/30 bg-red-500/10 py-4 active:opacity-80"
+      accessibilityRole="button"
+      accessibilityLabel="Log out"
+    >
+      <Ionicons name="log-out-outline" size={22} color="#FCA5A5" />
+      <Text className="text-base text-red-200">
+        Log out
+      </Text>
+    </Pressable>
   );
 }
 

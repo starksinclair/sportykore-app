@@ -28,6 +28,7 @@ import {
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { posthog } from "@/lib/posthog";
@@ -97,6 +98,7 @@ export function PlayerProfileView({
   viewerName,
 }: PlayerProfileViewProps) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
   const [editOpen, setEditOpen] = useState(false);
   const [editInitialStep, setEditInitialStep] = useState<1 | 2>(1);
   const [addHighlightOpen, setAddHighlightOpen] = useState(false);
@@ -125,12 +127,12 @@ export function PlayerProfileView({
 
   return (
     <View className="gap-5 pb-10">
-      <View className="gap-4 rounded-[28px] bg-white/6 px-5 py-5">
-        <View className="flex-row items-center gap-4">
-          <PlayerAvatar player={player} size={88} />
+      <View className={isTablet ? "gap-5 rounded-[28px] bg-white/6 px-6 py-6" : "gap-4 rounded-[28px] bg-white/6 px-5 py-5"}>
+        <View className={isTablet ? "flex-row items-center gap-5" : "flex-row items-center gap-4"}>
+          <PlayerAvatar player={player} size={isTablet ? 108 : 88} />
           <View className="min-w-0 flex-1 gap-1">
             <Text
-              className="text-2xl text-white"
+              className={isTablet ? "text-3xl text-white" : "text-2xl text-white"}
               numberOfLines={2}
             >
               {player.name}
@@ -176,7 +178,7 @@ export function PlayerProfileView({
         ) : null}
 
         {isOwner ? (
-          <View className="flex-row gap-2">
+          <View className={isTablet ? "max-w-[460px] flex-row gap-3" : "flex-row gap-2"}>
             <Button
               variant="accent"
               label="Edit profile"
@@ -238,24 +240,50 @@ export function PlayerProfileView({
         </View>
       ) : null}
 
-      <HighlightsSection
-        highlights={highlights}
-        isOwner={isOwner}
-        playerId={player.id}
-        loading={isOwner && ownHighlights.isLoading}
-        onAdd={() => setAddHighlightOpen(true)}
-      />
+      {isTablet ? (
+        <View className="flex-row items-start gap-5">
+          <View className="gap-5" style={{ flex: 1.35 }}>
+            <HighlightsSection
+              highlights={highlights}
+              isOwner={isOwner}
+              playerId={player.id}
+              loading={isOwner && ownHighlights.isLoading}
+              onAdd={() => setAddHighlightOpen(true)}
+            />
+            <AwardsSection awards={player.awards ?? []} />
+          </View>
+          <View className="gap-5" style={{ flex: 1 }}>
+            <CareerStatsSection
+              goals={stats.goals}
+              assists={stats.assists}
+              cards={stats.cards}
+              gamesPlayed={gamesPlayed}
+            />
+            <DetailsSection player={player} />
+          </View>
+        </View>
+      ) : (
+        <>
+          <HighlightsSection
+            highlights={highlights}
+            isOwner={isOwner}
+            playerId={player.id}
+            loading={isOwner && ownHighlights.isLoading}
+            onAdd={() => setAddHighlightOpen(true)}
+          />
 
-      <CareerStatsSection
-        goals={stats.goals}
-        assists={stats.assists}
-        cards={stats.cards}
-        gamesPlayed={gamesPlayed}
-      />
+          <CareerStatsSection
+            goals={stats.goals}
+            assists={stats.assists}
+            cards={stats.cards}
+            gamesPlayed={gamesPlayed}
+          />
 
-      <AwardsSection awards={player.awards ?? []} />
+          <AwardsSection awards={player.awards ?? []} />
 
-      <DetailsSection player={player} />
+          <DetailsSection player={player} />
+        </>
+      )}
 
       {isOwner ? (
         <>
@@ -291,10 +319,17 @@ export function PlayerProfileCreateState({
   ctaLabel?: string;
   onCreated?: (player: ApiPlayer) => void | Promise<void>;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const [open, setOpen] = useState(false);
   return (
-    <View className="gap-5 pb-10">
-      <View className="items-center gap-4 rounded-[28px] bg-white/6 px-5 py-8">
+    <View
+      className="gap-5 pb-10"
+      style={isTablet ? { alignItems: "center" } : undefined}
+    >
+      <View
+        className="w-full items-center gap-4 rounded-[28px] bg-white/6 px-5 py-8"
+        style={isTablet ? { maxWidth: 620 } : undefined}
+      >
         <View className="h-20 w-20 items-center justify-center rounded-[24px] bg-[#4A148C]">
           <Ionicons name="person-add-outline" size={34} color="#E6A817" />
         </View>
@@ -527,13 +562,17 @@ function HighlightCard({
   onDelete: () => void;
   deletePending: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const thumbnail =
     item.thumbnailUrl ?? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
   return (
-    <View className="w-1/2 p-1">
+    <View
+      className="p-1"
+      style={{ width: isTablet ? "33.3333%" : "50%" }}
+    >
       <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
         {playing ? (
-          <YoutubePlayer height={116} play videoId={item.videoId} />
+          <YoutubePlayer height={isTablet ? 132 : 116} play videoId={item.videoId} />
         ) : (
           <Pressable onPress={onPlay}>
             <Image

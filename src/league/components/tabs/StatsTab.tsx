@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat, ApiStatType } from "@/api/entities";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
 
 type Props = {
@@ -44,6 +45,7 @@ const TITLE_BY_SLUG: Record<string, string> = {
 
 export function LeagueStatsTab({ statTypes, stats }: Props) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
   const groups = useMemo(
     () => buildGroups(statTypes, stats),
     [statTypes, stats],
@@ -58,9 +60,13 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
   }
 
   return (
-    <View className="gap-6">
+    <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-6"}>
       {groups.map((group) => (
-        <View key={group.type.id} className="gap-3">
+        <View
+          key={group.type.id}
+          className="gap-3"
+          style={isTablet ? { width: "48%" } : undefined}
+        >
           <View className="flex-row items-center gap-2">
             <Ionicons name={group.icon} size={16} color="#E6A817" />
             <Text

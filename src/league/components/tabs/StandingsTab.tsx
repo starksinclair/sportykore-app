@@ -9,6 +9,7 @@ import type {
   StandingZoneType,
 } from "@/api/entities";
 import { EntityLogo } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 const ZONE_COLORS: Record<StandingZoneType, string> = {
   qualified: "#22C55E",
@@ -60,6 +61,8 @@ export function LeagueStandingsTab({
   onRowMarkerPress,
 }: Props) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
+  const spacious = isTablet && !compact;
   const displayStandings = zones?.length
     ? applyZonesToStandings(
         standings,
@@ -91,12 +94,12 @@ export function LeagueStandingsTab({
 
       <View className="overflow-hidden rounded-[24px] bg-white/6">
         <View
-          className={`flex-row items-center gap-1 border-b border-white/10 px-2 ${
-            compact ? "py-2" : "py-3"
+          className={`flex-row items-center border-b border-white/10 px-2 ${
+            spacious ? "gap-2 py-3.5" : compact ? "gap-1 py-2" : "gap-1 py-3"
           }`}
         >
           <Text
-            className="w-8 text-[10px] text-white/55"
+            className={`${spacious ? "w-10" : "w-8"} text-[10px] text-white/55`}
           >
             #
           </Text>
@@ -106,12 +109,12 @@ export function LeagueStandingsTab({
           >
             Team
           </Text>
-          <ColHeader>P</ColHeader>
-          <ColHeader>W</ColHeader>
-          <ColHeader>D</ColHeader>
-          <ColHeader>L</ColHeader>
-          <ColHeader>GD</ColHeader>
-          <ColHeader>Pts</ColHeader>
+          <ColHeader spacious={spacious}>P</ColHeader>
+          <ColHeader spacious={spacious}>W</ColHeader>
+          <ColHeader spacious={spacious}>D</ColHeader>
+          <ColHeader spacious={spacious}>L</ColHeader>
+          <ColHeader spacious={spacious}>GD</ColHeader>
+          <ColHeader spacious={spacious}>Pts</ColHeader>
         </View>
 
         {displayStandings.map((row, index) => {
@@ -134,8 +137,8 @@ export function LeagueStandingsTab({
             <View
               key={row.id || `${row.team?.id ?? "t"}-${row.position}`}
               className={[
-                "flex-row items-center gap-1 px-2",
-                compact ? "py-2" : "py-3",
+                "flex-row items-center px-2",
+                spacious ? "gap-2 py-3.5" : compact ? "gap-1 py-2" : "gap-1 py-3",
                 index !== displayStandings.length - 1 ? "border-b border-white/10" : "",
               ].join(" ")}
               style={{
@@ -144,7 +147,7 @@ export function LeagueStandingsTab({
                 borderLeftColor: zoneColor,
               }}
             >
-              <View className="w-8 flex-row items-center gap-1">
+              <View className={`${spacious ? "w-10" : "w-8"} flex-row items-center gap-1`}>
                 <Text
                   className={
                     isHighlighted
@@ -177,8 +180,12 @@ export function LeagueStandingsTab({
                   style={{ minWidth: 0 }}
                   className={
                     isHighlighted
-                      ? "min-w-0 flex-1 text-[10px] text-[#E6A817]"
-                      : "min-w-0 flex-1 text-[10px] text-white"
+                      ? spacious
+                        ? "min-w-0 flex-1 text-sm text-[#E6A817]"
+                        : "min-w-0 flex-1 text-[10px] text-[#E6A817]"
+                      : spacious
+                        ? "min-w-0 flex-1 text-sm text-white"
+                        : "min-w-0 flex-1 text-[10px] text-white"
                   }
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -208,12 +215,12 @@ export function LeagueStandingsTab({
                   </Pressable>
                 ) : null}
               </Pressable>
-              <Col>{row.played}</Col>
-              <Col>{row.wins}</Col>
-              <Col>{row.draws}</Col>
-              <Col>{row.losses}</Col>
-              <Col>{row.goalDifference}</Col>
-              <ColAccent>{row.points}</ColAccent>
+              <Col spacious={spacious}>{row.played}</Col>
+              <Col spacious={spacious}>{row.wins}</Col>
+              <Col spacious={spacious}>{row.draws}</Col>
+              <Col spacious={spacious}>{row.losses}</Col>
+              <Col spacious={spacious}>{row.goalDifference}</Col>
+              <ColAccent spacious={spacious}>{row.points}</ColAccent>
             </View>
           );
         })}
@@ -323,10 +330,10 @@ function findZoneForPosition(
   );
 }
 
-function ColHeader({ children }: { children: string }) {
+function ColHeader({ children, spacious = false }: { children: string; spacious?: boolean }) {
   return (
     <Text
-      className="w-6 text-right text-[10px] uppercase tracking-[1.2px] text-white/55"
+      className={`${spacious ? "w-9" : "w-6"} text-right text-[10px] uppercase tracking-[1.2px] text-white/55`}
       numberOfLines={1}
     >
       {children}
@@ -334,10 +341,10 @@ function ColHeader({ children }: { children: string }) {
   );
 }
 
-function Col({ children }: { children: number }) {
+function Col({ children, spacious = false }: { children: number; spacious?: boolean }) {
   return (
     <Text
-      className="w-6 text-right text-xs text-white/65"
+      className={`${spacious ? "w-9 text-sm" : "w-6 text-xs"} text-right text-white/65`}
       numberOfLines={1}
     >
       {children}
@@ -345,10 +352,10 @@ function Col({ children }: { children: number }) {
   );
 }
 
-function ColAccent({ children }: { children: number }) {
+function ColAccent({ children, spacious = false }: { children: number; spacious?: boolean }) {
   return (
     <Text
-      className="w-6 text-right text-xs text-[#E6A817]"
+      className={`${spacious ? "w-9 text-sm" : "w-6 text-xs"} text-right text-[#E6A817]`}
       numberOfLines={1}
     >
       {children}
@@ -373,6 +380,7 @@ export function GroupStandingsView({
   zones?: ApiStandingZone[];
   allGroups?: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const ordered = [...tables].sort(
     (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0),
   );
@@ -446,18 +454,22 @@ export function GroupStandingsView({
       </View>
 
       {showAll ? (
-        <View className="gap-5">
+        <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-5"}>
           {ordered.map((table) => (
-            <LeagueStandingsTab
+            <View
               key={table.stageGroupId ?? "rr"}
-              title={table.stageGroupName ?? "Table"}
-              standings={table.rows}
-              highlightTeamId={highlightTeamId}
-              zones={zones}
-              stageGroupId={table.stageGroupId}
-              useTablePositionForZones
-              compact
-            />
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <LeagueStandingsTab
+                title={table.stageGroupName ?? "Table"}
+                standings={table.rows}
+                highlightTeamId={highlightTeamId}
+                zones={zones}
+                stageGroupId={table.stageGroupId}
+                useTablePositionForZones
+                compact
+              />
+            </View>
           ))}
         </View>
       ) : selected ? (

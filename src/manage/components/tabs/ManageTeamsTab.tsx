@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import { EntityLogo } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useDeleteTeam } from "../../hooks";
@@ -19,6 +20,7 @@ type Props = {
 
 export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
   const deleteMutation = useDeleteTeam(leagueId, seasonId);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<ManagedTeam | null>(null);
@@ -116,10 +118,11 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
           </Text>
         </View>
       ) : (
-        <View className="gap-2">
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-2"}>
           {teams.map((team) => (
             <View
               key={team.id}
+              style={isTablet ? { width: "48%" } : undefined}
               className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-3"
             >
               <EntityLogo

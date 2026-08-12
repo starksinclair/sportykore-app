@@ -19,6 +19,7 @@ import { useAuth } from "@/auth";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { posthog } from "@/lib/posthog";
 import {
   showErrorToast,
@@ -59,6 +60,11 @@ export function HelpCenterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1080 : 860;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const faqsQuery = useHelpCenterFaqs();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
@@ -103,6 +109,34 @@ export function HelpCenterScreen() {
     category === "all"
       ? null
       : HELP_CENTER_CATEGORIES.find((item) => item.id === category);
+  const handleClearFilters = () => {
+    setQuery("");
+    setCategory("all");
+  };
+  const questionsPanel = (
+    <QuestionsPanel
+      articles={filteredArticles}
+      expandedId={expandedId}
+      isFetching={faqsQuery.isFetching}
+      onClear={handleClearFilters}
+      onToggle={(articleId) =>
+        setExpandedId((current) =>
+          current === articleId ? null : articleId,
+        )
+      }
+    />
+  );
+  const supportCard = (
+    <SupportPromptCard onReport={() => setReportOpen(true)} />
+  );
+  const footer = (
+    <Text
+      className="px-1 text-center text-[11px] text-white/30"
+      style={styles.footerText}
+    >
+      Help content {faqsQuery.data?.articles?.length ? "live" : "local"}
+    </Text>
+  );
 
   return (
     <View className="flex-1 bg-neutral-950">
@@ -114,7 +148,10 @@ export function HelpCenterScreen() {
 
       <SafeAreaView className="flex-1" edges={["top"]}>
         <View className="px-5 pb-3 pt-1">
-          <View className="flex-row items-center justify-between">
+          <View
+            className="flex-row items-center justify-between"
+            style={tabletFrameStyle}
+          >
             <Pressable
               onPress={() => router.back()}
               accessibilityLabel="Back"
@@ -136,196 +173,100 @@ export function HelpCenterScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-5 px-5 pb-10 pt-1"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 24,
+            ...(isTablet ? { alignItems: "center" as const } : null),
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-4 rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-5">
-            <View className="flex-row items-start gap-3">
-              <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-accent-500">
-                <Ionicons
-                  name="help-buoy-outline"
-                  size={23}
-                  color={colors.darkLabel}
-                />
-              </View>
-              <View className="min-w-0 flex-1 gap-1">
-                <Text
-                  className="text-2xl leading-8 text-white"
-                  style={[styles.heroTitleText, { fontFamily: fonts.displayBold }]}
-                >
-                  Get unstuck fast
-                </Text>
-                <Text
-                  className="text-sm leading-6 text-white/60"
-                  style={styles.secondaryText}
-                >
-                  Short answers for players, Team managers, and League admins.
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
-              <Ionicons name="search-outline" size={18} color={colors.accent} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search invites, standings, lineups"
-                placeholderTextColor="rgba(255,255,255,0.42)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                className="min-w-0 flex-1 p-0 text-sm text-white"
-                selectionColor={colors.accent}
-                style={[styles.searchInputText, { fontFamily: fonts.body }]}
-              />
-              {query.length > 0 ? (
-                <Pressable
-                  onPress={() => setQuery("")}
-                  accessibilityLabel="Clear search"
-                  hitSlop={8}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={18}
-                    color="rgba(255,255,255,0.5)"
-                  />
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-2 pr-5"
-          >
-            <CategoryChip
-              label={allCategory.title}
-              icon={allCategory.icon}
-              selected={category === "all"}
-              onPress={() => setCategory("all")}
-            />
-            {HELP_CENTER_CATEGORIES.map((item) => (
-              <CategoryChip
-                key={item.id}
-                label={item.title}
-                icon={item.icon}
-                selected={category === item.id}
-                onPress={() => setCategory(item.id)}
-              />
-            ))}
-          </ScrollView>
-
-          {selectedCategory ? (
-            <View className="rounded-[22px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+          <View className="w-full gap-5" style={tabletFrameStyle}>
+            <View className="gap-4 rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-5">
               <View className="flex-row items-start gap-3">
-                <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/20">
+                <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-accent-500">
                   <Ionicons
-                    name={selectedCategory.icon}
-                    size={19}
-                    color={colors.accent}
+                    name="help-buoy-outline"
+                    size={23}
+                    color={colors.darkLabel}
                   />
                 </View>
                 <View className="min-w-0 flex-1 gap-1">
                   <Text
-                    className="text-base text-accent-100"
-                    style={styles.accentText}
+                    className="text-2xl leading-8 text-white"
+                    style={[styles.heroTitleText, { fontFamily: fonts.displayBold }]}
                   >
-                    {selectedCategory.title}
+                    Get unstuck fast
                   </Text>
                   <Text
-                    className="text-xs leading-5 text-accent-100/70"
-                    style={styles.accentMutedText}
+                    className="text-sm leading-6 text-white/60"
+                    style={styles.secondaryText}
                   >
-                    {selectedCategory.description}
+                    Short answers for players, Team managers, and League admins.
                   </Text>
                 </View>
               </View>
-            </View>
-          ) : null}
 
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between px-1">
-              <View className="flex-row items-center gap-2">
-                <Text
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                  style={styles.eyebrowText}
-                >
-                  Questions
-                </Text>
-                {faqsQuery.isFetching ? (
-                  <ActivityIndicator color={colors.accent} size="small" />
+              <View className="flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
+                <Ionicons name="search-outline" size={18} color={colors.accent} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search invites, standings, lineups"
+                  placeholderTextColor="rgba(255,255,255,0.42)"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  className="min-w-0 flex-1 p-0 text-sm text-white"
+                  selectionColor={colors.accent}
+                  style={[styles.searchInputText, { fontFamily: fonts.body }]}
+                />
+                {query.length > 0 ? (
+                  <Pressable
+                    onPress={() => setQuery("")}
+                    accessibilityLabel="Clear search"
+                    hitSlop={8}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={18}
+                      color="rgba(255,255,255,0.5)"
+                    />
+                  </Pressable>
                 ) : null}
               </View>
-              <Text className="text-xs text-white/40" style={styles.countText}>
-                {filteredArticles.length} found
-              </Text>
             </View>
 
-            {filteredArticles.length > 0 ? (
-              filteredArticles.map((article) => (
-                <FaqArticleCard
-                  key={article.id}
-                  article={article}
-                  expanded={expandedId === article.id}
-                  onToggle={() =>
-                    setExpandedId((current) =>
-                      current === article.id ? null : article.id,
-                    )
-                  }
-                />
-              ))
+            {isTablet ? (
+              <View className="flex-row items-start gap-5">
+                <View
+                  className="gap-5"
+                  style={{ width: isWideTablet ? 320 : 288 }}
+                >
+                  <CategoryFilters
+                    category={category}
+                    onSelect={setCategory}
+                    stacked
+                  />
+                  <SelectedCategoryCard category={selectedCategory} />
+                  {supportCard}
+                  {footer}
+                </View>
+                <View className="min-w-0 flex-1">
+                  {questionsPanel}
+                </View>
+              </View>
             ) : (
-              <EmptyFaqState onClear={() => {
-                setQuery("");
-                setCategory("all");
-              }} />
+              <>
+                <CategoryFilters
+                  category={category}
+                  onSelect={setCategory}
+                />
+                <SelectedCategoryCard category={selectedCategory} />
+                {questionsPanel}
+                {supportCard}
+                {footer}
+              </>
             )}
           </View>
-
-          <View className="gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
-            <View className="flex-row items-start gap-3">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                <Ionicons
-                  name="chatbubble-ellipses-outline"
-                  size={19}
-                  color={colors.accent}
-                />
-              </View>
-              <View className="min-w-0 flex-1 gap-1">
-                <Text className="text-base text-white" style={styles.primaryText}>
-                  Still need help?
-                </Text>
-                <Text
-                  className="text-xs leading-5 text-white/55"
-                  style={styles.mutedText}
-                >
-                  Send a report and we will use it to improve the next build.
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={() => setReportOpen(true)}
-              accessibilityRole="button"
-              className="h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90"
-            >
-              <Ionicons
-                name="bug-outline"
-                size={17}
-                color={colors.darkLabel}
-              />
-              <Text className="text-sm text-neutral-950" style={styles.darkText}>
-                Report a problem
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text
-            className="px-1 text-center text-[11px] text-white/30"
-            style={styles.footerText}
-          >
-            Help content {faqsQuery.data?.articles?.length ? "live" : "local"}
-          </Text>
         </ScrollView>
 
         <BugReportSheet
@@ -338,16 +279,201 @@ export function HelpCenterScreen() {
   );
 }
 
+function CategoryFilters({
+  category,
+  onSelect,
+  stacked = false,
+}: {
+  category: CategoryFilter;
+  onSelect: (category: CategoryFilter) => void;
+  stacked?: boolean;
+}) {
+  const chips = (
+    <>
+      <CategoryChip
+        label={allCategory.title}
+        icon={allCategory.icon}
+        selected={category === "all"}
+        onPress={() => onSelect("all")}
+        stacked={stacked}
+      />
+      {HELP_CENTER_CATEGORIES.map((item) => (
+        <CategoryChip
+          key={item.id}
+          label={item.title}
+          icon={item.icon}
+          selected={category === item.id}
+          onPress={() => onSelect(item.id)}
+          stacked={stacked}
+        />
+      ))}
+    </>
+  );
+
+  if (stacked) {
+    return (
+      <View className="gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+        <Text
+          className="text-xs uppercase tracking-[2px] text-white/45"
+          style={styles.eyebrowText}
+        >
+          Browse by topic
+        </Text>
+        <View className="gap-2">
+          {chips}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerClassName="gap-2 pr-5"
+    >
+      {chips}
+    </ScrollView>
+  );
+}
+
+function SelectedCategoryCard({
+  category,
+}: {
+  category: (typeof HELP_CENTER_CATEGORIES)[number] | undefined | null;
+}) {
+  if (!category) return null;
+
+  return (
+    <View className="rounded-[22px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+      <View className="flex-row items-start gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/20">
+          <Ionicons
+            name={category.icon}
+            size={19}
+            color={colors.accent}
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <Text
+            className="text-base text-accent-100"
+            style={styles.accentText}
+          >
+            {category.title}
+          </Text>
+          <Text
+            className="text-xs leading-5 text-accent-100/70"
+            style={styles.accentMutedText}
+          >
+            {category.description}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function QuestionsPanel({
+  articles,
+  expandedId,
+  isFetching,
+  onClear,
+  onToggle,
+}: {
+  articles: HelpCenterArticle[];
+  expandedId: string | null;
+  isFetching: boolean;
+  onClear: () => void;
+  onToggle: (articleId: string) => void;
+}) {
+  return (
+    <View className="gap-3">
+      <View className="flex-row items-center justify-between px-1">
+        <View className="flex-row items-center gap-2">
+          <Text
+            className="text-xs uppercase tracking-[2px] text-white/45"
+            style={styles.eyebrowText}
+          >
+            Questions
+          </Text>
+          {isFetching ? (
+            <ActivityIndicator color={colors.accent} size="small" />
+          ) : null}
+        </View>
+        <Text className="text-xs text-white/40" style={styles.countText}>
+          {articles.length} found
+        </Text>
+      </View>
+
+      {articles.length > 0 ? (
+        articles.map((article) => (
+          <FaqArticleCard
+            key={article.id}
+            article={article}
+            expanded={expandedId === article.id}
+            onToggle={() => onToggle(article.id)}
+          />
+        ))
+      ) : (
+        <EmptyFaqState onClear={onClear} />
+      )}
+    </View>
+  );
+}
+
+function SupportPromptCard({ onReport }: { onReport: () => void }) {
+  return (
+    <View className="gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+      <View className="flex-row items-start gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={19}
+            color={colors.accent}
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <Text className="text-base text-white" style={styles.primaryText}>
+            Still need help?
+          </Text>
+          <Text
+            className="text-xs leading-5 text-white/55"
+            style={styles.mutedText}
+          >
+            Send a report and we will use it to improve the next build.
+          </Text>
+        </View>
+      </View>
+      <Pressable
+        onPress={onReport}
+        accessibilityRole="button"
+        className="h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90"
+      >
+        <Ionicons
+          name="bug-outline"
+          size={17}
+          color={colors.darkLabel}
+        />
+        <Text className="text-sm text-neutral-950" style={styles.darkText}>
+          Report a problem
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function CategoryChip({
   label,
   icon,
   selected,
   onPress,
+  stacked = false,
 }: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   selected: boolean;
   onPress: () => void;
+  stacked?: boolean;
 }) {
   return (
     <Pressable
@@ -356,6 +482,7 @@ function CategoryChip({
       accessibilityState={{ selected }}
       className={[
         "h-10 flex-row items-center gap-2 rounded-full border px-3 active:opacity-85",
+        stacked ? "justify-start" : "",
         selected
           ? "border-accent-400 bg-accent-500"
           : "border-white/10 bg-white/[0.06]",

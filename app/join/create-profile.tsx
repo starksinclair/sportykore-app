@@ -9,6 +9,7 @@ import type { ApiPlayer } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import {
   getPendingInviteContext,
   getPendingInviteToken,
@@ -24,6 +25,10 @@ import { PlayerProfileCreateState } from "@/player/components/PlayerProfileSurfa
 export default function CreatePlayerProfileRoute() {
   const router = useRouter();
   const { user } = useAuth();
+  const { isTablet } = useAdaptiveLayout();
+  const inviteFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: 680 }
+    : undefined;
   const [token, setToken] = useState<string | null>(null);
   const [context, setContext] = useState<PendingInviteContext>({});
   const [loadingToken, setLoadingToken] = useState(true);
@@ -82,7 +87,10 @@ export default function CreatePlayerProfileRoute() {
   if (!user) {
     return (
       <InviteProfileShell>
-        <View className="flex-1 items-center justify-center gap-5 px-6">
+        <View
+          className="flex-1 items-center justify-center gap-5 px-6"
+          style={inviteFrameStyle}
+        >
           <Text className="text-center text-xl text-white">
             Sign in to finish joining
           </Text>
@@ -102,7 +110,10 @@ export default function CreatePlayerProfileRoute() {
   if (!token) {
     return (
       <InviteProfileShell>
-        <View className="flex-1 items-center justify-center gap-6 px-6">
+        <View
+          className="flex-1 items-center justify-center gap-6 px-6"
+          style={inviteFrameStyle}
+        >
           <Text className="text-center text-xl text-white">
             No invite found
           </Text>
@@ -125,7 +136,10 @@ export default function CreatePlayerProfileRoute() {
 
   return (
     <InviteProfileShell>
-      <View className="flex-1 justify-center px-5">
+      <View
+        className="flex-1 justify-center px-5"
+        style={inviteFrameStyle}
+      >
         <PlayerProfileCreateState
           viewerName={user.name}
           title="Create your player profile"

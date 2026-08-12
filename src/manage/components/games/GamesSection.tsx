@@ -2,6 +2,7 @@ import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 import { ManageGameRow } from "./ManageGameRow";
 
@@ -24,6 +25,8 @@ export function GamesSection({
   emptyMessage,
   showLiveDot,
 }: Props) {
+  const { isTablet } = useAdaptiveLayout();
+
   return (
     <View className="gap-3">
       {title ? (
@@ -41,15 +44,21 @@ export function GamesSection({
           {emptyMessage}
         </Text>
       ) : (
-        games.map((game) => (
-          <ManageGameRow
-            key={game.id}
-            game={game}
-            leagueId={leagueId}
-            seasonId={seasonId}
-            variant={variant}
-          />
-        ))
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
+          {games.map((game) => (
+            <View
+              key={game.id}
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <ManageGameRow
+                game={game}
+                leagueId={leagueId}
+                seasonId={seasonId}
+                variant={variant}
+              />
+            </View>
+          ))}
+        </View>
       )}
     </View>
   );

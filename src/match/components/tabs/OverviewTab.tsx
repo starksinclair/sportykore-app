@@ -5,6 +5,7 @@ import MapView, { Marker } from "react-native-maps";
 
 import { EntityLogo } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import { formatPlayedAt } from "@/lib/datetime";
 import {
@@ -22,6 +23,7 @@ type Props = {
 
 export function MatchOverviewTab({ detail }: Props) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
   const isLive = isLiveGameStatus(detail.status);
   const phase = useGamePhaseLabel(detail);
   const showScore =
@@ -50,9 +52,8 @@ export function MatchOverviewTab({ detail }: Props) {
     }
   };
 
-  return (
-    <View className="gap-6">
-      <View className="rounded-[28px] bg-white/6 px-5 py-6">
+  const scoreCard = (
+    <View className="rounded-[28px] bg-white/6 px-5 py-6">
         <View className="flex-row items-center justify-between gap-4 ">
           <TeamColumn
             name={detail.homeTeam?.name ?? "TBD"}
@@ -94,7 +95,9 @@ export function MatchOverviewTab({ detail }: Props) {
           />
         </View>
       </View>
+  );
 
+  const factsSection = (
       <Section title="Match Facts">
         <View className="rounded-[24px] bg-white/6 px-4 py-5">
           <FactRow label="Kickoff" value={formatPlayedAt(detail.playedAt)} />
@@ -104,64 +107,66 @@ export function MatchOverviewTab({ detail }: Props) {
           ) : null}
         </View>
       </Section>
+  );
 
-      {motm?.player ? (
-        <Section title="Man of the match">
-          <Pressable
-            onPress={() => motm.player?.id && router.push(`/player/${motm.player.id}`)}
-            accessibilityRole="button"
-            accessibilityLabel={`Open ${motm.player.name} profile`}
-            className="flex-row items-center gap-3 rounded-[24px] border border-accent-400/20 bg-accent-500/10 px-4 py-4 active:opacity-90"
-          >
-            <EntityLogo
-              logoUrl={motm.player.avatarUrl}
-              variant="player"
-              size="md"
-              tone="dark"
-            />
-            <View className="min-w-0 flex-1">
-              <Text className="text-white" numberOfLines={1}>
-                {motm.player.name}
-              </Text>
-              <Text className="pt-1 text-xs text-accent-100/70">
-                Man of the match
-              </Text>
-            </View>
-            <Ionicons name="star" size={20} color="#E6A817" />
-          </Pressable>
-        </Section>
-      ) : null}
+  const motmSection = motm?.player ? (
+    <Section title="Man of the match">
+      <Pressable
+        onPress={() => motm.player?.id && router.push(`/player/${motm.player.id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`Open ${motm.player.name} profile`}
+        className="flex-row items-center gap-3 rounded-[24px] border border-accent-400/20 bg-accent-500/10 px-4 py-4 active:opacity-90"
+      >
+        <EntityLogo
+          logoUrl={motm.player.avatarUrl}
+          variant="player"
+          size="md"
+          tone="dark"
+        />
+        <View className="min-w-0 flex-1">
+          <Text className="text-white" numberOfLines={1}>
+            {motm.player.name}
+          </Text>
+          <Text className="pt-1 text-xs text-accent-100/70">
+            Man of the match
+          </Text>
+        </View>
+        <Ionicons name="star" size={20} color="#E6A817" />
+      </Pressable>
+    </Section>
+  ) : null;
 
-      {hasCoords && lat != null && lng != null ? (
-        <Section title="Location">
-          <View className="overflow-hidden rounded-[24px] bg-white/6">
-            <MapView
-              style={{ width: "100%", height: 180 }}
-              pointerEvents="none"
-              scrollEnabled={false}
-              zoomEnabled={false}
-              rotateEnabled={false}
-              pitchEnabled={false}
-              initialRegion={{
-                latitude: lat,
-                longitude: lng,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              }}
-            >
-              <Marker coordinate={{ latitude: lat, longitude: lng }} />
-            </MapView>
-            <View className="px-4 py-4">
-              <Button
-                variant="authPurple"
-                label="Get directions"
-                onPress={() => void handleDirections()}
-              />
-            </View>
-          </View>
-        </Section>
-      ) : null}
+  const locationSection = hasCoords && lat != null && lng != null ? (
+    <Section title="Location">
+      <View className="overflow-hidden rounded-[24px] bg-white/6">
+        <MapView
+          style={{ width: "100%", height: 180 }}
+          pointerEvents="none"
+          scrollEnabled={false}
+          zoomEnabled={false}
+          rotateEnabled={false}
+          pitchEnabled={false}
+          initialRegion={{
+            latitude: lat,
+            longitude: lng,
+            latitudeDelta: 0.02,
+            longitudeDelta: 0.02,
+          }}
+        >
+          <Marker coordinate={{ latitude: lat, longitude: lng }} />
+        </MapView>
+        <View className="px-4 py-4">
+          <Button
+            variant="authPurple"
+            label="Get directions"
+            onPress={() => void handleDirections()}
+          />
+        </View>
+      </View>
+    </Section>
+  ) : null;
 
+  const eventsSection = (
       <Section title="Events">
         <MatchEventsTimeline
           stats={detail.stats}
@@ -170,6 +175,33 @@ export function MatchOverviewTab({ detail }: Props) {
           onPlayerPress={(id) => router.push(`/player/${id}`)}
         />
       </Section>
+  );
+
+  if (isTablet) {
+    return (
+      <View className="gap-6">
+        {scoreCard}
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1 gap-6">
+            {factsSection}
+            {motmSection}
+            {locationSection}
+          </View>
+          <View className="min-w-0 flex-1">
+            {eventsSection}
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-6">
+      {scoreCard}
+      {factsSection}
+      {motmSection}
+      {locationSection}
+      {eventsSection}
     </View>
   );
 }

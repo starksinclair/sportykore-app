@@ -30,7 +30,7 @@ export default function PlayerRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Player">
+      <DetailScreenShell title="Player" tabletMaxWidth={1040}>
         <NotFound message="Invalid player id" />
       </DetailScreenShell>
     );
@@ -38,7 +38,7 @@ export default function PlayerRoute() {
 
   if (query.isLoading && !detail) {
     return (
-      <DetailScreenShell title="Player">
+      <DetailScreenShell title="Player" tabletMaxWidth={1040}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -48,7 +48,7 @@ export default function PlayerRoute() {
 
   if (query.isError || !detail) {
     return (
-      <DetailScreenShell title="Player">
+      <DetailScreenShell title="Player" tabletMaxWidth={1040}>
         <NotFound
           message={
             query.isError
@@ -66,6 +66,7 @@ export default function PlayerRoute() {
       subtitle={
         detail.player.visibility === "private" ? "Private profile" : undefined
       }
+      tabletMaxWidth={1040}
     >
       <PlayerProfileView
         player={detail.player}

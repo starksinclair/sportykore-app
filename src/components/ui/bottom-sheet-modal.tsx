@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
+
 type BottomSheetModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -36,6 +38,7 @@ export function BottomSheetModal({
   scrollEnabled = true,
 }: BottomSheetModalProps) {
   const isDark = variant === "dark";
+  const { isTablet } = useAdaptiveLayout();
   return (
     <Modal
       transparent
@@ -44,14 +47,17 @@ export function BottomSheetModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
+      <View style={[styles.root, isTablet && styles.rootTablet]}>
         <Pressable style={styles.scrim} onPress={onClose} />
-        <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+        <SafeAreaView
+          edges={isTablet ? ["top", "bottom", "left", "right"] : ["bottom"]}
+          style={[styles.safeArea, isTablet && styles.safeAreaTablet]}
+        >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.keyboardAvoiding}
+            style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
           >
-            <View style={[styles.sheet, isDark && styles.sheetDark]}>
+            <View style={[styles.sheet, isTablet && styles.sheetTablet, isDark && styles.sheetDark]}>
               <View style={[styles.handle, isDark && styles.handleDark]} />
               <View style={styles.header}>
                 <View style={styles.headerCopy}>
@@ -111,14 +117,27 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.28)",
   },
+  rootTablet: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
   scrim: {
     ...StyleSheet.absoluteFillObject,
   },
   safeArea: {
     justifyContent: "flex-end",
   },
+  safeAreaTablet: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   keyboardAvoiding: {
     width: "100%",
+  },
+  keyboardAvoidingTablet: {
+    maxWidth: 720,
   },
   sheet: {
     maxHeight: "97%",
@@ -128,6 +147,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
+  },
+  sheetTablet: {
+    width: "100%",
+    maxHeight: "88%",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 12,
   },
   handle: {
     alignSelf: "center",

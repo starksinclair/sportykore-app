@@ -6,6 +6,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { ThemedView } from "./themed-view";
 
 type DetailScreenShellProps = {
@@ -15,6 +16,8 @@ type DetailScreenShellProps = {
   leagueId?: number;
   /** Sticky content rendered between the header bar and the scrollable body (e.g. tabs, season picker). */
   headerContent?: ReactNode;
+  /** Keeps phone layouts unchanged while allowing selected detail screens to breathe on tablet. */
+  tabletMaxWidth?: number;
   children: ReactNode;
 };
 
@@ -24,9 +27,15 @@ export function DetailScreenShell({
   rightAccessory,
   leagueId,
   headerContent,
+  tabletMaxWidth,
   children,
 }: DetailScreenShellProps) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
+  const useTabletWidth = isTablet && tabletMaxWidth != null;
+  const tabletWidthStyle = useTabletWidth
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
 
   return (
     <ThemedView type="background" className="flex-1">
@@ -37,7 +46,10 @@ export function DetailScreenShell({
           stripeColor="rgba(230, 168, 23, 0.06)"
         />
 
-        <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
+        <View
+          className="flex-row items-center justify-between px-5 pb-3 pt-1"
+          style={tabletWidthStyle}
+        >
           <Pressable
             onPress={() => router.back()}
             accessibilityRole="button"
@@ -68,15 +80,26 @@ export function DetailScreenShell({
         </View>
 
         {headerContent ? (
-          <View className="gap-3 px-5 pb-2 pt-1">{headerContent}</View>
+          <View className="gap-3 px-5 pb-2 pt-1" style={tabletWidthStyle}>
+            {headerContent}
+          </View>
         ) : null}
 
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-6 px-5 pb-12 pt-3"
+          contentContainerStyle={
+            useTabletWidth ? { alignItems: "center" } : undefined
+          }
           showsVerticalScrollIndicator={false}
         >
-          {children}
+          {useTabletWidth ? (
+            <View className="w-full gap-6" style={{ maxWidth: tabletMaxWidth }}>
+              {children}
+            </View>
+          ) : (
+            children
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>

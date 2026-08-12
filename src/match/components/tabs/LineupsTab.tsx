@@ -4,6 +4,7 @@ import { Text, View } from "react-native";
 
 import type { ApiStat, ApiTeam } from "@/api/entities";
 import { DetailTabs } from "@/components/ui/detail-tabs";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { LineupPitchView } from "@/lineup/components/LineupPitchView";
 import type { TeamLineupGroup } from "@/lineup/types";
 
@@ -22,6 +23,7 @@ export function MatchLineupsTab({
   lineups,
   stats = [],
 }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
 
   const homeGroup = lineups.find((g) => g.team.id === homeTeam?.id);
@@ -76,6 +78,33 @@ export function MatchLineupsTab({
 
   const activeTeam = resolvedSide === "home" ? homeTeam : awayTeam;
   const activeGroup = resolvedSide === "home" ? homeGroup : awayGroup;
+
+  if (isTablet && tabs.length > 1) {
+    return (
+      <View className="flex-row items-start gap-6">
+        <View className="min-w-0 flex-1 gap-3">
+          <Text className="text-[12px] uppercase tracking-[2px] text-white/55">
+            {homeTeam?.name ?? "Home"}
+          </Text>
+          {homeTeam && homeGroup && (homeGroup.starters.length ?? 0) > 0 ? (
+            <LineupPitchView group={homeGroup} tone="dark" stats={stats} />
+          ) : homeTeam ? (
+            <TeamMissingLineup teamName={homeTeam.name} />
+          ) : null}
+        </View>
+        <View className="min-w-0 flex-1 gap-3">
+          <Text className="text-[12px] uppercase tracking-[2px] text-white/55">
+            {awayTeam?.name ?? "Away"}
+          </Text>
+          {awayTeam && awayGroup && (awayGroup.starters.length ?? 0) > 0 ? (
+            <LineupPitchView group={awayGroup} tone="dark" stats={stats} />
+          ) : awayTeam ? (
+            <TeamMissingLineup teamName={awayTeam.name} />
+          ) : null}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="gap-5">

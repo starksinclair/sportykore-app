@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAt } from "@/lib/datetime";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function LeagueMatchesTab({ games }: Props) {
+  const { isTablet } = useAdaptiveLayout();
   const sorted = useMemo(
     () =>
       [...games].sort(
@@ -31,9 +33,14 @@ export function LeagueMatchesTab({ games }: Props) {
   }
 
   return (
-    <View className="gap-3">
+    <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
       {sorted.map((game) => (
-        <LeagueMatchRow key={game.id} game={game} />
+        <View
+          key={game.id}
+          style={isTablet ? { width: "48%" } : undefined}
+        >
+          <LeagueMatchRow game={game} />
+        </View>
       ))}
     </View>
   );

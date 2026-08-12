@@ -440,25 +440,33 @@ export function VenueFormSheet({
                       height: 48,
                       borderRadius: 12,
                       borderWidth: 1,
-                      borderColor: "#e2e8f0",
+                      borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0",
                       paddingHorizontal: 14,
                       fontSize: 15,
-                      color: "#0f172a",
-                      backgroundColor: "#f8fafc",
+                      color: isDark ? "#FFFFFF" : "#0f172a",
+                      backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#f8fafc",
                     },
                     listView: {
                       borderWidth: 1,
-                      borderColor: "#e2e8f0",
+                      borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0",
                       borderRadius: 12,
                       marginTop: 4,
-                      backgroundColor: "#fff",
+                      backgroundColor: isDark ? "#18181B" : "#fff",
                       maxHeight: 220,
                     },
-                    row: { paddingVertical: 12, paddingHorizontal: 12 },
-                    description: { color: "#0f172a" },
+                    row: {
+                      paddingVertical: 12,
+                      paddingHorizontal: 12,
+                      backgroundColor: isDark ? "#18181B" : "#fff",
+                    },
+                    description: { color: isDark ? "#FFFFFF" : "#0f172a" },
+                    separator: {
+                      height: 1,
+                      backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
+                    },
                   }}
                   textInputProps={{
-                    placeholderTextColor: "#94a3b8",
+                    placeholderTextColor: isDark ? "rgba(255,255,255,0.45)" : "#94a3b8",
                   }}
                 />
               )}
@@ -623,12 +631,24 @@ function SharedVenueFields({
   dark: boolean;
   onSave: () => void;
 }) {
+  const darkInputStyle = dark
+    ? {
+        backgroundColor: "rgba(255,255,255,0.06)",
+        borderColor: "rgba(255,255,255,0.12)",
+      }
+    : undefined;
+  const darkInputClass = dark ? "text-white" : undefined;
+  const darkPlaceholder = dark ? "rgba(255,255,255,0.45)" : undefined;
+
   return (
     <View className="gap-4">
       <VenueSheetBlock title="Venue details" dark={dark}>
       <AuthTextField
         label="Name *"
         labelClassName={dark ? "text-white/60" : undefined}
+        className={darkInputClass}
+        inputRowStyle={darkInputStyle}
+        placeholderTextColor={darkPlaceholder}
         value={form.name}
         onChangeText={(name) => patchForm({ name })}
         placeholder="Riverside Pitch 2"
@@ -636,6 +656,9 @@ function SharedVenueFields({
       <AuthTextField
         label="Address (optional)"
         labelClassName={dark ? "text-white/60" : undefined}
+        className={darkInputClass}
+        inputRowStyle={darkInputStyle}
+        placeholderTextColor={darkPlaceholder}
         value={form.address}
         onChangeText={(address) => patchForm({ address })}
         placeholder="Street or landmark"
@@ -643,6 +666,9 @@ function SharedVenueFields({
       <AuthTextField
         label="City (optional)"
         labelClassName={dark ? "text-white/60" : undefined}
+        className={darkInputClass}
+        inputRowStyle={darkInputStyle}
+        placeholderTextColor={darkPlaceholder}
         value={form.city}
         onChangeText={(city) => patchForm({ city })}
         placeholder="Lagos"
@@ -652,6 +678,9 @@ function SharedVenueFields({
       <AuthTextField
         label="Capacity (optional)"
         labelClassName={dark ? "text-white/60" : undefined}
+        className={darkInputClass}
+        inputRowStyle={darkInputStyle}
+        placeholderTextColor={darkPlaceholder}
         value={form.capacity}
         onChangeText={(capacity) => patchForm({ capacity })}
         keyboardType="number-pad"
@@ -660,6 +689,9 @@ function SharedVenueFields({
       <AuthTextField
         label="Notes (optional)"
         labelClassName={dark ? "text-white/60" : undefined}
+        className={darkInputClass}
+        inputRowStyle={darkInputStyle}
+        placeholderTextColor={darkPlaceholder}
         value={form.notes}
         onChangeText={(notes) => patchForm({ notes })}
         placeholder="Astro turf, gate on Adeola St"

@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 
 import type { ApiSeasonDetail } from "@/api/entities";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAt } from "@/lib/datetime";
 import { isLiveGameStatus } from "@/lib/general-utils";
 import { isGoalsStat } from "@/lib/stat-types";
@@ -15,6 +16,7 @@ type Props = {
 
 export function LeagueOverviewTab({ season }: Props) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
   const counts = useMemo(() => deriveCounts(season), [season]);
   const topScorer = useMemo(() => deriveTopScorer(season), [season]);
   const recentResults = useMemo(
@@ -29,14 +31,13 @@ export function LeagueOverviewTab({ season }: Props) {
     [season.games],
   );
 
-  return (
-    <View className="gap-6">
-
-      {season.league.description && (
-          <View className="flex-row items-center gap-3">
-            <Text className="text-white text-[16px]"> {season.league.description}</Text>
-          </View>
-       ) }
+  const introContent = (
+    <>
+      {season.league.description ? (
+        <View className="flex-row items-center gap-3">
+          <Text className="text-white text-[16px]"> {season.league.description}</Text>
+        </View>
+      ) : null}
 
       <SeasonFormatBanner stages={season.stages ?? []} />
 
@@ -45,63 +46,85 @@ export function LeagueOverviewTab({ season }: Props) {
         <StatCard label="Matches" value={counts.matches} />
         <StatCard label="Live" value={counts.live} />
       </View>
+    </>
+  );
 
-      {topScorer ? (
-        <Section title="Player Of The Season">
-          <Pressable
-            onPress={() => router.push(`/player/${topScorer.player.id}`)}
-            className="rounded-[24px] bg-white/6 px-5 py-5 active:bg-white/10"
-          >
-            <View className="flex-row items-center gap-4">
-              <View className="h-16 w-16 items-center justify-center rounded-full bg-[#364156]">
-                <Text
-                  className="text-xl text-white"
-                >
-                  {initials(topScorer.player.name)}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text
-                  className="text-[20px] text-white"
-                >
-                  {topScorer.player.name}
-                </Text>
-                <Text
-                  className="pt-2 text-sm text-[#E6A817]"
-                >
-                  {topScorer.goals} goals · {topScorer.assists} assists
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </Section>
-      ) : null}
-
-      <Section title="Recent Results">
-        {recentResults.length ? (
-          recentResults.map((game) => (
-            <Pressable
-              key={game.id}
-              onPress={() => router.push(`/match/${game.id}`)}
-              className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+  const topScorerContent = topScorer ? (
+    <Section title="Player Of The Season">
+      <Pressable
+        onPress={() => router.push(`/player/${topScorer.player.id}`)}
+        className="rounded-[24px] bg-white/6 px-5 py-5 active:bg-white/10"
+      >
+        <View className="flex-row items-center gap-4">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-[#364156]">
+            <Text
+              className="text-xl text-white"
             >
-              <Text
-                className="text-white"
-              >
-                {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
-                {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
-              </Text>
-              <Text
-                className="pt-2 text-sm text-white/55"
-              >
-                {formatPlayedAt(game.playedAt)}
-              </Text>
-            </Pressable>
-          ))
-        ) : (
-          <EmptyText>No recent results yet.</EmptyText>
-        )}
-      </Section>
+              {initials(topScorer.player.name)}
+            </Text>
+          </View>
+          <View className="flex-1">
+            <Text
+              className="text-[20px] text-white"
+            >
+              {topScorer.player.name}
+            </Text>
+            <Text
+              className="pt-2 text-sm text-[#E6A817]"
+            >
+              {topScorer.goals} goals · {topScorer.assists} assists
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    </Section>
+  ) : null;
+
+  const recentResultsContent = (
+    <Section title="Recent Results">
+      {recentResults.length ? (
+        recentResults.map((game) => (
+          <Pressable
+            key={game.id}
+            onPress={() => router.push(`/match/${game.id}`)}
+            className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+          >
+            <Text
+              className="text-white"
+            >
+              {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
+              {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
+            </Text>
+            <Text
+              className="pt-2 text-sm text-white/55"
+            >
+              {formatPlayedAt(game.playedAt)}
+            </Text>
+          </Pressable>
+        ))
+      ) : (
+        <EmptyText>No recent results yet.</EmptyText>
+      )}
+    </Section>
+  );
+
+  if (isTablet) {
+    return (
+      <View className="gap-6">
+        <View className="gap-6">{introContent}</View>
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1">{topScorerContent}</View>
+          <View className="min-w-0 flex-1">{recentResultsContent}</View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-6">
+      {introContent}
+      {topScorerContent}
+      {recentResultsContent}
     </View>
   );
 }
