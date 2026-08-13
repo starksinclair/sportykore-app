@@ -6,9 +6,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
 import type { ApiPlayer } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { colors, scoreboardPattern } from "@/constants";
+import { scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import {
   getPendingInviteContext,
   getPendingInviteToken,
@@ -24,6 +27,11 @@ import { PlayerProfileCreateState } from "@/player/components/PlayerProfileSurfa
 export default function CreatePlayerProfileRoute() {
   const router = useRouter();
   const { user } = useAuth();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+  const inviteFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: 680 }
+    : undefined;
   const [token, setToken] = useState<string | null>(null);
   const [context, setContext] = useState<PendingInviteContext>({});
   const [loadingToken, setLoadingToken] = useState(true);
@@ -73,8 +81,11 @@ export default function CreatePlayerProfileRoute() {
 
   if (loadingToken) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#121212]">
-        <ActivityIndicator color={colors.accent} />
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: theme.background }}
+      >
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
@@ -82,11 +93,17 @@ export default function CreatePlayerProfileRoute() {
   if (!user) {
     return (
       <InviteProfileShell>
-        <View className="flex-1 items-center justify-center gap-5 px-6">
-          <Text className="text-center text-xl text-white">
+        <View
+          className="flex-1 items-center justify-center gap-5 px-6"
+          style={inviteFrameStyle}
+        >
+          <Text className="text-center text-xl" style={{ color: theme.text }}>
             Sign in to finish joining
           </Text>
-          <Text className="text-center text-sm leading-6 text-white/60">
+          <Text
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textMuted }}
+          >
             Your invite is saved. Sign in, then create your player profile.
           </Text>
           <Button
@@ -102,11 +119,17 @@ export default function CreatePlayerProfileRoute() {
   if (!token) {
     return (
       <InviteProfileShell>
-        <View className="flex-1 items-center justify-center gap-6 px-6">
-          <Text className="text-center text-xl text-white">
+        <View
+          className="flex-1 items-center justify-center gap-6 px-6"
+          style={inviteFrameStyle}
+        >
+          <Text className="text-center text-xl" style={{ color: theme.text }}>
             No invite found
           </Text>
-          <Text className="text-center text-sm leading-6 text-white/60">
+          <Text
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textMuted }}
+          >
             Open your invite link or paste your invite code on the join league screen.
           </Text>
           <Button
@@ -125,7 +148,10 @@ export default function CreatePlayerProfileRoute() {
 
   return (
     <InviteProfileShell>
-      <View className="flex-1 justify-center px-5">
+      <View
+        className="flex-1 justify-center px-5"
+        style={inviteFrameStyle}
+      >
         <PlayerProfileCreateState
           viewerName={user.name}
           title="Create your player profile"
@@ -143,11 +169,23 @@ export default function CreatePlayerProfileRoute() {
 }
 
 function InviteProfileShell({ children }: { children: ReactNode }) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+
   return (
-    <SafeAreaView className="flex-1 bg-[#121212]" edges={["top", "bottom"]}>
+    <SafeAreaView
+      className="flex-1"
+      edges={["top", "bottom"]}
+      style={{ backgroundColor: theme.background }}
+    >
       <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor={scoreboardPattern().stripeColor}
+        baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+        stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
+      />
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
       />
       {children}
     </SafeAreaView>

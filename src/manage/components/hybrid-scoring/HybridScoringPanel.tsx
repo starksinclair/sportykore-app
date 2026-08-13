@@ -3,9 +3,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { ApiGameDetail } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 import type { LeagueRosterRow } from "../../types";
 import { AdvancedTrackingPanel } from "./AdvancedTrackingPanel";
@@ -65,6 +67,8 @@ export function HybridScoringPanel({
   onLogGoal,
   onSkip,
 }: Props) {
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
   const accreditActive = pendingTeam != null;
 
@@ -81,45 +85,63 @@ export function HybridScoringPanel({
     [roster, activeTeamId],
   );
 
-  return (
-    <View className="gap-5">
-      <View className="flex-row justify-between gap-4 rounded-[24px] bg-white/6 px-4 py-4">
+  const scoreControls = (
+      <View
+        className="flex-row justify-between gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <ScoreSide
           label="Home"
           onMinus={() => onDecrement("home")}
           onPlus={() => onIncrement("home")}
           disabled={scorePending}
+          theme={theme}
         />
         <ScoreSide
           label="Away"
           onMinus={() => onDecrement("away")}
           onPlus={() => onIncrement("away")}
           disabled={scorePending}
+          theme={theme}
         />
       </View>
+  );
 
+  const accreditationCard = (
       <View
         className={`gap-3 rounded-[22px] border px-3 py-3 ${
-          accreditActive
-            ? "border-brand-400/40 bg-brand-500/10"
-            : "border-white/10 bg-white/4 opacity-60"
+          accreditActive ? "" : "opacity-60"
         }`}
+        style={{
+          backgroundColor: accreditActive ? theme.brandMuted : theme.cardMuted,
+          borderColor: accreditActive ? theme.brand : theme.cardBorder,
+        }}
         pointerEvents={accreditActive ? "auto" : "none"}
       >
         <View className="flex-row items-start justify-between gap-3">
           <View className="min-w-0 flex-1">
             <Text
-              className="text-xs uppercase tracking-[1.4px] text-white/55"
+              className="text-xs uppercase tracking-[1.4px]"
+              style={{ color: theme.textMuted }}
             >
               Select scorer and assist
             </Text>
-            <Text className="pt-1 text-xs leading-5 text-white/40">
+            <Text
+              className="pt-1 text-xs leading-5"
+              style={{ color: theme.textSubtle }}
+            >
               Choose a scorer, then optional assist.
             </Text>
           </View>
           {accreditActive ? (
-            <View className="rounded-full bg-accent-500/15 px-2.5 py-1">
-              <Text className="text-[10px] uppercase text-accent-100">
+            <View
+              className="rounded-full px-2.5 py-1"
+              style={{ backgroundColor: theme.accentMuted }}
+            >
+              <Text
+                className="text-[10px] uppercase"
+                style={{ color: theme.accent }}
+              >
                 Goal pending
               </Text>
             </View>
@@ -134,16 +156,28 @@ export function HybridScoringPanel({
         />
 
         {players.length === 0 ? (
-          <Text className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             No active players on this team.
           </Text>
         ) : (
-          <View className="overflow-hidden rounded-2xl border border-white/10 bg-black/10">
-            <View className="flex-row items-center justify-end gap-2 border-b border-white/10 px-2.5 py-2">
-              <Text className="w-16 text-center text-[10px] uppercase text-white/35">
+          <View
+            className="overflow-hidden rounded-2xl border"
+            style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+          >
+            <View
+              className="flex-row items-center justify-end gap-2 border-b px-2.5 py-2"
+              style={{ borderColor: theme.cardBorder }}
+            >
+              <Text
+                className="w-16 text-center text-[10px] uppercase"
+                style={{ color: theme.textSubtle }}
+              >
                 Goal
               </Text>
-              <Text className="w-16 text-center text-[10px] uppercase text-white/35">
+              <Text
+                className="w-16 text-center text-[10px] uppercase"
+                style={{ color: theme.textSubtle }}
+              >
                 Assist
               </Text>
             </View>
@@ -197,16 +231,17 @@ export function HybridScoringPanel({
             <Pressable
               onPress={onToggleOwnGoal}
               disabled={isPenalty}
-              className={`h-9 flex-row items-center gap-1.5 rounded-full bg-white/10 px-2.5 ${
+              className={`h-9 flex-row items-center gap-1.5 rounded-full px-2.5 ${
                 isPenalty ? "opacity-40" : ""
               }`}
+              style={{ backgroundColor: theme.card }}
             >
               <Ionicons
                 name={isOwnGoal ? "checkbox" : "square-outline"}
                 size={16}
-                color={isOwnGoal ? colors.accent : "rgba(255,255,255,0.55)"}
+                color={isOwnGoal ? theme.accent : theme.textSubtle}
               />
-              <Text className="text-xs text-white">
+              <Text className="text-xs" style={{ color: theme.text }}>
                 Own goal
               </Text>
             </Pressable>
@@ -214,16 +249,17 @@ export function HybridScoringPanel({
             <Pressable
               onPress={onTogglePenalty}
               disabled={isOwnGoal}
-              className={`h-9 flex-row items-center gap-1.5 rounded-full bg-white/10 px-2.5 ${
+              className={`h-9 flex-row items-center gap-1.5 rounded-full px-2.5 ${
                 isOwnGoal ? "opacity-40" : ""
               }`}
+              style={{ backgroundColor: theme.card }}
             >
               <Ionicons
                 name={isPenalty ? "checkbox" : "square-outline"}
                 size={16}
-                color={isPenalty ? colors.accent : "rgba(255,255,255,0.55)"}
+                color={isPenalty ? theme.accent : theme.textSubtle}
               />
-              <Text className="text-xs text-white">
+              <Text className="text-xs" style={{ color: theme.text }}>
                 Penalty
               </Text>
             </Pressable>
@@ -250,7 +286,7 @@ export function HybridScoringPanel({
             onPress={onLogGoal}
           />
           <Button
-            variant="ghost"
+            variant="secondary"
             label="Score only"
             className="h-11 flex-1 px-3"
             disabled={!accreditActive}
@@ -258,14 +294,37 @@ export function HybridScoringPanel({
           />
         </View>
       </View>
+  );
 
-      <AdvancedTrackingPanel
-        game={game}
-        leagueId={leagueId}
-        seasonId={seasonId}
-        roster={roster}
-        liveMinute={liveMinute}
-      />
+  const tracker = (
+    <AdvancedTrackingPanel
+      game={game}
+      leagueId={leagueId}
+      seasonId={seasonId}
+      roster={roster}
+      liveMinute={liveMinute}
+    />
+  );
+
+  if (isTablet) {
+    return (
+      <View className="flex-row items-start gap-5">
+        <View className="min-w-0 flex-1 gap-5">
+          {scoreControls}
+          {accreditationCard}
+        </View>
+        <View className="min-w-0 flex-1">
+          {tracker}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-5">
+      {scoreControls}
+      {accreditationCard}
+      {tracker}
     </View>
   );
 }
@@ -275,16 +334,19 @@ function ScoreSide({
   onMinus,
   onPlus,
   disabled,
+  theme,
 }: {
   label: string;
   onMinus: () => void;
   onPlus: () => void;
   disabled?: boolean;
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
     <View className="flex-1 items-center gap-2">
       <Text
-        className="text-xs uppercase tracking-wide text-white/55"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
@@ -292,16 +354,18 @@ function ScoreSide({
         <Pressable
           onPress={onMinus}
           disabled={disabled}
-          className="h-12 w-12 items-center justify-center rounded-full bg-white/10"
+          className="h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: theme.cardMuted }}
         >
-          <Ionicons name="remove" size={24} color="#fff" />
+          <Ionicons name="remove" size={24} color={theme.text} />
         </Pressable>
         <Pressable
           onPress={onPlus}
           disabled={disabled}
-          className="h-12 w-12 items-center justify-center rounded-full bg-[#E6A817]"
+          className="h-12 w-12 items-center justify-center rounded-full"
+          style={{ backgroundColor: theme.accent }}
         >
-          <Ionicons name="add" size={24} color="#1a1a1a" />
+          <Ionicons name="add" size={24} color={theme.textInverse} />
         </Pressable>
       </View>
     </View>

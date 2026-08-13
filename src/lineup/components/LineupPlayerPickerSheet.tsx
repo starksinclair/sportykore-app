@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import type { FormationSlot, RosterPickerPlayer } from "@/lineup/types";
 import { sortPlayersForSlot } from "@/lineup/utils";
@@ -26,6 +27,7 @@ export function LineupPlayerPickerSheet({
   onSelect,
   variant = "dark",
 }: Props) {
+  const theme = useTheme();
   const [query, setQuery] = useState("");
 
   const title =
@@ -66,17 +68,16 @@ export function LineupPlayerPickerSheet({
         value={query}
         onChangeText={setQuery}
         placeholder="Search players"
-        placeholderTextColor={variant === "dark" ? "rgba(255,255,255,0.35)" : "#9CA3AF"}
-        className={[
-          "mb-3 rounded-xl px-4 py-3 text-sm",
-          variant === "dark"
-            ? "bg-white/10 text-white"
-            : "bg-neutral-100 text-neutral-900",
-        ].join(" ")}
+        placeholderTextColor={theme.textSubtle}
+        className="mb-3 rounded-xl px-4 py-3 text-sm"
+        style={{
+          backgroundColor: theme.inputBackground,
+          color: theme.text,
+        }}
       />
       {filtered.length === 0 ? (
         <Text
-          className={variant === "dark" ? "text-white/50" : "text-neutral-500"}
+          style={{ color: theme.textSubtle }}
         >
           No players available.
         </Text>
@@ -88,22 +89,19 @@ export function LineupPlayerPickerSheet({
               onSelect(player);
               handleClose();
             }}
-            className={[
-              "mb-2 flex-row items-center justify-between rounded-xl px-4 py-3 active:opacity-80",
-              variant === "dark" ? "bg-white/8" : "bg-neutral-50",
-            ].join(" ")}
+            className="mb-2 flex-row items-center justify-between rounded-xl px-4 py-3 active:opacity-80"
+            style={{ backgroundColor: theme.cardMuted }}
           >
             <View className="flex-1">
               <Text
-                className={variant === "dark" ? "text-white" : "text-neutral-900"}
+                style={{ color: theme.text }}
               >
                 {player.playerName}
               </Text>
               {player.position ? (
                 <Text
-                  className={
-                    variant === "dark" ? "text-xs text-white/45" : "text-xs text-neutral-500"
-                  }
+                  className="text-xs"
+                  style={{ color: theme.textSubtle }}
                 >
                   {player.position}
                 </Text>
@@ -111,7 +109,7 @@ export function LineupPlayerPickerSheet({
             </View>
             {player.jerseyNumber != null ? (
               <Text
-                className={variant === "dark" ? "text-accent-300" : "text-brand-600"}
+                style={{ color: theme.accent }}
               >
                 #{player.jerseyNumber}
               </Text>

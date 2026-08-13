@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
-import { colors } from "@/constants";
 import { useAuditLogs } from "@/groups";
 import { messageForResourceLoad } from "@/lib/show-error-toast";
 
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function ManageActivityTab({ leagueId }: Props) {
+  const theme = useTheme();
   const [page, setPage] = useState(1);
   const query = useAuditLogs(leagueId, page, true);
   const rows = query.data?.data ?? [];
@@ -20,14 +21,14 @@ export function ManageActivityTab({ leagueId }: Props) {
   if (query.isLoading && !query.data) {
     return (
       <View className="items-center py-16">
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
 
   if (query.isError) {
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         {messageForResourceLoad(query.error, "Activity")}
       </Text>
     );
@@ -35,15 +36,15 @@ export function ManageActivityTab({ leagueId }: Props) {
 
   return (
     <View className="gap-4 pb-10">
-      <Text className="text-lg text-white">
+      <Text className="text-lg" style={{ color: theme.text }}>
         Activity
       </Text>
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Read-only log of organizer actions - deductions, overrides, draws, and more.
       </Text>
 
       {rows.length === 0 ? (
-        <Text className="text-sm text-white/45">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           No activity yet.
         </Text>
       ) : (
@@ -58,16 +59,19 @@ export function ManageActivityTab({ leagueId }: Props) {
             return (
               <View
                 key={entry.id}
-                className="rounded-[18px] border border-white/10 bg-white/5 px-4 py-3"
+                className="rounded-[18px] border px-4 py-3"
+                style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
               >
                 <Text
-                  className="text-sm text-white"
+                  className="text-sm"
+                  style={{ color: theme.text }}
                 >
                   {entry.action}
                   {entry.targetLabel ? ` · ${entry.targetLabel}` : ""}
                 </Text>
                 <Text
-                  className="pt-1 text-xs text-white/50"
+                  className="pt-1 text-xs"
+                  style={{ color: theme.textSubtle }}
                 >
                   {entry.actorName ?? "Organizer"}
                   {" · "}
@@ -75,7 +79,8 @@ export function ManageActivityTab({ leagueId }: Props) {
                 </Text>
                 {reason ? (
                   <Text
-                    className="pt-2 text-sm text-white/70"
+                    className="pt-2 text-sm"
+                    style={{ color: theme.textMuted }}
                   >
                     {reason}
                   </Text>
@@ -95,7 +100,7 @@ export function ManageActivityTab({ leagueId }: Props) {
             className="flex-1"
             onPress={() => setPage((p) => Math.max(1, p - 1))}
           />
-          <Text className="text-sm text-white/50">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             {page} / {lastPage}
           </Text>
           <Button
@@ -110,7 +115,7 @@ export function ManageActivityTab({ leagueId }: Props) {
 
       {query.isFetching ? (
         <Pressable disabled>
-          <Text className="text-center text-xs text-white/35">
+          <Text className="text-center text-xs" style={{ color: theme.textSubtle }}>
             Refreshing…
           </Text>
         </Pressable>

@@ -6,7 +6,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { colors } from "@/constants";
 import { pickProfileImage } from "@/lib/pick-profile-image";
-import type { PickedImageFile } from "@/lib/picked-image";
+import { MAX_IMAGE_UPLOAD_LABEL, type PickedImageFile } from "@/lib/picked-image";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 type Size = "sm" | "md" | "lg";
@@ -34,7 +34,7 @@ export function LogoImageUpload({
   value,
   onChange,
   label,
-  hint = "JPG, PNG, or WebP · max 2 MB",
+  hint = `JPG, PNG, or WebP · max ${MAX_IMAGE_UPLOAD_LABEL}`,
   size = "md",
   compact = false,
   layout = "row",

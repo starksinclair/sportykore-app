@@ -105,7 +105,7 @@ export default function ManageLeagueRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Manage">
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
         <NotFound message="Invalid league id" />
       </DetailScreenShell>
     );
@@ -113,7 +113,7 @@ export default function ManageLeagueRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Manage">
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -123,7 +123,7 @@ export default function ManageLeagueRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Manage">
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
         <NotFound
           message={
             query.isError
@@ -148,6 +148,7 @@ export default function ManageLeagueRoute() {
     <DetailScreenShell
       title={season.league.name}
       subtitle="Competition admin"
+      tabletMaxWidth={1120}
       headerContent={
         <>
           <SeasonPicker

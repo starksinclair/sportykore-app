@@ -1,6 +1,7 @@
 import { ActivityIndicator, Text, View } from "react-native";
 
 import type { ApiStage } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
 import { useStageStandings, useZones } from "@/groups";
 import { messageForResourceLoad } from "@/lib/show-error-toast";
@@ -21,6 +22,7 @@ export function LeagueStageStandingsPanel({
   highlightTeamId,
   fallbackStandings,
 }: Props) {
+  const theme = useTheme();
   const query = useStageStandings(stage.id, true);
   const zonesQuery = useZones(stage.id, true);
   const zones = zonesQuery.data ?? [];
@@ -44,7 +46,7 @@ export function LeagueStageStandingsPanel({
       );
     }
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         {messageForResourceLoad(query.error, "Standings")}
       </Text>
     );
@@ -61,7 +63,7 @@ export function LeagueStageStandingsPanel({
       );
     }
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Standings not available yet.
       </Text>
     );

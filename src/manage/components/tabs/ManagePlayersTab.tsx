@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiTeam } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { SeasonPicker } from "@/components/ui/season-picker";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
@@ -26,6 +28,8 @@ type Props = {
 };
 
 export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Props) {
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const rosterQuery = useSeasonRoster(leagueId, seasonId);
   const [rosterTeamId, setRosterTeamId] = useState<number | null>(
     teams[0]?.id ?? null,
@@ -59,17 +63,24 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
 
   return (
     <View className="gap-6 pb-8">
-      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="people-outline" size={22} color="#E6A817" />
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="people-outline" size={22} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Season roster
             </Text>
             <Text
-              className="text-xs leading-5 text-white/50"
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
               numberOfLines={2}
             >
               Invite players to a team and let them finish their own profile.
@@ -79,11 +90,13 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
             onPress={() => setInviteOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Invite to team"
-            className="h-10 flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 active:opacity-90"
+            className="h-10 flex-row items-center gap-1.5 rounded-full px-3 active:opacity-90"
+            style={{ backgroundColor: theme.accent }}
           >
-            <Ionicons name="person-add-outline" size={15} color="#171717" />
+            <Ionicons name="person-add-outline" size={15} color={theme.textInverse} />
             <Text
-              className="text-xs text-neutral-950"
+              className="text-xs"
+              style={{ color: theme.textInverse }}
               numberOfLines={1}
             >
               Invite
@@ -103,11 +116,11 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
       ) : null}
 
       {rosterQuery.isLoading ? (
-        <ActivityIndicator color="#E6A817" />
+        <ActivityIndicator color={theme.accent} />
       ) : null}
 
       {!rosterQuery.isLoading && (rosterQuery.data ?? []).length === 0 ? (
-        <Text className="text-sm text-white/45">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           No players on the roster yet. Share an invite link to get started.
         </Text>
       ) : null}
@@ -115,21 +128,29 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
       {!rosterQuery.isLoading &&
       (rosterQuery.data ?? []).length > 0 &&
       filteredRoster.length === 0 ? (
-        <Text className="text-sm text-white/45">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           {activeRosterTeam
             ? `No players on ${activeRosterTeam.name} yet.`
             : "No players for this team yet."}
         </Text>
       ) : null}
 
-      {filteredRoster.map((row) => (
-        <RosterRow
-          key={row.id}
-          row={row}
-          leagueId={leagueId}
-          seasonId={seasonId}
-        />
-      ))}
+      {filteredRoster.length > 0 ? (
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-6"}>
+          {filteredRoster.map((row) => (
+            <View
+              key={row.id}
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <RosterRow
+                row={row}
+                leagueId={leagueId}
+                seasonId={seasonId}
+              />
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <InviteLinkSheet
         visible={inviteOpen}
@@ -153,6 +174,7 @@ function RosterRow({
   leagueId: number;
   seasonId: number;
 }) {
+  const theme = useTheme();
   const [editOpen, setEditOpen] = useState(false);
   const updateMutation = useUpdateLeaguePlayer(leagueId, seasonId);
   const removeMutation = useRemoveLeaguePlayer(leagueId, seasonId);
@@ -202,20 +224,21 @@ function RosterRow({
       <Pressable
         onPress={() => setEditOpen(true)}
         onLongPress={handleRemove}
-        className="flex-row items-center gap-3 rounded-xl bg-white/6 px-4 py-3"
+        className="flex-row items-center gap-3 rounded-xl border px-4 py-3 active:opacity-85"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
       >
         <View className="flex-1 gap-1">
           <View className="flex-row items-center gap-2">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {row.player.name}
             </Text>
             {row.isCaptain ? (
-              <Text className="text-xs text-accent-400">
+              <Text className="text-xs" style={{ color: theme.accent }}>
                 Captain
               </Text>
             ) : null}
           </View>
-          <Text className="text-xs text-white/55">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
             {[
               row.jerseyNumber ? `#${row.jerseyNumber}` : null,
               row.position ?? null,
@@ -225,7 +248,7 @@ function RosterRow({
               .join(" · ")}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.45)" />
+        <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
       </Pressable>
 
       <BottomSheetModal
@@ -243,7 +266,8 @@ function RosterRow({
           />
           <View className="gap-2">
             <Text
-              className="text-xs uppercase tracking-wide text-slate-500"
+              className="text-xs uppercase tracking-wide"
+              style={{ color: theme.textSubtle }}
             >
               Position
             </Text>
@@ -256,12 +280,15 @@ function RosterRow({
                     onPress={() => setPosition(pos)}
                     className={[
                       "rounded-full border px-3 py-2 capitalize",
-                      active
-                        ? "border-brand-500 bg-brand-50"
-                        : "border-neutral-200",
                     ].join(" ")}
+                    style={{
+                      backgroundColor: active ? theme.brandMuted : theme.cardMuted,
+                      borderColor: active ? theme.brand : theme.cardBorder,
+                    }}
                   >
-                    <Text>{pos}</Text>
+                    <Text style={{ color: active ? theme.brand : theme.text }}>
+                      {pos}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -269,13 +296,14 @@ function RosterRow({
           </View>
           <Pressable
             onPress={() => setIsCaptain((value) => !value)}
-            className="flex-row items-center justify-between rounded-xl border border-neutral-200 px-4 py-3"
+            className="flex-row items-center justify-between rounded-xl border px-4 py-3"
+            style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
           >
-            <Text>Team captain</Text>
+            <Text style={{ color: theme.text }}>Team captain</Text>
             <Ionicons
               name={isCaptain ? "checkbox" : "square-outline"}
               size={22}
-              color="#4A148C"
+              color={theme.brand}
             />
           </Pressable>
           <Button

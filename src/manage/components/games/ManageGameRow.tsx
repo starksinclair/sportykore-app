@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { formatPlayedAt } from "@/lib/datetime";
@@ -27,6 +28,7 @@ type Props = {
 
 export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const deleteMutation = useDeleteGame(leagueId, seasonId);
   const gameTimeActions = useGameTimeActions(game.id, leagueId, seasonId);
@@ -149,7 +151,6 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         onClose={closeActionsMenu}
         title="Game actions"
         subtitle="Select an action"
-        variant="dark"
         scrollEnabled={false}
       >
         <View className="gap-2 pb-2">
@@ -198,9 +199,10 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         </View>
       </BottomSheetModal>
       <Pressable
-      onPress={variant === "live" ? openMatchCenter : undefined}
-      className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
-    >
+        onPress={variant === "live" ? openMatchCenter : undefined}
+        className="rounded-[22px] border px-4 py-4 active:opacity-85"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-2">
           <View className="flex-row items-center gap-2">
@@ -210,7 +212,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.homeTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -221,7 +223,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -229,12 +231,12 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         {showScore ? (
           <View className="items-end gap-1">
             <Text
-              className="text-[#E6A817]"
+              style={{ color: theme.accent }}
             >
               {game.homeScore ?? "-"}
             </Text>
-            <Text 
-              className="text-[#E6A817]"
+            <Text
+              style={{ color: theme.accent }}
             >
               {game.awayScore ?? "-"}
             </Text>
@@ -244,13 +246,15 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
 
       <View className="flex-row flex-wrap items-center pt-3">
         <Text
-          className="text-xs uppercase tracking-[1.5px] text-white/45"
+          className="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         >
           {formatPlayedAt(game.playedAt)} ·{" "}
         </Text>
         <GamePhaseLabel
           game={game}
-          textClassName="text-xs uppercase tracking-[1.5px] text-white/45"
+          textClassName="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         />
       </View>
 
@@ -312,21 +316,23 @@ function ActionChip({
   accent?: boolean;
   loading?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={loading}
-      className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-        accent ? "bg-[#E6A817]" : "bg-white/10"
-      }`}
+      className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5 active:opacity-85"
+      style={{ backgroundColor: accent ? theme.accent : theme.cardMuted }}
     >
       <Ionicons
         name={icon}
         size={14}
-        color={accent ? "#1a1a1a" : "rgba(255,255,255,0.85)"}
+        color={accent ? theme.textInverse : theme.textMuted}
       />
       <Text
-        className={`text-xs ${accent ? "text-neutral-950" : "text-white/85"}`}
+        className="text-xs"
+        style={{ color: accent ? theme.textInverse : theme.text }}
       >
         {label}
       </Text>
@@ -345,19 +351,25 @@ function ActionMenuRow({
   onPress: () => void;
   destructive?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 rounded-2xl bg-white/8 px-4 py-3.5 active:bg-white/14"
+      className="flex-row items-center gap-3 rounded-2xl px-4 py-3.5 active:opacity-85"
+      style={{ backgroundColor: theme.cardMuted }}
     >
       <Ionicons
         name={icon}
         size={18}
-        color={destructive ? "#f87171" : "rgba(255,255,255,0.85)"}
+        color={destructive ? theme.danger : theme.textMuted}
       />
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
-        className={`text-base ${destructive ? "text-red-400" : "text-white"}`}
+        className="text-base"
+        style={{
+          fontFamily: fonts.bodySemibold,
+          color: destructive ? theme.danger : theme.text,
+        }}
       >
         {label}
       </Text>

@@ -8,6 +8,7 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { FormFieldLabel } from "./form-field-label";
 
 export type AuthTextFieldProps = TextInputProps & {
@@ -37,10 +38,14 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
       inputRowStyle,
       editable = true,
       className,
+      placeholderTextColor,
+      style,
       ...rest
     },
     ref,
   ) {
+    const theme = useTheme();
+
     return (
       <View className={`gap-1.5 ${containerClassName ?? ""}`}>
         <View className="flex-row items-center justify-between gap-2">
@@ -52,17 +57,24 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
           {labelAccessory}
         </View>
         <View
-          style={[{ backgroundColor: "#F5F5F5" }, inputRowStyle]}
+          style={[
+            {
+              backgroundColor: theme.inputBackground,
+              borderColor: theme.inputBorder,
+            },
+            inputRowStyle,
+          ]}
           className={[
-            "flex-row items-center rounded-2xl border border-transparent px-3.5 py-3",
+            "flex-row items-center rounded-2xl border px-3.5 py-3",
             !editable ? "opacity-55" : "",
           ].join(" ")}
         >
           {leftIcon ? <View className="mr-2.5 opacity-55">{leftIcon}</View> : null}
           <TextInput
             ref={ref}
-            placeholderTextColor="#9CA3AF"
-            className={`min-h-[22px] flex-1 px-0 py-0 text-base text-neutral-950 ${className ?? ""}`}
+            placeholderTextColor={placeholderTextColor ?? theme.textSubtle}
+            className={`min-h-[22px] flex-1 px-0 py-0 text-base ${className ?? ""}`}
+            style={[{ color: theme.text }, style]}
             editable={editable}
             {...rest}
           />

@@ -3,6 +3,9 @@ import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiVenue } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useDeleteVenue, useLeagueVenues } from "../../hooks";
@@ -13,6 +16,9 @@ type Props = {
 };
 
 export function ManageVenuesTab({ leagueId }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const venuesQuery = useLeagueVenues(leagueId);
   const deleteMutation = useDeleteVenue(leagueId);
   const [formOpen, setFormOpen] = useState(false);
@@ -59,17 +65,24 @@ export function ManageVenuesTab({ leagueId }: Props) {
 
   return (
     <View className="gap-6 pb-8">
-      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="location-outline" size={22} color="#E6A817" />
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="location-outline" size={22} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               League venues
             </Text>
             <Text
-              className="text-xs leading-5 text-white/50"
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
               numberOfLines={2}
             >
               Reusable pitches for fixtures, maps, and directions.
@@ -79,11 +92,13 @@ export function ManageVenuesTab({ leagueId }: Props) {
             onPress={openAdd}
             accessibilityRole="button"
             accessibilityLabel="Add venue"
-            className="h-10 flex-row items-center gap-1.5 rounded-full bg-accent-500 px-3 active:opacity-90"
+            className="h-10 flex-row items-center gap-1.5 rounded-full px-3 active:opacity-90"
+            style={{ backgroundColor: theme.accent }}
           >
-            <Ionicons name="add" size={16} color="#171717" />
+            <Ionicons name="add" size={16} color={theme.textInverse} />
             <Text
-              className="text-xs text-neutral-950"
+              className="text-xs"
+              style={{ color: theme.textInverse }}
               numberOfLines={1}
             >
               Add
@@ -94,21 +109,26 @@ export function ManageVenuesTab({ leagueId }: Props) {
 
       {venuesQuery.isLoading ? (
         <View className="items-center py-12">
-          <ActivityIndicator color="#E6A817" />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : venues.length === 0 ? (
-        <View className="items-center gap-3 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <View className="h-14 w-14 items-center justify-center rounded-[22px] bg-white/10">
-            <Ionicons name="map-outline" size={26} color="#E6A817" />
+        <View
+          className="items-center gap-3 rounded-[24px] border border-dashed px-5 py-8"
+          style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+        >
+          <View className="h-14 w-14 items-center justify-center rounded-[22px]" style={{ backgroundColor: theme.accentMuted }}>
+            <Ionicons name="map-outline" size={26} color={theme.accent} />
           </View>
           <View className="gap-1">
             <Text
-              className="text-center text-base text-white"
+              className="text-center text-base"
+              style={{ color: theme.text }}
             >
               No venues yet
             </Text>
             <Text
-              className="text-center text-sm leading-6 text-white/55"
+              className="text-center text-sm leading-6"
+              style={{ color: theme.textSubtle }}
             >
               Add stadiums, community pitches, or name-only grounds for scheduling.
             </Text>
@@ -116,42 +136,51 @@ export function ManageVenuesTab({ leagueId }: Props) {
           <Pressable
             onPress={openAdd}
             accessibilityRole="button"
-            className="h-11 flex-row items-center gap-2 rounded-full bg-accent-500 px-4 active:opacity-90"
+            className="h-11 flex-row items-center gap-2 rounded-full px-4 active:opacity-90"
+            style={{ backgroundColor: theme.accent }}
           >
-            <Ionicons name="add" size={17} color="#171717" />
+            <Ionicons name="add" size={17} color={theme.textInverse} />
             <Text
-              className="text-sm text-neutral-950"
+              className="text-sm"
+              style={{ color: theme.textInverse }}
             >
               Add venue
             </Text>
           </Pressable>
         </View>
       ) : (
-        <View className="gap-3">
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
           {venues.map((venue) => {
             const hasPin =
               venue.latitude != null && venue.longitude != null;
             return (
               <View
                 key={venue.id}
-                className="flex-row items-center gap-3 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4"
+                className="flex-row items-center gap-3 rounded-[22px] border px-4 py-4"
+                style={{
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                  ...(isTablet ? { width: "48%" } : null),
+                }}
               >
-                <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">
+                <View className="h-11 w-11 items-center justify-center rounded-full" style={{ backgroundColor: theme.cardMuted }}>
                   <Ionicons
                     name={hasPin ? "location" : "location-outline"}
                     size={22}
-                    color={hasPin ? "#E6A817" : "rgba(255,255,255,0.45)"}
+                    color={hasPin ? theme.accent : theme.textSubtle}
                   />
                 </View>
                 <View className="min-w-0 flex-1">
                   <Text
-                    className="text-base text-white"
+                    className="text-base"
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                   >
                     {venue.name}
                   </Text>
                   <Text
-                    className="pt-0.5 text-sm text-white/50"
+                    className="pt-0.5 text-sm"
+                    style={{ color: theme.textSubtle }}
                     numberOfLines={1}
                   >
                     {[venue.city, venue.address].filter(Boolean).join(" · ") ||
@@ -163,9 +192,10 @@ export function ManageVenuesTab({ leagueId }: Props) {
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${venue.name}`}
-                  className="h-9 w-9 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                  className="h-9 w-9 items-center justify-center rounded-xl active:opacity-85"
+                  style={{ backgroundColor: theme.cardMuted }}
                 >
-                  <Ionicons name="create-outline" size={17} color="#FFFFFF" />
+                  <Ionicons name="create-outline" size={17} color={theme.textMuted} />
                 </Pressable>
                 <Pressable
                   onPress={() => handleDelete(venue)}
@@ -173,11 +203,12 @@ export function ManageVenuesTab({ leagueId }: Props) {
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${venue.name}`}
-                  className={`h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 active:bg-red-500/15 ${
+                  className={`h-9 w-9 items-center justify-center rounded-xl active:opacity-85 ${
                     deleteMutation.isPending ? "opacity-45" : ""
                   }`}
+                  style={{ backgroundColor: theme.dangerMuted }}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#f87171" />
+                  <Ionicons name="trash-outline" size={18} color={theme.danger} />
                 </Pressable>
               </View>
             );
@@ -190,7 +221,7 @@ export function ManageVenuesTab({ leagueId }: Props) {
         onClose={closeForm}
         leagueId={leagueId}
         venue={editingVenue}
-        variant="dark"
+        variant={isDark ? "dark" : "light"}
       />
     </View>
   );

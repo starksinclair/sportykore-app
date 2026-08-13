@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { DetailTabs, EntityLogo, type DetailTab } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
@@ -22,12 +23,13 @@ const TABS: readonly DetailTab<TabKey>[] = [
 export default function CountryRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const theme = useTheme();
   const [activeTab, setActiveTab] = useState<TabKey>("teams");
   const query = useCountryDetail(id ?? "");
 
   if (query.isLoading) {
     return (
-      <DetailScreenShell title="Country">
+      <DetailScreenShell title="Country" tabletMaxWidth={1040}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -37,9 +39,15 @@ export default function CountryRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Country">
-        <View className="rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
-          <Text className="text-lg text-white">
+      <DetailScreenShell title="Country" tabletMaxWidth={1040}>
+        <View
+          className="rounded-[22px] border px-5 py-8"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <Text className="text-lg" style={{ color: theme.text }}>
             {query.isError
               ? messageForResourceLoad(query.error, "Country")
               : "Country not found."}
@@ -56,6 +64,7 @@ export default function CountryRoute() {
     <DetailScreenShell
       title={country.name}
       subtitle="Country overview"
+      tabletMaxWidth={1040}
       headerContent={
         <DetailTabs
           tabs={TABS}
@@ -78,7 +87,8 @@ export default function CountryRoute() {
       {leagues.length > 0 ? (
         <View className="gap-3">
           <Text
-            className="text-[12px] uppercase tracking-[2px] text-white/55"
+            className="text-[12px] uppercase tracking-[2px]"
+            style={{ color: theme.textSubtle }}
           >
             Leagues
           </Text>
@@ -87,7 +97,8 @@ export default function CountryRoute() {
               <Pressable
                 key={league.id}
                 onPress={() => router.push(`/league/${league.id}`)}
-                className="flex-row items-center justify-between rounded-[18px] bg-white/6 px-4 py-3 active:bg-white/10"
+                className="flex-row items-center justify-between rounded-[18px] px-4 py-3 active:opacity-85"
+                style={{ backgroundColor: theme.card }}
               >
                 <View className="flex-row items-center gap-3">
                   <EntityLogo
@@ -96,11 +107,11 @@ export default function CountryRoute() {
                     size="sm"
                     tone="brand"
                   />
-                  <Text className="text-white">
+                  <Text style={{ color: theme.text }}>
                     {league.name}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+                <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
               </Pressable>
             ))}
           </View>
@@ -122,6 +133,7 @@ export default function CountryRoute() {
 
 function TeamsTab({ teams }: { teams: TeamRef[] }) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (!teams.length) {
     return <EmptyTab message="No teams in this country yet." />;
@@ -133,7 +145,8 @@ function TeamsTab({ teams }: { teams: TeamRef[] }) {
         <Pressable
           key={team.id}
           onPress={() => router.push(`/team/${team.id}`)}
-          className="flex-row items-center justify-between rounded-[18px] bg-white/6 px-4 py-4 active:bg-white/10"
+          className="flex-row items-center justify-between rounded-[18px] px-4 py-4 active:opacity-85"
+          style={{ backgroundColor: theme.card }}
         >
           <View className="flex-row items-center gap-3">
             <EntityLogo
@@ -142,11 +155,11 @@ function TeamsTab({ teams }: { teams: TeamRef[] }) {
               size="sm"
               tone="dark"
             />
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {team.name}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+          <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
         </Pressable>
       ))}
     </View>
@@ -155,6 +168,7 @@ function TeamsTab({ teams }: { teams: TeamRef[] }) {
 
 function PlayersTab({ players }: { players: CountryPlayerHighlight[] }) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (!players.length) {
     return <EmptyTab message="No featured players for this country yet." />;
@@ -166,25 +180,29 @@ function PlayersTab({ players }: { players: CountryPlayerHighlight[] }) {
         <Pressable
           key={entry.player.id}
           onPress={() => router.push(`/player/${entry.player.id}`)}
-          className="flex-row items-center justify-between rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+          className="flex-row items-center justify-between rounded-[22px] px-4 py-4 active:opacity-85"
+          style={{ backgroundColor: theme.card }}
         >
           <View className="flex-row items-center gap-3">
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-[#364156]">
-              <Text className="text-base text-white">
+            <View
+              className="h-12 w-12 items-center justify-center rounded-full"
+              style={{ backgroundColor: theme.brand }}
+            >
+              <Text className="text-base" style={{ color: theme.textInverse }}>
                 {entry.player.avatarInitials}
               </Text>
             </View>
             <View>
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 {entry.player.name}
               </Text>
-              <Text className="text-sm text-white/55">
+              <Text className="text-sm" style={{ color: theme.textSubtle }}>
                 {entry.player.position}
                 {entry.goals > 0 ? ` · ${entry.goals} goals` : ""}
               </Text>
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+          <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
         </Pressable>
       ))}
     </View>
@@ -193,6 +211,7 @@ function PlayersTab({ players }: { players: CountryPlayerHighlight[] }) {
 
 function RecentMatchesTab({ matches }: { matches: CountryMatchSummary[] }) {
   const router = useRouter();
+  const theme = useTheme();
 
   if (!matches.length) {
     return <EmptyTab message="No recent matches for this country yet." />;
@@ -204,16 +223,17 @@ function RecentMatchesTab({ matches }: { matches: CountryMatchSummary[] }) {
         <Pressable
           key={match.id}
           onPress={() => router.push(`/match/${match.id}`)}
-          className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+          className="rounded-[22px] px-4 py-4 active:opacity-85"
+          style={{ backgroundColor: theme.card }}
         >
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             {match.homeTeam.name} {match.scoreline} {match.awayTeam.name}
           </Text>
-          <Text className="pt-2 text-sm text-white/55">
+          <Text className="pt-2 text-sm" style={{ color: theme.textSubtle }}>
             {match.kickoffLabel} · {match.venue}
           </Text>
           {match.league?.name ? (
-            <Text className="pt-1 text-xs text-white/40">
+            <Text className="pt-1 text-xs" style={{ color: theme.textSubtle }}>
               {match.league.name}
             </Text>
           ) : null}
@@ -224,8 +244,10 @@ function RecentMatchesTab({ matches }: { matches: CountryMatchSummary[] }) {
 }
 
 function EmptyTab({ message }: { message: string }) {
+  const theme = useTheme();
+
   return (
-      <Text className="text-sm text-white/55">
+    <Text className="text-sm" style={{ color: theme.textSubtle }}>
       {message}
     </Text>
   );
@@ -236,17 +258,28 @@ function StatRow({
 }: {
   items: { label: string; value: number }[];
 }) {
+  const theme = useTheme();
+
   return (
     <View className="flex-row gap-3">
       {items.map((item) => (
-        <View key={item.label} className="flex-1 rounded-[22px] bg-white/6 px-3 py-4">
+        <View
+          key={item.label}
+          className="flex-1 rounded-[22px] border px-3 py-4"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
           <Text
-            className="text-center text-[24px] text-[#E6A817]"
+            className="text-center text-[24px]"
+            style={{ color: theme.accent }}
           >
             {item.value}
           </Text>
           <Text
-            className="pt-1 text-center text-xs text-white/55"
+            className="pt-1 text-center text-xs"
+            style={{ color: theme.textSubtle }}
           >
             {item.label}
           </Text>

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiStage } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { NotFound } from "@/components/not-found";
 import {
   DetailTabs,
@@ -33,6 +34,7 @@ type TabKey = "overview" | "matches" | "standings" | "bracket" | "stats";
 
 export default function LeagueRoute() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const theme = useTheme();
   const leagueId = Number(id);
   const isValidId = Number.isFinite(leagueId) && leagueId > 0;
   const [seasonId, setSeasonId] = useState<number | null>(null);
@@ -99,7 +101,7 @@ export default function LeagueRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <NotFound message="Invalid competition id" />
       </DetailScreenShell>
     );
@@ -107,7 +109,7 @@ export default function LeagueRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -117,7 +119,7 @@ export default function LeagueRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Competition">
+      <DetailScreenShell title="Competition" tabletMaxWidth={1120}>
         <NotFound
           message={
             query.isError
@@ -149,6 +151,7 @@ export default function LeagueRoute() {
   return (
     <DetailScreenShell
       title={season.league.name}
+      tabletMaxWidth={1120}
       rightAccessory={
         <View className="flex-row items-center gap-2">
           <LeagueNotificationToggle leagueId={season.league.id} />
@@ -188,18 +191,15 @@ export default function LeagueRoute() {
                           setActiveTab("standings");
                         }
                       }}
-                      className={`rounded-full border px-3 py-1.5 ${
-                        active
-                          ? "border-accent-400 bg-accent-500/20"
-                          : "border-white/15 bg-white/5"
-                      }`}
+                      className="rounded-full border px-3 py-1.5"
+                      style={{
+                        backgroundColor: active ? theme.accentMuted : theme.card,
+                        borderColor: active ? theme.accent : theme.cardBorder,
+                      }}
                     >
                       <Text
-                        className={
-                          active
-                            ? "text-xs text-accent-200"
-                            : "text-xs text-white/60"
-                        }
+                        className="text-xs"
+                        style={{ color: active ? theme.accent : theme.textMuted }}
                       >
                         {stage.name}
                       </Text>

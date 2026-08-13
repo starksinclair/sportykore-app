@@ -10,6 +10,7 @@ import {
 } from "react-native";
 
 import type { ApiVenue } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 
 import { useLeagueVenues } from "../../hooks";
@@ -45,7 +46,7 @@ export function GameVenuePicker({
   onChange,
   variant = "light",
 }: Props) {
-  const isDark = variant === "dark";
+  const theme = useTheme();
   const venuesQuery = useLeagueVenues(leagueId, enabled);
   const venues = venuesQuery.data ?? EMPTY_VENUES;
   const [formOpen, setFormOpen] = useState(false);
@@ -107,17 +108,14 @@ export function GameVenuePicker({
   return (
     <View className="gap-3">
       <Text
-        className={
-          isDark
-            ? "text-xs uppercase tracking-wide text-white/50"
-            : "text-xs uppercase tracking-wide text-slate-500"
-        }
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textSubtle }}
       >
         Venue (optional)
       </Text>
 
       {venuesQuery.isLoading ? (
-        <ActivityIndicator color="#4A148C" className="py-2" />
+        <ActivityIndicator color={theme.brand} className="py-2" />
       ) : oneOffMode ? (
         <View className="gap-3">
           <AuthTextField
@@ -128,7 +126,11 @@ export function GameVenuePicker({
             }
             placeholder="Riverside Pitch 2"
             autoFocus
-            labelClassName={isDark ? "text-white/60" : undefined}
+            inputRowStyle={{
+              backgroundColor: theme.inputBackground,
+              borderColor: theme.inputBorder,
+            }}
+            placeholderTextColor={theme.textSubtle}
           />
           <View className="flex-row flex-wrap gap-x-4 gap-y-2">
             <Pressable
@@ -139,14 +141,16 @@ export function GameVenuePicker({
               hitSlop={8}
             >
               <Text
-                className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
+                className="text-sm"
+                style={{ color: theme.accent }}
               >
                 Pick from league venues
               </Text>
             </Pressable>
             <Pressable onPress={clearSelection} hitSlop={8}>
               <Text
-                className={isDark ? "text-sm text-white/50" : "text-sm text-slate-500"}
+                className="text-sm"
+                style={{ color: theme.textSubtle }}
               >
                 Clear
               </Text>
@@ -155,32 +159,30 @@ export function GameVenuePicker({
         </View>
       ) : (
         <View
-          className={
-            isDark
-              ? "overflow-hidden rounded-[18px] border border-white/10 bg-white/5"
-              : "overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
-          }
+          className="overflow-hidden rounded-[18px] border"
+          style={{
+            backgroundColor: theme.cardMuted,
+            borderColor: theme.cardBorder,
+          }}
         >
           <Pressable
             onPress={() => setPickerOpen((open) => !open)}
             className="flex-row items-center gap-3 px-3.5 py-3"
           >
             <View
-              className={
-                isDark
-                  ? "h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15"
-                  : "h-9 w-9 items-center justify-center rounded-full bg-white"
-              }
+              className="h-9 w-9 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: theme.accentMuted }}
             >
               <Ionicons
                 name={hasSelection ? "location" : "location-outline"}
                 size={18}
-                color={isDark ? "#E6A817" : "#4A148C"}
+                color={theme.accent}
               />
             </View>
             <View className="min-w-0 flex-1">
               <Text
-                className={isDark ? "text-sm text-white" : "text-sm text-slate-900"}
+                className="text-sm"
+                style={{ color: theme.text }}
                 numberOfLines={1}
               >
                 {selection.kind === "none"
@@ -188,7 +190,8 @@ export function GameVenuePicker({
                   : selectionLabel(selection)}
               </Text>
               <Text
-                className={isDark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
+                className="pt-0.5 text-xs"
+                style={{ color: theme.textSubtle }}
                 numberOfLines={1}
               >
                 {selection.kind === "venue"
@@ -206,7 +209,8 @@ export function GameVenuePicker({
                 className="rounded-lg px-2 py-1"
               >
                 <Text
-                  className={isDark ? "text-xs text-white/55" : "text-xs text-slate-500"}
+                  className="text-xs"
+                  style={{ color: theme.textSubtle }}
                 >
                   Clear
                 </Text>
@@ -215,35 +219,38 @@ export function GameVenuePicker({
             <Ionicons
               name={pickerOpen ? "chevron-up" : "chevron-down"}
               size={18}
-              color={isDark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+              color={theme.textSubtle}
             />
           </Pressable>
 
           {pickerOpen ? (
-            <View className={isDark ? "border-t border-white/10 bg-neutral-950/70" : "border-t border-slate-200 bg-white"}>
+            <View
+              className="border-t"
+              style={{
+                backgroundColor: theme.surfaceRaised,
+                borderColor: theme.cardBorder,
+              }}
+            >
               {venues.length > 5 ? (
                 <View
-                  className={
-                    isDark
-                      ? "flex-row items-center gap-2 border-b border-white/10 px-3 py-2"
-                      : "flex-row items-center gap-2 border-b border-slate-100 px-3 py-2"
-                  }
+                  className="flex-row items-center gap-2 border-b px-3 py-2"
+                  style={{ borderColor: theme.cardBorder }}
                 >
                   <Ionicons
                     name="search"
                     size={16}
-                    color={isDark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+                    color={theme.textSubtle}
                   />
                   <TextInput
                     value={query}
                     onChangeText={setQuery}
                     placeholder="Search venues"
-                    placeholderTextColor="#94a3b8"
+                    placeholderTextColor={theme.textSubtle}
                     autoCorrect={false}
                     style={{
                       flex: 1,
                       fontSize: 14,
-                      color: isDark ? "#FFFFFF" : "#0f172a",
+                      color: theme.text,
                       paddingVertical: 6,
                     }}
                   />
@@ -252,7 +259,7 @@ export function GameVenuePicker({
                       <Ionicons
                         name="close-circle"
                         size={16}
-                        color={isDark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+                        color={theme.textSubtle}
                       />
                     </Pressable>
                   ) : null}
@@ -267,7 +274,6 @@ export function GameVenuePicker({
                 <VenueOptionRow
                   label="No venue"
                   selected={selection.kind === "none"}
-                  dark={isDark}
                   onPress={selectNone}
                 />
                 {filtered.map((venue) => {
@@ -283,7 +289,6 @@ export function GameVenuePicker({
                       label={venue.name}
                       subtitle={subtitle || undefined}
                       selected={active}
-                      dark={isDark}
                       showPin={
                         venue.latitude != null && venue.longitude != null
                       }
@@ -293,31 +298,40 @@ export function GameVenuePicker({
                 })}
                 {filtered.length === 0 ? (
                   <Text
-                    className={isDark ? "px-4 py-4 text-sm text-white/45" : "px-4 py-4 text-sm text-slate-500"}
+                    className="px-4 py-4 text-sm"
+                    style={{ color: theme.textSubtle }}
                   >
                     No venues match “{query.trim()}”.
                   </Text>
                 ) : null}
               </ScrollView>
 
-              <View className={isDark ? "flex-row border-t border-white/10" : "flex-row border-t border-slate-100"}>
+              <View
+                className="flex-row border-t"
+                style={{ borderColor: theme.cardBorder }}
+              >
                 <Pressable
                   onPress={() => setFormOpen(true)}
                   className="flex-1 items-center py-3"
                 >
                   <Text
-                    className={isDark ? "text-sm text-accent-200" : "text-sm text-brand-700"}
+                    className="text-sm"
+                    style={{ color: theme.accent }}
                   >
                     Add venue
                   </Text>
                 </Pressable>
-                <View className={isDark ? "w-px bg-white/10" : "w-px bg-slate-100"} />
+                <View
+                  className="w-px"
+                  style={{ backgroundColor: theme.cardBorder }}
+                />
                 <Pressable
                   onPress={enableOneOff}
                   className="flex-1 items-center py-3"
                 >
                   <Text
-                    className={isDark ? "text-sm text-white/60" : "text-sm text-slate-600"}
+                    className="text-sm"
+                    style={{ color: theme.textMuted }}
                   >
                     One-off name
                   </Text>
@@ -346,48 +360,38 @@ function VenueOptionRow({
   label,
   subtitle,
   selected,
-  dark = false,
   showPin,
   onPress,
 }: {
   label: string;
   subtitle?: string;
   selected: boolean;
-  dark?: boolean;
   showPin?: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-row items-center gap-3 border-b px-3.5 py-3 ${
-        dark
-          ? selected
-            ? "border-white/10 bg-accent-500/10"
-            : "border-white/10 bg-transparent"
-          : selected
-            ? "border-slate-50 bg-brand-50"
-            : "border-slate-50 bg-white"
-      }`}
+      className="flex-row items-center gap-3 border-b px-3.5 py-3"
+      style={{
+        backgroundColor: selected ? theme.accentMuted : "transparent",
+        borderColor: theme.cardBorder,
+      }}
     >
       <View className="min-w-0 flex-1">
         <Text
-          className={
-            dark
-              ? selected
-                ? "text-sm text-accent-100"
-                : "text-sm text-white"
-              : selected
-                ? "text-sm text-brand-800"
-                : "text-sm text-slate-900"
-          }
+          className="text-sm"
+          style={{ color: selected ? theme.accent : theme.text }}
           numberOfLines={1}
         >
           {label}
         </Text>
         {subtitle ? (
           <Text
-            className={dark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
+            className="pt-0.5 text-xs"
+            style={{ color: theme.textSubtle }}
             numberOfLines={1}
           >
             {subtitle}
@@ -398,18 +402,19 @@ function VenueOptionRow({
         <Ionicons
           name="navigate-outline"
           size={14}
-          color={dark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+          color={theme.textSubtle}
         />
       ) : null}
       {selected ? (
         <Ionicons
           name="checkmark-circle"
           size={20}
-          color={dark ? "#E6A817" : "#4A148C"}
+          color={theme.accent}
         />
       ) : (
         <View
-          className={dark ? "h-5 w-5 rounded-full border border-white/20" : "h-5 w-5 rounded-full border border-slate-200"}
+          className="h-5 w-5 rounded-full border"
+          style={{ borderColor: theme.inputBorder }}
         />
       )}
     </Pressable>

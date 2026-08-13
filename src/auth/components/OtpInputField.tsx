@@ -1,6 +1,7 @@
 import { useWindowDimensions } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
 
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function OtpInputField({ onComplete, disabled }: Props) {
+  const theme = useTheme();
   const { width } = useWindowDimensions();
   const gap = width < 360 ? 4 : 8;
   const availableWidth = Math.max(220, width - 88);
@@ -38,15 +40,15 @@ export function OtpInputField({ onComplete, disabled }: Props) {
           width: boxSize,
           height: boxHeight,
           borderRadius: 12,
-          borderColor: "#E2E8F0",
-          backgroundColor: "#F8FAFC",
+          borderColor: theme.inputBorder,
+          backgroundColor: theme.inputBackground,
         },
         focusedPinCodeContainerStyle: {
           borderColor: colors.brand,
         },
         pinCodeTextStyle: {
           fontSize,
-          color: "#0F172A",
+          color: theme.text,
         },
       }}
     />

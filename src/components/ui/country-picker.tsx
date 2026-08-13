@@ -3,16 +3,17 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
   Pressable,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 
-import { colors } from "@/constants";
+import { useTheme } from "@/color/use-theme";
 import { useCountries } from "@/country";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BottomSheetModal } from "./bottom-sheet-modal";
 import { CountryFlag, CountryLabel } from "./CountryFlag";
 import { FormFieldLabel } from "./form-field-label";
 
@@ -37,12 +38,21 @@ export function CountryPicker({
   placeholder = "Select country",
   required = false,
 }: Props) {
+  const theme = useTheme();
+  const { height } = useWindowDimensions();
+  const { isTablet } = useAdaptiveLayout();
   const [open, setOpen] = useState(false);
   const { data: countries, isLoading } = useCountries();
   const options = countries ?? [];
+  const sheetBodyHeight = height * (isTablet ? 0.72 : 0.84);
+  const reservedSheetSpace = isTablet ? 164 : 148;
+  const listHeight = Math.min(
+    isTablet ? 460 : 420,
+    Math.max(isTablet ? 300 : 240, sheetBodyHeight - reservedSheetSpace),
+  );
+  const columnCount = isTablet ? 2 : 1;
 
   const close = () => setOpen(false);
-  const insets = useSafeAreaInsets();
 
   const handleSelect = (country: CountryPickerOption) => {
     onChange(country);
@@ -57,78 +67,106 @@ export function CountryPicker({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={value ? `Country: ${value.name}` : placeholder}
-        className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80"
+        className="flex-row items-center justify-between rounded-2xl border px-3.5 py-3.5 active:opacity-80"
+        style={{
+          backgroundColor: theme.inputBackground,
+          borderColor: theme.inputBorder,
+        }}
       >
         {value ? (
           <CountryLabel
             code={value.code}
             name={value.name}
             flagWidth={20}
-            textClassName="text-base text-neutral-950"
+            textClassName="text-base"
+            textStyle={{ color: theme.text }}
           />
         ) : (
           <Text
-            className="text-base text-[#9CA3AF]"
+            className="text-base"
+            style={{ color: theme.textSubtle }}
           >
             {placeholder}
           </Text>
         )}
-        <Ionicons name="chevron-down" size={18} color="#6B7280" />
+        <Ionicons name="chevron-down" size={18} color={theme.textMuted} />
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
-        <Pressable className="flex-1 justify-end bg-black/40" onPress={close}>
-          <Pressable
-            className="max-h-[70%] rounded-t-3xl bg-white px-4 pb-8 pt-4"
-            onPress={(e) => e.stopPropagation()}
-          >
-            <View className="mb-3 h-1 w-12 self-center rounded-full bg-neutral-300" />
+      <BottomSheetModal
+        visible={open}
+        onClose={close}
+        title={label}
+        subtitle="Choose where this competition is based."
+        scrollEnabled={false}
+      >
+        {isLoading && options.length === 0 ? (
+          <View className="items-center py-8">
+            <ActivityIndicator color={theme.brand} />
             <Text
-              className="mb-3 text-lg text-neutral-950"
+              className="mt-3 text-sm"
+              style={{ color: theme.textSubtle }}
             >
-              {label}
+              Loading countries…
             </Text>
-
-            {isLoading && options.length === 0 ? (
-              <View className="items-center py-8">
-                <ActivityIndicator color={colors.brand} />
-                <Text
-                  className="mt-3 text-sm text-slate-500"
+          </View>
+        ) : (
+          <View
+            className="overflow-hidden rounded-2xl border"
+            style={{
+              height: listHeight,
+              maxHeight: '80%',
+              backgroundColor: theme.cardMuted,
+              borderColor: theme.cardBorder,
+            }}
+          >
+            <FlatList
+              key={`country-list-${columnCount}`}
+              style={{ flex: 1 }}
+              data={options}
+              numColumns={columnCount}
+              keyExtractor={(item) => item.code}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{
+                gap: isTablet ? 8 : 0,
+                padding: isTablet ? 8 : 0,
+                paddingBottom: isTablet ? 16 : 12,
+              }}
+              columnWrapperStyle={isTablet ? { gap: 8 } : undefined}
+              showsVerticalScrollIndicator
+              nestedScrollEnabled
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => handleSelect(item)}
+                  className="flex-row items-center gap-3 border-b px-3 py-4 active:opacity-85"
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    borderColor: theme.cardBorder,
+                    borderRadius: isTablet ? 14 : 0,
+                    backgroundColor:
+                      isTablet && item.code === value?.code
+                        ? theme.accentMuted
+                        : "transparent",
+                  }}
                 >
-                  Loading countries…
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-                style={{ maxHeight: 440 }}
-                data={options}
-                keyExtractor={(item) => item.code}
-                keyboardShouldPersistTaps="handled"
-                contentContainerStyle={{
-                  paddingBottom: insets.bottom + 90 
-                }}
-                nestedScrollEnabled
-                renderItem={({ item }) => (
-                  <Pressable
-                    onPress={() => handleSelect(item)}
-                    className="flex-row items-center gap-3 border-b border-neutral-100 py-4 active:bg-neutral-50"
+                  <CountryFlag code={item.code} width={24} />
+                  <Text
+                    className="flex-1 text-base"
+                    style={{ color: theme.text }}
                   >
-                    <CountryFlag code={item.code} width={24} />
-                    <Text
-                      className="flex-1 text-base text-neutral-950"
-                    >
-                      {item.name}
-                    </Text>
-                    {item.code === value?.code ? (
-                      <Ionicons name="checkmark-circle" size={22} color={colors.brand} />
-                    ) : null}
-                  </Pressable>
-                )}
-              />
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+                    {item.name}
+                  </Text>
+                  {item.code === value?.code ? (
+                    <Ionicons name="checkmark-circle" size={22} color={theme.brand} />
+                  ) : (
+                    <View className="w-[22px]" />
+                  )}
+                </Pressable>
+              )}
+            />
+          </View>
+        )}
+      </BottomSheetModal>
     </View>
   );
 }

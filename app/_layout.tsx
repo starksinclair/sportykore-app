@@ -9,6 +9,7 @@ import { type ReactNode, useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
+import { AppearanceProvider, useAppearance } from "@/color/appearance-context";
 import { sportyToastConfig } from "@/components/ui/toast-config";
 import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
@@ -28,7 +29,7 @@ import {
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { useFonts } from "expo-font";
-import { Platform, StyleSheet, View, useColorScheme } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { PostHogErrorBoundary, PostHogProvider } from "posthog-react-native";
@@ -80,6 +81,7 @@ function AnalyticsProvider({ children }: { children: ReactNode }) {
 
 function RootStack() {
   const { user, hasOnboarded, hydrated } = useAuth();
+  const appearance = useAppearance();
   const [fontsLoaded] = useFonts({
     Pacifico_400Regular,
     OpenSans_400Regular,
@@ -90,10 +92,10 @@ function RootStack() {
   });
 
   useEffect(() => {
-    if (hydrated && fontsLoaded) {
+    if (hydrated && fontsLoaded && appearance.hydrated) {
       SplashScreen.hideAsync();
     }
-  }, [hydrated, fontsLoaded]);
+  }, [appearance.hydrated, hydrated, fontsLoaded]);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -120,9 +122,17 @@ function RootStack() {
     </Stack>
   );
 }
-function RootLayout() {
-  const scheme = useColorScheme();
+function AppThemeBoundary({ children }: { children: ReactNode }) {
+  const { colorScheme } = useAppearance();
+  return (
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      {children}
+    </ThemeProvider>
+  );
+}
 
+function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
@@ -132,15 +142,16 @@ function RootLayout() {
               <AnalyticsProvider>
                 <AuthProvider>
                   <AuthGateProvider>
-                    <ThemeProvider value={scheme === "dark" ? DarkTheme : DefaultTheme}>
-                      <StatusBar style="auto" />
-                      <NotificationBridge />
-                      <RootStack />
-                      <InviteLinkCapture />
-                      <View pointerEvents="box-none" style={styles.toastOverlay}>
-                        <Toast config={sportyToastConfig} topOffset={58} />
-                      </View>
-                    </ThemeProvider>
+                    <AppearanceProvider>
+                      <AppThemeBoundary>
+                        <NotificationBridge />
+                        <RootStack />
+                        <InviteLinkCapture />
+                        <View pointerEvents="box-none" style={styles.toastOverlay}>
+                          <Toast config={sportyToastConfig} topOffset={58} />
+                        </View>
+                      </AppThemeBoundary>
+                    </AppearanceProvider>
                   </AuthGateProvider>
                 </AuthProvider>
               </AnalyticsProvider>

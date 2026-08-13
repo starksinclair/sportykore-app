@@ -12,6 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useTheme } from "@/color/use-theme";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
+
 type BottomSheetModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -35,7 +38,19 @@ export function BottomSheetModal({
   variant = "light",
   scrollEnabled = true,
 }: BottomSheetModalProps) {
-  const isDark = variant === "dark";
+  const forceDark = variant === "dark";
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+  const sheetBackgroundColor = forceDark ? "#121212" : theme.surfaceRaised;
+  const sheetBorderColor = forceDark ? "rgba(255,255,255,0.08)" : theme.cardBorder;
+  const handleColor = forceDark ? "rgba(255,255,255,0.2)" : theme.inputBorder;
+  const titleColor = forceDark ? "#FFFFFF" : theme.text;
+  const subtitleColor = forceDark ? "rgba(255,255,255,0.55)" : theme.textMuted;
+  const closeButtonBackground = forceDark
+    ? "rgba(255,255,255,0.08)"
+    : theme.cardMuted;
+  const closeIconColor = forceDark ? "#F9FAFB" : theme.text;
+
   return (
     <Modal
       transparent
@@ -44,32 +59,45 @@ export function BottomSheetModal({
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
+      <View style={[styles.root, isTablet && styles.rootTablet]}>
         <Pressable style={styles.scrim} onPress={onClose} />
-        <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
+        <SafeAreaView
+          edges={isTablet ? ["top", "bottom", "left", "right"] : ["bottom"]}
+          style={[styles.safeArea, isTablet && styles.safeAreaTablet]}
+        >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.keyboardAvoiding}
+            style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
           >
-            <View style={[styles.sheet, isDark && styles.sheetDark]}>
-              <View style={[styles.handle, isDark && styles.handleDark]} />
+            <View
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: sheetBackgroundColor,
+                  borderColor: sheetBorderColor,
+                  borderTopWidth: 1,
+                },
+                isTablet && styles.sheetTablet,
+              ]}
+            >
+              <View style={[styles.handle, { backgroundColor: handleColor }]} />
               <View style={styles.header}>
                 <View style={styles.headerCopy}>
-                  <Text
-                    style={[
-                      styles.title,
-                      isDark && styles.titleDark,
-                    ]}
+	                  <Text
+	                    style={[
+	                      styles.title,
+	                      { color: titleColor },
+	                    ]}
                     numberOfLines={2}
                   >
                     {title}
                   </Text>
                   {subtitle ? (
-                    <Text
-                      style={[
-                        styles.subtitle,
-                        isDark && styles.subtitleDark,
-                      ]}
+	                    <Text
+	                      style={[
+	                        styles.subtitle,
+	                        { color: subtitleColor },
+	                      ]}
                       numberOfLines={3}
                     >
                       {subtitle}
@@ -77,13 +105,16 @@ export function BottomSheetModal({
                   ) : null}
                 </View>
                 <Pressable
-                  onPress={onClose}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close modal"
-                  style={[styles.closeButton, isDark && styles.closeButtonDark]}
-                >
-                  <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
-                </Pressable>
+	                  onPress={onClose}
+	                  accessibilityRole="button"
+	                  accessibilityLabel="Close modal"
+	                  style={[
+                      styles.closeButton,
+                      { backgroundColor: closeButtonBackground },
+                    ]}
+	                >
+	                  <Ionicons name="close" size={20} color={closeIconColor} />
+	                </Pressable>
               </View>
               {scrollEnabled ? (
                 <ScrollView
@@ -111,14 +142,27 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.28)",
   },
+  rootTablet: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
   scrim: {
     ...StyleSheet.absoluteFillObject,
   },
   safeArea: {
     justifyContent: "flex-end",
   },
+  safeAreaTablet: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   keyboardAvoiding: {
     width: "100%",
+  },
+  keyboardAvoidingTablet: {
+    maxWidth: 720,
   },
   sheet: {
     maxHeight: "97%",
@@ -128,6 +172,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
+  },
+  sheetTablet: {
+    width: "100%",
+    maxHeight: "88%",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 12,
   },
   handle: {
     alignSelf: "center",

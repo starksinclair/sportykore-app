@@ -5,7 +5,7 @@ import DateTimePicker, {
 import { useState } from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { colors } from "@/constants";
+import { useTheme } from "@/color/use-theme";
 import { fonts } from "@/theme/fonts";
 
 import { BottomSheetModal } from "./bottom-sheet-modal";
@@ -36,6 +36,7 @@ export function NativeDatePickerField({
   labelClassName,
   variant = "light",
 }: Props) {
+  const theme = useTheme();
   const isDark = variant === "dark";
   const [open, setOpen] = useState(false);
   const selectedDate = clampDate(
@@ -60,26 +61,6 @@ export function NativeDatePickerField({
     }
   };
 
-  const triggerClassName = isDark
-    ? "flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/10 px-3.5 py-3.5 active:opacity-80"
-    : "flex-row items-center justify-between rounded-2xl border border-transparent bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80";
-  const valueClassName = value
-    ? isDark
-      ? "text-base text-white"
-      : "text-base text-neutral-950"
-    : isDark
-      ? "text-base text-white/40"
-      : "text-base text-[#9CA3AF]";
-  const helperClassName = isDark
-    ? "text-xs leading-5 text-white/45"
-    : "text-xs leading-5 text-slate-500";
-  const clearButtonClassName = isDark
-    ? "h-12 flex-1 items-center justify-center rounded-[13px] border border-white/10 bg-white/10"
-    : "h-12 flex-1 items-center justify-center rounded-[13px] border border-slate-200 bg-white";
-  const clearTextClassName = isDark
-    ? "text-sm text-white/80"
-    : "text-sm text-slate-700";
-
   return (
     <View className="gap-1.5">
       <FormFieldLabel
@@ -91,24 +72,31 @@ export function NativeDatePickerField({
         accessibilityRole="button"
         accessibilityLabel={value ? `${label}: ${value}` : placeholder}
         onPress={openPicker}
-        className={triggerClassName}
+        className="flex-row items-center justify-between rounded-2xl border px-3.5 py-3.5 active:opacity-80"
+        style={{
+          backgroundColor: theme.inputBackground,
+          borderColor: theme.inputBorder,
+        }}
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
-          className={valueClassName}
+          style={{
+            fontFamily: fonts.bodySemibold,
+            color: value ? theme.text : theme.textSubtle,
+          }}
+          className="text-base"
         >
           {value ? formatDisplayDate(value) : placeholder}
         </Text>
         <Ionicons
           name="calendar-outline"
           size={18}
-          color={isDark ? "rgba(255,255,255,0.58)" : colors.tabInactive}
+          color={theme.textMuted}
         />
       </Pressable>
       {helperText ? (
         <Text
-          style={{ fontFamily: fonts.body }}
-          className={helperClassName}
+          style={{ fontFamily: fonts.body, color: theme.textSubtle }}
+          className="text-xs leading-5"
         >
           {helperText}
         </Text>
@@ -136,11 +124,11 @@ export function NativeDatePickerField({
         >
           <View className="gap-4 pb-6">
             <View
-              className={
-                isDark
-                  ? "overflow-hidden rounded-[18px] border border-white/10 bg-white/5"
-                  : "overflow-hidden rounded-[18px] border border-slate-100 bg-slate-50"
-              }
+              className="overflow-hidden rounded-[18px] border"
+              style={{
+                backgroundColor: theme.cardMuted,
+                borderColor: theme.cardBorder,
+              }}
             >
               <DateTimePicker
                 value={draftDate}
@@ -148,9 +136,9 @@ export function NativeDatePickerField({
                 display="spinner"
                 minimumDate={minimumDate}
                 maximumDate={maximumDate}
-                accentColor={colors.accent}
+                accentColor={theme.accent}
                 themeVariant={isDark ? "dark" : "light"}
-                textColor={isDark ? colors.white : colors.darkLabel}
+                textColor={theme.text}
                 style={styles.iosPicker}
                 onChange={(_event, date) => {
                   if (date) setDraftDate(clampDate(date, minimumDate, maximumDate));
@@ -163,11 +151,15 @@ export function NativeDatePickerField({
                   onChange(null);
                   setOpen(false);
                 }}
-                className={clearButtonClassName}
+                className="h-12 flex-1 items-center justify-center rounded-[13px] border"
+                style={{
+                  backgroundColor: theme.cardMuted,
+                  borderColor: theme.cardBorder,
+                }}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className={clearTextClassName}
+                  style={{ fontFamily: fonts.bodyBold, color: theme.textMuted }}
+                  className="text-sm"
                 >
                   Clear
                 </Text>
@@ -177,11 +169,12 @@ export function NativeDatePickerField({
                   onChange(formatDateValue(draftDate));
                   setOpen(false);
                 }}
-                className="h-12 flex-1 items-center justify-center rounded-[13px] bg-brand"
+                className="h-12 flex-1 items-center justify-center rounded-[13px]"
+                style={{ backgroundColor: theme.brand }}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-sm text-white"
+                  style={{ fontFamily: fonts.bodyBold, color: theme.textInverse }}
+                  className="text-sm"
                 >
                   Set date
                 </Text>

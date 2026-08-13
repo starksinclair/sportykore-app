@@ -5,7 +5,10 @@ import type { ReactNode } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { ThemedView } from "./themed-view";
 
 type DetailScreenShellProps = {
@@ -15,6 +18,8 @@ type DetailScreenShellProps = {
   leagueId?: number;
   /** Sticky content rendered between the header bar and the scrollable body (e.g. tabs, season picker). */
   headerContent?: ReactNode;
+  /** Keeps phone layouts unchanged while allowing selected detail screens to breathe on tablet. */
+  tabletMaxWidth?: number;
   children: ReactNode;
 };
 
@@ -24,27 +29,44 @@ export function DetailScreenShell({
   rightAccessory,
   leagueId,
   headerContent,
+  tabletMaxWidth,
   children,
 }: DetailScreenShellProps) {
   const router = useRouter();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+  const useTabletWidth = isTablet && tabletMaxWidth != null;
+  const tabletWidthStyle = useTabletWidth
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
 
   return (
     <ThemedView type="background" className="flex-1">
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
-          baseColor="#0F0F10"
-          stripeColor="rgba(230, 168, 23, 0.06)"
+          baseColor={theme.patternBase}
+          stripeColor={theme.patternStripe}
+        />
+        <View
+          className="absolute inset-0"
+          pointerEvents="none"
+          style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
         />
 
-        <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
+        <View
+          className="relative flex-row items-center justify-between px-5 pb-3 pt-1"
+          style={tabletWidthStyle}
+        >
           <Pressable
             onPress={() => router.back()}
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+            className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
           >
-            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={22} color={theme.text} />
           </Pressable>
 
           {leagueId ? (
@@ -68,15 +90,26 @@ export function DetailScreenShell({
         </View>
 
         {headerContent ? (
-          <View className="gap-3 px-5 pb-2 pt-1">{headerContent}</View>
+          <View className="gap-3 px-5 pb-2 pt-1" style={tabletWidthStyle}>
+            {headerContent}
+          </View>
         ) : null}
 
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-6 px-5 pb-12 pt-3"
+          contentContainerStyle={
+            useTabletWidth ? { alignItems: "center" } : undefined
+          }
           showsVerticalScrollIndicator={false}
         >
-          {children}
+          {useTabletWidth ? (
+            <View className="w-full gap-6" style={{ maxWidth: tabletMaxWidth }}>
+              {children}
+            </View>
+          ) : (
+            children
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
@@ -90,11 +123,14 @@ function HeaderTitle({
   title: string;
   subtitle?: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <>
       <Text
         numberOfLines={1}
-        className="text-center text-[18px] text-white"
+        className="text-center text-[18px]"
+        style={{ color: theme.text }}
       >
         {title}
       </Text>
@@ -103,7 +139,8 @@ function HeaderTitle({
           {typeof subtitle === "string" ? (
             <Text
               numberOfLines={1}
-              className="text-center text-xs text-white/55"
+              className="text-center text-xs"
+              style={{ color: theme.textSubtle }}
             >
               {subtitle}
             </Text>

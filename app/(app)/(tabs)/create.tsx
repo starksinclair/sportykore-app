@@ -17,6 +17,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import type { CompetitionFormat } from "@/api/entities";
 import { ApiError } from "@/api/errors";
 import { useAuthGate } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { AuthTextField } from "@/components/ui/auth-text-field";
@@ -26,17 +28,21 @@ import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { OfflineBanner } from "@/components/ui/offline-banner";
-import { colors, scoreboardPattern } from "@/constants";
 import {
   GroupFormatConfigControl,
   buildDefaultGroupConfig,
   type GroupFormatFormState,
 } from "@/groups";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import {
   KnockoutTieFormatControl,
   buildKnockoutConfig,
   type TieFormatSelection,
 } from "@/knockout";
+import {
+  COMPETITION_FORMAT_COPY,
+  competitionFormatLabel,
+} from "@/league/competition-format-copy";
 import { CompetitionFormatPicker } from "@/league/components/CompetitionFormatPicker";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import { useCreateLeague } from "@/league/hooks";
@@ -49,16 +55,14 @@ import {
   tiebreakerLabel,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
-import {
-  COMPETITION_FORMAT_COPY,
-  competitionFormatLabel,
-} from "@/league/competition-format-copy";
 import { parseCalendarDate } from "@/lib/datetime";
-import { posthog } from "@/lib/posthog";
 import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
+import { posthog } from "@/lib/posthog";
 
 const TOTAL_STEPS = 3;
+
+type AppTheme = ReturnType<typeof useTheme>;
 
 type TeamRow = {
   id: string;
@@ -73,6 +77,10 @@ function newTeamRow(): TeamRow {
 export default function CreateScreen() {
   const [step, setStep] = useState(1);
   const insets = useSafeAreaInsets();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
   // const bottomInset = Math.max(insets.bottom, 10);
   const [name, setName] = useState("");
   const season = String(new Date().getFullYear());
@@ -260,13 +268,13 @@ export default function CreateScreen() {
   const progress = step / TOTAL_STEPS;
 
   return (
-    <View className="flex-1 bg-[#121212]">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
       <OfflineBanner />
       <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor={scoreboardPattern().stripeColor}
+        baseColor={theme.patternBase}
+        stripeColor={theme.patternStripe}
       />
 
       <KeyboardAvoidingView
@@ -282,16 +290,20 @@ export default function CreateScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-6">
+          <View
+            className="gap-6"
+            style={isTablet ? { alignSelf: "center", width: "100%", maxWidth: tabletMaxWidth } : undefined}
+          >
             <View className="gap-2">
-              {/* <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} /> */}
               <Text
-                className="text-[26px] leading-8 text-white"
+                className="text-[26px] leading-8"
+                style={{ color: theme.text }}
               >
                 Create a competition
               </Text>
               <Text
-                className="text-sm leading-6 text-white/70"
+                className="text-sm leading-6"
+                style={{ color: theme.textMuted }}
               >
                 Three quick steps to choose the season structure, add teams,
                 and review before it goes live.
@@ -299,19 +311,21 @@ export default function CreateScreen() {
             </View>
 
             <View className="gap-2">
-              <View className="h-2 overflow-hidden rounded-full bg-white/15">
+              <View
+                className="h-2 overflow-hidden rounded-full"
+                style={{ backgroundColor: theme.cardMuted }}
+              >
                 <View
                   className="h-2 rounded-full"
-                  style={{ width: `${progress * 100}%`, backgroundColor: colors.accent }}
+                  style={{ width: `${progress * 100}%`, backgroundColor: theme.accent }}
                 />
               </View>
               <View className="flex-row justify-between">
                 {["Basics", "Teams", "Review"].map((label, i) => (
                   <Text
                     key={label}
-                    className={
-                      i + 1 === step ? "text-xs text-[#E6A817]" : "text-xs text-white/45"
-                    }
+                    className="text-xs"
+                    style={{ color: i + 1 === step ? theme.accent : theme.textSubtle }}
                   >
                     {i + 1}. {label}
                   </Text>
@@ -320,16 +334,24 @@ export default function CreateScreen() {
             </View>
 
             {stepError ? (
-              <View className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-                <Text className="text-sm text-red-900">
+              <View
+                className="rounded-2xl border px-4 py-3"
+                style={{ backgroundColor: theme.dangerMuted, borderColor: theme.danger }}
+              >
+                <Text className="text-sm" style={{ color: theme.danger }}>
                   {stepError}
                 </Text>
               </View>
             ) : null}
 
-            <View className="rounded-[28px] bg-white px-5 py-6">
+            <View
+              className="rounded-[28px] border px-5 py-6"
+              style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+            >
               {step === 1 ? (
                 <StepBasics
+                  isDark={isDark}
+                  theme={theme}
                   name={name}
                   setName={setName}
                   startDate={startDate}
@@ -363,6 +385,7 @@ export default function CreateScreen() {
 
               {step === 2 ? (
                 <StepTeams
+                  theme={theme}
                   teams={teams}
                   format={format}
                   onChangeName={updateTeamName}
@@ -374,6 +397,8 @@ export default function CreateScreen() {
 
               {step === 3 ? (
                 <StepReview
+                  isDark={isDark}
+                  theme={theme}
                   name={name}
                   season={season}
                   startDate={startDate}
@@ -428,6 +453,8 @@ export default function CreateScreen() {
 }
 
 function StepBasics({
+  isDark,
+  theme,
   name,
   setName,
   startDate,
@@ -457,6 +484,8 @@ function StepBasics({
   selectedCountry,
   onSelectCountry,
 }: {
+  isDark: boolean;
+  theme: AppTheme;
   name: string;
   setName: (v: string) => void;
   startDate: string;
@@ -486,19 +515,21 @@ function StepBasics({
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
-  return (
-    <View className="gap-4">
-      <Text className="text-base text-neutral-950">
-        Step 1 - Competition basics
-      </Text>
+  const { isTablet } = useAdaptiveLayout();
 
+  const formatFields = (
+    <>
       <CompetitionFormatPicker
         value={format}
         onChange={setFormat}
         required
       />
-      <FormatHelpCard format={format} />
+      <FormatHelpCard format={format} theme={theme} />
+    </>
+  );
 
+  const identityFields = (
+    <>
       <AuthTextField
         label="Competition name"
         required
@@ -518,6 +549,7 @@ function StepBasics({
               value={startDate}
               onChange={(value) => setStartDate(value ?? "")}
               maximumDate={parseCalendarDate(endDate) ?? undefined}
+              variant={isDark ? "dark" : "light"}
             />
           </View>
           <View className="flex-1">
@@ -527,6 +559,7 @@ function StepBasics({
               value={endDate}
               onChange={(value) => setEndDate(value ?? "")}
               minimumDate={parseCalendarDate(startDate) ?? undefined}
+              variant={isDark ? "dark" : "light"}
             />
           </View>
         </View>
@@ -545,12 +578,17 @@ function StepBasics({
         onChangeText={setCity}
         autoCapitalize="words"
       />
+    </>
+  );
 
+  const rulesFields = (
+    <>
       <LabelBlock label="Division / band">
         <View className="flex-row flex-wrap gap-2">
           {DIVISION_OPTIONS.map((opt) => (
             <Chip
               key={opt.id}
+              theme={theme}
               selected={divisionId === opt.id}
               label={opt.label}
               onPress={() => setDivisionId(opt.id)}
@@ -563,7 +601,7 @@ function StepBasics({
         <TiebreakerPicker
           value={tiebreakerId}
           onChange={setTiebreakerId}
-          variant="light"
+          variant={isDark ? "dark" : "light"}
         />
       ) : format === "knockout" ? (
         <View className="gap-3">
@@ -578,20 +616,28 @@ function StepBasics({
             onChange={setTieFormat}
             hasThirdPlace={hasThirdPlace}
             onHasThirdPlaceChange={setHasThirdPlace}
-            tone="light"
+            tone={isDark ? "dark" : "light"}
           />
         </View>
       ) : (
-        <GroupFormatConfigControl value={groupForm} onChange={setGroupForm} />
+        <GroupFormatConfigControl
+          value={groupForm}
+          onChange={setGroupForm}
+          tone={isDark ? "dark" : "light"}
+        />
       )}
+    </>
+  );
 
+  const descriptionAndLogo = (
+    <>
       <View className="gap-1.5">
         <FormFieldLabel label="Description" />
         <TextInput
           value={description}
           onChangeText={setDescription}
           placeholder="Rules, venues, contacts…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={theme.textSubtle}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
@@ -600,9 +646,11 @@ function StepBasics({
             paddingHorizontal: 16,
             paddingVertical: 12,
             borderRadius: 16,
-            backgroundColor: "#F5F5F5",
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.inputBorder,
+            color: theme.text,
           }}
-          className="border border-transparent text-base text-neutral-950"
+          className="border text-base"
         />
       </View>
 
@@ -616,6 +664,34 @@ function StepBasics({
         hint="Recommend image: 150x150 px, JPG, PNG, or WebP, max 5 MB, keep logo centered"
         accessibilityLabel="Competition logo"
       />
+    </>
+  );
+
+  return (
+    <View className="gap-4">
+      <Text className="text-base" style={{ color: theme.text }}>
+        Step 1 - Competition basics
+      </Text>
+
+      {isTablet ? (
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1 gap-4">
+            {formatFields}
+            {identityFields}
+          </View>
+          <View className="min-w-0 flex-1 gap-4">
+            {rulesFields}
+            {descriptionAndLogo}
+          </View>
+        </View>
+      ) : (
+        <>
+          {formatFields}
+          {identityFields}
+          {rulesFields}
+          {descriptionAndLogo}
+        </>
+      )}
     </View>
   );
 }
@@ -633,21 +709,25 @@ function Chip({
   label,
   selected,
   onPress,
+  theme,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  theme: AppTheme;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className={[
-        "rounded-full border px-3 py-2",
-        selected ? "border-[#4A148C] bg-[#F3E8FF]" : "border-neutral-200 bg-neutral-50",
-      ].join(" ")}
+      className="rounded-full border px-3 py-2 active:opacity-85"
+      style={{
+        backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+        borderColor: selected ? theme.brand : theme.cardBorder,
+      }}
     >
       <Text
-        className={selected ? "text-xs text-[#4A148C]" : "text-xs text-neutral-800"}
+        className="text-xs"
+        style={{ color: selected ? theme.brand : theme.textMuted }}
         numberOfLines={2}
       >
         {label}
@@ -656,22 +736,31 @@ function Chip({
   );
 }
 
-function FormatHelpCard({ format }: { format: CompetitionFormat }) {
+function FormatHelpCard({
+  format,
+  theme,
+}: {
+  format: CompetitionFormat;
+  theme: AppTheme;
+}) {
   const copy = COMPETITION_FORMAT_COPY[format];
   return (
-    <View className="gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+    <View
+      className="gap-2 rounded-2xl border px-4 py-3"
+      style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+    >
       <View className="flex-row items-start gap-2">
         <Ionicons
           name="information-circle-outline"
           size={18}
-          color={colors.brand}
+          color={theme.accent}
           style={{ marginTop: 2 }}
         />
         <View className="min-w-0 flex-1 gap-1">
-          <Text className="text-sm text-amber-950">
+          <Text className="text-sm" style={{ color: theme.text }}>
             {copy.label}
           </Text>
-          <Text className="text-xs leading-5 text-amber-900">
+          <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
             {copy.description} {copy.lockedHint}
           </Text>
         </View>
@@ -681,6 +770,7 @@ function FormatHelpCard({ format }: { format: CompetitionFormat }) {
 }
 
 function StepTeams({
+  theme,
   teams,
   format,
   onChangeName,
@@ -688,6 +778,7 @@ function StepTeams({
   onAdd,
   onRemove,
 }: {
+  theme: AppTheme;
   teams: TeamRow[];
   format: CompetitionFormat;
   onChangeName: (id: string, name: string) => void;
@@ -695,12 +786,14 @@ function StepTeams({
   onAdd: () => void;
   onRemove: (id: string) => void;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+
   return (
     <View className="gap-4">
-      <Text className="text-base text-neutral-950">
+      <Text className="text-base" style={{ color: theme.text }}>
         Step 2 - Teams
       </Text>
-      <Text className="text-sm leading-6 text-slate-600">
+      <Text className="text-sm leading-6" style={{ color: theme.textMuted }}>
         {format === "knockout"
           ? "Add at least two teams. List order becomes cup seeding, so the first team is seed 1."
           : format === "group"
@@ -708,9 +801,13 @@ function StepTeams({
             : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
-      <View className="gap-3">
+      <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
         {teams.map((row, index) => (
-          <View key={row.id} className="flex-row items-center gap-2">
+          <View
+            key={row.id}
+            className="flex-row items-center gap-2"
+            style={isTablet ? { width: "48%" } : undefined}
+          >
             <View className="mt-7">
               <LogoImageUpload
                 value={row.logo}
@@ -733,9 +830,10 @@ function StepTeams({
               <Pressable
                 accessibilityLabel={`Remove team ${index + 1}`}
                 onPress={() => onRemove(row.id)}
-                className="mt-8 h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100 active:bg-neutral-200"
+                className="mt-8 h-11 w-11 items-center justify-center rounded-2xl active:opacity-85"
+                style={{ backgroundColor: theme.dangerMuted }}
               >
-                <Ionicons name="trash-outline" size={20} color="#6B7280" />
+                <Ionicons name="trash-outline" size={20} color={theme.danger} />
               </Pressable>
             ) : (
               <View className="mt-8 w-11" />
@@ -746,10 +844,11 @@ function StepTeams({
 
       <Pressable
         onPress={onAdd}
-        className="flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-[#4A148C] bg-[#FAF5FF] py-3 active:opacity-80"
+        className="flex-row items-center justify-center gap-2 rounded-2xl border border-dashed py-3 active:opacity-80"
+        style={{ backgroundColor: theme.brandMuted, borderColor: theme.brand }}
       >
-        <Ionicons name="add-circle-outline" size={22} color={colors.brand} />
-        <Text className="text-sm text-[#4A148C]">
+        <Ionicons name="add-circle-outline" size={22} color={theme.brand} />
+        <Text className="text-sm" style={{ color: theme.brand }}>
           Add another team
         </Text>
       </Pressable>
@@ -758,6 +857,8 @@ function StepTeams({
 }
 
 function StepReview({
+  isDark,
+  theme,
   name,
   season,
   startDate,
@@ -776,6 +877,8 @@ function StepReview({
   teams,
   created,
 }: {
+  isDark: boolean;
+  theme: AppTheme;
   name: string;
   season: string;
   startDate: string;
@@ -794,6 +897,7 @@ function StepReview({
   teams: TeamRow[];
   created: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const divisionLabel =
     DIVISION_OPTIONS.find((d) => d.id === divisionId)?.label ?? divisionId;
 
@@ -813,11 +917,14 @@ function StepReview({
 
   return (
     <View className="gap-5">
-      <Text className="text-base text-neutral-950">
+      <Text className="text-base" style={{ color: theme.text }}>
         Step 3 - Review
       </Text>
 
-      <View className="gap-3 rounded-2xl bg-neutral-50 px-4 py-4">
+      <View
+        className="gap-3 rounded-2xl border px-4 py-4"
+        style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+      >
         <SummaryLine label="Competition">
           <View className="flex-row items-center gap-3">
             {leagueLogo ? (
@@ -827,7 +934,7 @@ function StepReview({
                 contentFit="cover"
               />
             ) : null}
-            <Text className="text-base text-neutral-950">
+            <Text className="text-base" style={{ color: theme.text }}>
               {name}
             </Text>
           </View>
@@ -865,7 +972,7 @@ function StepReview({
               code={country.code}
               name={country.name}
               flagWidth={18}
-              textClassName="text-base text-neutral-950"
+              textClassName={isDark ? "text-base text-white" : "text-base text-neutral-950"}
             />
           </SummaryLine>
         ) : null}
@@ -874,54 +981,76 @@ function StepReview({
         {description.trim() ? (
           <View className="gap-1 pt-1">
             <Text
-              className="text-xs uppercase tracking-wide text-slate-500"
+              className="text-xs uppercase tracking-wide"
+              style={{ color: theme.textMuted }}
             >
               Description
             </Text>
-            <Text className="text-sm text-neutral-800">
+            <Text className="text-sm" style={{ color: theme.text }}>
               {description.trim()}
             </Text>
           </View>
         ) : null}
-        <View className="mt-1 border-t border-neutral-200 pt-3">
+        <View
+          className="mt-1 border-t pt-3"
+          style={{ borderColor: theme.cardBorder }}
+        >
           <Text
-            className="mb-2 text-xs uppercase tracking-wide text-slate-500"
+            className="mb-2 text-xs uppercase tracking-wide"
+            style={{ color: theme.textMuted }}
           >
             Teams ({teams.length})
           </Text>
-          {teams.map((team) => (
-            <View key={team.id} className="flex-row items-center gap-2 py-0.5">
-              {team.logo ? (
-                <Image
-                  source={{ uri: team.logo.uri }}
-                  style={{ width: 24, height: 24, borderRadius: 8 }}
-                  contentFit="cover"
-                />
-              ) : (
-                <View className="h-6 w-6 rounded-lg bg-neutral-200" />
-              )}
-              <Text
-                className="text-sm text-neutral-900"
+          <View className={isTablet ? "flex-row flex-wrap gap-2" : ""}>
+            {teams.map((team) => (
+              <View
+                key={team.id}
+                className="flex-row items-center gap-2 py-0.5"
+                style={isTablet ? { width: "48%" } : undefined}
               >
-                {team.name.trim()}
-              </Text>
-            </View>
-          ))}
+                {team.logo ? (
+                  <Image
+                    source={{ uri: team.logo.uri }}
+                    style={{ width: 24, height: 24, borderRadius: 8 }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View
+                    className="h-6 w-6 rounded-lg"
+                    style={{ backgroundColor: theme.brandMuted }}
+                  />
+                )}
+                <Text
+                  className="min-w-0 flex-1 text-sm"
+                  style={{ color: theme.text }}
+                  numberOfLines={1}
+                >
+                  {team.name.trim()}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
       {created ? (
-        <View className="flex-row gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
-          <Ionicons name="checkmark-circle-outline" size={22} color="#15803d" style={{ marginTop: 2 }} />
-          <Text className="flex-1 text-sm leading-5 text-green-950">
+        <View
+          className="flex-row gap-3 rounded-2xl border px-4 py-3"
+          style={{ backgroundColor: theme.successMuted, borderColor: theme.success }}
+        >
+          <Ionicons name="checkmark-circle-outline" size={22} color={theme.success} style={{ marginTop: 2 }} />
+          <Text className="flex-1 text-sm leading-5" style={{ color: theme.text }}>
             Your competition is live. Open Manage to schedule games, seed a cup bracket, or
             invite players.
           </Text>
         </View>
       ) : (
-        <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <Ionicons name="information-circle-outline" size={22} color={colors.brand} style={{ marginTop: 2 }} />
-          <Text className="flex-1 text-sm leading-5 text-amber-950">
+        <View
+          className="flex-row gap-3 rounded-2xl border px-4 py-3"
+          style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+        >
+          <Ionicons name="information-circle-outline" size={22} color={theme.accent} style={{ marginTop: 2 }} />
+          <Text className="flex-1 text-sm leading-5" style={{ color: theme.text }}>
             After creating, open Manage to invite players or finish knockout seeding if needed.
           </Text>
         </View>
@@ -939,15 +1068,18 @@ function SummaryLine({
   value?: string;
   children?: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-0.5">
       <Text
-        className="text-xs uppercase tracking-wide text-slate-500"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
       {children ?? (
-        <Text className="text-base text-neutral-950">
+        <Text className="text-base" style={{ color: theme.text }}>
           {value}
         </Text>
       )}

@@ -25,9 +25,12 @@ import {
   NativeDatePickerField,
   type CountryPickerOption,
 } from "@/components/ui";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { posthog } from "@/lib/posthog";
@@ -97,6 +100,8 @@ export function PlayerProfileView({
   viewerName,
 }: PlayerProfileViewProps) {
   const router = useRouter();
+  const { isTablet } = useAdaptiveLayout();
+  const theme = useTheme();
   const [editOpen, setEditOpen] = useState(false);
   const [editInitialStep, setEditInitialStep] = useState<1 | 2>(1);
   const [addHighlightOpen, setAddHighlightOpen] = useState(false);
@@ -125,18 +130,26 @@ export function PlayerProfileView({
 
   return (
     <View className="gap-5 pb-10">
-      <View className="gap-4 rounded-[28px] bg-white/6 px-5 py-5">
-        <View className="flex-row items-center gap-4">
-          <PlayerAvatar player={player} size={88} />
+      <View
+        className={isTablet ? "gap-5 rounded-[28px] border px-6 py-6" : "gap-4 rounded-[28px] border px-5 py-5"}
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <View className={isTablet ? "flex-row items-center gap-5" : "flex-row items-center gap-4"}>
+          <PlayerAvatar player={player} size={isTablet ? 108 : 88} />
           <View className="min-w-0 flex-1 gap-1">
             <Text
-              className="text-2xl text-white"
+              className={isTablet ? "text-3xl" : "text-2xl"}
+              style={{ color: theme.text }}
               numberOfLines={2}
             >
               {player.name}
             </Text>
             <Text
-              className="text-sm text-white/60"
+              className="text-sm"
+              style={{ color: theme.textMuted }}
               numberOfLines={2}
             >
               {[player.age != null ? `${player.age} yrs` : null, primaryPosition ? labelForPosition(primaryPosition) : null]
@@ -145,7 +158,8 @@ export function PlayerProfileView({
             </Text>
             {activeSeason?.team ? (
               <Text
-                className="text-sm text-[#E6A817]"
+                className="text-sm"
+                style={{ color: theme.accent }}
                 numberOfLines={1}
               >
                 {activeSeason.team.name}
@@ -153,7 +167,8 @@ export function PlayerProfileView({
               </Text>
             ) : (
               <Text
-                className="text-sm text-white/45"
+                className="text-sm"
+                style={{ color: theme.textSubtle }}
               >
                 Not in a league yet
               </Text>
@@ -163,20 +178,22 @@ export function PlayerProfileView({
 
         {player.bio ? (
           <Text
-            className="text-sm leading-6 text-white/75"
+            className="text-sm leading-6"
+            style={{ color: theme.textMuted }}
           >
             {player.bio}
           </Text>
         ) : isOwner ? (
           <Text
-            className="text-sm leading-6 text-white/50"
+            className="text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             Add a short bio so league admins and teammates know your game.
           </Text>
         ) : null}
 
         {isOwner ? (
-          <View className="flex-row gap-2">
+          <View className={isTablet ? "max-w-[460px] flex-row gap-3" : "flex-row gap-2"}>
             <Button
               variant="accent"
               label="Edit profile"
@@ -215,13 +232,19 @@ export function PlayerProfileView({
       ) : null}
 
       {!membership?.inLeague && isOwner ? (
-        <View className="flex-row items-center gap-3 rounded-[20px] border border-accent-400/25 bg-accent-500/10 px-4 py-4">
-          <Ionicons name="people-outline" size={22} color="#E6A817" />
+        <View
+          className="flex-row items-center gap-3 rounded-[20px] border px-4 py-4"
+          style={{
+            backgroundColor: theme.accentMuted,
+            borderColor: theme.accent,
+          }}
+        >
+          <Ionicons name="people-outline" size={22} color={theme.accent} />
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Join a league
             </Text>
-            <Text className="text-xs text-white/55">
+            <Text className="text-xs" style={{ color: theme.textSubtle }}>
               Your profile will show your club status once you join a roster.
             </Text>
           </View>
@@ -230,7 +253,8 @@ export function PlayerProfileView({
             className="rounded-full bg-accent-500 px-3 py-2"
           >
             <Text
-              className="text-xs text-neutral-950"
+              className="text-xs"
+              style={{ color: colors.darkLabel }}
             >
               Join
             </Text>
@@ -238,24 +262,50 @@ export function PlayerProfileView({
         </View>
       ) : null}
 
-      <HighlightsSection
-        highlights={highlights}
-        isOwner={isOwner}
-        playerId={player.id}
-        loading={isOwner && ownHighlights.isLoading}
-        onAdd={() => setAddHighlightOpen(true)}
-      />
+      {isTablet ? (
+        <View className="flex-row items-start gap-5">
+          <View className="gap-5" style={{ flex: 1.35 }}>
+            <HighlightsSection
+              highlights={highlights}
+              isOwner={isOwner}
+              playerId={player.id}
+              loading={isOwner && ownHighlights.isLoading}
+              onAdd={() => setAddHighlightOpen(true)}
+            />
+            <AwardsSection awards={player.awards ?? []} />
+          </View>
+          <View className="gap-5" style={{ flex: 1 }}>
+            <CareerStatsSection
+              goals={stats.goals}
+              assists={stats.assists}
+              cards={stats.cards}
+              gamesPlayed={gamesPlayed}
+            />
+            <DetailsSection player={player} />
+          </View>
+        </View>
+      ) : (
+        <>
+          <HighlightsSection
+            highlights={highlights}
+            isOwner={isOwner}
+            playerId={player.id}
+            loading={isOwner && ownHighlights.isLoading}
+            onAdd={() => setAddHighlightOpen(true)}
+          />
 
-      <CareerStatsSection
-        goals={stats.goals}
-        assists={stats.assists}
-        cards={stats.cards}
-        gamesPlayed={gamesPlayed}
-      />
+          <CareerStatsSection
+            goals={stats.goals}
+            assists={stats.assists}
+            cards={stats.cards}
+            gamesPlayed={gamesPlayed}
+          />
 
-      <AwardsSection awards={player.awards ?? []} />
+          <AwardsSection awards={player.awards ?? []} />
 
-      <DetailsSection player={player} />
+          <DetailsSection player={player} />
+        </>
+      )}
 
       {isOwner ? (
         <>
@@ -291,21 +341,38 @@ export function PlayerProfileCreateState({
   ctaLabel?: string;
   onCreated?: (player: ApiPlayer) => void | Promise<void>;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   return (
-    <View className="gap-5 pb-10">
-      <View className="items-center gap-4 rounded-[28px] bg-white/6 px-5 py-8">
-        <View className="h-20 w-20 items-center justify-center rounded-[24px] bg-[#4A148C]">
-          <Ionicons name="person-add-outline" size={34} color="#E6A817" />
+    <View
+      className="gap-5 pb-10"
+      style={isTablet ? { alignItems: "center" } : undefined}
+    >
+      <View
+        className="w-full items-center gap-4 rounded-[28px] border px-5 py-8"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+          ...(isTablet ? { maxWidth: 620 } : null),
+        }}
+      >
+        <View
+          className="h-20 w-20 items-center justify-center rounded-[24px]"
+          style={{ backgroundColor: theme.brand }}
+        >
+          <Ionicons name="person-add-outline" size={34} color={theme.accent} />
         </View>
         <View className="gap-2">
           <Text
-            className="text-center text-2xl text-white"
+            className="text-center text-2xl"
+            style={{ color: theme.text }}
           >
             {title}
           </Text>
           <Text
-            className="text-center text-sm leading-6 text-white/60"
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textMuted }}
           >
             {description}
           </Text>
@@ -330,6 +397,7 @@ export function PlayerProfileCreateState({
 }
 
 function PlayerAvatar({ player, size }: { player: ApiPlayer; size: number }) {
+  const theme = useTheme();
   const initials = playerInitials(player.name);
   if (player.avatarUrl) {
     return (
@@ -342,11 +410,18 @@ function PlayerAvatar({ player, size }: { player: ApiPlayer; size: number }) {
   }
   return (
     <View
-      className="items-center justify-center border border-accent-300/40 bg-[#4A148C]"
-      style={{ width: size, height: size, borderRadius: size / 3 }}
+      className="items-center justify-center border"
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 3,
+        backgroundColor: theme.brand,
+        borderColor: theme.accent,
+      }}
     >
       <Text
-        className="text-2xl text-[#E6A817]"
+        className="text-2xl"
+        style={{ color: theme.accent }}
       >
         {initials}
       </Text>
@@ -365,22 +440,33 @@ function CompletenessNudge({
   onDismiss: () => void;
   onPick: (field: PlayerProfileMissingField) => void;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="gap-3 rounded-[20px] border border-white/10 bg-white/5 px-4 py-4">
+    <View
+      className="gap-3 rounded-[20px] border px-4 py-4"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
       <View className="flex-row items-start justify-between gap-3">
         <View className="min-w-0 flex-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             Profile {completeness}% complete
           </Text>
-          <Text className="text-xs text-white/50">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
             Add a little more so your player card feels finished.
           </Text>
         </View>
         <Pressable onPress={onDismiss} hitSlop={8}>
-          <Ionicons name="close" size={18} color="rgba(255,255,255,0.55)" />
+          <Ionicons name="close" size={18} color={theme.textSubtle} />
         </Pressable>
       </View>
-      <View className="h-2 overflow-hidden rounded-full bg-white/10">
+      <View
+        className="h-2 overflow-hidden rounded-full"
+        style={{ backgroundColor: theme.cardMuted }}
+      >
         <View
           className="h-full rounded-full bg-accent-500"
           style={{ width: `${Math.max(0, Math.min(100, completeness))}%` }}
@@ -391,10 +477,12 @@ function CompletenessNudge({
           <Pressable
             key={field}
             onPress={() => onPick(field)}
-            className="rounded-full bg-white/8 px-3 py-1.5"
+            className="rounded-full px-3 py-1.5"
+            style={{ backgroundColor: theme.accentMuted }}
           >
             <Text
-              className="text-xs text-white"
+              className="text-xs"
+              style={{ color: theme.text }}
             >
               {MISSING_COPY[field]}
             </Text>
@@ -418,6 +506,7 @@ function HighlightsSection({
   loading: boolean;
   onAdd: () => void;
 }) {
+  const theme = useTheme();
   const [playingId, setPlayingId] = useState<number | null>(null);
   const mutations = useHighlightMutations(playerId);
   const atCap = highlights.length >= 10;
@@ -434,7 +523,8 @@ function HighlightsSection({
             className={atCap ? "opacity-45" : ""}
           >
             <Text
-              className="text-xs text-accent-300"
+              className="text-xs"
+              style={{ color: theme.accent }}
             >
               Add
             </Text>
@@ -443,13 +533,16 @@ function HighlightsSection({
       }
     >
       {loading ? (
-        <View className="items-center rounded-[20px] bg-white/5 py-8">
-          <ActivityIndicator color={colors.accent} />
+        <View
+          className="items-center rounded-[20px] py-8"
+          style={{ backgroundColor: theme.cardMuted }}
+        >
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : highlights.length ? (
         <>
           {atCap && isOwner ? (
-            <Text className="text-xs text-white/45">
+            <Text className="text-xs" style={{ color: theme.textSubtle }}>
               You have 10 highlights. Delete one before adding another.
             </Text>
           ) : null}
@@ -486,13 +579,20 @@ function HighlightsSection({
           </View>
         </>
       ) : (
-        <View className="items-center gap-3 rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
-          <Ionicons name="play-circle-outline" size={34} color="#E6A817" />
-          <Text className="text-white">
+        <View
+          className="items-center gap-3 rounded-[22px] border px-5 py-8"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <Ionicons name="play-circle-outline" size={34} color={theme.accent} />
+          <Text style={{ color: theme.text }}>
             {isOwner ? "Add your first highlight" : "No highlights yet"}
           </Text>
           <Text
-            className="text-center text-sm leading-6 text-white/55"
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             {isOwner
               ? "Paste a YouTube clip to make this profile feel alive."
@@ -527,13 +627,24 @@ function HighlightCard({
   onDelete: () => void;
   deletePending: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+  const theme = useTheme();
   const thumbnail =
     item.thumbnailUrl ?? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
   return (
-    <View className="w-1/2 p-1">
-      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+    <View
+      className="p-1"
+      style={{ width: isTablet ? "33.3333%" : "50%" }}
+    >
+      <View
+        className="overflow-hidden rounded-[18px] border"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
         {playing ? (
-          <YoutubePlayer height={116} play videoId={item.videoId} />
+          <YoutubePlayer height={isTablet ? 132 : 116} play videoId={item.videoId} />
         ) : (
           <Pressable onPress={onPlay}>
             <Image
@@ -550,7 +661,8 @@ function HighlightCard({
         )}
         <View className="gap-2 px-3 py-3">
           <Text
-            className="text-xs text-white"
+            className="text-xs"
+            style={{ color: theme.text }}
             numberOfLines={2}
           >
             {item.title?.trim() || "Untitled highlight"}
@@ -582,15 +694,23 @@ function CareerStatsSection({
   cards: number;
   gamesPlayed: number;
 }) {
+  const theme = useTheme();
+
   if (gamesPlayed === 0) {
     return (
       <Section title="Career stats">
-        <View className="items-center gap-3 rounded-[22px] border border-white/10 bg-white/5 px-5 py-8">
-          <Ionicons name="stats-chart-outline" size={30} color="rgba(255,255,255,0.55)" />
-          <Text className="text-white">
+        <View
+          className="items-center gap-3 rounded-[22px] border px-5 py-8"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <Ionicons name="stats-chart-outline" size={30} color={theme.textSubtle} />
+          <Text style={{ color: theme.text }}>
             No games played yet
           </Text>
-          <Text className="text-center text-sm text-white/50">
+          <Text className="text-center text-sm" style={{ color: theme.textSubtle }}>
             Stats will appear after this player records match minutes.
           </Text>
         </View>
@@ -612,6 +732,7 @@ function CareerStatsSection({
 
 function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
   const router = useRouter();
+  const theme = useTheme();
   const motmAwards = awards.filter((award) => award.awardType === "motm");
 
   if (motmAwards.length === 0) {
@@ -620,18 +741,24 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
 
   return (
     <Section title="Awards">
-      <View className="gap-3 rounded-[22px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+      <View
+        className="gap-3 rounded-[22px] border px-4 py-4"
+        style={{
+          backgroundColor: theme.accentMuted,
+          borderColor: theme.accent,
+        }}
+      >
         <View className="flex-row items-center gap-3">
           <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500">
             <Ionicons name="star" size={21} color={colors.darkLabel} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {motmAwards.length === 1
                 ? "1 man of the match"
                 : `${motmAwards.length} man of the match awards`}
             </Text>
-            <Text className="pt-1 text-xs text-accent-100/70">
+            <Text className="pt-1 text-xs" style={{ color: theme.textMuted }}>
               Awarded from official Match Center selections.
             </Text>
           </View>
@@ -643,18 +770,19 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
             onPress={() => award.gameId && router.push(`/match/${award.gameId}`)}
             accessibilityRole="button"
             accessibilityLabel="Open match"
-            className="flex-row items-center justify-between gap-3 rounded-2xl bg-black/15 px-3 py-3 active:opacity-90"
+            className="flex-row items-center justify-between gap-3 rounded-2xl px-3 py-3 active:opacity-90"
+            style={{ backgroundColor: theme.card }}
           >
             <View className="min-w-0 flex-1">
-              <Text className="text-sm text-accent-100" numberOfLines={1}>
+              <Text className="text-sm" style={{ color: theme.text }} numberOfLines={1}>
                 {award.game?.homeTeam?.name ?? "Home"} vs{" "}
                 {award.game?.awayTeam?.name ?? "Away"}
               </Text>
-              <Text className="pt-1 text-xs text-accent-100/60">
+              <Text className="pt-1 text-xs" style={{ color: theme.textSubtle }}>
                 Man of the match
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={17} color={colors.accent} />
+            <Ionicons name="chevron-forward" size={17} color={theme.accent} />
           </Pressable>
         ))}
       </View>
@@ -663,6 +791,7 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
 }
 
 function DetailsSection({ player }: { player: ApiPlayer }) {
+  const theme = useTheme();
   const rows = [
     { label: "Preferred foot", value: player.preferredFoot },
     { label: "Height", value: formatHeight(player.heightCm) },
@@ -677,17 +806,25 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
   return (
     <Section title="Details">
       {hasDetails ? (
-        <View className="overflow-hidden rounded-[20px] border border-white/10 bg-white/5">
+        <View
+          className="overflow-hidden rounded-[20px] border"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
           {rows.map((row) => (
             <View
               key={row.label}
-              className="flex-row items-center justify-between gap-3 border-b border-white/10 px-4 py-3"
+              className="flex-row items-center justify-between gap-3 border-b px-4 py-3"
+              style={{ borderColor: theme.cardBorder }}
             >
-                <Text className="text-sm text-white/45">
+                <Text className="text-sm" style={{ color: theme.textSubtle }}>
                 {row.label}
               </Text>
               <Text
-                className="min-w-0 flex-1 text-right text-sm text-white"
+                className="min-w-0 flex-1 text-right text-sm"
+                style={{ color: theme.text }}
                 numberOfLines={1}
               >
                 {row.value ?? "-"}
@@ -696,7 +833,7 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
           ))}
         </View>
       ) : (
-        <Text className="text-sm text-white/50">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Profile details will appear here as they are added.
         </Text>
       )}
@@ -722,6 +859,8 @@ function PlayerProfileFormSheet({
   onSaved?: (player: ApiPlayer) => void | Promise<void>;
 }) {
   const mutations = usePlayerProfileMutations();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const [step, setStep] = useState<1 | 2>(initialStep);
   const [name, setName] = useState(player?.name ?? viewerName ?? "");
   const [country, setCountry] = useState<CountryPickerOption | null>(
@@ -888,6 +1027,7 @@ function PlayerProfileFormSheet({
               minimumDate={minDob}
               maximumDate={maxDob}
               helperText="Used to show your age on your profile."
+              variant={isDark ? "dark" : "light"}
             />
           </>
         ) : (
@@ -901,7 +1041,8 @@ function PlayerProfileFormSheet({
                 multiline
               />
               <Text
-                className="text-right text-xs text-slate-500"
+                className="text-right text-xs"
+                style={{ color: theme.textSubtle }}
               >
                 {bio.length}/300
               </Text>
@@ -914,7 +1055,7 @@ function PlayerProfileFormSheet({
                 keyboardType="number-pad"
                 placeholder="175"
               />
-              <Text className="text-xs leading-5 text-slate-500">
+              <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
                 {heightCm
                   ? formatHeight(Number(heightCm))
                   : "Optional. You can leave this blank."}
@@ -997,6 +1138,7 @@ function HighlightFormSheet({
   onClose: () => void;
   playerId: number;
 }) {
+  const theme = useTheme();
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const mutations = useHighlightMutations(playerId);
@@ -1043,7 +1185,8 @@ function HighlightFormSheet({
             placeholder="Optional"
           />
           <Text
-            className="text-right text-xs text-slate-500"
+            className="text-right text-xs"
+            style={{ color: theme.textSubtle }}
           >
             {title.length}/140
           </Text>
@@ -1074,14 +1217,19 @@ function PhotoPicker({
   onRemove: () => void;
 }) {
   const uri = photo?.uri ?? currentUrl;
+  const theme = useTheme();
   return (
     <View className="items-center gap-2">
       <Pressable
         onPress={onPick}
-        className="h-24 w-24 items-center justify-center overflow-hidden rounded-[28px] border-2 border-dashed border-neutral-300 bg-neutral-50"
+        className="h-24 w-24 items-center justify-center overflow-hidden rounded-[28px] border-2 border-dashed"
+        style={{
+          backgroundColor: theme.cardMuted,
+          borderColor: theme.inputBorder,
+        }}
       >
         {picking ? (
-          <ActivityIndicator color={colors.brand} />
+          <ActivityIndicator color={theme.brand} />
         ) : uri ? (
           <Image
             source={{ uri }}
@@ -1090,8 +1238,8 @@ function PhotoPicker({
           />
         ) : (
           <View className="items-center gap-1">
-            <Ionicons name="camera-outline" size={26} color={colors.brand} />
-            <Text className="text-xs text-slate-500">
+            <Ionicons name="camera-outline" size={26} color={theme.brand} />
+            <Text className="text-xs" style={{ color: theme.textSubtle }}>
               Add photo
             </Text>
           </View>
@@ -1099,7 +1247,7 @@ function PhotoPicker({
       </Pressable>
       {photo ? (
         <Pressable onPress={onRemove} hitSlop={8}>
-          <Text className="text-xs text-slate-500">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
             Remove selected photo
           </Text>
         </Pressable>
@@ -1119,10 +1267,13 @@ function PositionPicker({
   onChange: (value: PlayerPosition | null) => void;
   allowClear?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-2">
       <Text
-        className="text-[11px] uppercase tracking-wider text-slate-500"
+        className="text-[11px] uppercase tracking-wider"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>
@@ -1133,12 +1284,15 @@ function PositionPicker({
             <Pressable
               key={position}
               onPress={() => onChange(position)}
-              className={`rounded-xl border px-3 py-2 ${
-                active ? "border-brand-500 bg-brand-50" : "border-slate-200 bg-slate-50"
-              }`}
+              className="rounded-xl border px-3 py-2"
+              style={{
+                backgroundColor: active ? theme.brandMuted : theme.cardMuted,
+                borderColor: active ? theme.brand : theme.cardBorder,
+              }}
             >
               <Text
-                className={active ? "text-xs text-brand-700" : "text-xs text-slate-700"}
+                className="text-xs"
+                style={{ color: active ? theme.brand : theme.textMuted }}
               >
                 {labelForPosition(position)}
               </Text>
@@ -1148,9 +1302,13 @@ function PositionPicker({
         {allowClear ? (
           <Pressable
             onPress={() => onChange(null)}
-            className="rounded-xl border border-slate-200 bg-white px-3 py-2"
+            className="rounded-xl border px-3 py-2"
+            style={{
+              backgroundColor: theme.cardMuted,
+              borderColor: theme.cardBorder,
+            }}
           >
-            <Text className="text-xs text-slate-500">
+            <Text className="text-xs" style={{ color: theme.textSubtle }}>
               None
             </Text>
           </Pressable>
@@ -1167,10 +1325,13 @@ function FootPicker({
   value: "left" | "right" | "both" | null;
   onChange: (value: "left" | "right" | "both") => void;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-2">
       <Text
-        className="text-[11px] uppercase tracking-wider text-slate-500"
+        className="text-[11px] uppercase tracking-wider"
+        style={{ color: theme.textSubtle }}
       >
         Preferred foot
       </Text>
@@ -1181,12 +1342,15 @@ function FootPicker({
             <Pressable
               key={option.value}
               onPress={() => onChange(option.value)}
-              className={`flex-1 rounded-xl border px-3 py-2 ${
-                active ? "border-brand-500 bg-brand-50" : "border-slate-200 bg-slate-50"
-              }`}
+              className="flex-1 rounded-xl border px-3 py-2"
+              style={{
+                backgroundColor: active ? theme.brandMuted : theme.cardMuted,
+                borderColor: active ? theme.brand : theme.cardBorder,
+              }}
             >
               <Text
-                className={active ? "text-center text-sm text-brand-700" : "text-center text-sm text-slate-700"}
+                className="text-center text-sm"
+                style={{ color: active ? theme.brand : theme.textMuted }}
               >
                 {option.label}
               </Text>
@@ -1199,14 +1363,23 @@ function FootPicker({
 }
 
 function PrivateProfileState() {
+  const theme = useTheme();
+
   return (
-    <View className="items-center gap-3 rounded-[28px] border border-white/10 bg-white/5 px-6 py-12">
-      <Ionicons name="lock-closed-outline" size={34} color="rgba(255,255,255,0.65)" />
-      <Text className="text-lg text-white">
+    <View
+      className="items-center gap-3 rounded-[28px] border px-6 py-12"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <Ionicons name="lock-closed-outline" size={34} color={theme.textSubtle} />
+      <Text className="text-lg" style={{ color: theme.text }}>
         {"This profile isn't public"}
       </Text>
       <Text
-        className="text-center text-sm leading-6 text-white/55"
+        className="text-center text-sm leading-6"
+        style={{ color: theme.textSubtle }}
       >
         This player has chosen to keep their profile private.
       </Text>
@@ -1223,11 +1396,14 @@ function Section({
   action?: import("react").ReactNode;
   children: import("react").ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between">
         <Text
-          className="text-[12px] uppercase tracking-[2px] text-white/55"
+          className="text-[12px] uppercase tracking-[2px]"
+          style={{ color: theme.textSubtle }}
         >
           {title}
         </Text>
@@ -1247,13 +1423,21 @@ function StatCard({
   value: number;
   label: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="min-w-[132px] flex-1 rounded-[20px] bg-white/6 px-4 py-4">
-      <Ionicons name={icon} size={21} color="#E6A817" />
-        <Text className="pt-3 text-2xl text-white">
+    <View
+      className="min-w-[132px] flex-1 rounded-[20px] border px-4 py-4"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <Ionicons name={icon} size={21} color={theme.accent} />
+        <Text className="pt-3 text-2xl" style={{ color: theme.text }}>
         {value}
       </Text>
-      <Text className="text-xs text-white/55">
+      <Text className="text-xs" style={{ color: theme.textSubtle }}>
         {label}
       </Text>
     </View>
@@ -1271,18 +1455,21 @@ function IconButton({
   danger?: boolean;
   disabled?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      className={`h-8 w-8 items-center justify-center rounded-full bg-white/8 ${
+      className={`h-8 w-8 items-center justify-center rounded-full ${
         disabled ? "opacity-45" : ""
       }`}
+      style={{ backgroundColor: danger ? theme.dangerMuted : theme.cardMuted }}
     >
       <Ionicons
         name={icon}
         size={15}
-        color={danger ? "#FCA5A5" : "rgba(255,255,255,0.75)"}
+        color={danger ? theme.danger : theme.textMuted}
       />
     </Pressable>
   );

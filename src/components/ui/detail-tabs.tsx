@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { colors } from "@/constants";
+import { useTheme } from "@/color/use-theme";
 
 export type DetailTab<T extends string> = {
   key: T;
@@ -25,8 +25,12 @@ export function DetailTabs<T extends string>({
   onTabChange,
   scrollable = false,
 }: Props<T>) {
+  const theme = useTheme();
   const row = (
-    <View className="flex-row gap-6 border-b border-white/10 px-1">
+    <View
+      className="flex-row gap-6 border-b px-1"
+      style={{ borderColor: theme.cardBorder }}
+    >
       {tabs.map((tab) => {
         const isActive = tab.key === activeTab;
         return (
@@ -38,13 +42,13 @@ export function DetailTabs<T extends string>({
             className="pb-3 pt-1"
             style={{
               borderBottomWidth: 2,
-              borderBottomColor: isActive ? colors.accent : "transparent",
+              borderBottomColor: isActive ? theme.accent : "transparent",
               marginBottom: -1,
             }}
           >
             <Text
               style={{
-                color: isActive ? colors.accent : "rgba(255,255,255,0.55)",
+                color: isActive ? theme.accent : theme.textSubtle,
               }}
               className="text-[14px]"
             >

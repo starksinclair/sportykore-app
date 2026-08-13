@@ -11,8 +11,8 @@ import {
 } from "react-native";
 
 import type { ApiGameDetail, GameStatus } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { colors } from "@/constants";
 import { calculateCurrentMinute } from "@/lib/game-time";
 import { posthog } from "@/lib/posthog";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
@@ -77,6 +77,7 @@ export function MatchCenterSubstitutionPanel({
   teamId,
   enabled,
 }: Props) {
+  const theme = useTheme();
   const lineupsQuery = useGameLineups(game.id);
   const recordMutation = useRecordSubstitutions(leagueId, seasonId, game.id);
   const deleteMutation = useDeleteStat(leagueId, seasonId);
@@ -234,17 +235,24 @@ export function MatchCenterSubstitutionPanel({
   const hasLineup = starters.length > 0;
 
   return (
-    <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+    <View
+      className="gap-4 rounded-[24px] border px-4 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="swap-horizontal-outline" size={20} color={colors.accent} />
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="swap-horizontal-outline" size={20} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             Substitutions
           </Text>
           <Text
-            className="text-xs leading-5 text-white/50"
+            className="text-xs leading-5"
+            style={{ color: theme.textSubtle }}
             numberOfLines={2}
           >
             Record player swaps from the selected team lineup.
@@ -255,14 +263,14 @@ export function MatchCenterSubstitutionPanel({
       {canDraft ? (
         <View className="gap-3">
           {!hasLineup && !lineupsQuery.isLoading ? (
-            <Text className="text-sm text-white/45">
+            <Text className="text-sm" style={{ color: theme.textSubtle }}>
               Set this team’s lineup before recording substitutions.
             </Text>
           ) : null}
 
           {lineupsQuery.isLoading ? (
             <View className="items-center py-3">
-              <ActivityIndicator color={colors.accent} />
+              <ActivityIndicator color={theme.accent} />
             </View>
           ) : null}
 
@@ -273,11 +281,16 @@ export function MatchCenterSubstitutionPanel({
                 return (
                   <View
                     key={row.key}
-                    className="gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] px-3 py-3"
+                    className="gap-3 rounded-[20px] border px-3 py-3"
+                    style={{
+                      backgroundColor: theme.cardMuted,
+                      borderColor: theme.cardBorder,
+                    }}
                   >
                     <View className="flex-row items-center justify-between">
                       <Text
-                        className="text-sm text-white"
+                        className="text-sm"
+                        style={{ color: theme.text }}
                       >
                         Swap {index + 1}
                       </Text>
@@ -288,9 +301,10 @@ export function MatchCenterSubstitutionPanel({
                           }
                           hitSlop={8}
                           accessibilityLabel={`Remove swap ${index + 1}`}
-                          className="h-8 w-8 items-center justify-center rounded-lg bg-white/10"
+                          className="h-8 w-8 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: theme.dangerMuted }}
                         >
-                          <Ionicons name="trash-outline" size={16} color="#fca5a5" />
+                          <Ionicons name="trash-outline" size={16} color={theme.danger} />
                         </Pressable>
                       ) : null}
                     </View>
@@ -305,6 +319,7 @@ export function MatchCenterSubstitutionPanel({
                       onSelect={(entry) =>
                         updateDraft(row.key, { playerOffId: entry.playerId })
                       }
+                      theme={theme}
                     />
 
                     <PlayerDropdown
@@ -317,12 +332,12 @@ export function MatchCenterSubstitutionPanel({
                       onSelect={(entry) =>
                         updateDraft(row.key, { playerOnId: entry.playerId })
                       }
+                      theme={theme}
                     />
 
                     <View className="w-28">
                       <AuthTextField
                         label="Minute"
-                        labelClassName="text-white/60"
                         value={row.minute}
                         onChangeText={(value) =>
                           updateDraft(row.key, { minute: value })
@@ -345,6 +360,7 @@ export function MatchCenterSubstitutionPanel({
                   onPress={handleAddRow}
                   disabled={isBusy || drafts.length >= MAX_DRAFT_SUBS}
                   tone="subtle"
+                  theme={theme}
                 />
               </View>
               <View className="flex-1">
@@ -355,25 +371,30 @@ export function MatchCenterSubstitutionPanel({
                   loading={recordMutation.isPending}
                   disabled={isBusy}
                   tone="gold"
+                  theme={theme}
                 />
               </View>
             </View>
           ) : null}
         </View>
       ) : (
-          <Text className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Substitutions can be recorded while the match is live.
         </Text>
       )}
 
-      <View className="gap-2 border-t border-white/10 pt-4">
+      <View
+        className="gap-2 border-t pt-4"
+        style={{ borderColor: theme.cardBorder }}
+      >
         <Text
-          className="text-[11px] uppercase tracking-wider text-white/45"
+          className="text-[11px] uppercase tracking-wider"
+          style={{ color: theme.textSubtle }}
         >
           Recorded
         </Text>
         {recorded.length === 0 ? (
-          <Text className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             No substitutions recorded for this team yet.
           </Text>
         ) : (
@@ -385,16 +406,19 @@ export function MatchCenterSubstitutionPanel({
             return (
               <View
                 key={`${pair.off.id}-${pair.on.id}`}
-                className="flex-row items-center gap-3 rounded-xl bg-white/6 px-3 py-3"
+                className="flex-row items-center gap-3 rounded-xl px-3 py-3"
+                style={{ backgroundColor: theme.cardMuted }}
               >
                 <View className="flex-1">
                   <Text
-                    className="text-sm text-white"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {offName} → {onName}
                   </Text>
-                  <Text     
-                    className="text-xs text-white/45"
+                  <Text
+                    className="text-xs"
+                    style={{ color: theme.textSubtle }}
                   >
                     {minuteLabel}
                   </Text>
@@ -403,9 +427,10 @@ export function MatchCenterSubstitutionPanel({
                   onPress={() => handleDeletePair(pair)}
                   disabled={isBusy}
                   accessibilityLabel={`Delete substitution ${offName} for ${onName}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                  className="h-10 w-10 items-center justify-center rounded-xl active:opacity-85"
+                  style={{ backgroundColor: theme.dangerMuted }}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#fca5a5" />
+                  <Ionicons name="trash-outline" size={18} color={theme.danger} />
                 </Pressable>
               </View>
             );
@@ -424,6 +449,7 @@ function PlayerDropdown({
   selected,
   emptyText,
   onSelect,
+  theme,
 }: {
   label: string;
   helper: string;
@@ -432,6 +458,7 @@ function PlayerDropdown({
   selected?: GameLineup;
   emptyText: string;
   onSelect: (entry: GameLineup) => void;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -449,34 +476,43 @@ function PlayerDropdown({
   return (
     <View className="gap-2">
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
-      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+      <View
+        className="overflow-hidden rounded-[18px] border"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <Pressable
           onPress={() => setOpen((current) => !current)}
           className="flex-row items-center gap-3 px-3.5 py-3"
           accessibilityRole="button"
           accessibilityLabel={label}
         >
-          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+          <View
+            className="h-9 w-9 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
             <Ionicons
               name={selected ? "person" : "person-outline"}
               size={18}
-              color={colors.accent}
+              color={theme.accent}
             />
           </View>
           <View className="min-w-0 flex-1">
             <Text
-              className={selected ? "text-sm text-white" : "text-sm text-white/65"}
+              className="text-sm"
+              style={{ color: selected ? theme.text : theme.textSubtle }}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
               {selected ? playerLabel(selected) : placeholder}
             </Text>
             <Text
-              className="pt-0.5 text-xs text-white/45"
+              className="pt-0.5 text-xs"
+              style={{ color: theme.textSubtle }}
               numberOfLines={1}
             >
               {selected ? helper : `${options.length} available`}
@@ -485,29 +521,35 @@ function PlayerDropdown({
           <Ionicons
             name={open ? "chevron-up" : "chevron-down"}
             size={18}
-            color="rgba(255,255,255,0.45)"
+            color={theme.textSubtle}
           />
         </Pressable>
 
         {open ? (
-          <View className="border-t border-white/10 bg-neutral-950/70">
+          <View
+            className="border-t"
+            style={{ backgroundColor: theme.surface, borderColor: theme.cardBorder }}
+          >
             {options.length > 5 ? (
-              <View className="flex-row items-center gap-2 border-b border-white/10 px-3 py-2">
+              <View
+                className="flex-row items-center gap-2 border-b px-3 py-2"
+                style={{ borderColor: theme.cardBorder }}
+              >
                 <Ionicons
                   name="search"
                   size={16}
-                  color="rgba(255,255,255,0.45)"
+                  color={theme.textSubtle}
                 />
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
                   placeholder="Search players"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={theme.textSubtle}
                   autoCorrect={false}
                   style={{
                     flex: 1,
                     fontSize: 14,
-                    color: colors.white,
+                    color: theme.text,
                     paddingVertical: 6,
                   }}
                 />
@@ -516,7 +558,7 @@ function PlayerDropdown({
                     <Ionicons
                       name="close-circle"
                       size={16}
-                      color="rgba(255,255,255,0.45)"
+                      color={theme.textSubtle}
                     />
                   </Pressable>
                 ) : null}
@@ -534,18 +576,22 @@ function PlayerDropdown({
                   <Pressable
                     key={entry.id}
                     onPress={() => handleSelect(entry)}
-                    className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
-                      active ? "bg-accent-500/10" : "bg-transparent"
-                    }`}
+                    className="flex-row items-center gap-3 border-b px-3.5 py-3 active:opacity-85"
+                    style={{
+                      backgroundColor: active ? theme.accentMuted : "transparent",
+                      borderColor: theme.cardBorder,
+                    }}
                   >
                     <Text
-                      className="w-9 text-xs text-white/45"
+                      className="w-9 text-xs"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={1}
                     >
                       {entry.jerseyNumber != null ? `#${entry.jerseyNumber}` : "-"}
                     </Text>
                     <Text
-                      className={active ? "min-w-0 flex-1 text-sm text-accent-100" : "min-w-0 flex-1 text-sm text-white"}
+                      className="min-w-0 flex-1 text-sm"
+                      style={{ color: active ? theme.accent : theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -555,17 +601,21 @@ function PlayerDropdown({
                       <Ionicons
                         name="checkmark-circle"
                         size={20}
-                        color={colors.accent}
+                        color={theme.accent}
                       />
                     ) : (
-                      <View className="h-5 w-5 rounded-full border border-white/20" />
+                      <View
+                        className="h-5 w-5 rounded-full border"
+                        style={{ borderColor: theme.cardBorder }}
+                      />
                     )}
                   </Pressable>
                 );
               })}
               {filtered.length === 0 ? (
                 <Text
-                  className="px-4 py-4 text-sm text-white/45"
+                  className="px-4 py-4 text-sm"
+                  style={{ color: theme.textSubtle }}
                 >
                   {q ? `No players match "${query.trim()}".` : emptyText}
                 </Text>
@@ -585,6 +635,7 @@ function SubstitutionActionButton({
   loading,
   disabled,
   onPress,
+  theme,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -592,6 +643,7 @@ function SubstitutionActionButton({
   loading?: boolean;
   disabled?: boolean;
   onPress: () => void;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const inactive = disabled || loading;
   const gold = tone === "gold";
@@ -601,15 +653,17 @@ function SubstitutionActionButton({
       onPress={onPress}
       disabled={inactive}
       accessibilityRole="button"
-      className={`h-11 flex-row items-center justify-center gap-1.5 rounded-full border px-3 ${
-        gold
-          ? "border-accent-400 bg-accent-500 active:opacity-90"
-          : "border-white/15 bg-white/10 active:bg-white/15"
-      } ${inactive ? "opacity-50" : ""}`}
+      className={`h-11 flex-row items-center justify-center gap-1.5 rounded-full border px-3 active:opacity-90 ${
+        inactive ? "opacity-50" : ""
+      }`}
+      style={{
+        backgroundColor: gold ? theme.accent : theme.cardMuted,
+        borderColor: gold ? theme.accent : theme.cardBorder,
+      }}
     >
       {loading ? (
         <ActivityIndicator
-          color={gold ? colors.darkLabel : colors.white}
+          color={gold ? theme.textInverse : theme.text}
           size="small"
         />
       ) : (
@@ -617,12 +671,11 @@ function SubstitutionActionButton({
           <Ionicons
             name={icon}
             size={16}
-            color={gold ? colors.darkLabel : colors.white}
+            color={gold ? theme.textInverse : theme.text}
           />
           <Text
-            className={`min-w-0 text-center text-xs ${
-              gold ? "text-neutral-950" : "text-white"
-            }`}
+            className="min-w-0 text-center text-xs"
+            style={{ color: gold ? theme.textInverse : theme.text }}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.82}

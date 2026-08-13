@@ -10,10 +10,11 @@ import {
 } from "react-native";
 
 import type { ApiStage, ApiTeam, KnockoutStageConfig } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { colors } from "@/constants";
 import {
   BracketView,
   KnockoutTieFormatControl,
@@ -43,6 +44,7 @@ export function ManageKnockoutTab({
   stages,
   teams,
 }: Props) {
+  const theme = useTheme();
   const knockouts = useMemo(
     () =>
       stages
@@ -63,17 +65,24 @@ export function ManageKnockoutTab({
 
   return (
     <View className="gap-6 pb-8">
-      <View className="rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="trophy-outline" size={22} color={colors.accent} />
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="trophy-outline" size={22} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Knockout cup
             </Text>
             <Text
-              className="text-xs leading-5 text-white/50"
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
               numberOfLines={2}
             >
               {hasKnockoutStage
@@ -95,21 +104,23 @@ export function ManageKnockoutTab({
             disabled={hasKnockoutStage}
             accessibilityRole="button"
             accessibilityLabel="Add cup"
-            className={`h-10 flex-row items-center gap-1.5 rounded-full px-3 ${
-              hasKnockoutStage
-                ? "bg-white/10 opacity-50"
-                : "bg-accent-500 active:opacity-90"
+            className={`h-10 flex-row items-center gap-1.5 rounded-full px-3 active:opacity-90 ${
+              hasKnockoutStage ? "opacity-50" : ""
             }`}
+            style={{
+              backgroundColor: hasKnockoutStage ? theme.cardMuted : theme.accent,
+            }}
           >
             <Ionicons
               name="add"
               size={16}
-              color={hasKnockoutStage ? colors.white : colors.darkLabel}
+              color={hasKnockoutStage ? theme.textMuted : theme.textInverse}
             />
             <Text
-              className={`text-xs ${
-                hasKnockoutStage ? "text-white" : "text-neutral-950"
-              }`}
+              className="text-xs"
+              style={{
+                color: hasKnockoutStage ? theme.textMuted : theme.textInverse,
+              }}
               numberOfLines={1}
             >
               Add
@@ -119,12 +130,16 @@ export function ManageKnockoutTab({
       </View>
 
       {knockouts.length === 0 ? (
-        <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <Text className="text-base text-white">
+        <View
+          className="rounded-[22px] border border-dashed px-5 py-8"
+          style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+        >
+          <Text className="text-base" style={{ color: theme.text }}>
             No knockout stage
           </Text>
           <Text
-            className="pt-2 text-sm leading-6 text-white/55"
+            className="pt-2 text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             Add a cup stage, then seed teams in draw order to build the bracket.
           </Text>
@@ -138,14 +153,14 @@ export function ManageKnockoutTab({
                 <Pressable
                   key={stage.id}
                   onPress={() => setSelectedStageId(stage.id)}
-                  className={`rounded-xl border px-3 py-2 ${
-                    active
-                      ? "border-accent-400 bg-accent-500/20"
-                      : "border-white/15 bg-white/5"
-                  }`}
+                  className="rounded-xl border px-3 py-2 active:opacity-85"
+                  style={{
+                    backgroundColor: active ? theme.accentMuted : theme.card,
+                    borderColor: active ? theme.accent : theme.cardBorder,
+                  }}
                 >
                   <Text
-                    className={active ? "text-accent-200" : "text-white/70"}
+                    style={{ color: active ? theme.accent : theme.textMuted }}
                   >
                     {stage.name} · {stage.status}
                   </Text>
@@ -205,6 +220,8 @@ function KnockoutStagePanel({
   onOpenSeed: () => void;
 }) {
   const router = useRouter();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const bracketQuery = useStageBracket(stage.id, true);
   const nextRoundMutation = useGenerateNextRound(leagueId, seasonId);
   const ties = bracketQuery.data?.ties ?? [];
@@ -237,7 +254,10 @@ function KnockoutStagePanel({
   };
 
   return (
-    <View className="gap-4 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+    <View
+      className="gap-4 rounded-[22px] border px-4 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row flex-wrap gap-2">
         {needsSeed ? (
           <KnockoutActionButton
@@ -271,11 +291,11 @@ function KnockoutStagePanel({
       </View>
 
       {bracketQuery.isLoading ? (
-        <ActivityIndicator color="#E6A817" />
+        <ActivityIndicator color={theme.accent} />
       ) : (
         <BracketView
           ties={ties}
-          tone="dark"
+          tone={isDark ? "dark" : "light"}
           hasThirdPlace={Boolean(
             (stage.config as KnockoutStageConfig | undefined)?.format
               ?.has_third_place,
@@ -313,6 +333,7 @@ function KnockoutActionButton({
   disabled?: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
   const inactive = disabled || loading;
   const gold = tone === "gold";
 
@@ -321,16 +342,19 @@ function KnockoutActionButton({
       onPress={onPress}
       disabled={inactive}
       accessibilityRole="button"
-      style={{ flexGrow: 1, minWidth: 148 }}
-      className={`h-10 flex-row items-center justify-center gap-1.5 rounded-full border px-3 ${
-        gold
-          ? "border-accent-400 bg-accent-500 active:opacity-90"
-          : "border-white/15 bg-white/10 active:bg-white/15"
-      } ${inactive ? "opacity-50" : ""}`}
+      className={`h-10 flex-row items-center justify-center gap-1.5 rounded-full border px-3 active:opacity-90 ${
+        inactive ? "opacity-50" : ""
+      }`}
+      style={{
+        flexGrow: 1,
+        minWidth: 148,
+        backgroundColor: gold ? theme.accent : theme.cardMuted,
+        borderColor: gold ? theme.accent : theme.cardBorder,
+      }}
     >
       {loading ? (
         <ActivityIndicator
-          color={gold ? colors.darkLabel : colors.white}
+          color={gold ? theme.textInverse : theme.text}
           size="small"
         />
       ) : (
@@ -338,12 +362,11 @@ function KnockoutActionButton({
           <Ionicons
             name={icon}
             size={15}
-            color={gold ? colors.darkLabel : colors.white}
+            color={gold ? theme.textInverse : theme.textMuted}
           />
           <Text
-            className={`min-w-0 text-center text-xs ${
-              gold ? "text-neutral-950" : "text-white"
-            }`}
+            className="min-w-0 text-center text-xs"
+            style={{ color: gold ? theme.textInverse : theme.text }}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.82}
@@ -445,6 +468,7 @@ function SeedKnockoutSheet({
   stage: ApiStage;
   teams: ApiTeam[];
 }) {
+  const theme = useTheme();
   const seedMutation = useSeedKnockoutStage(leagueId, seasonId);
   const [order, setOrder] = useState<ApiTeam[]>(() => [...teams]);
   const [step, setStep] = useState<"order" | "preview">("order");
@@ -508,16 +532,19 @@ function SeedKnockoutSheet({
           ? "Top of the list is seed 1. Teams pair in list order - 1 v 2, 3 v 4 - and byes go to the top seeds."
           : "Check the matchups before you lock them in."
       }
-      variant="dark"
       scrollEnabled
     >
       {step === "order" ? (
         <View className="gap-4">
           <SeedSheetBlock title="Seed order">
-            <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
-              <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
+            <View
+              className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+              style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+            >
+              <Ionicons name="information-circle-outline" size={18} color={theme.accent} />
               <Text
-                className="min-w-0 flex-1 text-xs leading-5 text-white/60"
+                className="min-w-0 flex-1 text-xs leading-5"
+                style={{ color: theme.textMuted }}
               >
                 {order.length} teams
                 {byeCount > 0
@@ -530,17 +557,20 @@ function SeedKnockoutSheet({
             {order.map((team, index) => (
               <View
                 key={team.id}
-                className="flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-3 py-3"
+                className="flex-row items-center gap-3 rounded-[18px] border px-3 py-3"
+                style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
               >
-                <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+                <View className="h-9 w-9 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
                   <Text
-                    className="text-xs text-accent-100"
+                    className="text-xs"
+                    style={{ color: theme.accent }}
                   >
                     {index + 1}
                   </Text>
                 </View>
                 <Text
-                  className="min-w-0 flex-1 text-sm text-white"
+                  className="min-w-0 flex-1 text-sm"
+                  style={{ color: theme.text }}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
@@ -577,16 +607,21 @@ function SeedKnockoutSheet({
             </View>
             {byeExplanation(order.length) ? (
               <Text
-                className="text-sm leading-6 text-white/55"
+                className="text-sm leading-6"
+                style={{ color: theme.textSubtle }}
               >
                 {byeExplanation(order.length)}
               </Text>
             ) : null}
           </SeedSheetBlock>
-          <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/25 bg-accent-500/10 px-3 py-3">
-            <Ionicons name="warning" size={18} color={colors.accent} />
+          <View
+            className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+            style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+          >
+            <Ionicons name="warning" size={18} color={theme.accent} />
             <Text
-              className="min-w-0 flex-1 text-sm leading-5 text-white/65"
+              className="min-w-0 flex-1 text-sm leading-5"
+              style={{ color: theme.textMuted }}
             >
               Generating the bracket locks the seeding. You can&apos;t reorder
               or re-seed teams once ties and fixtures are created.
@@ -620,10 +655,16 @@ function SeedSheetBlock({
   title: string;
   children: React.ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+    <View
+      className="gap-3 rounded-[18px] border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
@@ -641,21 +682,22 @@ function SeedMoveButton({
   disabled?: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      className={`h-9 w-9 items-center justify-center rounded-xl border ${
-        disabled
-          ? "border-white/5 bg-white/5 opacity-35"
-          : "border-white/15 bg-white/10 active:bg-white/15"
+      className={`h-9 w-9 items-center justify-center rounded-xl border active:opacity-85 ${
+        disabled ? "opacity-35" : ""
       }`}
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
     >
       <Ionicons
         name={icon}
         size={17}
-        color={disabled ? "rgba(255,255,255,0.35)" : colors.white}
+        color={disabled ? theme.textSubtle : theme.text}
       />
     </Pressable>
   );

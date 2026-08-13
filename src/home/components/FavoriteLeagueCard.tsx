@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import { useAuthGate } from "@/auth";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
@@ -20,6 +21,7 @@ type Props = {
 
 export function FavoriteLeagueCard({ entry, params }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const { league, country } = entry;
   const { mutate: favouriteLeague } = useFavouriteLeague(params);
   const { mutate: unfavouriteLeague } = useUnfavouriteLeague(params);
@@ -27,10 +29,19 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
 
   return (
     <View
-      className="overflow-hidden rounded-[13px] border border-neutral-200 bg-white"
-      style={styles.card}
+      className="overflow-hidden rounded-[13px] border"
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+      ]}
     >
-      <View className="flex-row items-center justify-between gap-3 bg-white px-4 py-3">
+      <View
+        className="flex-row items-center justify-between gap-3 px-4 py-3"
+        style={{ backgroundColor: theme.card }}
+      >
         <EntityLogo
           logoUrl={league.logoUrl}
           variant="league"
@@ -41,7 +52,8 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
         <View className="min-w-0 flex-1">
           <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
             <Text
-              className="text-[13px] text-neutral-950"
+              className="text-[13px]"
+              style={{ color: theme.text }}
               numberOfLines={1}
             >
               {league.name}
@@ -51,7 +63,8 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
             code={country.code}
             name={country.name}
             flagWidth={14}
-            textClassName="text-[9px] text-neutral-500"
+            textClassName="text-[9px]"
+            textStyle={{ color: theme.textSubtle }}
           />
         </View>
         <View className="flex-row items-center gap-2">
@@ -71,7 +84,11 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
                 }
               })
             }
-            className="h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white"
+            className="h-9 w-9 items-center justify-center rounded-full border"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
+            }}
           >
             <Ionicons
               name={league.isFavourited ? "heart" : "heart-outline"}
@@ -83,15 +100,12 @@ export function FavoriteLeagueCard({ entry, params }: Props) {
       </View>
 
       {(league.games ?? []).length > 0 ? (
-        <View className="border-t border-neutral-200">
+        <View className="border-t" style={{ borderColor: theme.cardBorder }}>
           {(league.games ?? []).map((game, index) => (
             <View
               key={game.id}
-              className={
-                index !== (league.games ?? []).length - 1
-                  ? "border-b border-neutral-200"
-                  : ""
-              }
+              className={index !== (league.games ?? []).length - 1 ? "border-b" : ""}
+              style={{ borderColor: theme.cardBorder }}
             >
               <MatchRow game={game} />
             </View>

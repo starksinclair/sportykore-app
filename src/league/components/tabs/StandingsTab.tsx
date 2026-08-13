@@ -8,7 +8,9 @@ import type {
   ApiStandingZone,
   StandingZoneType,
 } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 const ZONE_COLORS: Record<StandingZoneType, string> = {
   qualified: "#22C55E",
@@ -60,6 +62,9 @@ export function LeagueStandingsTab({
   onRowMarkerPress,
 }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+  const spacious = isTablet && !compact;
   const displayStandings = zones?.length
     ? applyZonesToStandings(
         standings,
@@ -71,7 +76,7 @@ export function LeagueStandingsTab({
 
   if (!displayStandings.length) {
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Standings not available yet.
       </Text>
     );
@@ -82,36 +87,40 @@ export function LeagueStandingsTab({
   return (
     <View className="gap-3">
       {title ? (
-        <Text
-          className="text-sm text-white"
-        >
+        <Text className="text-sm" style={{ color: theme.text }}>
           {title}
         </Text>
       ) : null}
 
-      <View className="overflow-hidden rounded-[24px] bg-white/6">
+      <View
+        className="overflow-hidden rounded-[24px] border"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View
-          className={`flex-row items-center gap-1 border-b border-white/10 px-2 ${
-            compact ? "py-2" : "py-3"
+          className={`flex-row items-center border-b px-2 ${
+            spacious ? "gap-2 py-3.5" : compact ? "gap-1 py-2" : "gap-1 py-3"
           }`}
+          style={{ borderColor: theme.cardBorder }}
         >
           <Text
-            className="w-8 text-[10px] text-white/55"
+            className={`${spacious ? "w-10" : "w-8"} text-[10px]`}
+            style={{ color: theme.textSubtle }}
           >
             #
           </Text>
           <Text
-            className="min-w-0 flex-1 text-[10px] uppercase tracking-[1.5px] text-white/55"
+            className="min-w-0 flex-1 text-[10px] uppercase tracking-[1.5px]"
+            style={{ color: theme.textSubtle }}
             numberOfLines={1}
           >
             Team
           </Text>
-          <ColHeader>P</ColHeader>
-          <ColHeader>W</ColHeader>
-          <ColHeader>D</ColHeader>
-          <ColHeader>L</ColHeader>
-          <ColHeader>GD</ColHeader>
-          <ColHeader>Pts</ColHeader>
+          <ColHeader spacious={spacious}>P</ColHeader>
+          <ColHeader spacious={spacious}>W</ColHeader>
+          <ColHeader spacious={spacious}>D</ColHeader>
+          <ColHeader spacious={spacious}>L</ColHeader>
+          <ColHeader spacious={spacious}>GD</ColHeader>
+          <ColHeader spacious={spacious}>Pts</ColHeader>
         </View>
 
         {displayStandings.map((row, index) => {
@@ -122,7 +131,7 @@ export function LeagueStandingsTab({
             ? ZONE_COLORS[row.zone.type]
             : "transparent";
           const rowBackgroundColor = isHighlighted
-            ? "#E6A8171A"
+            ? theme.accentMuted
             : row.zone?.type
               ? `${zoneColor}14`
               : undefined;
@@ -134,23 +143,21 @@ export function LeagueStandingsTab({
             <View
               key={row.id || `${row.team?.id ?? "t"}-${row.position}`}
               className={[
-                "flex-row items-center gap-1 px-2",
-                compact ? "py-2" : "py-3",
-                index !== displayStandings.length - 1 ? "border-b border-white/10" : "",
+                "flex-row items-center px-2",
+                spacious ? "gap-2 py-3.5" : compact ? "gap-1 py-2" : "gap-1 py-3",
               ].join(" ")}
               style={{
                 backgroundColor: rowBackgroundColor,
                 borderLeftWidth: 3,
                 borderLeftColor: zoneColor,
+                borderBottomWidth: index !== displayStandings.length - 1 ? 1 : 0,
+                borderBottomColor: theme.cardBorder,
               }}
             >
-              <View className="w-8 flex-row items-center gap-1">
+              <View className={`${spacious ? "w-10" : "w-8"} flex-row items-center gap-1`}>
                 <Text
-                  className={
-                    isHighlighted
-                      ? "min-w-3 text-[12px] text-[#E6A817]"
-                      : "min-w-3 text-[12px] text-white/70"
-                  }
+                  className="min-w-3 text-[12px]"
+                  style={{ color: isHighlighted ? theme.accent : theme.textMuted }}
                   numberOfLines={1}
                 >
                   {displayPosition}
@@ -174,12 +181,11 @@ export function LeagueStandingsTab({
                   />
                 ) : null}
                 <Text
-                  style={{ minWidth: 0 }}
-                  className={
-                    isHighlighted
-                      ? "min-w-0 flex-1 text-[10px] text-[#E6A817]"
-                      : "min-w-0 flex-1 text-[10px] text-white"
-                  }
+                  className={spacious ? "min-w-0 flex-1 text-sm" : "min-w-0 flex-1 text-[10px]"}
+                  style={{
+                    minWidth: 0,
+                    color: isHighlighted ? theme.accent : theme.text,
+                  }}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                   adjustsFontSizeToFit
@@ -201,19 +207,20 @@ export function LeagueStandingsTab({
                     accessibilityLabel="Standing adjustment details"
                   >
                     <Text
-                      className="text-sm text-accent-200"
+                      className="text-sm"
+                      style={{ color: theme.accent }}
                     >
                       *
                     </Text>
                   </Pressable>
                 ) : null}
               </Pressable>
-              <Col>{row.played}</Col>
-              <Col>{row.wins}</Col>
-              <Col>{row.draws}</Col>
-              <Col>{row.losses}</Col>
-              <Col>{row.goalDifference}</Col>
-              <ColAccent>{row.points}</ColAccent>
+              <Col spacious={spacious}>{row.played}</Col>
+              <Col spacious={spacious}>{row.wins}</Col>
+              <Col spacious={spacious}>{row.draws}</Col>
+              <Col spacious={spacious}>{row.losses}</Col>
+              <Col spacious={spacious}>{row.goalDifference}</Col>
+              <ColAccent spacious={spacious}>{row.points}</ColAccent>
             </View>
           );
         })}
@@ -224,7 +231,11 @@ export function LeagueStandingsTab({
           {zoneLegend.map((z) => (
             <View
               key={z.type}
-              className="flex-row items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2 py-1"
+              className="flex-row items-center gap-1.5 rounded-full border px-2 py-1"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
             >
               <Ionicons
                 name={ZONE_ICONS[z.type]}
@@ -232,7 +243,8 @@ export function LeagueStandingsTab({
                 color={ZONE_COLORS[z.type]}
               />
               <Text
-                className="text-[10px] text-white/65"
+                className="text-[10px]"
+                style={{ color: theme.textMuted }}
                 numberOfLines={1}
               >
                 {z.label}
@@ -323,10 +335,13 @@ function findZoneForPosition(
   );
 }
 
-function ColHeader({ children }: { children: string }) {
+function ColHeader({ children, spacious = false }: { children: string; spacious?: boolean }) {
+  const theme = useTheme();
+
   return (
     <Text
-      className="w-6 text-right text-[10px] uppercase tracking-[1.2px] text-white/55"
+      className={`${spacious ? "w-9" : "w-6"} text-right text-[10px] uppercase tracking-[1.2px]`}
+      style={{ color: theme.textSubtle }}
       numberOfLines={1}
     >
       {children}
@@ -334,10 +349,13 @@ function ColHeader({ children }: { children: string }) {
   );
 }
 
-function Col({ children }: { children: number }) {
+function Col({ children, spacious = false }: { children: number; spacious?: boolean }) {
+  const theme = useTheme();
+
   return (
     <Text
-      className="w-6 text-right text-xs text-white/65"
+      className={`${spacious ? "w-9 text-sm" : "w-6 text-xs"} text-right`}
+      style={{ color: theme.textMuted }}
       numberOfLines={1}
     >
       {children}
@@ -345,10 +363,13 @@ function Col({ children }: { children: number }) {
   );
 }
 
-function ColAccent({ children }: { children: number }) {
+function ColAccent({ children, spacious = false }: { children: number; spacious?: boolean }) {
+  const theme = useTheme();
+
   return (
     <Text
-      className="w-6 text-right text-xs text-[#E6A817]"
+      className={`${spacious ? "w-9 text-sm" : "w-6 text-xs"} text-right`}
+      style={{ color: theme.accent }}
       numberOfLines={1}
     >
       {children}
@@ -373,6 +394,8 @@ export function GroupStandingsView({
   zones?: ApiStandingZone[];
   allGroups?: boolean;
 }) {
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const ordered = [...tables].sort(
     (a, b) => (a.sequence ?? 0) - (b.sequence ?? 0),
   );
@@ -382,7 +405,7 @@ export function GroupStandingsView({
 
   if (!ordered.length) {
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Standings not available yet.
       </Text>
     );
@@ -413,14 +436,14 @@ export function GroupStandingsView({
             <Pressable
               key={id ?? "rr"}
               onPress={() => setSelectedId(id)}
-              className={`rounded-xl border px-3 py-2 ${
-                active
-                  ? "border-accent-400 bg-accent-500/20"
-                  : "border-white/15 bg-white/5"
-              }`}
+              className="rounded-xl border px-3 py-2 active:opacity-85"
+              style={{
+                backgroundColor: active ? theme.accentMuted : theme.card,
+                borderColor: active ? theme.accent : theme.cardBorder,
+              }}
             >
               <Text
-                className={active ? "text-accent-200" : "text-white/70"}
+                style={{ color: active ? theme.accent : theme.textMuted }}
               >
                 {table.stageGroupName ?? "Table"}
               </Text>
@@ -430,14 +453,14 @@ export function GroupStandingsView({
         {ordered.length > 1 ? (
           <Pressable
             onPress={() => setSelectedId("all")}
-            className={`rounded-xl border px-3 py-2 ${
-              showAll
-                ? "border-accent-400 bg-accent-500/20"
-                : "border-white/15 bg-white/5"
-            }`}
+            className="rounded-xl border px-3 py-2 active:opacity-85"
+            style={{
+              backgroundColor: showAll ? theme.accentMuted : theme.card,
+              borderColor: showAll ? theme.accent : theme.cardBorder,
+            }}
           >
             <Text
-              className={showAll ? "text-accent-200" : "text-white/70"}
+              style={{ color: showAll ? theme.accent : theme.textMuted }}
             >
               All groups
             </Text>
@@ -446,18 +469,22 @@ export function GroupStandingsView({
       </View>
 
       {showAll ? (
-        <View className="gap-5">
+        <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-5"}>
           {ordered.map((table) => (
-            <LeagueStandingsTab
+            <View
               key={table.stageGroupId ?? "rr"}
-              title={table.stageGroupName ?? "Table"}
-              standings={table.rows}
-              highlightTeamId={highlightTeamId}
-              zones={zones}
-              stageGroupId={table.stageGroupId}
-              useTablePositionForZones
-              compact
-            />
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <LeagueStandingsTab
+                title={table.stageGroupName ?? "Table"}
+                standings={table.rows}
+                highlightTeamId={highlightTeamId}
+                zones={zones}
+                stageGroupId={table.stageGroupId}
+                useTablePositionForZones
+                compact
+              />
+            </View>
           ))}
         </View>
       ) : selected ? (

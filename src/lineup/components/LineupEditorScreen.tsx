@@ -4,10 +4,13 @@ import { useMemo } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
 import { teamPlayersToRosterRows } from "@/lineup/utils";
@@ -31,6 +34,13 @@ export function LineupEditorScreen({
   const matchQuery = useMatchDetail(gameId);
   const teamQuery = useTeamDetail(teamId);
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const seasonPlayers = useMemo(() => {
     const leagues = teamQuery.data?.leagues ?? [];
     const league =
@@ -68,24 +78,29 @@ export function LineupEditorScreen({
         : null;
 
   return (
-    <View className="flex-1 bg-[#121212]">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
-          baseColor={colors.scoreboardBlack}
-          stripeColor={colors.patternStripe}
+          baseColor={isDark ? colors.scoreboardBlack : theme.patternBase}
+          stripeColor={theme.patternStripe}
         />
 
-        <View className="flex-row items-center gap-3 px-5 pb-4 pt-2">
+        <View
+          className="flex-row items-center gap-3 px-5 pb-4 pt-2"
+          style={tabletFrameStyle}
+        >
           <Pressable
             onPress={() => router.back()}
             accessibilityLabel="Go back"
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/15"
+            className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+            style={{ backgroundColor: isDark ? theme.card : theme.brandMuted }}
           >
-            <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+            <Ionicons name="chevron-back" size={22} color={theme.text} />
           </Pressable>
           <View className="flex-1">
             <Text
-              className="text-xl text-white"
+              className="text-xl"
+              style={{ color: theme.text }}
             >
               Set lineup
             </Text>
@@ -93,14 +108,22 @@ export function LineupEditorScreen({
         </View>
 
         {team ? (
-          <View className="mb-2 flex-row items-center gap-3 px-5">
-            <EntityLogo logoUrl={team.logoUrl} variant="team" size="sm" tone="dark" />
+          <View
+            className="mb-2 flex-row items-center gap-3 px-5"
+            style={tabletFrameStyle}
+        >
+            <EntityLogo
+              logoUrl={team.logoUrl}
+              variant="team"
+              size="sm"
+              tone={isDark ? "dark" : "light"}
+            />
             <View className="flex-1">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 {team.name}
               </Text>
               {opponent ? (
-                <Text className="text-sm text-white/55">
+                <Text className="text-sm" style={{ color: theme.textSubtle }}>
                   vs {opponent.name}
                 </Text>
               ) : null}
@@ -114,8 +137,10 @@ export function LineupEditorScreen({
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingBottom: insets.bottom + 16,
+            ...(isTablet ? { alignItems: "center" as const } : null),
           }}
         >
+          <View className="w-full" style={tabletFrameStyle}>
           {matchQuery.isLoading || teamQuery.isLoading ? (
             <View className="items-center py-16">
               <ActivityIndicator color={colors.accent} />
@@ -144,6 +169,7 @@ export function LineupEditorScreen({
               embedded
             />
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -10,6 +10,8 @@ import {
 } from "react-native";
 
 import type { ApiTeam } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -48,12 +50,14 @@ function TeamPicker({
   selectedId,
   onSelect,
   excludeId,
+  theme,
 }: {
   label: string;
   teams: ApiTeam[];
   selectedId: number | null;
   onSelect: (id: number | null) => void;
   excludeId?: number | null;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -80,34 +84,43 @@ function TeamPicker({
   return (
     <View className="gap-2">
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
-      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+      <View
+        className="overflow-hidden rounded-[18px] border"
+        style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+      >
         <Pressable
           onPress={() => setOpen((current) => !current)}
           className="flex-row items-center gap-3 px-3.5 py-3"
           accessibilityRole="button"
           accessibilityLabel={`Choose ${label.toLowerCase()}`}
         >
-          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
+          <View
+            className="h-9 w-9 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
             <Ionicons
               name={hasSelection ? "shield-checkmark" : "shield-outline"}
               size={18}
-              color="#E6A817"
+              color={theme.accent}
             />
           </View>
           <View className="min-w-0 flex-1">
             <Text
-              className={hasSelection ? "text-sm text-white" : "text-sm text-white/65"}
+              className="text-sm"
+              style={{ color: hasSelection ? theme.text : theme.textSubtle }}
               numberOfLines={1}
               ellipsizeMode="tail"
             >
               {selectedTeam?.name ?? `Choose ${label.toLowerCase()}`}
             </Text>
             <Text
-              className="pt-0.5 text-xs text-white/45"
+              className="pt-0.5 text-xs"
+              style={{ color: theme.textSubtle }}
               numberOfLines={1}
             >
               {hasSelection
@@ -122,7 +135,8 @@ function TeamPicker({
               className="rounded-lg px-2 py-1"
             >
               <Text
-                className="text-xs text-white/55"
+                className="text-xs"
+                style={{ color: theme.textMuted }}
               >
                 Clear
               </Text>
@@ -131,29 +145,35 @@ function TeamPicker({
           <Ionicons
             name={open ? "chevron-up" : "chevron-down"}
             size={18}
-            color="rgba(255,255,255,0.45)"
+            color={theme.textSubtle}
           />
         </Pressable>
 
         {open ? (
-          <View className="border-t border-white/10 bg-neutral-950/70">
+          <View
+            className="border-t"
+            style={{ backgroundColor: theme.surface, borderColor: theme.cardBorder }}
+          >
             {options.length > 5 ? (
-              <View className="flex-row items-center gap-2 border-b border-white/10 px-3 py-2">
+              <View
+                className="flex-row items-center gap-2 border-b px-3 py-2"
+                style={{ borderColor: theme.cardBorder }}
+              >
                 <Ionicons
                   name="search"
                   size={16}
-                  color="rgba(255,255,255,0.45)"
+                  color={theme.textSubtle}
                 />
                 <TextInput
                   value={query}
                   onChangeText={setQuery}
                   placeholder="Search teams"
-                  placeholderTextColor="#94a3b8"
+                  placeholderTextColor={theme.textSubtle}
                   autoCorrect={false}
                   style={{
                     flex: 1,
                     fontSize: 14,
-                    color: "#FFFFFF",
+                    color: theme.text,
                     paddingVertical: 6,
                   }}
                 />
@@ -162,7 +182,7 @@ function TeamPicker({
                     <Ionicons
                       name="close-circle"
                       size={16}
-                      color="rgba(255,255,255,0.45)"
+                      color={theme.textSubtle}
                     />
                   </Pressable>
                 ) : null}
@@ -180,11 +200,13 @@ function TeamPicker({
                   label={team.name}
                   selected={selectedId === team.id}
                   onPress={() => handleSelect(team.id)}
+                  theme={theme}
                 />
               ))}
               {filtered.length === 0 ? (
                 <Text
-                  className="px-4 py-4 text-sm text-white/45"
+                  className="px-4 py-4 text-sm"
+                  style={{ color: theme.textSubtle }}
                 >
                   {`No teams match "${query.trim()}".`}
                 </Text>
@@ -201,21 +223,26 @@ function TeamOptionRow({
   label,
   selected,
   onPress,
+  theme,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
-        selected ? "bg-accent-500/10" : "bg-transparent"
-      }`}
+      className="flex-row items-center gap-3 border-b px-3.5 py-3 active:opacity-85"
+      style={{
+        backgroundColor: selected ? theme.accentMuted : "transparent",
+        borderColor: theme.cardBorder,
+      }}
     >
       <View className="min-w-0 flex-1">
         <Text
-          className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
+          className="text-sm"
+          style={{ color: selected ? theme.accent : theme.text }}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -223,15 +250,20 @@ function TeamOptionRow({
         </Text>
       </View>
       {selected ? (
-        <Ionicons name="checkmark-circle" size={20} color="#E6A817" />
+        <Ionicons name="checkmark-circle" size={20} color={theme.accent} />
       ) : (
-        <View className="h-5 w-5 rounded-full border border-white/20" />
+        <View
+          className="h-5 w-5 rounded-full border"
+          style={{ borderColor: theme.cardBorder }}
+        />
       )}
     </Pressable>
   );
 }
 
 export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const teamsQuery = useLeagueTeams(leagueId, visible);
   const createMutation = useCreateGame(leagueId, seasonId);
 
@@ -323,28 +355,32 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
       onClose={resetAndClose}
       title="Schedule game"
       subtitle="Pick teams, kick-off details, and the match venue."
-      variant="dark"
     >
       {teamsQuery.isLoading ? (
-        <ActivityIndicator className="py-6" color="#E6A817" />
+        <ActivityIndicator className="py-6" color={theme.accent} />
       ) : teams.length < 2 ? (
-        <View className="items-center gap-3 rounded-[20px] border border-white/10 bg-white/5 px-4 py-6">
-          <Ionicons name="people-outline" size={28} color="#E6A817" />
+        <View
+          className="items-center gap-3 rounded-[20px] border px-4 py-6"
+          style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+        >
+          <Ionicons name="people-outline" size={28} color={theme.accent} />
           <Text
-            className="text-center text-sm leading-6 text-white/60"
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             Add at least two teams to this league before scheduling games.
           </Text>
         </View>
       ) : (
         <View className="gap-4">
-          <GameSheetBlock title="Teams">
+          <GameSheetBlock title="Teams" theme={theme}>
             <TeamPicker
               label="Home team"
               teams={teams}
               selectedId={homeTeamId}
               onSelect={setHomeTeamId}
               excludeId={awayTeamId}
+              theme={theme}
             />
             <TeamPicker
               label="Away team"
@@ -352,42 +388,40 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
               selectedId={awayTeamId}
               onSelect={setAwayTeamId}
               excludeId={homeTeamId}
+              theme={theme}
             />
           </GameSheetBlock>
-          <GameSheetBlock title="Kick-off">
+          <GameSheetBlock title="Kick-off" theme={theme}>
             <NativeDatePickerField
               label="Date"
               value={dateStr}
               onChange={(value) => setDateStr(value ?? "")}
               placeholder="Pick fixture date"
-              labelClassName="text-white/60"
-              variant="dark"
+              variant={isDark ? "dark" : "light"}
               required
             />
             <AuthTextField
               label="Kick-off time (HH:mm) uses 24-hour format"
-              labelClassName="text-white/60"
               value={timeStr}
               onChangeText={setTimeStr}
               placeholder="15:00"
               autoCapitalize="none"
             />
           </GameSheetBlock>
-          <GameSheetBlock title="Venue">
+          <GameSheetBlock title="Venue" theme={theme}>
             <GameVenuePicker
               leagueId={leagueId}
               enabled={visible}
               selection={venueSelection}
               onChange={setVenueSelection}
-              variant="dark"
+              variant={isDark ? "dark" : "light"}
             />
           </GameSheetBlock>
-          <GameSheetBlock title="Match length">
+          <GameSheetBlock title="Match length" theme={theme}>
             <View className="flex-row gap-3">
               <View className="flex-1">
                 <AuthTextField
                   label="First half (min)"
-                  labelClassName="text-white/60"
                   value={firstHalfMinutes}
                   onChangeText={setFirstHalfMinutes}
                   keyboardType="number-pad"
@@ -397,7 +431,6 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
               <View className="flex-1">
                 <AuthTextField
                   label="Second half (min)"
-                  labelClassName="text-white/60"
                   value={secondHalfMinutes}
                   onChangeText={setSecondHalfMinutes}
                   keyboardType="number-pad"
@@ -422,14 +455,20 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
 function GameSheetBlock({
   title,
   children,
+  theme,
 }: {
   title: string;
   children: ReactNode;
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
-    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+    <View
+      className="gap-3 rounded-[18px] border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {title}
       </Text>

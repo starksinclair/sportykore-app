@@ -3,7 +3,10 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiStat, ApiTeam } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { DetailTabs } from "@/components/ui/detail-tabs";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { LineupPitchView } from "@/lineup/components/LineupPitchView";
 import type { TeamLineupGroup } from "@/lineup/types";
 
@@ -22,6 +25,9 @@ export function MatchLineupsTab({
   lineups,
   stats = [],
 }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
 
   const homeGroup = lineups.find((g) => g.team.id === homeTeam?.id);
@@ -29,7 +35,7 @@ export function MatchLineupsTab({
 
   if (!homeTeam && !awayTeam) {
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Teams not assigned to this match yet.
       </Text>
     );
@@ -41,17 +47,21 @@ export function MatchLineupsTab({
 
   if (!hasAnyLineup) {
     return (
-      <View className="items-center gap-3 rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
+      <View
+        className="items-center gap-3 rounded-[24px] border px-6 py-10"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <Ionicons
           name="football-outline"
           size={32}
-          color="rgba(255,255,255,0.6)"
+          color={theme.textMuted}
         />
-        <Text className="text-lg text-white">
+        <Text className="text-lg" style={{ color: theme.text }}>
           Lineups not submitted yet
         </Text>
         <Text
-          className="text-center text-sm text-white/55"
+          className="text-center text-sm"
+          style={{ color: theme.textSubtle }}
         >
           Official team sheets will appear here once managers confirm their
           starting elevens.
@@ -77,6 +87,39 @@ export function MatchLineupsTab({
   const activeTeam = resolvedSide === "home" ? homeTeam : awayTeam;
   const activeGroup = resolvedSide === "home" ? homeGroup : awayGroup;
 
+  if (isTablet && tabs.length > 1) {
+    return (
+      <View className="flex-row items-start gap-6">
+        <View className="min-w-0 flex-1 gap-3">
+          <Text
+            className="text-[12px] uppercase tracking-[2px]"
+            style={{ color: theme.textSubtle }}
+          >
+            {homeTeam?.name ?? "Home"}
+          </Text>
+          {homeTeam && homeGroup && (homeGroup.starters.length ?? 0) > 0 ? (
+            <LineupPitchView group={homeGroup} tone={isDark ? "dark" : "light"} stats={stats} />
+          ) : homeTeam ? (
+            <TeamMissingLineup teamName={homeTeam.name} />
+          ) : null}
+        </View>
+        <View className="min-w-0 flex-1 gap-3">
+          <Text
+            className="text-[12px] uppercase tracking-[2px]"
+            style={{ color: theme.textSubtle }}
+          >
+            {awayTeam?.name ?? "Away"}
+          </Text>
+          {awayTeam && awayGroup && (awayGroup.starters.length ?? 0) > 0 ? (
+            <LineupPitchView group={awayGroup} tone={isDark ? "dark" : "light"} stats={stats} />
+          ) : awayTeam ? (
+            <TeamMissingLineup teamName={awayTeam.name} />
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View className="gap-5">
       {tabs.length > 1 ? (
@@ -89,7 +132,7 @@ export function MatchLineupsTab({
       ) : null}
 
       {activeTeam && activeGroup && (activeGroup.starters.length ?? 0) > 0 ? (
-        <LineupPitchView group={activeGroup} tone="dark" stats={stats} />
+        <LineupPitchView group={activeGroup} tone={isDark ? "dark" : "light"} stats={stats} />
       ) : activeTeam ? (
         <TeamMissingLineup teamName={activeTeam.name} />
       ) : null}
@@ -98,13 +141,19 @@ export function MatchLineupsTab({
 }
 
 function TeamMissingLineup({ teamName }: { teamName: string }) {
+  const theme = useTheme();
+
   return (
-    <View className="rounded-[20px] border border-dashed border-white/15 bg-white/5 px-5 py-6">
-      <Text className="text-white">
+    <View
+      className="rounded-[20px] border border-dashed px-5 py-6"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
+      <Text style={{ color: theme.text }}>
         {teamName}
       </Text>
       <Text
-        className="pt-1 text-sm text-white/55"
+        className="pt-1 text-sm"
+        style={{ color: theme.textSubtle }}
       >
         Lineup not submitted yet.
       </Text>

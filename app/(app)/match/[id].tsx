@@ -53,7 +53,7 @@ export default function MatchRoute() {
 
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Match">
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
         <NotFound message="Invalid match id" />
       </DetailScreenShell>
     );
@@ -61,7 +61,7 @@ export default function MatchRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Match">
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -71,7 +71,7 @@ export default function MatchRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Match">
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
         <NotFound
           message={
             query.isError
@@ -100,6 +100,7 @@ export default function MatchRoute() {
       leagueId={detail.league?.id ?? 0}
       title={title}
       subtitle={matchup}
+      tabletMaxWidth={1120}
       headerContent={
         <DetailTabs
           tabs={TABS}

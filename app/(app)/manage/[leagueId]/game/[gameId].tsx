@@ -13,11 +13,14 @@ import {
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGameDetail, ApiPlayerAward, ApiStat, GameStatus } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { LiveMinute } from "@/components/ui/live-minute";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useLiveMinute } from "@/hooks/useLiveMinute";
 import {
   messageForResourceLoad,
@@ -70,6 +73,9 @@ export default function ManageMatchCenterPage() {
     seasonId?: string;
   }>();
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
   const leagueId = Number(params.leagueId);
   const gameId = Number(params.gameId);
   const seasonIdParam = Number(params.seasonId);
@@ -226,16 +232,22 @@ export default function ManageMatchCenterPage() {
 
   if (detailQuery.isLoading && !game) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#0F0F10]">
-        <ActivityIndicator color={colors.accent} />
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: theme.background }}
+      >
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
 
   if (!game || homeTeamId == null || awayTeamId == null) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#0F0F10] px-6">
-        <Text className="text-center text-white/70">
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: theme.background }}
+      >
+        <Text className="text-center" style={{ color: theme.textMuted }}>
           {detailQuery.isError
             ? messageForResourceLoad(detailQuery.error, "Match")
             : "Match not found."}
@@ -403,23 +415,184 @@ export default function ManageMatchCenterPage() {
     setSsePatch((prev) => ({ ...prev, awards: [award] }));
   };
 
+  const roster = rosterQuery.data ?? [];
+  const tabletMaxWidth = isWideTablet ? 1180 : 960;
+
+  const scoreCard = (
+    <View
+      className="items-center gap-2 rounded-[28px] border px-4 py-6"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <LiveMinute game={game} />
+      <View className="w-full flex-row items-center justify-between gap-4">
+        <TeamScore
+          name={game.homeTeam?.name ?? "Home"}
+          score={game.homeScore}
+        />
+        <Text
+          className="text-2xl"
+          style={{ color: theme.textSubtle }}
+        >
+          –
+        </Text>
+        <TeamScore
+          name={game.awayTeam?.name ?? "Away"}
+          score={game.awayScore}
+          align="right"
+        />
+      </View>
+      {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
+        <Text
+          className="text-sm"
+          style={{ color: theme.accent }}
+        >
+          Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
+        </Text>
+      ) : game.status === "penalty_shootout" ? (
+        <Text
+          className="text-sm"
+          style={{ color: theme.accent }}
+        >
+          Penalty shootout
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const clockControls = (
+    <GameControls
+      game={game}
+      leagueId={leagueId}
+      seasonId={seasonId}
+      onFullTime={handleFullTimeComplete}
+    />
+  );
+
+  const tabBar = (
+    <DetailTabs
+      tabs={TABS}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      scrollable
+    />
+  );
+
+  const activeTabContent = (
+    <>
+      {activeTab === "score" ? (
+        <HybridScoringPanel
+          game={game}
+          leagueId={leagueId}
+          seasonId={seasonId}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          liveMinute={liveMinute}
+          pendingTeam={pendingTeam}
+          scorerId={scorerId}
+          assistId={assistId}
+          isOwnGoal={isOwnGoal}
+          isPenalty={isPenalty}
+          minute={minute}
+          scorePending={scoreMutation.isPending}
+          accreditPending={accreditMutation.isPending}
+          onIncrement={(team) => void handleIncrement(team)}
+          onDecrement={(team) => void handleDecrement(team)}
+          onSelectScorer={(id) =>
+            setScorerId((prev) => (prev === id ? null : id))
+          }
+          onSelectAssist={(id) =>
+            setAssistId((prev) => (prev === id ? null : id))
+          }
+          onToggleOwnGoal={() => {
+            setIsOwnGoal((prev) => !prev);
+            setAssistId(null);
+          }}
+          onTogglePenalty={() => setIsPenalty((prev) => !prev)}
+          onMinuteChange={setMinute}
+          onLogGoal={() => void handleLogGoal()}
+          onSkip={resetAccredit}
+        />
+      ) : null}
+
+      {activeTab === "goals" ? (
+        <MatchCenterGoalsTab
+          homeGoals={goalPartition.home}
+          awayGoals={goalPartition.away}
+          homeTeamName={game.homeTeam?.name ?? "Home"}
+          awayTeamName={game.awayTeam?.name ?? "Away"}
+          assistsByGoalPlayer={goalPartition.assistsByGoalPlayer}
+          onAccredit={handleAccreditFromGoals}
+        />
+      ) : null}
+
+      {activeTab === "stats" ? (
+        <MatchCenterStatsTab
+          game={game}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          statMinute={statMinute}
+          onStatMinuteChange={setStatMinute}
+          recording={recording}
+          onRecordStat={(eventKey, row) => void recordInlineStat(eventKey, row)}
+          onDeleteStat={async (statId) => {
+            try {
+              await deleteStatMutation.mutateAsync({ statId, gameId });
+            } catch (err) {
+              showThrownAsToast(err);
+            }
+          }}
+        />
+      ) : null}
+
+      {activeTab === "lineup" ? (
+        <MatchCenterLineupTab
+          game={game}
+          leagueId={leagueId}
+          seasonId={seasonId}
+          homeTeamId={homeTeamId}
+          awayTeamId={awayTeamId}
+          roster={roster}
+          onMotmSaved={handleMotmSaved}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <SafeAreaProvider>
-      <SafeAreaView className="flex-1 bg-[#0F0F10]" edges={["top", "bottom"]}>
+      <SafeAreaView
+        className="flex-1"
+        edges={["top", "bottom"]}
+        style={{ backgroundColor: theme.background }}
+      >
       <BlackPatternBackground
-        baseColor="#0F0F10"
-        stripeColor="rgba(230, 168, 23, 0.06)"
+        baseColor={isDark ? "#0F0F10" : theme.patternBase}
+        stripeColor={theme.patternStripe}
       />
       {/* <SafeAreaView className="flex-1" edges={["top", "bottom"]}> */}
-        <View className="flex-row items-center justify-between px-5 pb-2 pt-1">
+        <View
+          className="flex-row items-center justify-between px-5 pb-2 pt-1"
+          style={
+            isTablet
+              ? { alignSelf: "center", width: "100%", maxWidth: tabletMaxWidth }
+              : undefined
+          }
+        >
           <Pressable
             onPress={() => router.back()}
-            className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
+            className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+            style={{ backgroundColor: isDark ? theme.card : theme.brandMuted }}
           >
-            <Ionicons name="chevron-back" size={22} color="#fff" />
+            <Ionicons name="chevron-back" size={22} color={theme.text} />
           </Pressable>
           <Text
-            className="text-xs uppercase tracking-[2px] text-white/50"
+            className="text-xs uppercase tracking-[2px]"
+            style={{ color: theme.textSubtle }}
           >
             Live match center
           </Text>
@@ -427,147 +600,50 @@ export default function ManageMatchCenterPage() {
         </View>
 
         <ScrollView
-          className="flex-1 px-5"
+          className={isTablet ? "flex-1" : "flex-1 px-5"}
           contentContainerClassName="gap-5 pb-10"
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 90 
+            paddingBottom: insets.bottom + (isTablet ? 48 : 90),
+            ...(isTablet
+              ? { alignItems: "center", paddingHorizontal: 24, paddingTop: 4 }
+              : null),
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={detailQuery.isFetching} onRefresh={() => void detailQuery.refetch()} />}
         >
-          <View className="items-center gap-2 rounded-[28px] border border-white/10 bg-white/5 px-4 py-6">
-            <LiveMinute game={game} />
-            <View className="w-full flex-row items-center justify-between gap-4">
-              <TeamScore
-                name={game.homeTeam?.name ?? "Home"}
-                score={game.homeScore}
-              />
-              <Text
-                className="text-2xl text-white/30"
-              >
-                –
-              </Text>
-              <TeamScore
-                name={game.awayTeam?.name ?? "Away"}
-                score={game.awayScore}
-                align="right"
-              />
+          {isTablet ? (
+            <View style={{ width: "100%", maxWidth: tabletMaxWidth, gap: 20 }}>
+              <View className="flex-row items-start gap-5">
+                <View className="min-w-0 flex-1 gap-5">
+                  {scoreCard}
+                  <MatchSeriesHeader game={game} tie={seriesTie} />
+                </View>
+                <View className="min-w-0 flex-1 gap-5">
+                  {clockControls}
+                  <MatchDayFlowGuide
+                    game={game}
+                    expanded={flowGuideOpen}
+                    onToggle={() => setFlowGuideOpen((prev) => !prev)}
+                  />
+                </View>
+              </View>
+              {tabBar}
+              {activeTabContent}
             </View>
-            {game.homePenaltyScore != null && game.awayPenaltyScore != null ? (
-              <Text
-                className="text-sm text-accent-200"
-              >
-                Pens {game.homePenaltyScore}–{game.awayPenaltyScore}
-              </Text>
-            ) : game.status === "penalty_shootout" ? (
-              <Text
-                className="text-sm text-accent-200"
-              >
-                Penalty shootout
-              </Text>
-            ) : null}
-          </View>
-
-          <MatchSeriesHeader game={game} tie={seriesTie} />
-
-          <MatchDayFlowGuide
-            game={game}
-            expanded={flowGuideOpen}
-            onToggle={() => setFlowGuideOpen((prev) => !prev)}
-          />
-
-          <GameControls
-            game={game}
-            leagueId={leagueId}
-            seasonId={seasonId}
-            onFullTime={handleFullTimeComplete}
-          />
-
-          <DetailTabs
-            tabs={TABS}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            scrollable
-          />
-
-          {activeTab === "score" ? (
-            <HybridScoringPanel
-              game={game}
-              leagueId={leagueId}
-              seasonId={seasonId}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              liveMinute={liveMinute}
-              pendingTeam={pendingTeam}
-              scorerId={scorerId}
-              assistId={assistId}
-              isOwnGoal={isOwnGoal}
-              isPenalty={isPenalty}
-              minute={minute}
-              scorePending={scoreMutation.isPending}
-              accreditPending={accreditMutation.isPending}
-              onIncrement={(team) => void handleIncrement(team)}
-              onDecrement={(team) => void handleDecrement(team)}
-              onSelectScorer={(id) =>
-                setScorerId((prev) => (prev === id ? null : id))
-              }
-              onSelectAssist={(id) =>
-                setAssistId((prev) => (prev === id ? null : id))
-              }
-              onToggleOwnGoal={() => {
-                setIsOwnGoal((prev) => !prev);
-                setAssistId(null);
-              }}
-              onTogglePenalty={() => setIsPenalty((prev) => !prev)}
-              onMinuteChange={setMinute}
-              onLogGoal={() => void handleLogGoal()}
-              onSkip={resetAccredit}
-            />
-          ) : null}
-
-          {activeTab === "goals" ? (
-            <MatchCenterGoalsTab
-              homeGoals={goalPartition.home}
-              awayGoals={goalPartition.away}
-              homeTeamName={game.homeTeam?.name ?? "Home"}
-              awayTeamName={game.awayTeam?.name ?? "Away"}
-              assistsByGoalPlayer={goalPartition.assistsByGoalPlayer}
-              onAccredit={handleAccreditFromGoals}
-            />
-          ) : null}
-
-          {activeTab === "stats" ? (
-            <MatchCenterStatsTab
-              game={game}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              statMinute={statMinute}
-              onStatMinuteChange={setStatMinute}
-              recording={recording}
-              onRecordStat={(eventKey, row) => void recordInlineStat(eventKey, row)}
-              onDeleteStat={async (statId) => {
-                try {
-                  await deleteStatMutation.mutateAsync({ statId, gameId });
-                } catch (err) {
-                  showThrownAsToast(err);
-                }
-              }}
-            />
-          ) : null}
-
-          {activeTab === "lineup" ? (
-            <MatchCenterLineupTab
-              game={game}
-              leagueId={leagueId}
-              seasonId={seasonId}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              roster={rosterQuery.data ?? []}
-              onMotmSaved={handleMotmSaved}
-            />
-          ) : null}
+          ) : (
+            <>
+              {scoreCard}
+              <MatchSeriesHeader game={game} tie={seriesTie} />
+              <MatchDayFlowGuide
+                game={game}
+                expanded={flowGuideOpen}
+                onToggle={() => setFlowGuideOpen((prev) => !prev)}
+              />
+              {clockControls}
+              {tabBar}
+              {activeTabContent}
+            </>
+          )}
         </ScrollView>
       {/* </SafeAreaView> */}
     </SafeAreaView>
@@ -691,6 +767,7 @@ function MatchDayFlowGuide({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const theme = useTheme();
   const status = game.status;
   const flowStatus = flowStatusForGame(game);
   const activeIndex = Math.max(
@@ -702,28 +779,46 @@ function MatchDayFlowGuide({
     matchStatusGuidance.scheduled!;
 
   return (
-    <View className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
+    <View
+      className="overflow-hidden rounded-[24px] border"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         accessibilityLabel={expanded ? "Hide match day flow" : "Show match day flow"}
-        className="flex-row items-start gap-3 px-4 py-4 active:bg-white/5"
+        className="flex-row items-start gap-3 px-4 py-4 active:opacity-85"
       >
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="map-outline" size={19} color={colors.accent} />
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="map-outline" size={19} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             Match day flow
           </Text>
-          <Text className="pt-1 text-xs leading-5 text-white/50">
+          <Text
+            className="pt-1 text-xs leading-5"
+            style={{ color: theme.textSubtle }}
+          >
             {guidance.title}
           </Text>
         </View>
         {status === "paused" ? (
-          <View className="rounded-full bg-white/10 px-2.5 py-1">
-            <Text className="text-[10px] uppercase text-white/60">
+          <View
+            className="rounded-full px-2.5 py-1"
+            style={{ backgroundColor: theme.cardMuted }}
+          >
+            <Text
+              className="text-[10px] uppercase"
+              style={{ color: theme.textMuted }}
+            >
               Paused
             </Text>
           </View>
@@ -731,12 +826,15 @@ function MatchDayFlowGuide({
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="rgba(255,255,255,0.65)"
+          color={theme.textMuted}
         />
       </Pressable>
 
       {expanded ? (
-        <View className="gap-4 border-t border-white/10 px-4 pb-4 pt-4">
+        <View
+          className="gap-4 border-t px-4 pb-4 pt-4"
+          style={{ borderColor: theme.cardBorder }}
+        >
           <View className="gap-2">
             {MATCH_FLOW_STEPS.map((step, index) => {
               const isActive = index === activeIndex;
@@ -744,36 +842,39 @@ function MatchDayFlowGuide({
               return (
                 <View
                   key={step.key}
-                  className={`flex-row items-center gap-3 rounded-2xl border px-3 py-3 ${
-                    isActive
-                      ? "border-accent-400/60 bg-accent-500/15"
-                      : "border-white/10 bg-white/[0.03]"
-                  }`}
+                  className="flex-row items-center gap-3 rounded-2xl border px-3 py-3"
+                  style={{
+                    backgroundColor: isActive ? theme.accentMuted : theme.cardMuted,
+                    borderColor: isActive ? theme.accent : theme.cardBorder,
+                  }}
                 >
                   <View
-                    className={`h-8 w-8 items-center justify-center rounded-full ${
-                      isActive
-                        ? "bg-accent-500"
+                    className="h-8 w-8 items-center justify-center rounded-full"
+                    style={{
+                      backgroundColor: isActive
+                        ? theme.accent
                         : isDone
-                          ? "bg-brand-500"
-                          : "bg-white/10"
-                    }`}
+                          ? theme.brand
+                          : theme.card,
+                    }}
                   >
                     <Ionicons
                       name={isDone ? "checkmark" : isActive ? "ellipse" : "ellipse-outline"}
                       size={15}
-                      color={isActive ? colors.darkLabel : colors.white}
+                      color={isActive ? colors.darkLabel : theme.text}
                     />
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text
-                      className={isActive ? "text-sm text-accent-100" : "text-sm text-white"}
+                      className="text-sm"
+                      style={{ color: isActive ? theme.accent : theme.text }}
                       numberOfLines={1}
                     >
                       {step.title}
                     </Text>
                     <Text
-                      className="pt-0.5 text-xs leading-5 text-white/50"
+                      className="pt-0.5 text-xs leading-5"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={2}
                     >
                       {step.helper}
@@ -781,7 +882,10 @@ function MatchDayFlowGuide({
                   </View>
                   {isActive ? (
                     <View className="rounded-full bg-accent-500 px-2.5 py-1">
-                      <Text className="text-[10px] uppercase text-neutral-950">
+                      <Text
+                        className="text-[10px] uppercase"
+                        style={{ color: colors.darkLabel }}
+                      >
                         Now
                       </Text>
                     </View>
@@ -791,8 +895,17 @@ function MatchDayFlowGuide({
             })}
           </View>
 
-          <View className="rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
-            <Text className="text-sm leading-6 text-accent-100">
+          <View
+            className="rounded-2xl border px-3 py-3"
+            style={{
+              backgroundColor: theme.accentMuted,
+              borderColor: theme.accent,
+            }}
+          >
+            <Text
+              className="text-sm leading-6"
+              style={{ color: theme.textMuted }}
+            >
               {guidance.detail}
             </Text>
           </View>
@@ -811,16 +924,20 @@ function TeamScore({
   score: number | null;
   align?: "right";
 }) {
+  const theme = useTheme();
+
   return (
     <View className={`flex-1 ${align === "right" ? "items-end" : "items-start"}`}>
       <Text
-        className="text-sm text-white/70"
+        className="text-sm"
+        style={{ color: theme.textMuted }}
         numberOfLines={2}
       >
         {name}
       </Text>
       <Text
-        className="pt-2 text-5xl text-[#E6A817]"
+        className="pt-2 text-5xl"
+        style={{ color: theme.accent }}
       >
         {score ?? 0}
       </Text>

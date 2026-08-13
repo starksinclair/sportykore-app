@@ -3,6 +3,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -63,6 +65,8 @@ export function EditGameSheet({
   seasonId,
   onClose,
 }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const [dateStr, setDateStr] = useState("");
   const [timeStr, setTimeStr] = useState("");
@@ -112,35 +116,32 @@ export function EditGameSheet({
       onClose={onClose}
       title="Edit fixture"
       subtitle={`${game.homeTeam?.name ?? "Home"} vs ${game.awayTeam?.name ?? "Away"}`}
-      variant="dark"
     >
       <View className="gap-4">
-        <GameSheetBlock title="Kick-off">
+        <GameSheetBlock title="Kick-off" theme={theme}>
           <NativeDatePickerField
             label="Date"
             value={dateStr}
             onChange={(value) => setDateStr(value ?? "")}
             placeholder="Pick fixture date"
-            labelClassName="text-white/60"
-            variant="dark"
+            variant={isDark ? "dark" : "light"}
             required
           />
           <AuthTextField
             label="Kick-off time (HH:mm) uses 24-hour format"
-            labelClassName="text-white/60"
             value={timeStr}
             onChangeText={setTimeStr}
             placeholder="15:00"
             autoCapitalize="none"
           />
         </GameSheetBlock>
-        <GameSheetBlock title="Venue">
+        <GameSheetBlock title="Venue" theme={theme}>
           <GameVenuePicker
             leagueId={leagueId}
             enabled={visible}
             selection={venueSelection}
             onChange={setVenueSelection}
-            variant="dark"
+            variant={isDark ? "dark" : "light"}
           />
         </GameSheetBlock>
         <Button
@@ -149,10 +150,14 @@ export function EditGameSheet({
           loading={updateMutation.isPending}
           onPress={() => void handleSave()}
         />
-        <View className="flex-row items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-          <Ionicons name="information-circle-outline" size={17} color="#E6A817" />
+        <View
+          className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+          style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+        >
+          <Ionicons name="information-circle-outline" size={17} color={theme.accent} />
           <Text
-            className="min-w-0 flex-1 text-xs leading-5 text-white/50"
+            className="min-w-0 flex-1 text-xs leading-5"
+            style={{ color: theme.textMuted }}
           >
             Teams cannot be changed here. Delete and reschedule if needed.
           </Text>
@@ -165,14 +170,20 @@ export function EditGameSheet({
 function GameSheetBlock({
   title,
   children,
+  theme,
 }: {
   title: string;
   children: ReactNode;
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
-    <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+    <View
+      className="gap-3 rounded-[18px] border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {title}
       </Text>

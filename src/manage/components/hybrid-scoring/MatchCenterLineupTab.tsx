@@ -3,9 +3,10 @@ import { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiGameDetail, ApiPlayerAward, GameStatus } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { EntityLogo } from "@/components/ui/entity-logo";
-import { colors } from "@/constants";
 import { LineupEditor } from "@/lineup/components/LineupEditor";
 import { useSetMotmAward } from "@/manage/hooks";
 import type { LeagueRosterRow } from "@/manage/types";
@@ -52,6 +53,7 @@ export function MatchCenterLineupTab({
   roster,
   onMotmSaved,
 }: Props) {
+  const theme = useTheme();
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
   const motmMutation = useSetMotmAward(game.id, leagueId, seasonId);
   const activeTeamId = activeSide === "home" ? homeTeamId : awayTeamId;
@@ -105,7 +107,10 @@ export function MatchCenterLineupTab({
         onSelect={(playerId) => void handleSetMotm(playerId)}
       />
 
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <TeamTabs
           homeLabel={game.homeTeam?.name ?? "Home"}
           awayLabel={game.awayTeam?.name ?? "Away"}
@@ -122,9 +127,12 @@ export function MatchCenterLineupTab({
         />
       </View>
 
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         {teamRoster.length === 0 ? (
-          <Text className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             No players on this team for the season.
           </Text>
         ) : (
@@ -152,6 +160,8 @@ function MotmAwardCard({
   pending: boolean;
   onSelect: (playerId: number) => void;
 }) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const [pickerOpen, setPickerOpen] = useState(false);
   const currentPlayer = award?.player;
   const currentName =
@@ -167,33 +177,45 @@ function MotmAwardCard({
 
   return (
     <>
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-start gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="star-outline" size={19} color={colors.accent} />
+          <View
+            className="h-10 w-10 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="star-outline" size={19} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Man of the match
             </Text>
-            <Text className="pt-1 text-xs leading-5 text-white/50">
+            <Text
+              className="pt-1 text-xs leading-5"
+              style={{ color: theme.textSubtle }}
+            >
               Pick from the submitted lineups for this game.
             </Text>
           </View>
         </View>
 
-        <View className="flex-row items-center gap-3 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
+        <View
+          className="flex-row items-center gap-3 rounded-2xl border px-3 py-3"
+          style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+        >
           <EntityLogo
             logoUrl={currentPlayer?.avatarUrl}
             variant="player"
             size="sm"
-            tone="dark"
+            tone={isDark ? "dark" : "light"}
           />
           <View className="min-w-0 flex-1">
-            <Text className="text-sm text-accent-100">
+            <Text className="text-sm" style={{ color: theme.accent }}>
               {currentName ?? "Not selected yet"}
             </Text>
-            <Text className="pt-0.5 text-xs text-accent-100/65">
+            <Text className="pt-0.5 text-xs" style={{ color: theme.textMuted }}>
               {currentName
                 ? "Shown on the match page and player profile."
                 : hasCandidates
@@ -208,16 +230,17 @@ function MotmAwardCard({
           disabled={!hasCandidates || pending}
           accessibilityRole="button"
           accessibilityLabel="Choose man of the match"
-          className={`h-12 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+          className={`h-12 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90 ${
             !hasCandidates || pending ? "opacity-45" : ""
           }`}
+          style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
         >
           {pending ? (
-            <ActivityIndicator color={colors.darkLabel} />
+            <ActivityIndicator color={theme.textInverse} />
           ) : (
-            <Ionicons name="star" size={17} color={colors.darkLabel} />
+            <Ionicons name="star" size={17} color={theme.textInverse} />
           )}
-          <Text className="text-sm text-neutral-950">
+          <Text className="text-sm" style={{ color: theme.textInverse }}>
             {currentName ? "Change MOTM" : "Choose MOTM"}
           </Text>
         </Pressable>
@@ -228,7 +251,6 @@ function MotmAwardCard({
         onClose={() => setPickerOpen(false)}
         title="Choose MOTM"
         subtitle="Only players from submitted lineups are available."
-        variant="dark"
       >
         <View className="gap-2">
           {candidates.map((candidate) => {
@@ -240,23 +262,31 @@ function MotmAwardCard({
                 disabled={pending}
                 accessibilityRole="button"
                 accessibilityLabel={`Choose ${candidate.name} as man of the match`}
-                className={`flex-row items-center gap-3 rounded-2xl border px-3 py-3 active:opacity-85 ${
-                  selected
-                    ? "border-accent-400/60 bg-accent-500/15"
-                    : "border-white/10 bg-white/[0.04]"
-                }`}
+                className="flex-row items-center gap-3 rounded-2xl border px-3 py-3 active:opacity-85"
+                style={{
+                  backgroundColor: selected ? theme.accentMuted : theme.cardMuted,
+                  borderColor: selected ? theme.accent : theme.cardBorder,
+                }}
               >
                 <EntityLogo
                   logoUrl={candidate.avatarUrl}
                   variant="player"
                   size="sm"
-                  tone="dark"
+                  tone={isDark ? "dark" : "light"}
                 />
                 <View className="min-w-0 flex-1">
-                  <Text className="text-sm text-white" numberOfLines={1}>
+                  <Text
+                    className="text-sm"
+                    style={{ color: theme.text }}
+                    numberOfLines={1}
+                  >
                     {candidate.name}
                   </Text>
-                  <Text className="pt-0.5 text-xs text-white/45" numberOfLines={1}>
+                  <Text
+                    className="pt-0.5 text-xs"
+                    style={{ color: theme.textSubtle }}
+                    numberOfLines={1}
+                  >
                     {[
                       candidate.teamName,
                       candidate.role,
@@ -269,7 +299,7 @@ function MotmAwardCard({
                   </Text>
                 </View>
                 {selected ? (
-                  <Ionicons name="checkmark-circle" size={21} color={colors.accent} />
+                  <Ionicons name="checkmark-circle" size={21} color={theme.accent} />
                 ) : null}
               </Pressable>
             );

@@ -8,8 +8,8 @@ import type {
   ApiTeamLeague,
   ApiTeamSeason,
 } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
-import { colors } from "@/constants";
 import { formatPlayedAt } from "@/lib/datetime";
 
 import {
@@ -29,6 +29,7 @@ type Props = {
 
 export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const teamId = team.id;
 
   const games = useMemo(() => season?.games ?? [], [season?.games]);
@@ -70,7 +71,10 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
 
   return (
     <View className="gap-6">
-      <View className="rounded-[28px] bg-white/6 px-5 py-6">
+      <View
+        className="rounded-[28px] border px-5 py-6"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-4">
           <EntityLogo
             logoUrl={team.logoUrl}
@@ -81,14 +85,16 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
           />
           <View className="flex-1">
             <Text
-              className="text-[24px] text-white"
+              className="text-[24px]"
+              style={{ color: theme.text }}
             >
               {team.name}
             </Text>
             {league ? (
               <Pressable onPress={() => router.push(`/league/${league.id}`)}>
                 <Text
-                  className="pt-1 text-sm text-[#E6A817]"
+                  className="pt-1 text-sm"
+                  style={{ color: theme.accent }}
                 >
                   {league.name}
                   {season ? ` · ${season.name}` : ""}
@@ -97,7 +103,8 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
             ) : null}
             {standing ? (
               <Text
-                className="pt-1 text-xs text-white/55"
+                className="pt-1 text-xs"
+                style={{ color: theme.textSubtle }}
               >
                 Position #{standing.position} · {standing.points} pts
               </Text>
@@ -117,24 +124,30 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
         <Section title="Top Player">
           <Pressable
             onPress={() => router.push(`/player/${topPlayer.player.id}`)}
-            className="rounded-[24px] bg-white/6 px-5 py-5 active:bg-white/10"
+            className="rounded-[24px] border px-5 py-5 active:opacity-85"
+            style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
           >
             <View className="flex-row items-center gap-4">
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-[#364156]">
+              <View
+                className="h-14 w-14 items-center justify-center rounded-full"
+                style={{ backgroundColor: theme.brand }}
+              >
                 <Text
-                  className="text-lg text-white"
+                  className="text-lg"
+                  style={{ color: theme.textInverse }}
                 >
                   {initials(topPlayer.player.name)}
                 </Text>
               </View>
               <View className="flex-1">
                 <Text
-                  className="text-white"
+                  style={{ color: theme.text }}
                 >
                   {topPlayer.player.name}
                 </Text>
                 <Text
-                  className="pt-1 text-sm text-[#E6A817]"
+                  className="pt-1 text-sm"
+                  style={{ color: theme.accent }}
                 >
                   {topPlayer.goals} goals · {topPlayer.assists} assists
                 </Text>
@@ -150,16 +163,18 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
             <Pressable
               key={game.id}
               onPress={() => router.push(`/match/${game.id}`)}
-              className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+              className="rounded-[22px] border px-4 py-4 active:opacity-85"
+              style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
             >
               <Text
-                className="text-white"
+                style={{ color: theme.text }}
               >
                 {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
                 {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
               </Text>
               <Text
-                className="pt-2 text-sm text-white/55"
+                className="pt-2 text-sm"
+                style={{ color: theme.textSubtle }}
               >
                 {formatPlayedAt(game.playedAt)}
               </Text>
@@ -167,7 +182,8 @@ export function TeamOverviewTab({ team, league, season, liveStanding }: Props) {
           ))
         ) : (
           <Text
-            className="text-sm text-white/55"
+            className="text-sm"
+            style={{ color: theme.textSubtle }}
           >
             No completed games yet.
           </Text>
@@ -193,10 +209,13 @@ function Section({
   title: string;
   children: import("react").ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <Text
-        className="text-[12px] uppercase tracking-[2px] text-white/55"
+        className="text-[12px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
@@ -214,18 +233,24 @@ function MiniCard({
   value: number;
   accent?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="flex-1 rounded-[18px] bg-white/6 px-3 py-4">
+    <View
+      className="flex-1 rounded-[18px] border px-3 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <Text
         style={{
-          color: accent ? colors.accent : "#FFFFFF",
+          color: accent ? theme.accent : theme.text,
         }}
         className="text-center text-[22px]"
       >
         {value}
       </Text>
       <Text
-        className="pt-1 text-center text-xs text-white/55"
+        className="pt-1 text-center text-xs"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>

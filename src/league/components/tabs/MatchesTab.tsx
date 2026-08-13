@@ -3,7 +3,9 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAt } from "@/lib/datetime";
 
 type Props = {
@@ -11,6 +13,8 @@ type Props = {
 };
 
 export function LeagueMatchesTab({ games }: Props) {
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const sorted = useMemo(
     () =>
       [...games].sort(
@@ -22,18 +26,21 @@ export function LeagueMatchesTab({ games }: Props) {
 
   if (!sorted.length) {
     return (
-      <Text
-        className="text-sm text-white/55"
-      >
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No matches scheduled in this season yet.
       </Text>
     );
   }
 
   return (
-    <View className="gap-3">
+    <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
       {sorted.map((game) => (
-        <LeagueMatchRow key={game.id} game={game} />
+        <View
+          key={game.id}
+          style={isTablet ? { width: "48%" } : undefined}
+        >
+          <LeagueMatchRow game={game} />
+        </View>
       ))}
     </View>
   );
@@ -41,11 +48,13 @@ export function LeagueMatchesTab({ games }: Props) {
 
 function LeagueMatchRow({ game }: { game: ApiGame }) {
   const router = useRouter();
+  const theme = useTheme();
 
   return (
     <Pressable
       onPress={() => router.push(`/match/${game.id}`)}
-      className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+      className="rounded-[22px] border px-4 py-4 active:opacity-85"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
     >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-2">
@@ -56,7 +65,7 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
               size="xs"
               tone="dark"
             />
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.homeTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -67,19 +76,19 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
               size="xs"
               tone="dark"
             />
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
         </View>
         <View className="items-end gap-1">
           <Text
-            className="text-[#E6A817]"
+            style={{ color: theme.accent }}
           >
             {game.homeScore ?? "-"}
           </Text>
           <Text
-            className="text-[#E6A817]"
+            style={{ color: theme.accent }}
           >
             {game.awayScore ?? "-"}
           </Text>
@@ -87,13 +96,15 @@ function LeagueMatchRow({ game }: { game: ApiGame }) {
       </View>
       <View className="flex-row flex-wrap items-center pt-3">
         <Text
-          className="text-xs uppercase tracking-[1.5px] text-white/45"
+          className="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         >
           {formatPlayedAt(game.playedAt)} ·{" "}
         </Text>
         <GamePhaseLabel
           game={game}
-          textClassName="text-xs uppercase tracking-[1.5px] text-white/45"
+          textClassName="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         />
       </View>
     </Pressable>

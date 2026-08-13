@@ -1,8 +1,11 @@
 import * as ImagePicker from "expo-image-picker";
 
-import type { PickedImageFile } from "@/lib/picked-image";
+import {
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_IMAGE_UPLOAD_LABEL,
+  type PickedImageFile,
+} from "@/lib/picked-image";
 
-const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_MIME = new Set([
   "image/jpeg",
   "image/jpg",
@@ -25,7 +28,7 @@ function fileNameFromUri(uri: string, mime: string): string {
   return `logo.${ext}`;
 }
 
-/** Opens the photo library for a square competition logo. JPG, PNG, or WebP, max 5 MB. */
+/** Opens the photo library for a square competition logo. JPG, PNG, or WebP, max 10 MB. */
 export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
   const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
   if (!permission.granted) {
@@ -46,11 +49,11 @@ export async function pickCompetitionLogo(): Promise<PickedImageFile | null> {
   const asset = result.assets[0];
   const mime = asset.mimeType ?? mimeFromUri(asset.uri);
   if (!ALLOWED_MIME.has(mime)) {
-    throw new Error("Use a JPG, PNG, or WebP image (max 5 MB).");
+    throw new Error(`Use a JPG, PNG, or WebP image (max ${MAX_IMAGE_UPLOAD_LABEL}).`);
   }
 
-  if (asset.fileSize != null && asset.fileSize > MAX_BYTES) {
-    throw new Error("Logo must be 5 MB or smaller.");
+  if (asset.fileSize != null && asset.fileSize > MAX_IMAGE_UPLOAD_BYTES) {
+    throw new Error(`Logo must be ${MAX_IMAGE_UPLOAD_LABEL} or smaller.`);
   }
 
   return {

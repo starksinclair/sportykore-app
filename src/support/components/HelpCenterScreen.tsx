@@ -16,9 +16,12 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors, scoreboardPattern } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { posthog } from "@/lib/posthog";
 import {
   showErrorToast,
@@ -59,6 +62,13 @@ export function HelpCenterScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1080 : 860;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const faqsQuery = useHelpCenterFaqs();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
@@ -103,29 +113,66 @@ export function HelpCenterScreen() {
     category === "all"
       ? null
       : HELP_CENTER_CATEGORIES.find((item) => item.id === category);
+  const handleClearFilters = () => {
+    setQuery("");
+    setCategory("all");
+  };
+  const questionsPanel = (
+    <QuestionsPanel
+      articles={filteredArticles}
+      expandedId={expandedId}
+      isFetching={faqsQuery.isFetching}
+      onClear={handleClearFilters}
+      onToggle={(articleId) =>
+        setExpandedId((current) =>
+          current === articleId ? null : articleId,
+        )
+      }
+    />
+  );
+  const supportCard = (
+    <SupportPromptCard onReport={() => setReportOpen(true)} />
+  );
+  const footer = (
+    <Text
+      className="px-1 text-center text-[11px]"
+      style={[styles.footerText, { color: theme.textSubtle }]}
+    >
+      Help content {faqsQuery.data?.articles?.length ? "live" : "local"}
+    </Text>
+  );
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor={scoreboardPattern().stripeColor}
+        baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+        stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
+      />
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
       />
 
-      <SafeAreaView className="flex-1" edges={["top"]}>
+      <SafeAreaView className="relative flex-1" edges={["top"]}>
         <View className="px-5 pb-3 pt-1">
-          <View className="flex-row items-center justify-between">
+          <View
+            className="flex-row items-center justify-between"
+            style={tabletFrameStyle}
+          >
             <Pressable
               onPress={() => router.back()}
               accessibilityLabel="Back"
               accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color={colors.white} />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <Text
-              className="text-center text-base uppercase tracking-[2px] text-white/85"
-              style={styles.headerText}
+              className="text-center text-base uppercase tracking-[2px]"
+              style={[styles.headerText, { color: theme.text }]}
             >
               Help center
             </Text>
@@ -136,196 +183,118 @@ export function HelpCenterScreen() {
         <ScrollView
           className="flex-1"
           contentContainerClassName="gap-5 px-5 pb-10 pt-1"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 24,
+            ...(isTablet ? { alignItems: "center" as const } : null),
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-4 rounded-[26px] border border-white/10 bg-white/[0.04] px-4 py-5">
-            <View className="flex-row items-start gap-3">
-              <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-accent-500">
-                <Ionicons
-                  name="help-buoy-outline"
-                  size={23}
-                  color={colors.darkLabel}
-                />
-              </View>
-              <View className="min-w-0 flex-1 gap-1">
-                <Text
-                  className="text-2xl leading-8 text-white"
-                  style={[styles.heroTitleText, { fontFamily: fonts.displayBold }]}
-                >
-                  Get unstuck fast
-                </Text>
-                <Text
-                  className="text-sm leading-6 text-white/60"
-                  style={styles.secondaryText}
-                >
-                  Short answers for players, Team managers, and League admins.
-                </Text>
-              </View>
-            </View>
-
-            <View className="flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
-              <Ionicons name="search-outline" size={18} color={colors.accent} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder="Search invites, standings, lineups"
-                placeholderTextColor="rgba(255,255,255,0.42)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                className="min-w-0 flex-1 p-0 text-sm text-white"
-                selectionColor={colors.accent}
-                style={[styles.searchInputText, { fontFamily: fonts.body }]}
-              />
-              {query.length > 0 ? (
-                <Pressable
-                  onPress={() => setQuery("")}
-                  accessibilityLabel="Clear search"
-                  hitSlop={8}
-                >
-                  <Ionicons
-                    name="close-circle"
-                    size={18}
-                    color="rgba(255,255,255,0.5)"
-                  />
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerClassName="gap-2 pr-5"
-          >
-            <CategoryChip
-              label={allCategory.title}
-              icon={allCategory.icon}
-              selected={category === "all"}
-              onPress={() => setCategory("all")}
-            />
-            {HELP_CENTER_CATEGORIES.map((item) => (
-              <CategoryChip
-                key={item.id}
-                label={item.title}
-                icon={item.icon}
-                selected={category === item.id}
-                onPress={() => setCategory(item.id)}
-              />
-            ))}
-          </ScrollView>
-
-          {selectedCategory ? (
-            <View className="rounded-[22px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+          <View className="w-full gap-5" style={tabletFrameStyle}>
+            <View
+              className="gap-4 rounded-[26px] border px-4 py-5"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
+            >
               <View className="flex-row items-start gap-3">
-                <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/20">
+                <View className="h-12 w-12 items-center justify-center rounded-[18px] bg-accent-500">
                   <Ionicons
-                    name={selectedCategory.icon}
-                    size={19}
-                    color={colors.accent}
+                    name="help-buoy-outline"
+                    size={23}
+                    color={colors.darkLabel}
                   />
                 </View>
                 <View className="min-w-0 flex-1 gap-1">
                   <Text
-                    className="text-base text-accent-100"
-                    style={styles.accentText}
+                    className="text-2xl leading-8"
+                    style={[
+                      styles.heroTitleText,
+                      { color: theme.text, fontFamily: fonts.displayBold },
+                    ]}
                   >
-                    {selectedCategory.title}
+                    Get unstuck fast
                   </Text>
                   <Text
-                    className="text-xs leading-5 text-accent-100/70"
-                    style={styles.accentMutedText}
+                    className="text-sm leading-6"
+                    style={[styles.secondaryText, { color: theme.textMuted }]}
                   >
-                    {selectedCategory.description}
+                    Short answers for players, Team managers, and League admins.
                   </Text>
                 </View>
               </View>
-            </View>
-          ) : null}
 
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between px-1">
-              <View className="flex-row items-center gap-2">
-                <Text
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                  style={styles.eyebrowText}
-                >
-                  Questions
-                </Text>
-                {faqsQuery.isFetching ? (
-                  <ActivityIndicator color={colors.accent} size="small" />
+              <View
+                className="flex-row items-center gap-2 rounded-[18px] border px-4 py-3"
+                style={{
+                  backgroundColor: theme.inputBackground,
+                  borderColor: theme.inputBorder,
+                }}
+              >
+                <Ionicons name="search-outline" size={18} color={theme.accent} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search invites, standings, lineups"
+                  placeholderTextColor={theme.textSubtle}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  className="min-w-0 flex-1 p-0 text-sm"
+                  selectionColor={theme.accent}
+                  style={[
+                    styles.searchInputText,
+                    { color: theme.text, fontFamily: fonts.body },
+                  ]}
+                />
+                {query.length > 0 ? (
+                  <Pressable
+                    onPress={() => setQuery("")}
+                    accessibilityLabel="Clear search"
+                    hitSlop={8}
+                  >
+                    <Ionicons
+                      name="close-circle"
+                      size={18}
+                      color={theme.textSubtle}
+                    />
+                  </Pressable>
                 ) : null}
               </View>
-              <Text className="text-xs text-white/40" style={styles.countText}>
-                {filteredArticles.length} found
-              </Text>
             </View>
 
-            {filteredArticles.length > 0 ? (
-              filteredArticles.map((article) => (
-                <FaqArticleCard
-                  key={article.id}
-                  article={article}
-                  expanded={expandedId === article.id}
-                  onToggle={() =>
-                    setExpandedId((current) =>
-                      current === article.id ? null : article.id,
-                    )
-                  }
-                />
-              ))
+            {isTablet ? (
+              <View className="flex-row items-start gap-5">
+                <View
+                  className="gap-5"
+                  style={{ width: isWideTablet ? 320 : 288 }}
+                >
+                  <CategoryFilters
+                    category={category}
+                    onSelect={setCategory}
+                    stacked
+                  />
+                  <SelectedCategoryCard category={selectedCategory} />
+                  {supportCard}
+                  {footer}
+                </View>
+                <View className="min-w-0 flex-1">
+                  {questionsPanel}
+                </View>
+              </View>
             ) : (
-              <EmptyFaqState onClear={() => {
-                setQuery("");
-                setCategory("all");
-              }} />
+              <>
+                <CategoryFilters
+                  category={category}
+                  onSelect={setCategory}
+                />
+                <SelectedCategoryCard category={selectedCategory} />
+                {questionsPanel}
+                {supportCard}
+                {footer}
+              </>
             )}
           </View>
-
-          <View className="gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
-            <View className="flex-row items-start gap-3">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                <Ionicons
-                  name="chatbubble-ellipses-outline"
-                  size={19}
-                  color={colors.accent}
-                />
-              </View>
-              <View className="min-w-0 flex-1 gap-1">
-                <Text className="text-base text-white" style={styles.primaryText}>
-                  Still need help?
-                </Text>
-                <Text
-                  className="text-xs leading-5 text-white/55"
-                  style={styles.mutedText}
-                >
-                  Send a report and we will use it to improve the next build.
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={() => setReportOpen(true)}
-              accessibilityRole="button"
-              className="h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90"
-            >
-              <Ionicons
-                name="bug-outline"
-                size={17}
-                color={colors.darkLabel}
-              />
-              <Text className="text-sm text-neutral-950" style={styles.darkText}>
-                Report a problem
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text
-            className="px-1 text-center text-[11px] text-white/30"
-            style={styles.footerText}
-          >
-            Help content {faqsQuery.data?.articles?.length ? "live" : "local"}
-          </Text>
         </ScrollView>
 
         <BugReportSheet
@@ -338,17 +307,241 @@ export function HelpCenterScreen() {
   );
 }
 
+function CategoryFilters({
+  category,
+  onSelect,
+  stacked = false,
+}: {
+  category: CategoryFilter;
+  onSelect: (category: CategoryFilter) => void;
+  stacked?: boolean;
+}) {
+  const theme = useTheme();
+  const chips = (
+    <>
+      <CategoryChip
+        label={allCategory.title}
+        icon={allCategory.icon}
+        selected={category === "all"}
+        onPress={() => onSelect("all")}
+        stacked={stacked}
+      />
+      {HELP_CENTER_CATEGORIES.map((item) => (
+        <CategoryChip
+          key={item.id}
+          label={item.title}
+          icon={item.icon}
+          selected={category === item.id}
+          onPress={() => onSelect(item.id)}
+          stacked={stacked}
+        />
+      ))}
+    </>
+  );
+
+  if (stacked) {
+    return (
+      <View
+        className="gap-3 rounded-[24px] border px-4 py-4"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <Text
+          className="text-xs uppercase tracking-[2px]"
+          style={[styles.eyebrowText, { color: theme.textSubtle }]}
+        >
+          Browse by topic
+        </Text>
+        <View className="gap-2">
+          {chips}
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerClassName="gap-2 pr-5"
+    >
+      {chips}
+    </ScrollView>
+  );
+}
+
+function SelectedCategoryCard({
+  category,
+}: {
+  category: (typeof HELP_CENTER_CATEGORIES)[number] | undefined | null;
+}) {
+  const theme = useTheme();
+
+  if (!category) return null;
+
+  return (
+    <View
+      className="rounded-[22px] border px-4 py-4"
+      style={{
+        backgroundColor: theme.accentMuted,
+        borderColor: theme.accent,
+      }}
+    >
+      <View className="flex-row items-start gap-3">
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.card }}
+        >
+          <Ionicons
+            name={category.icon}
+            size={19}
+            color={theme.accent}
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <Text
+            className="text-base"
+            style={[styles.accentText, { color: theme.text }]}
+          >
+            {category.title}
+          </Text>
+          <Text
+            className="text-xs leading-5"
+            style={[styles.accentMutedText, { color: theme.textMuted }]}
+          >
+            {category.description}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function QuestionsPanel({
+  articles,
+  expandedId,
+  isFetching,
+  onClear,
+  onToggle,
+}: {
+  articles: HelpCenterArticle[];
+  expandedId: string | null;
+  isFetching: boolean;
+  onClear: () => void;
+  onToggle: (articleId: string) => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <View className="gap-3">
+      <View className="flex-row items-center justify-between px-1">
+        <View className="flex-row items-center gap-2">
+          <Text
+            className="text-xs uppercase tracking-[2px]"
+            style={[styles.eyebrowText, { color: theme.textSubtle }]}
+          >
+            Questions
+          </Text>
+          {isFetching ? (
+            <ActivityIndicator color={theme.accent} size="small" />
+          ) : null}
+        </View>
+        <Text
+          className="text-xs"
+          style={[styles.countText, { color: theme.textSubtle }]}
+        >
+          {articles.length} found
+        </Text>
+      </View>
+
+      {articles.length > 0 ? (
+        articles.map((article) => (
+          <FaqArticleCard
+            key={article.id}
+            article={article}
+            expanded={expandedId === article.id}
+            onToggle={() => onToggle(article.id)}
+          />
+        ))
+      ) : (
+        <EmptyFaqState onClear={onClear} />
+      )}
+    </View>
+  );
+}
+
+function SupportPromptCard({ onReport }: { onReport: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <View
+      className="gap-3 rounded-[24px] border px-4 py-4"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <View className="flex-row items-start gap-3">
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={19}
+            color={theme.accent}
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <Text
+            className="text-base"
+            style={[styles.primaryText, { color: theme.text }]}
+          >
+            Still need help?
+          </Text>
+          <Text
+            className="text-xs leading-5"
+            style={[styles.mutedText, { color: theme.textSubtle }]}
+          >
+            Send a report and we will use it to improve the next build.
+          </Text>
+        </View>
+      </View>
+      <Pressable
+        onPress={onReport}
+        accessibilityRole="button"
+        className="h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90"
+      >
+        <Ionicons
+          name="bug-outline"
+          size={17}
+          color={colors.darkLabel}
+        />
+        <Text className="text-sm text-neutral-950" style={styles.darkText}>
+          Report a problem
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function CategoryChip({
   label,
   icon,
   selected,
   onPress,
+  stacked = false,
 }: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
   selected: boolean;
   onPress: () => void;
+  stacked?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
@@ -356,19 +549,24 @@ function CategoryChip({
       accessibilityState={{ selected }}
       className={[
         "h-10 flex-row items-center gap-2 rounded-full border px-3 active:opacity-85",
-        selected
-          ? "border-accent-400 bg-accent-500"
-          : "border-white/10 bg-white/[0.06]",
+        stacked ? "justify-start" : "",
       ].join(" ")}
+      style={{
+        backgroundColor: selected ? theme.accent : theme.card,
+        borderColor: selected ? theme.accent : theme.cardBorder,
+      }}
     >
       <Ionicons
         name={icon}
         size={15}
-        color={selected ? colors.darkLabel : colors.accent}
+        color={selected ? colors.darkLabel : theme.accent}
       />
       <Text
-        className={selected ? "text-xs text-neutral-950" : "text-xs text-white/75"}
-        style={selected ? styles.darkText : styles.chipText}
+        className="text-xs"
+        style={[
+          selected ? styles.darkText : styles.chipText,
+          { color: selected ? colors.darkLabel : theme.textMuted },
+        ]}
         numberOfLines={1}
       >
         {label}
@@ -387,30 +585,43 @@ function FaqArticleCard({
   onToggle: () => void;
 }) {
   const router = useRouter();
+  const theme = useTheme();
 
   return (
-    <View className="overflow-hidden rounded-[22px] border border-white/10 bg-white/[0.04]">
+    <View
+      className="overflow-hidden rounded-[22px] border"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         accessibilityLabel={article.question}
-        className="flex-row items-start gap-3 px-4 py-4 active:bg-white/5"
+        className="flex-row items-start gap-3 px-4 py-4 active:opacity-80"
       >
-        <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-2xl bg-white/10">
+        <View
+          className="mt-0.5 h-9 w-9 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
           <Ionicons
             name={categoryIcon(article.categoryId)}
             size={17}
-            color={colors.accent}
+            color={theme.accent}
           />
         </View>
         <View className="min-w-0 flex-1 gap-1">
-          <Text className="text-base leading-6 text-white" style={styles.primaryText}>
+          <Text
+            className="text-base leading-6"
+            style={[styles.primaryText, { color: theme.text }]}
+          >
             {article.question}
           </Text>
           <Text
-            className="text-xs uppercase tracking-[1.5px] text-white/35"
-            style={styles.metaText}
+            className="text-xs uppercase tracking-[1.5px]"
+            style={[styles.metaText, { color: theme.textSubtle }]}
           >
             {categoryLabel(article.categoryId)}
           </Text>
@@ -418,28 +629,41 @@ function FaqArticleCard({
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="rgba(255,255,255,0.6)"
+          color={theme.textSubtle}
         />
       </Pressable>
 
       {expanded ? (
-        <View className="gap-4 border-t border-white/10 px-4 pb-4 pt-3">
-          <Text className="text-sm leading-6 text-white/68" style={styles.bodyText}>
+        <View
+          className="gap-4 border-t px-4 pb-4 pt-3"
+          style={{ borderColor: theme.cardBorder }}
+        >
+          <Text
+            className="text-sm leading-6"
+            style={[styles.bodyText, { color: theme.textMuted }]}
+          >
             {article.answer}
           </Text>
           {article.relatedAction ? (
             <Pressable
               onPress={() => router.push(article.relatedAction?.route ?? "/profile")}
               accessibilityRole="button"
-              className="self-start flex-row items-center gap-2 rounded-full border border-accent-400/40 bg-accent-500/10 px-3 py-2 active:bg-accent-500/15"
+              className="self-start flex-row items-center gap-2 rounded-full border px-3 py-2 active:opacity-85"
+              style={{
+                backgroundColor: theme.accentMuted,
+                borderColor: theme.accent,
+              }}
             >
-              <Text className="text-xs text-accent-100" style={styles.accentText}>
+              <Text
+                className="text-xs"
+                style={[styles.accentText, { color: theme.text }]}
+              >
                 {article.relatedAction.label}
               </Text>
               <Ionicons
                 name="arrow-forward-outline"
                 size={14}
-                color={colors.accent}
+                color={theme.accent}
               />
             </Pressable>
           ) : null}
@@ -450,18 +674,32 @@ function FaqArticleCard({
 }
 
 function EmptyFaqState({ onClear }: { onClear: () => void }) {
+  const theme = useTheme();
+
   return (
-    <View className="items-center gap-3 rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-8">
-      <View className="h-12 w-12 items-center justify-center rounded-[20px] bg-white/10">
-        <Ionicons name="search-outline" size={23} color={colors.accent} />
+    <View
+      className="items-center gap-3 rounded-[24px] border px-5 py-8"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <View
+        className="h-12 w-12 items-center justify-center rounded-[20px]"
+        style={{ backgroundColor: theme.accentMuted }}
+      >
+        <Ionicons name="search-outline" size={23} color={theme.accent} />
       </View>
       <View className="gap-1">
-        <Text className="text-center text-base text-white" style={styles.primaryText}>
+        <Text
+          className="text-center text-base"
+          style={[styles.primaryText, { color: theme.text }]}
+        >
           No matching questions
         </Text>
         <Text
-          className="text-center text-sm leading-6 text-white/55"
-          style={styles.mutedText}
+          className="text-center text-sm leading-6"
+          style={[styles.mutedText, { color: theme.textSubtle }]}
         >
           Try another word or clear the filters.
         </Text>
@@ -469,9 +707,16 @@ function EmptyFaqState({ onClear }: { onClear: () => void }) {
       <Pressable
         onPress={onClear}
         accessibilityRole="button"
-        className="rounded-full border border-white/10 bg-white/10 px-4 py-2 active:bg-white/15"
+        className="rounded-full border px-4 py-2 active:opacity-85"
+        style={{
+          backgroundColor: theme.cardMuted,
+          borderColor: theme.cardBorder,
+        }}
       >
-        <Text className="text-xs text-white" style={styles.primaryText}>
+        <Text
+          className="text-xs"
+          style={[styles.primaryText, { color: theme.text }]}
+        >
           Clear filters
         </Text>
       </Pressable>
@@ -489,6 +734,8 @@ function BugReportSheet({
   onClose: () => void;
 }) {
   const submitMutation = useSubmitBugReport();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const [type, setType] = useState<BugReportType>("bug");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -541,13 +788,13 @@ function BugReportSheet({
       onClose={onClose}
       title="Report a problem"
       subtitle="Tell us what happened. We will include basic app context automatically."
-      variant="dark"
+      variant={isDark ? "dark" : "light"}
     >
       <View className="gap-4">
         <View className="gap-2">
           <Text
-            className="text-xs uppercase tracking-[1.5px] text-white/45"
-            style={styles.eyebrowText}
+            className="text-xs uppercase tracking-[1.5px]"
+            style={[styles.eyebrowText, { color: theme.textSubtle }]}
           >
             Type
           </Text>
@@ -560,18 +807,18 @@ function BugReportSheet({
                   onPress={() => setType(item.id)}
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
-                  className={[
-                    "rounded-full border px-3 py-2 active:opacity-85",
-                    selected
-                      ? "border-accent-400 bg-accent-500"
-                      : "border-white/10 bg-white/[0.06]",
-                  ].join(" ")}
+                  className="rounded-full border px-3 py-2 active:opacity-85"
+                  style={{
+                    backgroundColor: selected ? theme.accent : theme.cardMuted,
+                    borderColor: selected ? theme.accent : theme.cardBorder,
+                  }}
                 >
                   <Text
-                    className={
-                      selected ? "text-xs text-neutral-950" : "text-xs text-white/75"
-                    }
-                    style={selected ? styles.darkText : styles.chipText}
+                    className="text-xs"
+                    style={[
+                      selected ? styles.darkText : styles.chipText,
+                      { color: selected ? colors.darkLabel : theme.textMuted },
+                    ]}
                   >
                     {item.label}
                   </Text>
@@ -621,7 +868,7 @@ function BugReportSheet({
           ) : (
             <Ionicons name="send-outline" size={17} color={colors.darkLabel} />
           )}
-          <Text className="text-sm text-neutral-950">
+          <Text className="text-sm" style={{ color: colors.darkLabel }}>
             {submitMutation.isPending ? "Sending..." : "Send report"}
           </Text>
         </Pressable>
@@ -647,11 +894,13 @@ function ReportField({
   minHeight?: number;
   maxLength?: number;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-1.5">
       <Text
-        className="text-xs uppercase tracking-[1.5px] text-white/45"
-        style={styles.eyebrowText}
+        className="text-xs uppercase tracking-[1.5px]"
+        style={[styles.eyebrowText, { color: theme.textSubtle }]}
       >
         {label}
       </Text>
@@ -659,13 +908,21 @@ function ReportField({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="rgba(255,255,255,0.42)"
+        placeholderTextColor={theme.textSubtle}
         multiline={multiline}
         textAlignVertical={multiline ? "top" : "center"}
         maxLength={maxLength}
-        className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-base text-white"
+        className="rounded-2xl border px-4 py-3 text-base"
         selectionColor={colors.accent}
-        style={[styles.reportInputText, { minHeight }]}
+        style={[
+          styles.reportInputText,
+          {
+            minHeight,
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.inputBorder,
+            color: theme.text,
+          },
+        ]}
       />
     </View>
   );
