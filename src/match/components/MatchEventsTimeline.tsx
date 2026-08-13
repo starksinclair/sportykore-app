@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
 import {
   iconForStatType,
@@ -31,6 +32,7 @@ export function MatchEventsTimeline({
   awayTeamId,
   onPlayerPress,
 }: Props) {
+  const theme = useTheme();
   const events = useMemo(
     () => buildTimelineEvents(stats, homeTeamId, awayTeamId),
     [stats, homeTeamId, awayTeamId],
@@ -38,16 +40,20 @@ export function MatchEventsTimeline({
 
   if (!events.length) {
     return (
-        <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No events recorded yet.
       </Text>
     );
   }
 
   return (
-    <View className="relative overflow-hidden rounded-[20px] bg-white/6 px-3 py-4">
+    <View
+      className="relative overflow-hidden rounded-[20px] border px-3 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View
-        className="absolute bottom-4 left-1/2 top-4 w-px -translate-x-1/2 bg-white/15"
+        className="absolute bottom-4 left-1/2 top-4 w-px -translate-x-1/2"
+        style={{ backgroundColor: theme.cardBorder }}
         pointerEvents="none"
       />
 
@@ -122,6 +128,7 @@ function EventTimelineRow({
   event: TimelineEvent;
   onPlayerPress?: (playerId: number) => void;
 }) {
+  const theme = useTheme();
   const { stat, side, assist } = event;
   const minuteLabel = formatMinute(stat);
 
@@ -129,7 +136,8 @@ function EventTimelineRow({
     return (
       <View className="items-center gap-2">
         <Text
-          className="text-xs text-accent-400"
+          className="text-xs"
+          style={{ color: theme.accent }}
         >
           {minuteLabel}
         </Text>
@@ -158,7 +166,8 @@ function EventTimelineRow({
 
       <View className="z-10 w-12 items-center pt-1">
         <Text
-          className="text-xs text-accent-400"
+          className="text-xs"
+          style={{ color: theme.accent }}
         >
           {minuteLabel}
         </Text>
@@ -189,6 +198,7 @@ function EventBubble({
   align: "start" | "end" | "center";
   onPlayerPress?: (playerId: number) => void;
 }) {
+  const theme = useTheme();
   const typeName =
     (stat.type?.displayName ?? stat.type?.name ?? "Event") +
     (isGoalsStat(stat) && stat.isPenalty ? " (pen.)" : "");
@@ -199,7 +209,7 @@ function EventBubble({
     : (stat.player?.name ?? "Unknown");
   const playerId = stat.player?.id;
   const iconName = stat.type ? iconForStatType(stat.type) : "stats-chart-outline";
-  const iconColor = iconColorForStat(stat);
+  const iconColor = iconColorForStat(stat, theme.accent, theme.textMuted);
 
   const alignClass =
     align === "end"
@@ -214,29 +224,33 @@ function EventBubble({
   const content = (
     <View
       className={[
-        "max-w-full flex-row gap-2 rounded-xl bg-white/8 px-3 py-2.5",
+        "max-w-full flex-row gap-2 rounded-xl px-3 py-2.5",
         alignClass,
       ].join(" ")}
+      style={{ backgroundColor: theme.cardMuted }}
     >
       {align !== "end" ? (
         <Ionicons name={iconName} size={16} color={iconColor} />
       ) : null}
       <View className={align === "end" ? "items-end" : align === "center" ? "items-center" : ""}>
         <Text
-          className={["text-sm text-white", textAlignClass].join(" ")}
+          className={["text-sm", textAlignClass].join(" ")}
+          style={{ color: theme.text }}
           numberOfLines={2}
         >
           {playerName}
         </Text>
         <Text
-          className={["pt-0.5 text-xs text-white/55", textAlignClass].join(" ")}
+          className={["pt-0.5 text-xs", textAlignClass].join(" ")}
+          style={{ color: theme.textSubtle }}
           numberOfLines={1}
         >
           {typeName}
         </Text>
         {assist ? (
           <Text
-            className={["pt-0.5 text-xs text-white/45", textAlignClass].join(" ")}
+            className={["pt-0.5 text-xs", textAlignClass].join(" ")}
+            style={{ color: theme.textSubtle }}
             numberOfLines={1}
           >
             {assist.player?.name ?? "Assist"}
@@ -268,10 +282,14 @@ function formatMinute(stat: ApiStat): string {
   return `${stat.minute}${stat.isStoppageTime ? "+" : ""}'`;
 }
 
-function iconColorForStat(stat: ApiStat): string {
+function iconColorForStat(
+  stat: ApiStat,
+  accentColor: string,
+  fallbackColor: string,
+): string {
   const slug = stat.type?.name?.toLowerCase();
-  if (slug === "goals" || slug === "own_goal") return colors.accent;
+  if (slug === "goals" || slug === "own_goal") return accentColor;
   if (slug === "yellow_card") return colors.signInYellow;
   if (slug === "red_card") return colors.liveRed;
-  return "rgba(255,255,255,0.7)";
+  return fallbackColor;
 }

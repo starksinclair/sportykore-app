@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
@@ -41,6 +43,8 @@ function readParam(value: string | string[] | undefined): string | undefined {
 export default function JoinLeagueScreen() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const tabletMaxWidth = isWideTablet ? 760 : 660;
   const tabletFrameStyle = isTablet
@@ -129,14 +133,19 @@ export default function JoinLeagueScreen() {
   };
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.scoreboardBlack }}>
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor={scoreboardPattern().stripeColor}
+        baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+        stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
+      />
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
       />
 
-      <SafeAreaView className="flex-1" edges={["top", "bottom"]}>
+      <SafeAreaView className="relative flex-1" edges={["top", "bottom"]}>
         <View className="px-5 pt-1">
           <View
             className="flex-row items-center justify-between pb-2"
@@ -146,12 +155,14 @@ export default function JoinLeagueScreen() {
               onPress={() => router.replace("/profile")}
               accessibilityLabel="Back"
               accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color={colors.white} />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <Text
-              className="text-center text-base uppercase tracking-[2px] text-white/85"
+              className="text-center text-base uppercase tracking-[2px]"
+              style={{ color: theme.text }}
             >
               Join a league
             </Text>
@@ -161,7 +172,7 @@ export default function JoinLeagueScreen() {
 
         {!hydrated || loadingPrefill ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator color={colors.accent} />
+            <ActivityIndicator color={theme.accent} />
           </View>
         ) : !user ? (
           <JoinLeagueLoginPrompt />
@@ -179,17 +190,22 @@ export default function JoinLeagueScreen() {
             >
               <View className="w-full gap-5" style={tabletFrameStyle}>
                 <View className="items-center gap-3">
-                  <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-accent-500/15">
-                    <Ionicons name="ticket-outline" size={28} color={colors.accent} />
+                  <View
+                    className="h-16 w-16 items-center justify-center rounded-[22px]"
+                    style={{ backgroundColor: theme.accentMuted }}
+                  >
+                    <Ionicons name="ticket-outline" size={28} color={theme.accent} />
                   </View>
                   <View className="gap-2">
                     <Text
-                      className="text-center text-2xl text-white"
+                      className="text-center text-2xl"
+                      style={{ color: theme.text }}
                     >
                       Join your league
                     </Text>
                     <Text
-                      className="text-center text-sm leading-6 text-white/65"
+                      className="text-center text-sm leading-6"
+                      style={{ color: theme.textMuted }}
                     >
                       Paste the invite code or full link from your league admin.
                     </Text>
@@ -197,11 +213,18 @@ export default function JoinLeagueScreen() {
                 </View>
 
                 {leagueName || teamName ? (
-                  <View className="gap-3 rounded-[22px] border border-white/10 bg-white/6 px-4 py-4">
+                  <View
+                    className="gap-3 rounded-[22px] border px-4 py-4"
+                    style={{
+                      backgroundColor: theme.card,
+                      borderColor: theme.cardBorder,
+                    }}
+                  >
                     <View className="flex-row items-center gap-2">
-                      <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
+                      <Ionicons name="shield-checkmark-outline" size={16} color={theme.accent} />
                       <Text
-                        className="text-xs uppercase tracking-wide text-white/50"
+                        className="text-xs uppercase tracking-wide"
+                        style={{ color: theme.textSubtle }}
                       >
                         Invite details
                       </Text>
@@ -215,15 +238,23 @@ export default function JoinLeagueScreen() {
                   </View>
                 ) : null}
 
-                <View className="gap-4 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
+                <View
+                  className="gap-4 rounded-[22px] border px-4 py-4"
+                  style={{
+                    backgroundColor: theme.card,
+                    borderColor: theme.cardBorder,
+                  }}
+                >
                   <View className="gap-1">
                     <Text
-                      className="text-base text-white"
+                      className="text-base"
+                      style={{ color: theme.text }}
                     >
                       Enter invite
                     </Text>
                     <Text
-                      className="text-sm leading-5 text-white/55"
+                      className="text-sm leading-5"
+                      style={{ color: theme.textSubtle }}
                     >
                       Codes and shared links both work here.
                     </Text>
@@ -231,7 +262,6 @@ export default function JoinLeagueScreen() {
 
                   <AuthTextField
                     label="Invite code or link"
-                    labelClassName="text-white/60"
                     value={input}
                     onChangeText={setInput}
                     placeholder="550e8400-e29b-41d4-a716-446655440000"
@@ -271,14 +301,17 @@ export default function JoinLeagueScreen() {
 }
 
 function InviteContextRow({ label, value }: { label: string; value: string }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-1">
       <Text
-        className="text-[11px] uppercase tracking-wider text-white/45"
+        className="text-[11px] uppercase tracking-wider"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>
-      <Text className="text-base text-white">
+      <Text className="text-base" style={{ color: theme.text }}>
         {value}
       </Text>
     </View>

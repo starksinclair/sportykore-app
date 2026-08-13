@@ -11,6 +11,8 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGame, ApiPlayerWithStats, GameStatus } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
@@ -61,6 +63,8 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   const router = useRouter();
   const teamQuery = useTeamDetail(teamId);
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const tabletMaxWidth = isWideTablet ? 1120 : 920;
   const tabletFrameStyle = isTablet
@@ -107,11 +111,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   };
 
   return (
-    <View className="flex-1 bg-[#121212]">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
-          baseColor={colors.scoreboardBlack}
-          stripeColor={colors.patternStripe}
+          baseColor={isDark ? colors.scoreboardBlack : theme.patternBase}
+          stripeColor={theme.patternStripe}
         />
 
         <View className="px-5 pb-2">
@@ -120,19 +124,22 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
             <Pressable
               onPress={() => router.back()}
               accessibilityLabel="Go back"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/15"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? theme.card : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <View className="flex-1">
               <Text
-                className="text-xl text-white"
+                className="text-xl"
+                style={{ color: theme.text }}
               >
                 {teamInfo?.name ?? "Team"}
               </Text>
               {leagueName ? (
                 <Text
-                  className="text-sm text-white/55"
+                  className="text-sm"
+                  style={{ color: theme.textSubtle }}
                 >
                   {leagueName}
                 </Text>
@@ -146,10 +153,11 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                 logoUrl={teamInfo.logoUrl}
                 variant="team"
                 size="sm"
-                tone="dark"
+                tone={isDark ? "dark" : "light"}
               />
               <Text
-                className="flex-1 text-sm text-white/55"
+                className="flex-1 text-sm"
+                style={{ color: theme.textSubtle }}
               >
                 Set lineups for fixtures. Roster is view-only.
               </Text>
@@ -182,14 +190,22 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
               onRetry={() => teamQuery.refetch()}
             />
           ) : !seasonBlock ? (
-            <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
+            <View
+              className="rounded-[22px] border border-dashed px-5 py-8"
+              style={{
+                backgroundColor: theme.cardMuted,
+                borderColor: theme.cardBorder,
+              }}
+            >
               <Text
-                className="text-base text-white"
+                className="text-base"
+                style={{ color: theme.text }}
               >
                 No active season
               </Text>
               <Text
-                className="pt-2 text-sm leading-6 text-white/55"
+                className="pt-2 text-sm leading-6"
+                style={{ color: theme.textSubtle }}
               >
                 Ask the league admin to activate a season before setting
                 lineups.
@@ -205,7 +221,7 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                 />
               </View>
               <View className="gap-3" style={isTablet ? { flex: 1 } : undefined}>
-                <SquadList roster={roster} />
+                <SquadList roster={roster} isDark={isDark} />
               </View>
             </View>
           )}
@@ -225,17 +241,31 @@ function FixturesList({
   teamId: number;
   onOpenLineup: (gameId: number) => void;
 }) {
+  const theme = useTheme();
+
   return (
     <>
-      <Text className="text-xs uppercase tracking-[2px] text-white/45">
+      <Text
+        className="text-xs uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
+      >
         Fixtures
       </Text>
       {games.length === 0 ? (
-        <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <Text className="text-base text-white">
+        <View
+          className="rounded-[22px] border border-dashed px-5 py-8"
+          style={{
+            backgroundColor: theme.cardMuted,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <Text className="text-base" style={{ color: theme.text }}>
             No fixtures yet
           </Text>
-          <Text className="pt-2 text-sm leading-6 text-white/55">
+          <Text
+            className="pt-2 text-sm leading-6"
+            style={{ color: theme.textSubtle }}
+          >
             When the league admin schedules games for this team, they will show
             up here for lineup setup.
           </Text>
@@ -248,13 +278,16 @@ function FixturesList({
             <Pressable
               key={game.id}
               onPress={() => onOpenLineup(game.id)}
-              className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-4 active:bg-white/10"
+              className="flex-row items-center gap-3 rounded-[20px] px-4 py-4"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? theme.cardMuted : theme.card,
+              })}
             >
               <View className="flex-1 gap-1">
-                <Text className="text-white">
+                <Text style={{ color: theme.text }}>
                   vs {opponent?.name ?? "TBD"}
                 </Text>
-                <Text className="text-sm text-white/55">
+                <Text className="text-sm" style={{ color: theme.textSubtle }}>
                   {formatPlayedAtShortDate(game.playedAt)} ·{" "}
                   {formatPlayedAtTime(game.playedAt)}
                   {game.venueName ? ` · ${game.venueName}` : ""}
@@ -263,15 +296,13 @@ function FixturesList({
               <View
                 className={[
                   "rounded-full px-2.5 py-1",
-                  editable ? "bg-accent-400/20" : "bg-white/10",
+                  editable ? "bg-accent-400/20" : "",
                 ].join(" ")}
+                style={!editable ? { backgroundColor: theme.cardMuted } : undefined}
               >
                 <Text
-                  className={
-                    editable
-                      ? "text-xs text-accent-300"
-                      : "text-xs text-white/55"
-                  }
+                  className="text-xs"
+                  style={{ color: editable ? theme.accent : theme.textSubtle }}
                 >
                   {statusLabel(game.status)}
                 </Text>
@@ -279,7 +310,7 @@ function FixturesList({
               <Ionicons
                 name="chevron-forward"
                 size={18}
-                color="rgba(255,255,255,0.45)"
+                color={theme.textSubtle}
               />
             </Pressable>
           );
@@ -289,37 +320,50 @@ function FixturesList({
   );
 }
 
-function SquadList({ roster }: { roster: ApiPlayerWithStats[] }) {
+function SquadList({
+  roster,
+  isDark,
+}: {
+  roster: ApiPlayerWithStats[];
+  isDark: boolean;
+}) {
+  const theme = useTheme();
+
   return (
     <>
-      <Text className="text-xs uppercase tracking-[2px] text-white/45">
+      <Text
+        className="text-xs uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
+      >
         Squad
       </Text>
       {roster.length === 0 ? (
-        <Text className="text-sm text-white/45">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           No players on this team for the season yet.
         </Text>
       ) : (
         roster.map((player) => (
           <View
             key={player.id}
-            className="flex-row items-center gap-3 rounded-[16px] bg-white/6 px-4 py-3"
+            className="flex-row items-center gap-3 rounded-[16px] px-4 py-3"
+            style={{ backgroundColor: theme.card }}
           >
             <EntityLogo
               logoUrl={player.avatarUrl}
               variant="player"
               size="sm"
-              tone="brand"
+              tone={isDark ? "brand" : "light"}
               accessibilityLabel={player.name}
             />
             <View className="flex-1">
               <Text
-                className="text-sm text-white"
+                className="text-sm"
+                style={{ color: theme.text }}
                 numberOfLines={1}
               >
                 {player.name}
               </Text>
-              <Text className="text-xs text-white/45">
+              <Text className="text-xs" style={{ color: theme.textSubtle }}>
                 {positionLabel(player.position)}
               </Text>
             </View>

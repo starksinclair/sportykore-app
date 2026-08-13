@@ -17,6 +17,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { ApiError } from "@/api/errors";
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -80,6 +82,8 @@ function isFavoriteLeagueEntry(item: MatchFeedItem): item is FavoriteLeagueEntry
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
   const { user } = useAuth();
@@ -238,7 +242,10 @@ export default function HomeScreen() {
   const feedControls = (
     <>
       <Animated.View entering={FadeInDown.delay(80).duration(350)}>
-        <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
+        <View
+          className="rounded-[13px] p-1.5"
+          style={{ backgroundColor: theme.brandMuted }}
+        >
           <View className="flex-row gap-2">
             <SegmentButton
               label="Matches"
@@ -263,15 +270,23 @@ export default function HomeScreen() {
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(140).duration(350)}>
-        <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
+        <View
+          className="gap-3 rounded-[13px] border p-2"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => setFiltersOpen(true)}
-              className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
+              className="h-12 flex-row items-center gap-1.5 rounded-[13px] px-3 active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="options-outline" size={18} color={colors.brand} />
+              <Ionicons name="options-outline" size={18} color={theme.brand} />
               <Text
-                className="text-sm text-neutral-900"
+                className="text-sm"
+                style={{ color: theme.text }}
               >
                 {selectedCountry ? selectedCountry.name : "Filters"}
               </Text>
@@ -290,8 +305,9 @@ export default function HomeScreen() {
                 }}
                 className={[
                   "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
-                  liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
+                  liveOnly ? "border border-[#ba0c2f]" : "",
                 ].join(" ")}
+                style={{ backgroundColor: liveOnly ? "transparent" : theme.cardMuted }}
               >
                 <PulsingDot size={6} color="#ba0c2f" />
                 <Text
@@ -303,33 +319,34 @@ export default function HomeScreen() {
             ) : null}
             {activeTab === "matches" ? (
               <View
-                style={styles.dateControl}
-                className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
+                className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] px-2"
+                style={[styles.dateControl, { backgroundColor: theme.cardMuted }]}
               >
                 <Pressable
                   onPress={() => cycleDate(-1)}
-                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                  className="h-10 w-10 items-center justify-center rounded-full active:opacity-85"
                 >
-                  <Ionicons name="chevron-back" size={18} color={colors.brand} />
+                  <Ionicons name="chevron-back" size={18} color={theme.brand} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
                     setCalendarMonth(startOfMonth(selectedDate.date));
                     setCalendarOpen(true);
                   }}
-                  className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
+                  className="flex-1 items-center rounded-[10px] px-1 py-1 active:opacity-85"
                 >
                   <Text
-                    className="text-sm text-neutral-950"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {selectedDate.displayLabel}
                   </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => cycleDate(1)}
-                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                  className="h-10 w-10 items-center justify-center rounded-full active:opacity-85"
                 >
-                  <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+                  <Ionicons name="chevron-forward" size={18} color={theme.brand} />
                 </Pressable>
               </View>
             ) : null}
@@ -387,20 +404,25 @@ export default function HomeScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#121212]">
-       <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+       <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <OfflineBanner />
 
         {/*<View className="relative overflow-hidden bg-[#121212] px-5 pb-8 pt-4">*/}
           <BlackPatternBackground
-            baseColor={scoreboardPattern().baseColor}
-            stripeColor={scoreboardPattern().stripeColor}
+            baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+            stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
+          />
+          <View
+            className="absolute inset-0"
+            pointerEvents="none"
+            style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.68)" }}
           />
 
           <Animated.View
             entering={FadeInDown.duration(350)}
-            className="gap-6 px-5 pb-5 pt-4"
+            className="relative gap-6 px-5 pb-5 pt-4"
             style={tabletFrameStyle}
           >
             <View className="flex-row items-center gap-3">
@@ -412,10 +434,14 @@ export default function HomeScreen() {
                 onPress={() => router.push("/search")}
                 accessibilityRole="search"
                 accessibilityLabel="Search players, countries, leagues, teams"
-                className="flex-1 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 active:opacity-80"
+                className="flex-1 flex-row items-center gap-2 rounded-2xl border px-4 py-3 active:opacity-80"
+                style={{
+                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : theme.card,
+                  borderColor: theme.cardBorder,
+                }}
               >
-                <Ionicons name="search-outline" size={14} color="#FFFFFF" />
-                <Text className="flex-1 text-sm text-white/55">
+                <Ionicons name="search-outline" size={14} color={theme.accent} />
+                <Text className="flex-1 text-sm" style={{ color: theme.textSubtle }}>
                   Players, leagues, teams
                 </Text>
               </Pressable>
@@ -423,11 +449,12 @@ export default function HomeScreen() {
               <View className="items-end gap-2 pt-1">
                 <Pressable
                   onPress={() => router.push("/profile")}
-                  className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+                  className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
                   accessibilityRole="button"
                   accessibilityLabel="Profile and settings"
                 >
-                  <Ionicons name="person-outline" size={20} color="#FFFFFF" />
+                  <Ionicons name="person-outline" size={20} color={theme.text} />
                 </Pressable>
                 {/* <Text
                   className="text-xs uppercase tracking-[2px] text-white/45"
@@ -441,7 +468,8 @@ export default function HomeScreen() {
 
         {activeTab === "matches" ? (
           <SectionList<MatchFeedItem, MatchFeedSection>
-            className="flex-1 bg-white"
+            className="flex-1"
+            style={{ backgroundColor: theme.background }}
             ListHeaderComponentStyle={
               isTablet ? styles.tabletListCell : undefined
             }
@@ -458,7 +486,8 @@ export default function HomeScreen() {
             renderSectionHeader={({ section }) => (
               <View className="w-full pb-2 pt-4" style={tabletFrameStyle}>
                 <Text
-                  className="text-xs uppercase tracking-[1.5px] text-slate-500"
+                  className="text-xs uppercase tracking-[1.5px]"
+                  style={{ color: theme.textSubtle }}
                 >
                   {section.title}
                 </Text>
@@ -470,11 +499,18 @@ export default function HomeScreen() {
               }
               return (
                 <View
-                  className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3"
-                  style={tabletFrameStyle}
+                  className="w-full rounded-2xl border px-4 py-3"
+                  style={[
+                    tabletFrameStyle,
+                    {
+                      backgroundColor: theme.cardMuted,
+                      borderColor: theme.cardBorder,
+                    },
+                  ]}
                 >
                   <Text
-                    className="text-sm leading-5 text-slate-600"
+                    className="text-sm leading-5"
+                    style={{ color: theme.textMuted }}
                   >
                     No favourite leagues yet - tap the heart on a league to pin it here.
                   </Text>
@@ -513,7 +549,8 @@ export default function HomeScreen() {
           />
         ) : (
         <ScrollView
-          className="flex-1 bg-white"
+          className="flex-1"
+          style={{ backgroundColor: theme.background }}
           contentContainerClassName="gap-5 px-5 pb-32 pt-5"
           contentContainerStyle={isTablet ? { alignItems: "center" } : undefined}
           showsVerticalScrollIndicator={false}
@@ -581,25 +618,27 @@ export default function HomeScreen() {
             setSelectedCountry(null);
             setFiltersOpen(false);
           }}
-          className={[
-            "flex-row items-center justify-between rounded-2xl px-4 py-4",
-            selectedCountry === null ? "bg-[#F3E8FF]" : "bg-neutral-50",
-          ].join(" ")}
+          className="flex-row items-center justify-between rounded-2xl px-4 py-4"
+          style={{
+            backgroundColor: selectedCountry === null ? theme.brandMuted : theme.cardMuted,
+          }}
         >
           <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <Ionicons name="globe-outline" size={17} color={colors.brand} />
+            <View
+              className="h-8 w-8 items-center justify-center rounded-full"
+              style={{ backgroundColor: theme.card }}
+            >
+              <Ionicons name="globe-outline" size={17} color={theme.brand} />
             </View>
             <Text
-              className={
-                selectedCountry === null ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"
-              }
+              className="text-sm"
+              style={{ color: selectedCountry === null ? theme.brand : theme.text }}
             >
               All Countries
             </Text>
           </View>
           {selectedCountry === null ? (
-            <Ionicons name="checkmark-circle" size={20} color={colors.brand} />
+            <Ionicons name="checkmark-circle" size={20} color={theme.brand} />
           ) : null}
         </Pressable>
 
@@ -612,23 +651,27 @@ export default function HomeScreen() {
                 setSelectedCountry(option);
                 setFiltersOpen(false);
               }}
-              className={[
-                "flex-row items-center justify-between rounded-2xl px-4 py-4",
-                selected ? "bg-[#F3E8FF]" : "bg-neutral-50",
-              ].join(" ")}
+              className="flex-row items-center justify-between rounded-2xl px-4 py-4"
+              style={{
+                backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+              }}
             >
               <View className="flex-row items-center gap-3">
-                <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
+                <View
+                  className="h-8 w-8 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.card }}
+                >
                   <CountryFlag code={option.code} width={22} />
                 </View>
                 <Text 
-                  className={selected ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"}
+                  className="text-sm"
+                  style={{ color: selected ? theme.brand : theme.text }}
                 >
                   {option.name}
                 </Text>
               </View>
               {selected ? (
-                <Ionicons name="checkmark-circle" size={20} color={colors.brand} />
+                <Ionicons name="checkmark-circle" size={20} color={theme.brand} />
               ) : null}
             </Pressable>
           );
@@ -645,18 +688,20 @@ export default function HomeScreen() {
           <View className="flex-row items-center justify-between">
             <Pressable
               onPress={() => setCalendarMonth((current) => addMonths(current, -1))}
-              className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="chevron-back" size={18} color={colors.brand} />
+              <Ionicons name="chevron-back" size={18} color={theme.brand} />
             </Pressable>
-            <Text className="text-base text-neutral-950">
+            <Text className="text-base" style={{ color: theme.text }}>
               {calendar.monthLabelFormat.format(calendarMonth)}
             </Text>
             <Pressable
               onPress={() => setCalendarMonth((current) => addMonths(current, 1))}
-              className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+              <Ionicons name="chevron-forward" size={18} color={theme.brand} />
             </Pressable>
           </View>
 
@@ -664,7 +709,8 @@ export default function HomeScreen() {
             {calendar.weekdayLabels.map((day, index) => (
               <Text
                 key={`${day}-${index}`}
-                className="w-10 text-center text-xs uppercase tracking-[1.5px] text-slate-400"
+                className="w-10 text-center text-xs uppercase tracking-[1.5px]"
+                style={{ color: theme.textSubtle }}
               >
                 {day}
               </Text>
@@ -693,23 +739,31 @@ export default function HomeScreen() {
                       setSelectedDateOffset(dayOffset(today, cell));
                       setCalendarOpen(false);
                     }}
-                    className={[
-                      "items-center rounded-2xl py-3",
-                      selected ? "bg-[#4A148C]" : "bg-neutral-50",
-                    ].join(" ")}
+                    className="items-center rounded-2xl py-3"
+                    style={{
+                      backgroundColor: selected ? theme.brand : theme.cardMuted,
+                    }}
                   >
                     <Text
-                      className={selected ? "text-sm text-white" : "text-sm text-neutral-900"}
+                      className="text-sm"
+                      style={{ color: selected ? theme.textInverse : theme.text }}
                     >
                       {cell.getDate()}
                     </Text>
                     <Text
                       className={
                         selected
-                          ? "pt-1 text-[10px] text-white/70"
+                          ? "pt-1 text-[10px]"
                           : isToday
-                            ? "pt-1 text-[10px] text-[#4A148C]"
+                            ? "pt-1 text-[10px]"
                             : "pt-1 text-[10px] text-transparent"
+                      }
+                      style={
+                        selected
+                          ? { color: theme.textInverse }
+                          : isToday
+                            ? { color: theme.brand }
+                            : undefined
                       }
                     >
                       {isToday ? "Today" : " "}
@@ -734,25 +788,35 @@ function PendingInviteBanner({
   teamName?: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
   const target = [teamName, leagueName].filter(Boolean).join(" · ");
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 rounded-[16px] border border-[#E6A817]/40 bg-[#FFF7D6] px-4 py-4 active:opacity-85"
+      className="flex-row items-center gap-3 rounded-[16px] border px-4 py-4 active:opacity-85"
+      style={{
+        backgroundColor: theme.accentMuted,
+        borderColor: theme.accent,
+      }}
       accessibilityRole="button"
       accessibilityLabel="Complete invite"
     >
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-[#4A148C]">
-        <Ionicons name="mail-unread-outline" size={19} color="#E6A817" />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: theme.brand }}
+      >
+        <Ionicons name="mail-unread-outline" size={19} color={theme.accent} />
       </View>
       <View className="min-w-0 flex-1 gap-0.5">
         <Text
-          className="text-sm text-neutral-950"
+          className="text-sm"
+          style={{ color: theme.text }}
         >
           Finish your invite
         </Text>
         <Text
-          className="text-xs leading-5 text-neutral-700"
+          className="text-xs leading-5"
+          style={{ color: theme.textMuted }}
           numberOfLines={2}
         >
           {target
@@ -760,7 +824,7 @@ function PendingInviteBanner({
             : "Create your player profile to join this league."}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#4A148C" />
+      <Ionicons name="chevron-forward" size={18} color={theme.brand} />
     </Pressable>
   );
 }

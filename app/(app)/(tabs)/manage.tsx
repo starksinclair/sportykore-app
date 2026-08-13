@@ -16,9 +16,11 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import type { ApiTeam } from "@/api/entities";
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { colors, scoreboardPattern } from "@/constants";
+import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
 import { messageFromThrown, showInfoToast } from "@/lib/show-error-toast";
@@ -56,6 +58,8 @@ type InviteTarget = {
 export default function ManageScreen() {
   const router = useRouter();
   const { user, hydrated } = useAuth();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const query = useManagedHub(Boolean(user));
   const [refreshing, onRefresh] = useRefresh([() => query.refetch()]);
   const [inviteTarget, setInviteTarget] = useState<InviteTarget | null>(null);
@@ -146,24 +150,31 @@ export default function ManageScreen() {
   const adminCount = query.data?.adminTeams.length ?? 0;
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.scoreboardBlack }}>
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
-          baseColor={scoreboardPattern().baseColor}
-          stripeColor={scoreboardPattern().stripeColor}
+          baseColor={theme.patternBase}
+          stripeColor={theme.patternStripe}
+        />
+        <View
+          className="absolute inset-0"
+          pointerEvents="none"
+          style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
         />
 
         <View className="px-5 pb-5 pt-2">
           <View className="">
             <View style={tabletFrameStyle}>
               <Text
-                className="text-[28px] text-white"
+                className="text-[28px]"
+                style={{ color: theme.text }}
               >
                 Manage
               </Text>
               <Text
-                className="pt-1 text-sm leading-6 text-white/60"
+                className="pt-1 text-sm leading-6"
+                style={{ color: theme.textMuted }}
               >
                 Leagues you run and teams you manage, all in one place.
               </Text>
@@ -200,7 +211,7 @@ export default function ManageScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.accent}
+                tintColor={theme.accent}
               />
             }
             showsVerticalScrollIndicator={false}
@@ -318,7 +329,7 @@ export default function ManageScreen() {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor={colors.accent}
+                tintColor={theme.accent}
               />
             }
             stickySectionHeadersEnabled={false}
@@ -370,18 +381,22 @@ function InviteTeamsErrorSheet({
   onRetry: () => void;
   message: string;
 }) {
+  const theme = useTheme();
+
   return (
     <BottomSheetModal
       visible={visible}
       onClose={onClose}
       title="Invite to team"
       subtitle="Teams could not be loaded for this league."
-      variant="dark"
     >
       <View className="gap-4 py-2">
-        <View className="flex-row items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
-          <Ionicons name="warning-outline" size={18} color={colors.accent} />
-          <Text className="min-w-0 flex-1 text-sm leading-6 text-white/60">
+        <View
+          className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+          style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+        >
+          <Ionicons name="warning-outline" size={18} color={theme.accent} />
+          <Text className="min-w-0 flex-1 text-sm leading-6" style={{ color: theme.textMuted }}>
             {message}
           </Text>
         </View>
@@ -389,10 +404,11 @@ function InviteTeamsErrorSheet({
           onPress={onRetry}
           accessibilityRole="button"
           accessibilityLabel="Retry loading teams"
-          className="h-12 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90"
+          className="h-12 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90"
+          style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
         >
-          <Ionicons name="refresh-outline" size={17} color={colors.darkLabel} />
-          <Text className="text-sm text-neutral-950">
+          <Ionicons name="refresh-outline" size={17} color={theme.textInverse} />
+          <Text className="text-sm" style={{ color: theme.textInverse }}>
             Retry
           </Text>
         </Pressable>
@@ -408,17 +424,18 @@ function InviteTeamsLoadingSheet({
   visible: boolean;
   onClose: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <BottomSheetModal
       visible={visible}
       onClose={onClose}
       title="Invite to team"
       subtitle="Loading teams for this league."
-      variant="dark"
     >
       <View className="items-center gap-3 py-6">
-        <ActivityIndicator color={colors.accent} />
-        <Text className="text-sm text-white/55">
+        <ActivityIndicator color={theme.accent} />
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Getting teams ready...
         </Text>
       </View>
@@ -466,20 +483,27 @@ function ManageCountCard({
   label: string;
   value: number;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="flex-1 rounded-[22px] border border-white/10 bg-white/[0.04] px-4 py-4">
+    <View
+      className="flex-1 rounded-[22px] border px-4 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-center justify-between">
-        <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name={icon} size={18} color={colors.accent} />
+        <View className="h-9 w-9 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+          <Ionicons name={icon} size={18} color={theme.accent} />
         </View>
         <Text
-          className="text-2xl text-white"
+          className="text-2xl"
+          style={{ color: theme.text }}
         >
           {value}
         </Text>
       </View>
       <Text
-        className="pt-3 text-[11px] uppercase tracking-wide text-white/50"
+        className="pt-3 text-[11px] uppercase tracking-wide"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>
@@ -494,8 +518,13 @@ function ManageHelpDropdown({
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="overflow-hidden rounded-[24px] border border-white/10 bg-white/[0.04]">
+    <View
+      className="overflow-hidden rounded-[24px] border"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <Pressable
         onPress={onToggle}
         accessibilityRole="button"
@@ -505,17 +534,18 @@ function ManageHelpDropdown({
             ? "Hide league setup guide"
             : "Show league setup guide"
         }
-        className="flex-row items-center gap-3 px-4 py-4 active:bg-white/5"
+        className="flex-row items-center gap-3 px-4 py-4 active:opacity-85"
       >
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="help-buoy-outline" size={19} color={colors.accent} />
+        <View className="h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+          <Ionicons name="help-buoy-outline" size={19} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             How to run your league
           </Text>
           <Text
-            className="pt-1 text-xs leading-5 text-white/50"
+            className="pt-1 text-xs leading-5"
+            style={{ color: theme.textSubtle }}
             numberOfLines={2}
           >
             Setup steps and role permissions, tucked away when you do not need them.
@@ -524,12 +554,12 @@ function ManageHelpDropdown({
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
           size={18}
-          color="rgba(255,255,255,0.65)"
+          color={theme.textMuted}
         />
       </Pressable>
 
       {expanded ? (
-        <View className="gap-3 border-t border-white/10 px-3 pb-3 pt-3">
+        <View className="gap-3 border-t px-3 pb-3 pt-3" style={{ borderColor: theme.cardBorder }}>
           <LeagueRunbookCard />
           <RoleGuideCard />
         </View>
@@ -576,17 +606,22 @@ const runbookSteps: {
 ];
 
 function LeagueRunbookCard() {
+  const theme = useTheme();
+
   return (
-    <View className="gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-4">
+    <View
+      className="gap-4 rounded-[24px] border px-4 py-4"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-start gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="clipboard-outline" size={19} color={colors.accent} />
+        <View className="h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+          <Ionicons name="clipboard-outline" size={19} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             League setup runbook
           </Text>
-          <Text className="pt-1 text-xs leading-5 text-white/50">
+          <Text className="pt-1 text-xs leading-5" style={{ color: theme.textSubtle }}>
             The fastest path from setup to match day.
           </Text>
         </View>
@@ -596,21 +631,22 @@ function LeagueRunbookCard() {
         {runbookSteps.map((step, index) => (
           <View
             key={step.title}
-            className="flex-row items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3"
+            className="flex-row items-start gap-3 rounded-2xl border px-3 py-3"
+            style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
           >
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white/10">
-              <Ionicons name={step.icon} size={16} color={colors.accent} />
+            <View className="h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: theme.accentMuted }}>
+              <Ionicons name={step.icon} size={16} color={theme.accent} />
             </View>
             <View className="min-w-0 flex-1">
               <View className="flex-row items-center gap-2">
-                <Text className="text-xs text-white/35">
+                <Text className="text-xs" style={{ color: theme.textSubtle }}>
                   {index + 1}
                 </Text>
-                <Text className="min-w-0 flex-1 text-sm text-white" numberOfLines={1}>
+                <Text className="min-w-0 flex-1 text-sm" style={{ color: theme.text }} numberOfLines={1}>
                   {step.title}
                 </Text>
               </View>
-              <Text className="pt-1 text-xs leading-5 text-white/50">
+              <Text className="pt-1 text-xs leading-5" style={{ color: theme.textSubtle }}>
                 {step.detail}
               </Text>
             </View>
@@ -622,17 +658,22 @@ function LeagueRunbookCard() {
 }
 
 function RoleGuideCard() {
+  const theme = useTheme();
+
   return (
-    <View className="gap-3 rounded-[24px] border border-accent-400/20 bg-accent-500/10 px-4 py-4">
+    <View
+      className="gap-3 rounded-[24px] border px-4 py-4"
+      style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+    >
       <View className="flex-row items-start gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500">
-          <Ionicons name="key-outline" size={19} color={colors.darkLabel} />
+        <View className="h-10 w-10 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accent }}>
+          <Ionicons name="key-outline" size={19} color={theme.textInverse} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-accent-100">
+          <Text style={{ color: theme.text }}>
             Who can do what
           </Text>
-          <Text className="pt-1 text-xs leading-5 text-accent-100/70">
+          <Text className="pt-1 text-xs leading-5" style={{ color: theme.textMuted }}>
             SportyKore shows controls based on your role.
           </Text>
         </View>
@@ -660,14 +701,19 @@ function RoleGuideRow({
   title: string;
   detail: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="flex-row items-start gap-3 rounded-2xl border border-accent-400/20 bg-black/15 px-3 py-3">
-      <Ionicons name={icon} size={17} color={colors.accent} />
+    <View
+      className="flex-row items-start gap-3 rounded-2xl border px-3 py-3"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
+      <Ionicons name={icon} size={17} color={theme.accent} />
       <View className="min-w-0 flex-1">
-        <Text className="text-sm text-accent-100">
+        <Text className="text-sm" style={{ color: theme.text }}>
           {title}
         </Text>
-        <Text className="pt-1 text-xs leading-5 text-accent-100/65">
+        <Text className="pt-1 text-xs leading-5" style={{ color: theme.textMuted }}>
           {detail}
         </Text>
       </View>
@@ -676,16 +722,20 @@ function RoleGuideRow({
 }
 
 function ManageSectionHeader({ title, count }: { title: string; count: number }) {
+  const theme = useTheme();
+
   return (
     <View className="flex-row items-center justify-between pb-3 pt-2">
       <Text
-        className="text-xs uppercase tracking-[2px] text-white/45"
+        className="text-xs uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
-      <View className="rounded-full bg-white/8 px-2.5 py-1">
+      <View className="rounded-full px-2.5 py-1" style={{ backgroundColor: theme.cardMuted }}>
         <Text
-          className="text-[11px] text-white/60"
+          className="text-[11px]"
+          style={{ color: theme.textMuted }}
         >
           {count}
         </Text>
@@ -722,15 +772,20 @@ function ManageColumnEmptyState({
   title: string;
   body: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="rounded-[22px] border border-dashed border-white/15 bg-white/[0.04] px-4 py-6">
-      <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
-        <Ionicons name={icon} size={20} color={colors.accent} />
+    <View
+      className="rounded-[22px] border border-dashed px-4 py-6"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
+      <View className="h-11 w-11 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+        <Ionicons name={icon} size={20} color={theme.accent} />
       </View>
-      <Text className="pt-4 text-sm text-white">
+      <Text className="pt-4 text-sm" style={{ color: theme.text }}>
         {title}
       </Text>
-      <Text className="pt-2 text-xs leading-5 text-white/50">
+      <Text className="pt-2 text-xs leading-5" style={{ color: theme.textSubtle }}>
         {body}
       </Text>
     </View>
@@ -739,19 +794,25 @@ function ManageColumnEmptyState({
 
 function ManageEmptyLeagues() {
   const router = useRouter();
+  const theme = useTheme();
 
   return (
-    <View className="items-center rounded-[24px] border border-white/10 bg-white/[0.04] px-6 py-10">
-      <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-accent-500/15">
-        <Ionicons name="briefcase-outline" size={28} color={colors.accent} />
+    <View
+      className="items-center rounded-[24px] border px-6 py-10"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
+      <View className="h-16 w-16 items-center justify-center rounded-[22px]" style={{ backgroundColor: theme.accentMuted }}>
+        <Ionicons name="briefcase-outline" size={28} color={theme.accent} />
       </View>
       <Text
-        className="pt-5 text-center text-lg text-white"
+        className="pt-5 text-center text-lg"
+        style={{ color: theme.text }}
       >
         Nothing to manage yet
       </Text>
       <Text
-        className="pt-2 text-center text-sm leading-6 text-white/55"
+        className="pt-2 text-center text-sm leading-6"
+        style={{ color: theme.textSubtle }}
       >
         Create a league from the Create tab, or wait for a league admin to add
         you as a team manager.
@@ -760,11 +821,13 @@ function ManageEmptyLeagues() {
         onPress={() => router.push("/create")}
         accessibilityRole="button"
         accessibilityLabel="Create league"
-        className="mt-6 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-5 py-3 active:opacity-90"
+        className="mt-6 flex-row items-center justify-center gap-2 rounded-full border px-5 py-3 active:opacity-90"
+        style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
       >
-        <Ionicons name="add" size={17} color={colors.darkLabel} />
+        <Ionicons name="add" size={17} color={theme.textInverse} />
         <Text
-          className="text-sm text-neutral-950"
+          className="text-sm"
+          style={{ color: theme.textInverse }}
         >
           Create league
         </Text>
@@ -780,13 +843,19 @@ function ManageErrorState({
   onRetry: () => void;
   message: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="items-center rounded-[24px] border border-white/10 bg-white/[0.04] px-6 py-10">
-      <View className="h-16 w-16 items-center justify-center rounded-[22px] bg-accent-500/15">
-        <Ionicons name="warning-outline" size={28} color={colors.accent} />
+    <View
+      className="items-center rounded-[24px] border px-6 py-10"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
+      <View className="h-16 w-16 items-center justify-center rounded-[22px]" style={{ backgroundColor: theme.accentMuted }}>
+        <Ionicons name="warning-outline" size={28} color={theme.accent} />
       </View>
       <Text
-        className="pt-5 text-center text-sm leading-6 text-white/65"
+        className="pt-5 text-center text-sm leading-6"
+        style={{ color: theme.textMuted }}
       >
         {message}
       </Text>
@@ -794,11 +863,13 @@ function ManageErrorState({
         onPress={onRetry}
         accessibilityRole="button"
         accessibilityLabel="Retry"
-        className="mt-6 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-5 py-3 active:opacity-90"
+        className="mt-6 flex-row items-center justify-center gap-2 rounded-full border px-5 py-3 active:opacity-90"
+        style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
       >
-        <Ionicons name="refresh-outline" size={17} color={colors.darkLabel} />
+        <Ionicons name="refresh-outline" size={17} color={theme.textInverse} />
         <Text
-          className="text-sm text-neutral-950"
+          className="text-sm"
+          style={{ color: theme.textInverse }}
         >
           Retry
         </Text>

@@ -8,6 +8,7 @@ import {
 } from "react-native";
 
 import { useAuth } from "@/auth";
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
 import {
   messageFromThrown,
@@ -33,6 +34,7 @@ export function LeagueNotificationToggle({
   variant = "pill",
 }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const { user } = useAuth();
   const preferenceQuery = useLeagueNotificationPreference(
     leagueId,
@@ -84,21 +86,23 @@ export function LeagueNotificationToggle({
         hitSlop={10}
         onPress={handlePress}
         className={`h-9 w-9 items-center justify-center rounded-full border ${
-          enabled
-            ? "border-accent-400 bg-accent-500"
-            : "border-neutral-200 bg-white"
-        } ${busy ? "opacity-70" : ""}`}
+          busy ? "opacity-70" : ""
+        }`}
+        style={{
+          backgroundColor: enabled ? theme.accent : theme.card,
+          borderColor: enabled ? theme.accent : theme.cardBorder,
+        }}
       >
         {busy ? (
           <ActivityIndicator
             size="small"
-            color={enabled ? "#000" : colors.brand}
+            color={enabled ? colors.darkLabel : theme.brand}
           />
         ) : (
           <Ionicons
             name={enabled ? "notifications" : "notifications-outline"}
             size={18}
-            color={enabled ? "#000" : colors.brand}
+            color={enabled ? colors.darkLabel : theme.brand}
           />
         )}
       </Pressable>
@@ -115,22 +119,28 @@ export function LeagueNotificationToggle({
       disabled={busy}
       onPress={handlePress}
       className={`min-h-10 flex-row items-center gap-2 rounded-full border px-3 ${
-        enabled
-          ? "border-accent-300 bg-accent-500"
-          : "border-white/15 bg-white/10"
-      } ${busy ? "opacity-70" : ""}`}
+        busy ? "opacity-70" : ""
+      }`}
+      style={{
+        backgroundColor: enabled ? theme.accent : theme.card,
+        borderColor: enabled ? theme.accent : theme.cardBorder,
+      }}
     >
       {busy ? (
-        <ActivityIndicator size="small" color={enabled ? "#000" : colors.accent} />
+        <ActivityIndicator
+          size="small"
+          color={enabled ? colors.darkLabel : theme.accent}
+        />
       ) : (
         <Ionicons
           name={enabled ? "notifications" : "notifications-outline"}
           size={18}
-          color={enabled ? "#000" : colors.accent}
+          color={enabled ? colors.darkLabel : theme.accent}
         />
       )}
       <Text
-        className={enabled ? "text-xs text-neutral-950" : "text-xs text-white"}
+        className="text-xs"
+        style={{ color: enabled ? colors.darkLabel : theme.text }}
       >
         {enabled ? "Alerts on" : "Alerts"}
       </Text>

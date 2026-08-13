@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { useTheme } from "@/color/use-theme";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 type BottomSheetModalProps = {
@@ -37,8 +38,19 @@ export function BottomSheetModal({
   variant = "light",
   scrollEnabled = true,
 }: BottomSheetModalProps) {
-  const isDark = variant === "dark";
+  const forceDark = variant === "dark";
+  const theme = useTheme();
   const { isTablet } = useAdaptiveLayout();
+  const sheetBackgroundColor = forceDark ? "#121212" : theme.surfaceRaised;
+  const sheetBorderColor = forceDark ? "rgba(255,255,255,0.08)" : theme.cardBorder;
+  const handleColor = forceDark ? "rgba(255,255,255,0.2)" : theme.inputBorder;
+  const titleColor = forceDark ? "#FFFFFF" : theme.text;
+  const subtitleColor = forceDark ? "rgba(255,255,255,0.55)" : theme.textMuted;
+  const closeButtonBackground = forceDark
+    ? "rgba(255,255,255,0.08)"
+    : theme.cardMuted;
+  const closeIconColor = forceDark ? "#F9FAFB" : theme.text;
+
   return (
     <Modal
       transparent
@@ -57,25 +69,35 @@ export function BottomSheetModal({
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
           >
-            <View style={[styles.sheet, isTablet && styles.sheetTablet, isDark && styles.sheetDark]}>
-              <View style={[styles.handle, isDark && styles.handleDark]} />
+            <View
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: sheetBackgroundColor,
+                  borderColor: sheetBorderColor,
+                  borderTopWidth: 1,
+                },
+                isTablet && styles.sheetTablet,
+              ]}
+            >
+              <View style={[styles.handle, { backgroundColor: handleColor }]} />
               <View style={styles.header}>
                 <View style={styles.headerCopy}>
-                  <Text
-                    style={[
-                      styles.title,
-                      isDark && styles.titleDark,
-                    ]}
+	                  <Text
+	                    style={[
+	                      styles.title,
+	                      { color: titleColor },
+	                    ]}
                     numberOfLines={2}
                   >
                     {title}
                   </Text>
                   {subtitle ? (
-                    <Text
-                      style={[
-                        styles.subtitle,
-                        isDark && styles.subtitleDark,
-                      ]}
+	                    <Text
+	                      style={[
+	                        styles.subtitle,
+	                        { color: subtitleColor },
+	                      ]}
                       numberOfLines={3}
                     >
                       {subtitle}
@@ -83,13 +105,16 @@ export function BottomSheetModal({
                   ) : null}
                 </View>
                 <Pressable
-                  onPress={onClose}
-                  accessibilityRole="button"
-                  accessibilityLabel="Close modal"
-                  style={[styles.closeButton, isDark && styles.closeButtonDark]}
-                >
-                  <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
-                </Pressable>
+	                  onPress={onClose}
+	                  accessibilityRole="button"
+	                  accessibilityLabel="Close modal"
+	                  style={[
+                      styles.closeButton,
+                      { backgroundColor: closeButtonBackground },
+                    ]}
+	                >
+	                  <Ionicons name="close" size={20} color={closeIconColor} />
+	                </Pressable>
               </View>
               {scrollEnabled ? (
                 <ScrollView

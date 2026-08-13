@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 
-import { colors } from "@/constants";
+import { useTheme } from "@/color/use-theme";
 
 export type SeasonOption = {
   id: number;
@@ -26,6 +26,7 @@ export function SeasonPicker({
   label = "Season",
   disabled = false,
 }: Props) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const active = seasons.find((season) => season.id === activeSeasonId) ?? null;
   const interactive = !disabled && seasons.length > 1;
@@ -38,21 +39,30 @@ export function SeasonPicker({
         }}
         accessibilityRole="button"
         accessibilityLabel={`${label} picker`}
-        className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 active:opacity-80"
-        style={{ opacity: interactive ? 1 : 0.85 }}
+        className="flex-row items-center gap-3 rounded-2xl border px-4 py-3 active:opacity-80"
+        style={{
+          opacity: interactive ? 1 : 0.85,
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
       >
-        <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="calendar-outline" size={17} color={colors.accent} />
+        <View
+          className="h-9 w-9 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="calendar-outline" size={17} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
           <Text
-            className="text-[11px] uppercase tracking-wide text-white/45"
+            className="text-[11px] uppercase tracking-wide"
+            style={{ color: theme.textSubtle }}
             numberOfLines={1}
           >
             {label}
           </Text>
           <Text
-            className="pt-0.5 text-[15px] text-white"
+            className="pt-0.5 text-[15px]"
+            style={{ color: theme.text }}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -63,13 +73,19 @@ export function SeasonPicker({
           <Ionicons
             name={open ? "chevron-up" : "chevron-down"}
             size={18}
-            color="rgba(255,255,255,0.7)"
+            color={theme.textMuted}
           />
         ) : null}
       </Pressable>
 
       {open && interactive ? (
-        <View className="mt-2 overflow-hidden rounded-[18px] border border-white/10 bg-neutral-950/95">
+        <View
+          className="mt-2 overflow-hidden rounded-[18px] border"
+          style={{
+            backgroundColor: theme.surfaceRaised,
+            borderColor: theme.cardBorder,
+          }}
+        >
           <ScrollView
             nestedScrollEnabled
             keyboardShouldPersistTaps="handled"
@@ -86,20 +102,26 @@ export function SeasonPicker({
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Select ${season.name}`}
-                  className={`flex-row items-center gap-3 border-b border-white/10 px-3.5 py-3 ${
-                    selected ? "bg-accent-500/10" : "bg-transparent"
-                  }`}
+                  className="flex-row items-center gap-3 border-b px-3.5 py-3"
+                  style={{
+                    backgroundColor: selected ? theme.accentMuted : "transparent",
+                    borderColor: theme.cardBorder,
+                  }}
                 >
-                  <View className="h-8 w-8 items-center justify-center rounded-full bg-white/8">
+                  <View
+                    className="h-8 w-8 items-center justify-center rounded-full"
+                    style={{ backgroundColor: theme.cardMuted }}
+                  >
                     <Ionicons
                       name={selected ? "checkmark" : "ellipse-outline"}
                       size={16}
-                      color={selected ? colors.accent : "rgba(255,255,255,0.4)"}
+                      color={selected ? theme.accent : theme.textSubtle}
                     />
                   </View>
                   <View className="min-w-0 flex-1">
                     <Text
-                      className={selected ? "text-sm text-accent-100" : "text-sm text-white"}
+                      className="text-sm"
+                      style={{ color: selected ? theme.accent : theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -107,7 +129,8 @@ export function SeasonPicker({
                     </Text>
                     {season.status ? (
                       <Text
-                        className="pt-0.5 text-xs capitalize text-white/45"
+                        className="pt-0.5 text-xs capitalize"
+                        style={{ color: theme.textSubtle }}
                         numberOfLines={1}
                       >
                         {season.status}

@@ -3,19 +3,24 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { openBrowserAsync } from "expo-web-browser";
 import type { ReactNode } from "react";
-import { Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
+import { posthog } from "@/lib/posthog";
 import { useOwnPlayerProfile } from "@/player";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { isDark, toggleDarkMode } = useAppearance();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const deleteAccountUrl = "https://www.sportykore.com/delete-account";
@@ -55,14 +60,27 @@ export default function ProfileScreen() {
     router.push("/player/me");
   };
 
+  const handleAppearanceToggle = () => {
+    const nextTheme = isDark ? "light" : "dark";
+    posthog?.capture("appearance_theme_toggled", {
+      theme: nextTheme,
+      source: "profile",
+    });
+    void toggleDarkMode();
+  };
+
   return (
-    <View className="flex-1 bg-neutral-950">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor="rgba(230, 168, 23, 0.045)"
+        baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+        stripeColor={theme.patternStripe}
       />
-      <View className="absolute inset-0 bg-black/35" pointerEvents="none" />
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.72)" }}
+      />
 
       <View className="relative overflow-hidden px-5 pt-0">
         <SafeAreaView edges={["top", "bottom"]}>
@@ -74,12 +92,14 @@ export default function ProfileScreen() {
               onPress={() => router.replace("/(app)/(tabs)")}
               accessibilityLabel="Back"
               accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <Text
-              className="text-base text-center uppercase tracking-[2px] text-white/85"
+              className="text-base text-center uppercase tracking-[2px]"
+              style={{ color: theme.text }}
             >
               Profile
             </Text>
@@ -87,22 +107,32 @@ export default function ProfileScreen() {
           </View>
 
           <View className="mt-5 gap-5" style={tabletFrameStyle}>
-            <View className="rounded-[22px] border border-white/10 bg-white/[0.06] px-4 py-4">
+            <View
+              className="rounded-[22px] border px-4 py-4"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
+            >
               {user ? (
                 <View className="flex-row items-center gap-4">
-                  <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
-                    <Text className="text-xl text-white">
+                  <View
+                    className="h-16 w-16 items-center justify-center rounded-[20px]"
+                    style={{ backgroundColor: colors.brand }}
+                  >
+                    <Text className="text-xl" style={{ color: colors.white }}>
                       {displayName?.slice(0, 1).toUpperCase()}
                     </Text>
                   </View>
                   <View className="flex-1 gap-1">
                     <Text
-                      className="text-lg leading-6 text-white"
+                      className="text-lg leading-6"
+                      style={{ color: theme.text }}
                       numberOfLines={2}
                     >
                       {displayName}
                     </Text>
-                    <Text className="text-sm text-white/65">
+                    <Text className="text-sm" style={{ color: theme.textMuted }}>
                       {email}
                     </Text>
                   </View>
@@ -115,7 +145,7 @@ export default function ProfileScreen() {
                   accessibilityLabel="Sign in"
                 >
                   <Ionicons name="log-in-outline" size={22} color={colors.darkLabel} />
-                  <Text className="text-base text-neutral-950">
+                  <Text className="text-base" style={{ color: colors.darkLabel }}>
                     Sign in
                   </Text>
                 </Pressable>
@@ -155,6 +185,10 @@ export default function ProfileScreen() {
                     />
                   </>
                 ) : null}
+                <AppearanceSection
+                  isDark={isDark}
+                  onToggle={handleAppearanceToggle}
+                />
               </View>
               <View className="flex-1 gap-6">
                 <SupportSection
@@ -180,6 +214,11 @@ export default function ProfileScreen() {
                   />
                 </>
               ) : null}
+
+              <AppearanceSection
+                isDark={isDark}
+                onToggle={handleAppearanceToggle}
+              />
 
               <SupportSection
                 onTerms={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
@@ -211,6 +250,8 @@ function PlayerProfileSection({
   loading: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Section title="Player profile">
       {hasPlayerProfile ? (
@@ -223,14 +264,17 @@ function PlayerProfileSection({
       ) : (
         <View className="gap-3 px-4 py-4">
           <View className="flex-row gap-3">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15">
-              <Ionicons name="person-add-outline" size={20} color={colors.accent} />
+            <View
+              className="h-10 w-10 items-center justify-center rounded-xl"
+              style={{ backgroundColor: theme.accentMuted }}
+            >
+              <Ionicons name="person-add-outline" size={20} color={theme.accent} />
             </View>
             <View className="min-w-0 flex-1 gap-1">
-              <Text className="text-[15px] text-white">
+              <Text className="text-[15px]" style={{ color: theme.text }}>
                 Create player profile
               </Text>
-              <Text className="text-xs leading-5 text-white/60">
+              <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
                 A permanent profile that follows you across leagues,
                 with your stats and highlights in one place.
               </Text>
@@ -307,16 +351,67 @@ function SupportSection({
   );
 }
 
+function AppearanceSection({
+  isDark,
+  onToggle,
+}: {
+  isDark: boolean;
+  onToggle: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Section title="Appearance">
+      <View className="flex-row items-center gap-3 px-4 py-4">
+        <View
+          className="h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons
+            name={isDark ? "moon-outline" : "sunny-outline"}
+            size={20}
+            color={theme.accent}
+          />
+        </View>
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text className="text-[15px]" style={{ color: theme.text }}>
+            Dark mode
+          </Text>
+          <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
+            Turn it off for better visibility in direct sun.
+          </Text>
+        </View>
+        <Switch
+          value={isDark}
+          onValueChange={onToggle}
+          trackColor={{
+            false: theme.inputBorder,
+            true: "rgba(230,168,23,0.5)",
+          }}
+          thumbColor={isDark ? theme.accent : colors.white}
+          ios_backgroundColor={theme.inputBorder}
+        />
+      </View>
+    </Section>
+  );
+}
+
 function LogoutButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300/30 bg-red-500/10 py-4 active:opacity-80"
+      className="flex-row items-center justify-center gap-2 rounded-[14px] border py-4 active:opacity-80"
+      style={{
+        backgroundColor: theme.dangerMuted,
+        borderColor: theme.danger,
+      }}
       accessibilityRole="button"
       accessibilityLabel="Log out"
     >
-      <Ionicons name="log-out-outline" size={22} color="#FCA5A5" />
-      <Text className="text-base text-red-200">
+      <Ionicons name="log-out-outline" size={22} color={theme.danger} />
+      <Text className="text-base" style={{ color: theme.danger }}>
         Log out
       </Text>
     </Pressable>
@@ -324,14 +419,23 @@ function LogoutButton({ onPress }: { onPress: () => void }) {
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-2">
       <Text
-        className="px-1 text-[11px] uppercase tracking-[2px] text-white/50"
+        className="px-1 text-[11px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
-      <View className="overflow-hidden rounded-[18px] border border-white/10 bg-white/[0.06]">
+      <View
+        className="overflow-hidden rounded-[18px] border"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
         {children}
       </View>
     </View>
@@ -339,7 +443,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function Divider() {
-  return <View className="ml-14 h-px bg-white/10" />;
+  const theme = useTheme();
+
+  return <View className="ml-14 h-px" style={{ backgroundColor: theme.cardBorder }} />;
 }
 
 function SettingsRowChevron({
@@ -353,27 +459,32 @@ function SettingsRowChevron({
   subtitle?: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 px-4 py-3 active:bg-white/5"
+      className="flex-row items-center gap-3 px-4 py-3 active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/10">
-        <Ionicons name={icon} size={20} color={colors.accent} />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-xl"
+        style={{ backgroundColor: theme.accentMuted }}
+      >
+        <Ionicons name={icon} size={20} color={theme.accent} />
       </View>
       <View className="flex-1 gap-0.5">
-        <Text className="text-[15px] text-white">
+        <Text className="text-[15px]" style={{ color: theme.text }}>
           {title}
         </Text>
         {subtitle ? (
-          <Text className="text-xs text-white/55">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
             {subtitle}
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.5)" />
+      <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
     </Pressable>
   );
 }

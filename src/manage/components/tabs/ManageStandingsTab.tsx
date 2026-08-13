@@ -8,6 +8,7 @@ import type {
   ApiStandingZone,
   StandingZoneType,
 } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -61,18 +62,24 @@ function ToolPanel({
   onAction?: () => void;
   children: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+    <View
+      className="gap-3 rounded-[22px] border px-4 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-start gap-3">
-        <View className="h-9 w-9 items-center justify-center rounded-2xl bg-white/10">
-          <Ionicons name={icon} size={18} color="#E6A817" />
+        <View className="h-9 w-9 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
+          <Ionicons name={icon} size={18} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1 gap-1">
-          <Text className="text-white">
+          <Text style={{ color: theme.text }}>
             {title}
           </Text>
           <Text
-            className="text-xs leading-5 text-white/45"
+            className="text-xs leading-5"
+            style={{ color: theme.textSubtle }}
           >
             {description}
           </Text>
@@ -81,10 +88,12 @@ function ToolPanel({
           <Pressable
             onPress={onAction}
             accessibilityRole="button"
-            className="h-9 items-center justify-center rounded-full bg-white px-3 active:bg-slate-100"
+            className="h-9 items-center justify-center rounded-full px-3 active:opacity-90"
+            style={{ backgroundColor: theme.accent }}
           >
             <Text
-              className="text-xs text-neutral-950"
+              className="text-xs"
+              style={{ color: theme.textInverse }}
               numberOfLines={1}
             >
               {actionLabel}
@@ -98,9 +107,14 @@ function ToolPanel({
 }
 
 function EmptyToolState({ text }: { text: string }) {
+  const theme = useTheme();
+
   return (
-    <View className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
-      <Text className="text-sm text-white/45">
+    <View
+      className="rounded-2xl border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         {text}
       </Text>
     </View>
@@ -114,10 +128,16 @@ function SheetBlock({
   title: string;
   children: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="gap-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
+    <View
+      className="gap-2 rounded-[18px] border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
@@ -135,23 +155,28 @@ function MoveButton({
   disabled?: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      className={`h-9 w-9 items-center justify-center rounded-xl border ${
-        disabled
-          ? "border-white/5 bg-white/5 opacity-40"
-          : "border-white/15 bg-white/10 active:bg-white/15"
+      className={`h-9 w-9 items-center justify-center rounded-xl border active:opacity-85 ${
+        disabled ? "opacity-40" : ""
       }`}
+      style={{
+        backgroundColor: theme.cardMuted,
+        borderColor: theme.cardBorder,
+      }}
     >
-      <Ionicons name={icon} size={17} color="#FFFFFF" />
+      <Ionicons name={icon} size={17} color={disabled ? theme.textSubtle : theme.text} />
     </Pressable>
   );
 }
 
 export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
+  const theme = useTheme();
   const candidates = standingStages(stages);
   const [stageId, setStageId] = useState(candidates[0]?.id ?? 0);
   const stage = candidates.find((s) => s.id === stageId) ?? candidates[0] ?? null;
@@ -192,7 +217,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
 
   if (!stage) {
     return (
-      <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No standings stage on this season.
       </Text>
     );
@@ -214,15 +239,15 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               <Pressable
                 key={s.id}
                 onPress={() => setStageId(s.id)}
-                style={{ maxWidth: "100%" }}
-                className={`rounded-xl border px-3 py-2 ${
-                  active
-                    ? "border-accent-400 bg-accent-500/20"
-                    : "border-white/15 bg-white/5"
-                }`}
+                className="rounded-xl border px-3 py-2 active:opacity-85"
+                style={{
+                  maxWidth: "100%",
+                  backgroundColor: active ? theme.accentMuted : theme.card,
+                  borderColor: active ? theme.accent : theme.cardBorder,
+                }}
               >
                 <Text
-                  className={active ? "text-accent-200" : "text-white/70"}
+                  style={{ color: active ? theme.accent : theme.textMuted }}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
@@ -234,17 +259,24 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         </View>
       ) : null}
 
-      <View className="rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="rounded-[22px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="options-outline" size={20} color="#E6A817" />
+          <View
+            className="h-10 w-10 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="options-outline" size={20} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Standing tools
             </Text>
             <Text
-              className="text-xs leading-5 text-white/50"
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
               numberOfLines={2}
             >
               Adjust points, resolve tied rows, and color table zones.
@@ -254,17 +286,17 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             onPress={() => setEditMode((v) => !v)}
             accessibilityRole="button"
             accessibilityLabel={editMode ? "Close standing tools" : "Edit standings"}
-            className={`h-10 flex-row items-center gap-1.5 rounded-full px-3 ${
-              editMode ? "bg-accent-500" : "bg-white/10"
-            }`}
+            className="h-10 flex-row items-center gap-1.5 rounded-full px-3 active:opacity-90"
+            style={{ backgroundColor: editMode ? theme.accent : theme.cardMuted }}
           >
             <Ionicons
               name={editMode ? "close" : "create-outline"}
               size={15}
-              color={editMode ? "#171717" : "#FFFFFF"}
+              color={editMode ? theme.textInverse : theme.textMuted}
             />
             <Text
-              className={`text-xs ${editMode ? "text-neutral-950" : "text-white"}`}
+              className="text-xs"
+              style={{ color: editMode ? theme.textInverse : theme.text }}
               numberOfLines={1}
             >
               {editMode ? "Done" : "Edit"}
@@ -274,11 +306,14 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
       </View>
 
       {stale.length > 0 ? (
-        <View className="gap-2 rounded-[20px] border border-orange-400/40 bg-orange-500/10 px-4 py-3">
-            <Text className="text-sm text-orange-200">
+        <View
+          className="gap-2 rounded-[20px] border px-4 py-3"
+          style={{ backgroundColor: theme.dangerMuted, borderColor: theme.danger }}
+        >
+          <Text className="text-sm" style={{ color: theme.danger }}>
             Stale overrides
           </Text>
-          <Text className="text-xs text-white/60">
+          <Text className="text-xs" style={{ color: theme.textMuted }}>
             These no longer match a live points/played tie. Clear them or leave as history.
           </Text>
           {stale.map((o) => (
@@ -287,7 +322,8 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               className="flex-row items-center justify-between gap-2 py-1"
             >
               <Text
-                className="min-w-0 flex-1 text-sm text-white/80"
+                className="min-w-0 flex-1 text-sm"
+                style={{ color: theme.text }}
                 numberOfLines={2}
               >
                 {o.team?.name ?? `Team ${o.teamId}`} · {o.reason}
@@ -318,10 +354,14 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
 
       {editMode ? (
         <View className="gap-4">
-          <View className="flex-row items-start gap-2 rounded-2xl border border-accent-400/20 bg-accent-500/10 px-3 py-3">
-            <Ionicons name="information-circle-outline" size={18} color="#E6A817" />
+          <View
+            className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+            style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+          >
+            <Ionicons name="information-circle-outline" size={18} color={theme.accent} />
             <Text
-              className="min-w-0 flex-1 text-xs leading-5 text-white/60"
+              className="min-w-0 flex-1 text-xs leading-5"
+              style={{ color: theme.textMuted }}
             >
               Reordering only works for teams tied on points and games played.
               Zones are visual only; they never change points or order.
@@ -343,11 +383,12 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             {(adjustmentsQuery.data ?? []).map((a) => (
               <View
                 key={a.id}
-                className="flex-row items-center justify-between gap-3 rounded-2xl bg-white/5 px-3 py-3"
+                className="flex-row items-center justify-between gap-3 rounded-2xl px-3 py-3"
+                style={{ backgroundColor: theme.cardMuted }}
               >
                 <View className="min-w-0 flex-1">
                   <Text
-                    className="text-white"
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -355,7 +396,8 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                     {a.pointsDelta}
                   </Text>
                   <Text
-                    className="text-xs text-white/50"
+                    className="text-xs"
+                    style={{ color: theme.textSubtle }}
                     numberOfLines={2}
                   >
                     {a.reason}
@@ -385,33 +427,37 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               <Pressable
                 key={key}
                 onPress={() => openReorder(rows)}
-                className="rounded-[18px] border border-white/10 bg-white/5 px-3 py-3 active:bg-white/10"
+                className="rounded-[18px] border px-3 py-3 active:opacity-85"
+                style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
               >
                 <View className="flex-row items-center gap-3">
-                  <View className="h-9 w-9 items-center justify-center rounded-2xl bg-white/10">
+                  <View className="h-9 w-9 items-center justify-center rounded-2xl" style={{ backgroundColor: theme.accentMuted }}>
                     <Text
-                      className="text-xs text-accent-200"
+                      className="text-xs"
+                      style={{ color: theme.accent }}
                     >
                       {rows.length}
                     </Text>
                   </View>
                   <View className="min-w-0 flex-1 gap-1">
                     <Text
-                      className="text-sm text-white"
+                      className="text-sm"
+                      style={{ color: theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
                       {key.replace(":", " pts · ")} played
                     </Text>
                     <Text
-                      className="text-xs text-white/45"
+                      className="text-xs"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
                       {rows.map((row) => row.team?.name ?? `Team ${row.team?.id}`).join(", ")}
                     </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.45)" />
+                  <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
                 </View>
               </Pressable>
             ))}
@@ -426,7 +472,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 )
               }
             >
-                <Text className="text-xs text-accent-200">
+                <Text className="text-xs" style={{ color: theme.accent }}>
                 {"Why can't I drag other rows?"}
               </Text>
             </Pressable>
@@ -450,7 +496,8 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             {(zonesQuery.data ?? []).map((z) => (
               <View
                 key={z.id}
-                className="flex-row items-center justify-between gap-3 rounded-2xl bg-white/5 px-3 py-3"
+                className="flex-row items-center justify-between gap-3 rounded-2xl px-3 py-3"
+                style={{ backgroundColor: theme.cardMuted }}
               >
                 <Pressable
                   className="min-w-0 flex-1"
@@ -465,7 +512,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                   }}
                 >
                   <Text
-                    className="text-white"
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -475,7 +522,8 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                       : ""}
                   </Text>
                   <Text
-                    className="pt-1 text-xs text-white/45"
+                    className="pt-1 text-xs"
+                    style={{ color: theme.textSubtle }}
                     numberOfLines={1}
                   >
                     Positions {z.fromPosition}–{z.toPosition}
@@ -503,7 +551,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         onClose={() => setAdjOpen(false)}
         title="Point adjustment"
         subtitle="Non-zero delta with a required reason. Multiple adjustments sum."
-        variant="dark"
       >
         <View className="gap-4">
           <SheetBlock title="Team">
@@ -516,15 +563,16 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                 <Pressable
                   key={id}
                   onPress={() => setTeamId(id)}
-                  style={{ maxWidth: "100%" }}
-                  className={`rounded-xl border px-3 py-2 ${
-                    active
-                      ? "border-accent-400 bg-accent-500/20"
-                      : "border-white/15 bg-white/5"
-                  }`}
+                  className="rounded-xl border px-3 py-2 active:opacity-85"
+                  style={{
+                    maxWidth: "100%",
+                    backgroundColor: active ? theme.accentMuted : theme.cardMuted,
+                    borderColor: active ? theme.accent : theme.cardBorder,
+                  }}
                 >
                   <Text
-                    className="text-sm text-white"
+                    className="text-sm"
+                    style={{ color: active ? theme.accent : theme.text }}
                     numberOfLines={1}
                     ellipsizeMode="tail"
                   >
@@ -538,14 +586,12 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
           <SheetBlock title="Adjustment">
           <AuthTextField
             label="Points delta"
-            labelClassName="text-white/60"
             value={delta}
             onChangeText={setDelta}
             keyboardType="numbers-and-punctuation"
           />
           <AuthTextField
             label="Reason"
-            labelClassName="text-white/60"
             value={reason}
             onChangeText={setReason}
           />
@@ -584,7 +630,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         onClose={() => setReorderOpen(false)}
         title="Reorder tied teams"
         subtitle="Send the full cohort as a contiguous 1…N order."
-        variant="dark"
       >
         <View className="gap-4">
           <SheetBlock title="Order">
@@ -593,17 +638,23 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             return (
               <View
                 key={id}
-                className="flex-row items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2.5"
+                className="flex-row items-center justify-between gap-3 rounded-2xl border px-3 py-2.5"
+                style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
               >
-                <View className="h-8 w-8 items-center justify-center rounded-xl bg-accent-500/15">
+                <View
+                  className="h-8 w-8 items-center justify-center rounded-xl"
+                  style={{ backgroundColor: theme.accentMuted }}
+                >
                   <Text
-                    className="text-xs text-accent-200"
+                    className="text-xs"
+                    style={{ color: theme.accent }}
                   >
                     {index + 1}
                   </Text>
                 </View>
                 <Text
-                  className="min-w-0 flex-1 text-white"
+                  className="min-w-0 flex-1"
+                  style={{ color: theme.text }}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
@@ -646,7 +697,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
           <SheetBlock title="Reason">
           <AuthTextField
             label="Please explain the reason for the change"
-            labelClassName="text-white/60 text-xs lowercase"
             value={reorderReason}
             cursorColor={colors.accent}
             onChangeText={setReorderReason}
@@ -684,7 +734,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         onClose={() => setZoneOpen(false)}
         title={editingZone ? "Edit zone" : "Add zone"}
         subtitle="Zones only color the table - they never change points or ranking."
-        variant="dark"
       >
         <View className="gap-4">
           <SheetBlock title="Zone type">
@@ -693,15 +742,16 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               <Pressable
                 key={t}
                 onPress={() => setZoneType(t)}
-                style={{ maxWidth: "100%" }}
-                className={`rounded-xl border px-3 py-2 ${
-                  zoneType === t
-                    ? "border-accent-400 bg-accent-500/20"
-                    : "border-white/15 bg-white/5"
-                }`}
+                className="rounded-xl border px-3 py-2 active:opacity-85"
+                style={{
+                  maxWidth: "100%",
+                  backgroundColor: zoneType === t ? theme.accentMuted : theme.cardMuted,
+                  borderColor: zoneType === t ? theme.accent : theme.cardBorder,
+                }}
               >
                 <Text
-                  className="text-xs text-white"
+                  className="text-xs"
+                  style={{ color: zoneType === t ? theme.accent : theme.text }}
                   numberOfLines={1}
                 >
                   {t}
@@ -715,15 +765,16 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
               <View className="flex-row flex-wrap gap-2">
                 <Pressable
                   onPress={() => setZoneStageGroupId(null)}
-                  style={{ maxWidth: "100%" }}
-                  className={`rounded-xl border px-3 py-2 ${
-                    zoneStageGroupId == null
-                      ? "border-accent-400 bg-accent-500/20"
-                      : "border-white/15 bg-white/5"
-                  }`}
+                  className="rounded-xl border px-3 py-2 active:opacity-85"
+                  style={{
+                    maxWidth: "100%",
+                    backgroundColor: zoneStageGroupId == null ? theme.accentMuted : theme.cardMuted,
+                    borderColor: zoneStageGroupId == null ? theme.accent : theme.cardBorder,
+                  }}
                 >
                   <Text
-                    className="text-xs text-white"
+                    className="text-xs"
+                    style={{ color: zoneStageGroupId == null ? theme.accent : theme.text }}
                     numberOfLines={1}
                   >
                     All groups
@@ -736,15 +787,16 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
                     <Pressable
                       key={table.stageGroupId}
                       onPress={() => setZoneStageGroupId(table.stageGroupId)}
-                      style={{ maxWidth: "100%" }}
-                      className={`rounded-xl border px-3 py-2 ${
-                        active
-                          ? "border-accent-400 bg-accent-500/20"
-                          : "border-white/15 bg-white/5"
-                      }`}
+                      className="rounded-xl border px-3 py-2 active:opacity-85"
+                      style={{
+                        maxWidth: "100%",
+                        backgroundColor: active ? theme.accentMuted : theme.cardMuted,
+                        borderColor: active ? theme.accent : theme.cardBorder,
+                      }}
                     >
                       <Text
-                        className="text-xs text-white"
+                        className="text-xs"
+                        style={{ color: active ? theme.accent : theme.text }}
                         numberOfLines={1}
                       >
                         {table.stageGroupName ?? `Group ${table.stageGroupId}`}
@@ -760,7 +812,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             <View className="flex-1">
               <AuthTextField
                 label="From"
-                labelClassName="text-white/60"
                 value={fromPos}
                 onChangeText={setFromPos}
                 keyboardType="number-pad"
@@ -769,7 +820,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
             <View className="flex-1">
               <AuthTextField
                 label="To"
-                labelClassName="text-white/60"
                 value={toPos}
                 onChangeText={setToPos}
                 keyboardType="number-pad"
@@ -780,7 +830,6 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
           <SheetBlock title="Label">
           <AuthTextField
             label="Label"
-            labelClassName="text-white/60"
             value={zoneLabel}
             onChangeText={setZoneLabel}
             placeholder="Optional"

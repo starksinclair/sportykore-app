@@ -8,6 +8,8 @@ import {
 } from "react-native";
 
 import type { ApiGame, ApiStage, ApiTeam, BracketRound } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import {
@@ -46,6 +48,8 @@ export function ManageGroupsTab({
   games,
   onKnockoutGenerated,
 }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const groups = groupStages(stages);
   const stage = groups[0] ?? null;
   const config = stage ? readGroupConfig(stage) : null;
@@ -192,7 +196,7 @@ export function ManageGroupsTab({
 
   if (!stage) {
     return (
-        <Text className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No group stage on this season.
       </Text>
     );
@@ -201,10 +205,10 @@ export function ManageGroupsTab({
   return (
     <View className="gap-6 pb-8">
       <View className="gap-2">
-        <Text className="text-lg text-white">
+        <Text className="text-lg" style={{ color: theme.text }}>
           {stage.name}
         </Text>
-        <Text className="text-sm text-white/55">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Status: {stage.status}
           {config
             ? ` · ${config.format.group_count} groups · top ${config.advancement.per_group} advance`
@@ -212,12 +216,15 @@ export function ManageGroupsTab({
         </Text>
       </View>
 
-      <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text className="text-base text-white">
+      <View
+        className="gap-3 rounded-[22px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-base" style={{ color: theme.text }}>
           1. Draw
         </Text>
         {drawDone ? (
-          <Text className="text-sm text-white/55">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             Teams are assigned
             {stageGroups.length
               ? ` across ${stageGroups.map((g) => g.name).join(", ")}`
@@ -226,7 +233,7 @@ export function ManageGroupsTab({
           </Text>
         ) : (
           <View className="gap-2">
-            <Text className="text-sm text-white/55">
+            <Text className="text-sm" style={{ color: theme.textSubtle }}>
               Uneven groups are allowed. Confirm before saving.
             </Text>
             <Button
@@ -244,8 +251,11 @@ export function ManageGroupsTab({
         )}
       </View>
 
-      <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text className="text-base text-white">
+      <View
+        className="gap-3 rounded-[22px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-base" style={{ color: theme.text }}>
           2. Fixtures
         </Text>
         <Button
@@ -257,11 +267,14 @@ export function ManageGroupsTab({
         />
       </View>
 
-      <View className="gap-3 rounded-[22px] border border-white/10 bg-white/5 px-4 py-4">
-        <Text className="text-base text-white">
+      <View
+        className="gap-3 rounded-[22px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-base" style={{ color: theme.text }}>
           3. Knockout phase
         </Text>
-        <Text className="text-sm text-white/55">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Preview qualifiers without writing until you confirm.
         </Text>
         <Button
@@ -277,7 +290,6 @@ export function ManageGroupsTab({
         onClose={() => setDrawOpen(false)}
         title="Manual draw"
         subtitle="Tap a team, then tap a destination group. Uneven sizes are fine."
-        variant="dark"
       >
         <ScrollView className="max-h-[420px]" nestedScrollEnabled>
           <View className="gap-4 pb-4">
@@ -286,7 +298,8 @@ export function ManageGroupsTab({
               return (
                 <View key={group.id} className="gap-2">
                   <Text
-                    className="text-sm text-white"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {group.name} ({ids.length})
                   </Text>
@@ -296,7 +309,11 @@ export function ManageGroupsTab({
                       return (
                         <Pressable
                           key={teamId}
-                          style={{ maxWidth: "100%" }}
+                          style={{
+                            maxWidth: "100%",
+                            backgroundColor: theme.cardMuted,
+                            borderColor: theme.cardBorder,
+                          }}
                           onPress={() => {
                             const others = stageGroups.filter(
                               (g) => g.id !== group.id,
@@ -314,10 +331,11 @@ export function ManageGroupsTab({
                               ],
                             );
                           }}
-                          className="rounded-xl border border-white/15 bg-white/10 px-3 py-2"
+                          className="rounded-xl border px-3 py-2 active:opacity-85"
                         >
                           <Text
-                            className="text-sm text-white"
+                            className="text-sm"
+                            style={{ color: theme.text }}
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
@@ -347,6 +365,7 @@ export function ManageGroupsTab({
           leagueId={leagueId}
           seasonId={seasonId}
           stageId={stage.id}
+          isDark={isDark}
           onDone={() => {
             setWizardOpen(false);
             onKnockoutGenerated?.();
@@ -363,6 +382,7 @@ function GenerateKnockoutWizard({
   leagueId,
   seasonId,
   stageId,
+  isDark,
   onDone,
 }: {
   visible: boolean;
@@ -370,8 +390,10 @@ function GenerateKnockoutWizard({
   leagueId: number;
   seasonId: number;
   stageId: number;
+  isDark: boolean;
   onDone: () => void;
 }) {
+  const theme = useTheme();
   const [step, setStep] = useState(1);
   const [targetRound, setTargetRound] = useState<BracketRound | undefined>();
   const [thirdsMode, setThirdsMode] = useState<"auto" | "manual">("auto");
@@ -446,18 +468,17 @@ function GenerateKnockoutWizard({
       onClose={handleClose}
       title="Generate knockout"
       subtitle={`Step ${step} of 5 - nothing is saved until you confirm.`}
-      variant="dark"
     >
       <ScrollView className="max-h-[480px]" nestedScrollEnabled>
         <View className="gap-4 pb-6">
           {previewQuery.isFetching ? (
-            <Text className="text-sm text-white/55">
+            <Text className="text-sm" style={{ color: theme.textSubtle }}>
               Loading preview…
             </Text>
           ) : null}
 
           {(preview?.outstandingGames ?? 0) > 0 ? (
-            <Text className="text-sm text-accent-200">
+            <Text className="text-sm" style={{ color: theme.accent }}>
               {preview!.outstandingGames} group games still outstanding. Confirm
               will use force if needed.
             </Text>
@@ -465,7 +486,7 @@ function GenerateKnockoutWizard({
 
           {step === 1 ? (
             <View className="gap-2">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 Choose bracket entry
               </Text>
               {(options.length
@@ -486,21 +507,22 @@ function GenerateKnockoutWizard({
                   <Pressable
                     key={opt.targetRound}
                     onPress={() => setTargetRound(opt.targetRound)}
-                    className={`rounded-xl border px-3 py-3 ${
-                      active
-                        ? "border-accent-400 bg-accent-500/20"
-                        : "border-white/15 bg-white/5"
-                    }`}
+                    className="rounded-xl border px-3 py-3"
+                    style={{
+                      backgroundColor: active ? theme.accentMuted : theme.cardMuted,
+                      borderColor: active ? theme.accent : theme.cardBorder,
+                    }}
                   >
                     <Text
-                      className="text-white"
+                      style={{ color: theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
                       {opt.label ?? opt.targetRound.toUpperCase()}
                     </Text>
                     <Text
-                        className="pt-1 text-xs text-white/55"
+                      className="pt-1 text-xs"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={2}
                     >
                       {opt.summary ??
@@ -524,7 +546,7 @@ function GenerateKnockoutWizard({
 
           {step === 2 ? (
             <View className="gap-3">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 Third-placed teams
               </Text>
               <View className="flex-row gap-2">
@@ -532,14 +554,17 @@ function GenerateKnockoutWizard({
                   <Pressable
                     key={mode}
                     onPress={() => setThirdsMode(mode)}
-                    className={`flex-1 rounded-xl border px-3 py-2 ${
-                      thirdsMode === mode
-                        ? "border-accent-400 bg-accent-500/20"
-                        : "border-white/15 bg-white/5"
-                    }`}
+                    className="flex-1 rounded-xl border px-3 py-2"
+                    style={{
+                      backgroundColor:
+                        thirdsMode === mode ? theme.accentMuted : theme.cardMuted,
+                      borderColor:
+                        thirdsMode === mode ? theme.accent : theme.cardBorder,
+                    }}
                   >
                     <Text
-                      className="text-center capitalize text-white"
+                      className="text-center capitalize"
+                      style={{ color: theme.text }}
                       numberOfLines={1}
                     >
                       {mode}
@@ -560,14 +585,20 @@ function GenerateKnockoutWizard({
                           : [...prev, c.teamId],
                       );
                     }}
-                    className={`rounded-xl border px-3 py-2 ${
-                      selected || thirdsMode === "auto"
-                        ? "border-accent-400/50 bg-accent-500/10"
-                        : "border-white/15 bg-white/5"
-                    }`}
+                    className="rounded-xl border px-3 py-2"
+                    style={{
+                      backgroundColor:
+                        selected || thirdsMode === "auto"
+                          ? theme.accentMuted
+                          : theme.cardMuted,
+                      borderColor:
+                        selected || thirdsMode === "auto"
+                          ? theme.accent
+                          : theme.cardBorder,
+                    }}
                   >
                     <Text
-                      className="text-white"
+                      style={{ color: theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -608,10 +639,10 @@ function GenerateKnockoutWizard({
 
           {step === 3 ? (
             <View className="gap-3">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 Review qualifiers
               </Text>
-              <Text className="text-xs text-white/55">
+              <Text className="text-xs" style={{ color: theme.textSubtle }}>
                 Tap two rows to swap. Every entry is editable.
               </Text>
               <QualifierListEditor
@@ -620,6 +651,7 @@ function GenerateKnockoutWizard({
                 }
                 orderedIds={ordered}
                 onChange={setQualifierIds}
+                theme={theme}
               />
               <View className="flex-row gap-2">
                 <Button
@@ -640,7 +672,7 @@ function GenerateKnockoutWizard({
 
           {step === 4 ? (
             <View className="gap-3">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 Knockout settings
               </Text>
               <KnockoutTieFormatControl
@@ -648,7 +680,7 @@ function GenerateKnockoutWizard({
                 onChange={setTieFormat}
                 hasThirdPlace={hasThirdPlace}
                 onHasThirdPlaceChange={setHasThirdPlace}
-                tone="dark"
+                tone={isDark ? "dark" : "light"}
               />
               <View className="flex-row gap-2">
                 <Button
@@ -669,10 +701,10 @@ function GenerateKnockoutWizard({
 
           {step === 5 ? (
             <View className="gap-3">
-              <Text className="text-white">
+              <Text style={{ color: theme.text }}>
                 Confirm
               </Text>
-              <Text className="text-sm text-white/55">
+              <Text className="text-sm" style={{ color: theme.textSubtle }}>
                 Creates a knockout stage seeded with {ordered.length} teams
                 {targetRound ? ` starting at ${targetRound}` : ""}.
               </Text>
@@ -703,10 +735,12 @@ function QualifierListEditor({
   entries,
   orderedIds,
   onChange,
+  theme,
 }: {
   entries: QualifierEntry[];
   orderedIds: number[];
   onChange: (ids: number[]) => void;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const [swapFrom, setSwapFrom] = useState<number | null>(null);
   const byId = new Map(entries.map((e) => [e.teamId, e]));
@@ -739,14 +773,14 @@ function QualifierListEditor({
               }
               setSwapFrom(null);
             }}
-            className={`rounded-xl border px-3 py-2 ${
-              active
-                ? "border-accent-400 bg-accent-500/20"
-                : "border-white/15 bg-white/5"
-            }`}
+            className="rounded-xl border px-3 py-2"
+            style={{
+              backgroundColor: active ? theme.accentMuted : theme.cardMuted,
+              borderColor: active ? theme.accent : theme.cardBorder,
+            }}
           >
             <Text
-              className="text-white"
+              style={{ color: theme.text }}
               numberOfLines={1}
               ellipsizeMode="tail"
             >

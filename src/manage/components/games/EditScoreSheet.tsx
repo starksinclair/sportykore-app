@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { colors } from "@/constants";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useUpdateGame } from "../../hooks";
@@ -26,6 +26,7 @@ export function EditScoreSheet({
   seasonId,
   onClose,
 }: Props) {
+  const theme = useTheme();
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const [home, setHome] = useState("0");
   const [away, setAway] = useState("0");
@@ -64,33 +65,44 @@ export function EditScoreSheet({
       onClose={onClose}
       title="Edit score"
       subtitle={`${game.homeTeam?.name ?? "Home"} vs ${game.awayTeam?.name ?? "Away"}`}
-      variant="dark"
     >
       <View className="gap-4">
-        <View className="gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3">
-          <Text className="text-xs uppercase tracking-wide text-white/50">
+        <View
+          className="gap-3 rounded-[18px] border px-3 py-3"
+          style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+        >
+          <Text
+            className="text-xs uppercase tracking-wide"
+            style={{ color: theme.textMuted }}
+          >
             Scoreline
           </Text>
           <View className="flex-row gap-3">
             <View className="min-w-0 flex-1 gap-2">
-              <Text className="text-xs text-white/45" numberOfLines={1}>
+              <Text
+                className="text-xs"
+                style={{ color: theme.textSubtle }}
+                numberOfLines={1}
+              >
                 {game.homeTeam?.name ?? "Home"}
               </Text>
               <AuthTextField
                 label="Home score"
-                labelClassName="text-white/60"
                 value={home}
                 onChangeText={setHome}
                 keyboardType="number-pad"
               />
             </View>
             <View className="min-w-0 flex-1 gap-2">
-              <Text className="text-xs text-white/45" numberOfLines={1}>
+              <Text
+                className="text-xs"
+                style={{ color: theme.textSubtle }}
+                numberOfLines={1}
+              >
                 {game.awayTeam?.name ?? "Away"}
               </Text>
               <AuthTextField
                 label="Away score"
-                labelClassName="text-white/60"
                 value={away}
                 onChangeText={setAway}
                 keyboardType="number-pad"
@@ -104,13 +116,19 @@ export function EditScoreSheet({
           loading={updateMutation.isPending}
           onPress={() => void handleSave()}
         />
-        <View className="flex-row items-start gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-3">
+        <View
+          className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+          style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+        >
           <Ionicons
             name="information-circle-outline"
             size={17}
-            color={colors.accent}
+            color={theme.accent}
           />
-          <Text className="min-w-0 flex-1 text-xs leading-5 text-white/50">
+          <Text
+            className="min-w-0 flex-1 text-xs leading-5"
+            style={{ color: theme.textMuted }}
+          >
             Scores are not updated automatically when deleting stats. Adjust manually if needed.
           </Text>
         </View>

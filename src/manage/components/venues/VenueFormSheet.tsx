@@ -12,6 +12,7 @@ import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplet
 import MapView, { Marker, type Region } from "react-native-maps";
 
 import type { ApiVenue } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -129,6 +130,7 @@ export function VenueFormSheet({
 }: Props) {
   const isEdit = venue != null;
   const isDark = variant === "dark";
+  const theme = useTheme();
   const createMutation = useCreateVenue(leagueId);
   const updateMutation = useUpdateVenue(leagueId);
   const venuesQuery = useLeagueVenues(leagueId, visible);
@@ -383,11 +385,8 @@ export function VenueFormSheet({
           {mode === "places" ? (
             <View className="gap-2" style={{ zIndex: 10 }}>
               <Text
-                className={
-                  isDark
-                    ? "text-xs uppercase tracking-wide text-white/50"
-                    : "text-xs uppercase tracking-wide text-slate-500"
-                }
+                className="text-xs uppercase tracking-wide"
+                style={{ color: theme.textSubtle }}
               >
                 Search places
               </Text>
@@ -440,33 +439,33 @@ export function VenueFormSheet({
                       height: 48,
                       borderRadius: 12,
                       borderWidth: 1,
-                      borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0",
+                      borderColor: theme.inputBorder,
                       paddingHorizontal: 14,
                       fontSize: 15,
-                      color: isDark ? "#FFFFFF" : "#0f172a",
-                      backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#f8fafc",
+                      color: theme.text,
+                      backgroundColor: theme.inputBackground,
                     },
                     listView: {
                       borderWidth: 1,
-                      borderColor: isDark ? "rgba(255,255,255,0.12)" : "#e2e8f0",
+                      borderColor: theme.cardBorder,
                       borderRadius: 12,
                       marginTop: 4,
-                      backgroundColor: isDark ? "#18181B" : "#fff",
+                      backgroundColor: theme.surfaceRaised,
                       maxHeight: 220,
                     },
                     row: {
                       paddingVertical: 12,
                       paddingHorizontal: 12,
-                      backgroundColor: isDark ? "#18181B" : "#fff",
+                      backgroundColor: theme.surfaceRaised,
                     },
-                    description: { color: isDark ? "#FFFFFF" : "#0f172a" },
+                    description: { color: theme.text },
                     separator: {
                       height: 1,
-                      backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "#e2e8f0",
+                      backgroundColor: theme.cardBorder,
                     },
                   }}
                   textInputProps={{
-                    placeholderTextColor: isDark ? "rgba(255,255,255,0.45)" : "#94a3b8",
+                    placeholderTextColor: theme.textSubtle,
                   }}
                 />
               )}
@@ -477,16 +476,17 @@ export function VenueFormSheet({
             <View className="gap-2">
               <Pressable
                 onPress={openPinMap}
-                className={
-                  isDark
-                    ? "flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3"
-                    : "flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
-                }
+                className="flex-row items-center gap-3 rounded-[18px] border px-4 py-3 active:opacity-85"
+                style={{
+                  backgroundColor: theme.cardMuted,
+                  borderColor: theme.cardBorder,
+                }}
               >
-                <Ionicons name="map-outline" size={22} color={isDark ? "#E6A817" : "#4A148C"} />
+                <Ionicons name="map-outline" size={22} color={theme.accent} />
                 <View className="flex-1">
                   <Text
-                    className={isDark ? "text-sm text-white" : "text-sm text-slate-900"}
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {form.latitude != null && form.longitude != null
                       ? "Pin placed - tap to adjust"
@@ -494,7 +494,8 @@ export function VenueFormSheet({
                   </Text>
                   {form.latitude != null && form.longitude != null ? (
                     <Text
-                      className={isDark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
+                      className="pt-0.5 text-xs"
+                      style={{ color: theme.textSubtle }}
                     >
                       {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
                     </Text>
@@ -503,7 +504,7 @@ export function VenueFormSheet({
                 <Ionicons
                   name="chevron-forward"
                   size={18}
-                  color={isDark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+                  color={theme.textSubtle}
                 />
               </Pressable>
             </View>
@@ -549,30 +550,40 @@ export function VenueFormSheet({
         presentationStyle="fullScreen"
         onRequestClose={closePinMap}
       >
-        <View className="flex-1 bg-white">
-          <View className="flex-row items-center justify-between border-b border-slate-200 px-4 pb-3 pt-14">
+        <View className="flex-1" style={{ backgroundColor: theme.background }}>
+          <View
+            className="flex-row items-center justify-between border-b px-4 pb-3 pt-14"
+            style={{
+              backgroundColor: theme.surfaceRaised,
+              borderColor: theme.cardBorder,
+            }}
+          >
             <Pressable onPress={closePinMap} hitSlop={12}>
               <Text
-                className="text-base text-slate-600"
+                className="text-base"
+                style={{ color: theme.textMuted }}
               >
                 Cancel
               </Text>
             </Pressable>
             <Text
-              className="text-base text-slate-900"
+              className="text-base"
+              style={{ color: theme.text }}
             >
               Drop pin
             </Text>
             <Pressable onPress={confirmPin} hitSlop={12}>
               <Text
-                className="text-base text-brand-700"
+                className="text-base"
+                style={{ color: theme.accent }}
               >
                 Done
               </Text>
             </Pressable>
           </View>
           <Text
-            className="px-4 py-2 text-sm text-slate-500"
+            className="px-4 py-2 text-sm"
+            style={{ color: theme.textSubtle }}
           >
             Drag the pin to the pitch. You will name it on the next step.
           </Text>
@@ -607,7 +618,7 @@ export function VenueFormSheet({
             </MapView>
           ) : (
             <View className="flex-1 items-center justify-center">
-              <ActivityIndicator color="#4A148C" />
+              <ActivityIndicator color={theme.brand} />
             </View>
           )}
         </View>
@@ -631,44 +642,35 @@ function SharedVenueFields({
   dark: boolean;
   onSave: () => void;
 }) {
-  const darkInputStyle = dark
-    ? {
-        backgroundColor: "rgba(255,255,255,0.06)",
-        borderColor: "rgba(255,255,255,0.12)",
-      }
-    : undefined;
-  const darkInputClass = dark ? "text-white" : undefined;
-  const darkPlaceholder = dark ? "rgba(255,255,255,0.45)" : undefined;
+  const theme = useTheme();
+  const inputStyle = {
+    backgroundColor: theme.inputBackground,
+    borderColor: theme.inputBorder,
+  };
 
   return (
     <View className="gap-4">
       <VenueSheetBlock title="Venue details" dark={dark}>
       <AuthTextField
         label="Name *"
-        labelClassName={dark ? "text-white/60" : undefined}
-        className={darkInputClass}
-        inputRowStyle={darkInputStyle}
-        placeholderTextColor={darkPlaceholder}
+        inputRowStyle={inputStyle}
+        placeholderTextColor={theme.textSubtle}
         value={form.name}
         onChangeText={(name) => patchForm({ name })}
         placeholder="Riverside Pitch 2"
       />
       <AuthTextField
         label="Address (optional)"
-        labelClassName={dark ? "text-white/60" : undefined}
-        className={darkInputClass}
-        inputRowStyle={darkInputStyle}
-        placeholderTextColor={darkPlaceholder}
+        inputRowStyle={inputStyle}
+        placeholderTextColor={theme.textSubtle}
         value={form.address}
         onChangeText={(address) => patchForm({ address })}
         placeholder="Street or landmark"
       />
       <AuthTextField
         label="City (optional)"
-        labelClassName={dark ? "text-white/60" : undefined}
-        className={darkInputClass}
-        inputRowStyle={darkInputStyle}
-        placeholderTextColor={darkPlaceholder}
+        inputRowStyle={inputStyle}
+        placeholderTextColor={theme.textSubtle}
         value={form.city}
         onChangeText={(city) => patchForm({ city })}
         placeholder="Lagos"
@@ -677,10 +679,8 @@ function SharedVenueFields({
       <VenueSheetBlock title="Extras" dark={dark}>
       <AuthTextField
         label="Capacity (optional)"
-        labelClassName={dark ? "text-white/60" : undefined}
-        className={darkInputClass}
-        inputRowStyle={darkInputStyle}
-        placeholderTextColor={darkPlaceholder}
+        inputRowStyle={inputStyle}
+        placeholderTextColor={theme.textSubtle}
         value={form.capacity}
         onChangeText={(capacity) => patchForm({ capacity })}
         keyboardType="number-pad"
@@ -688,10 +688,8 @@ function SharedVenueFields({
       />
       <AuthTextField
         label="Notes (optional)"
-        labelClassName={dark ? "text-white/60" : undefined}
-        className={darkInputClass}
-        inputRowStyle={darkInputStyle}
-        placeholderTextColor={darkPlaceholder}
+        inputRowStyle={inputStyle}
+        placeholderTextColor={theme.textSubtle}
         value={form.notes}
         onChangeText={(notes) => patchForm({ notes })}
         placeholder="Astro turf, gate on Adeola St"
@@ -725,17 +723,24 @@ function VenueSheetBlock({
   dark: boolean;
   children: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View
-      className={
+      className={dark ? "gap-3 rounded-[18px] border px-3 py-3" : "gap-3"}
+      style={
         dark
-          ? "gap-3 rounded-[18px] border border-white/10 bg-white/[0.03] px-3 py-3"
-          : "gap-3"
+          ? {
+              backgroundColor: theme.cardMuted,
+              borderColor: theme.cardBorder,
+            }
+          : undefined
       }
     >
       {dark ? (
         <Text 
-          className="text-xs uppercase tracking-wide text-white/50"
+          className="text-xs uppercase tracking-wide"
+          style={{ color: theme.textSubtle }}
         >
           {title}
         </Text>
@@ -749,7 +754,7 @@ function ModeButton({
   icon,
   label,
   hint,
-  dark = false,
+  dark: _dark = false,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -758,26 +763,33 @@ function ModeButton({
   dark?: boolean;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className={
-        dark
-          ? "flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3.5 active:bg-white/10"
-          : "flex-row items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5"
-      }
+      className="flex-row items-center gap-3 rounded-[18px] border px-4 py-3.5 active:opacity-85"
+      style={{
+        backgroundColor: theme.cardMuted,
+        borderColor: theme.cardBorder,
+      }}
     >
-      <View className={dark ? "h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15" : "h-10 w-10 items-center justify-center rounded-full bg-brand-50"}>
-        <Ionicons name={icon} size={20} color={dark ? "#E6A817" : "#4A148C"} />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-2xl"
+        style={{ backgroundColor: theme.accentMuted }}
+      >
+        <Ionicons name={icon} size={20} color={theme.accent} />
       </View>
       <View className="flex-1">
         <Text
-          className={dark ? "text-sm text-white" : "text-sm text-slate-900"}
+          className="text-sm"
+          style={{ color: theme.text }}
         >
           {label}
         </Text>
         <Text
-          className={dark ? "pt-0.5 text-xs text-white/45" : "pt-0.5 text-xs text-slate-500"}
+          className="pt-0.5 text-xs"
+          style={{ color: theme.textSubtle }}
         >
           {hint}
         </Text>
@@ -785,7 +797,7 @@ function ModeButton({
       <Ionicons
         name="chevron-forward"
         size={18}
-        color={dark ? "rgba(255,255,255,0.45)" : "#94a3b8"}
+        color={theme.textSubtle}
       />
     </Pressable>
   );

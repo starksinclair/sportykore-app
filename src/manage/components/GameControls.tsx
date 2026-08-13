@@ -9,6 +9,7 @@ import {
 } from "react-native";
 
 import type { ApiGame, GameStatus } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -32,6 +33,7 @@ type Props = {
 type ClockActionKey = "extraTime" | "penalties" | "pause";
 
 export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
+  const theme = useTheme();
   const actions = useGameTimeActions(game.id, leagueId, seasonId);
   const enterPens = useEnterPenaltyShootout(game.id, leagueId);
   const completePens = useCompletePenaltyShootout(game.id, leagueId);
@@ -140,17 +142,24 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
 
   return (
     <>
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-            <Ionicons name="timer-outline" size={20} color={colors.accent} />
+          <View
+            className="h-10 w-10 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="timer-outline" size={20} color={theme.accent} />
           </View>
           <View className="min-w-0 flex-1">
-            <Text className="text-white">
+            <Text style={{ color: theme.text }}>
               Match clock
             </Text>
             <Text
-              className="text-xs leading-5 text-white/50"
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
               numberOfLines={2}
             >
               Move the game through live periods and final decisions.
@@ -270,12 +279,12 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
         onClose={() => setFullTimeOpen(false)}
         title="End game"
         subtitle="Confirm the final score before closing the match."
-        variant="dark"
       >
         <View className="gap-4">
           <ActionDetailCard
             icon="flag"
             title="What ending the game does"
+            theme={theme}
             details={[
               "Saves the final home and away score.",
               "Marks the match as finished on the server.",
@@ -285,14 +294,12 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
           />
           <AuthTextField
             label="Home score"
-            labelClassName="text-white/60"
             value={homeScore}
             onChangeText={setHomeScore}
             keyboardType="number-pad"
           />
           <AuthTextField
             label="Away score"
-            labelClassName="text-white/60"
             value={awayScore}
             onChangeText={setAwayScore}
             keyboardType="number-pad"
@@ -311,7 +318,6 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
         onClose={() => setClockAction(null)}
         title={clockAction ? clockActionDetails[clockAction].title : "Match action"}
         subtitle={clockAction ? clockActionDetails[clockAction].subtitle : undefined}
-        variant="dark"
       >
         {clockAction ? (
           <View className="gap-4">
@@ -319,6 +325,7 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
               icon={clockActionDetails[clockAction].icon}
               title={clockActionDetails[clockAction].detailTitle}
               details={clockActionDetails[clockAction].details}
+              theme={theme}
             />
             <Button
               variant="authPurple"
@@ -349,12 +356,12 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
         onClose={() => setPensOpen(false)}
         title="Penalty shootout"
         subtitle="Scores must differ to confirm a winner."
-        variant="dark"
       >
         <View className="gap-4">
           <ActionDetailCard
             icon="football"
             title="What confirming penalties does"
+            theme={theme}
             details={[
               "Saves the home and away penalty scores.",
               "The scores must be different so the match has a winner.",
@@ -364,14 +371,12 @@ export function GameControls({ game, leagueId, seasonId, onFullTime }: Props) {
           />
           <AuthTextField
             label="Home penalties"
-            labelClassName="text-white/60"
             value={homePens}
             onChangeText={setHomePens}
             keyboardType="number-pad"
           />
           <AuthTextField
             label="Away penalties"
-            labelClassName="text-white/60"
             value={awayPens}
             onChangeText={setAwayPens}
             keyboardType="number-pad"
@@ -441,27 +446,39 @@ function ActionDetailCard({
   icon,
   title,
   details,
+  theme,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   details: string[];
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
-    <View className="gap-3 rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-4">
+    <View
+      className="gap-3 rounded-[20px] border px-4 py-4"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name={icon} size={19} color={colors.accent} />
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name={icon} size={19} color={theme.accent} />
         </View>
-        <Text className="min-w-0 flex-1 text-white">
+        <Text className="min-w-0 flex-1" style={{ color: theme.text }}>
           {title}
         </Text>
       </View>
       <View className="gap-2">
         {details.map((detail) => (
           <View key={detail} className="flex-row items-start gap-2">
-            <View className="mt-2 h-1.5 w-1.5 rounded-full bg-accent-500" />
+            <View
+              className="mt-2 h-1.5 w-1.5 rounded-full"
+              style={{ backgroundColor: theme.accent }}
+            />
             <Text
-              className="min-w-0 flex-1 text-sm leading-6 text-white/60"
+              className="min-w-0 flex-1 text-sm leading-6"
+              style={{ color: theme.textMuted }}
             >
               {detail}
             </Text>

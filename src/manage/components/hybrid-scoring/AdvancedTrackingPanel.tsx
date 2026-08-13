@@ -11,6 +11,7 @@ import {
 } from "react-native";
 
 import type { ApiGameDetail } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
@@ -103,6 +104,7 @@ export function AdvancedTrackingPanel({
   roster,
   liveMinute,
 }: Props) {
+  const theme = useTheme();
   const { isOnline } = useNetworkStatus();
   const [queued, setQueued] = useState<QueuedTrackingEvent[]>([]);
   const [pitchLayout, setPitchLayout] = useState<TrackingPitchLayout | null>(null);
@@ -335,34 +337,56 @@ export function AdvancedTrackingPanel({
   };
 
   return (
-    <View className="gap-4 rounded-[24px] border border-white/10 bg-white/[0.04] px-3 py-4">
+    <View
+      className="gap-4 rounded-[24px] border px-3 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <View className="flex-row items-start gap-3 px-1">
-        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-accent-500/15">
-          <Ionicons name="football-outline" size={19} color={colors.accent} />
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="football-outline" size={19} color={theme.accent} />
         </View>
         <View className="min-w-0 flex-1">
-          <Text className="text-white">Pitch tracker</Text>
-          <Text className="pt-1 text-xs leading-5 text-white/50">
+          <Text style={{ color: theme.text }}>Pitch tracker</Text>
+          <Text
+            className="pt-1 text-xs leading-5"
+            style={{ color: theme.textSubtle }}
+          >
             {usingRosterFallback
               ? "Using the first 11 active roster players until lineups are submitted."
               : "Tap a player, record the event, or swap the tracking marker."}
           </Text>
         </View>
         <View className="items-end gap-1">
-          <View className="rounded-full bg-white/10 px-2.5 py-1">
-            <Text className="text-[10px] uppercase text-white/60">
+          <View
+            className="rounded-full px-2.5 py-1"
+            style={{ backgroundColor: theme.cardMuted }}
+          >
+            <Text
+              className="text-[10px] uppercase"
+              style={{ color: theme.textMuted }}
+            >
               {queued.length} queued
             </Text>
           </View>
           {lastSaved ? (
-            <Text className="max-w-[112px] text-right text-[10px] text-accent-100" numberOfLines={1}>
+            <Text
+              className="max-w-[112px] text-right text-[10px]"
+              style={{ color: theme.accent }}
+              numberOfLines={1}
+            >
               {lastSaved}
             </Text>
           ) : null}
         </View>
       </View>
 
-      <View className="gap-3 rounded-[20px] border border-accent-400/15 bg-accent-500/10 px-3 py-3">
+      <View
+        className="gap-3 rounded-[20px] border px-3 py-3"
+        style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+      >
         <MetricRow
           label="Possession"
           homeValue={
@@ -375,28 +399,34 @@ export function AdvancedTrackingPanel({
               ? `${game.tracking.teams.away.possessionPct}%`
               : "Not tracked"
           }
+          theme={theme}
         />
         <MetricRow
           label="Pass completion"
           homeValue={formatPct(game.tracking?.teams.home.passCompletionPct)}
           awayValue={formatPct(game.tracking?.teams.away.passCompletionPct)}
+          theme={theme}
         />
         <MetricRow
           label="Shot accuracy"
           homeValue={formatPct(game.tracking?.teams.home.shotAccuracyPct)}
           awayValue={formatPct(game.tracking?.teams.away.shotAccuracyPct)}
+          theme={theme}
         />
       </View>
 
       {!players.length ? (
-        <View className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-          <Text className="text-sm text-white/65">
+        <View
+          className="rounded-2xl border px-4 py-4"
+          style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+        >
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             Add players to both team rosters to unlock pass and shot tracking.
           </Text>
         </View>
       ) : (
         <>
-          <PitchLegend />
+          <PitchLegend theme={theme} />
           <TrackingPitch
             pitchPlayers={pitchPlayers}
             countsByPlayer={countsByPlayer}
@@ -413,10 +443,13 @@ export function AdvancedTrackingPanel({
           <Pressable
             onPress={() => void resetPitch()}
             accessibilityRole="button"
-            className="h-10 flex-row items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 active:bg-white/10"
+            className="h-10 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-85"
+            style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
           >
-            <Ionicons name="refresh-outline" size={16} color={colors.accent} />
-            <Text className="text-xs text-white/75">Reset pitch to starters</Text>
+            <Ionicons name="refresh-outline" size={16} color={theme.accent} />
+            <Text className="text-xs" style={{ color: theme.textMuted }}>
+              Reset pitch to starters
+            </Text>
           </Pressable>
         </>
       )}
@@ -425,16 +458,17 @@ export function AdvancedTrackingPanel({
         onPress={() => void flushQueue("manual")}
         disabled={!queued.length || isSyncing}
         accessibilityRole="button"
-        className={`h-11 flex-row items-center justify-center gap-2 rounded-full border border-accent-400 bg-accent-500 px-4 active:opacity-90 ${
+        className={`h-11 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90 ${
           !queued.length || isSyncing ? "opacity-45" : ""
         }`}
+        style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
       >
         {isSyncing ? (
-          <ActivityIndicator color={colors.darkLabel} />
+          <ActivityIndicator color={theme.textInverse} />
         ) : (
-          <Ionicons name="cloud-upload-outline" size={17} color={colors.darkLabel} />
+          <Ionicons name="cloud-upload-outline" size={17} color={theme.textInverse} />
         )}
-        <Text className="text-sm text-neutral-950">
+        <Text className="text-sm" style={{ color: theme.textInverse }}>
           {isSyncing ? "Syncing..." : "Sync now"}
         </Text>
       </Pressable>
@@ -444,6 +478,7 @@ export function AdvancedTrackingPanel({
           notice={syncNotice}
           canClearQueue={syncNotice.tone === "error" && queued.length > 0 && !isSyncing}
           onClearQueue={confirmClearQueue}
+          theme={theme}
         />
       ) : null}
 
@@ -696,6 +731,7 @@ function SwapPlayerSheet({
   onClose: () => void;
   onSelect: (player: PitchPlayer) => void;
 }) {
+  const theme = useTheme();
   const activeKeys = new Set([...activeLayout.home, ...activeLayout.away]);
   const candidates = player
     ? players.filter(
@@ -712,7 +748,6 @@ function SwapPlayerSheet({
       onClose={onClose}
       title="Swap tracking player"
       subtitle={player ? `Replace ${player.name} on the pitch tracker only.` : undefined}
-      variant="dark"
     >
       <ScrollView
         style={styles.swapList}
@@ -725,7 +760,11 @@ function SwapPlayerSheet({
               onPress={() => onSelect(candidate)}
               accessibilityRole="button"
               accessibilityLabel={`Swap in ${candidate.name}`}
-              className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3"
+              className="flex-row items-center gap-3 rounded-2xl border px-3 py-3 active:opacity-85"
+              style={{
+                backgroundColor: theme.cardMuted,
+                borderColor: theme.cardBorder,
+              }}
             >
               <View
                 className={`h-10 w-10 items-center justify-center rounded-full ${
@@ -737,18 +776,33 @@ function SwapPlayerSheet({
                 </Text>
               </View>
               <View className="min-w-0 flex-1">
-                <Text className="text-sm text-white" numberOfLines={1}>
+                <Text
+                  className="text-sm"
+                  style={{ color: theme.text }}
+                  numberOfLines={1}
+                >
                   {candidate.name}
                 </Text>
-                <Text className="pt-0.5 text-xs text-white/45" numberOfLines={1}>
+                <Text
+                  className="pt-0.5 text-xs"
+                  style={{ color: theme.textSubtle }}
+                  numberOfLines={1}
+                >
                   {candidate.teamName} - {candidate.role}
                 </Text>
               </View>
-              <Ionicons name="swap-horizontal-outline" size={18} color={colors.accent} />
+              <Ionicons name="swap-horizontal-outline" size={18} color={theme.accent} />
             </Pressable>
           ))
         ) : (
-          <Text className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-sm text-white/65">
+          <Text
+            className="rounded-2xl border px-4 py-4 text-sm"
+            style={{
+              backgroundColor: theme.cardMuted,
+              borderColor: theme.cardBorder,
+              color: theme.textSubtle,
+            }}
+          >
             No available player to swap in for this team.
           </Text>
         )}
@@ -761,10 +815,12 @@ function SyncNoticeRow({
   notice,
   canClearQueue,
   onClearQueue,
+  theme,
 }: {
   notice: Exclude<SyncNotice, null>;
   canClearQueue: boolean;
   onClearQueue: () => void;
+  theme: ReturnType<typeof useTheme>;
 }) {
   const isError = notice.tone === "error";
   const icon =
@@ -776,13 +832,19 @@ function SyncNoticeRow({
 
   return (
     <View
-      className={`gap-3 rounded-2xl border px-3 py-3 ${
-        isError
-          ? "border-red-400/35 bg-red-500/10"
+      className="gap-3 rounded-2xl border px-3 py-3"
+      style={{
+        backgroundColor: isError
+          ? theme.dangerMuted
           : notice.tone === "success"
-            ? "border-emerald-400/35 bg-emerald-500/10"
-            : "border-white/10 bg-white/[0.04]"
-      }`}
+            ? theme.successMuted
+            : theme.cardMuted,
+        borderColor: isError
+          ? theme.danger
+          : notice.tone === "success"
+            ? theme.success
+            : theme.cardBorder,
+      }}
     >
       <View className="flex-row items-start gap-2">
         <Ionicons
@@ -790,13 +852,16 @@ function SyncNoticeRow({
           size={16}
           color={
             isError
-              ? colors.liveRed
+              ? theme.danger
               : notice.tone === "success"
-                ? colors.accent
-                : colors.accent
+                ? theme.success
+                : theme.accent
           }
         />
-        <Text className="min-w-0 flex-1 text-xs leading-5 text-white/70">
+        <Text
+          className="min-w-0 flex-1 text-xs leading-5"
+          style={{ color: theme.textMuted }}
+        >
           {notice.message}
         </Text>
       </View>
@@ -804,23 +869,29 @@ function SyncNoticeRow({
         <Pressable
           onPress={onClearQueue}
           accessibilityRole="button"
-          className="h-9 flex-row items-center justify-center gap-2 rounded-full border border-red-300/30 bg-red-500/15 px-3"
+          className="h-9 flex-row items-center justify-center gap-2 rounded-full border px-3"
+          style={{ backgroundColor: theme.dangerMuted, borderColor: theme.danger }}
         >
-          <Ionicons name="trash-outline" size={15} color={colors.liveRed} />
-          <Text className="text-xs text-red-100">Clear queued events</Text>
+          <Ionicons name="trash-outline" size={15} color={theme.danger} />
+          <Text className="text-xs" style={{ color: theme.danger }}>
+            Clear queued events
+          </Text>
         </Pressable>
       ) : null}
     </View>
   );
 }
 
-function PitchLegend() {
+function PitchLegend({ theme }: { theme: ReturnType<typeof useTheme> }) {
   return (
-    <View className="flex-row flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-3">
-      <LegendPill label="Gold" helper="home" color="accent" />
-      <LegendPill label="Purple" helper="away" color="brand" />
-      <LegendPill label="Tap" helper="record" color="plain" />
-      <LegendPill label="Swap" helper="tracker only" color="plain" />
+    <View
+      className="flex-row flex-wrap items-center gap-2 rounded-2xl border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
+      <LegendPill label="Gold" helper="home" color="accent" theme={theme} />
+      <LegendPill label="Purple" helper="away" color="brand" theme={theme} />
+      <LegendPill label="Tap" helper="record" color="plain" theme={theme} />
+      <LegendPill label="Swap" helper="tracker only" color="plain" theme={theme} />
     </View>
   );
 }
@@ -829,25 +900,39 @@ function LegendPill({
   label,
   helper,
   color,
+  theme,
 }: {
   label: string;
   helper: string;
   color: "accent" | "brand" | "plain";
+  theme: ReturnType<typeof useTheme>;
 }) {
+  const isAccent = color === "accent";
+  const isBrand = color === "brand";
+
   return (
     <View
-      className={`flex-row items-center gap-1 rounded-full px-2 py-1 ${
-        color === "accent"
-          ? "bg-accent-500"
-          : color === "brand"
-            ? "bg-brand-600"
-            : "bg-white/10"
-      }`}
+      className="flex-row items-center gap-1 rounded-full px-2 py-1"
+      style={{
+        backgroundColor: isAccent
+          ? theme.accent
+          : isBrand
+            ? theme.brand
+            : theme.card,
+      }}
     >
-      <Text className={color === "accent" ? "text-[10px] text-neutral-950" : "text-[10px] text-white"}>
+      <Text
+        className="text-[10px]"
+        style={{ color: isAccent || isBrand ? theme.textInverse : theme.text }}
+      >
         {label}
       </Text>
-      <Text className={color === "accent" ? "text-[10px] text-neutral-950/70" : "text-[10px] text-white/50"}>
+      <Text
+        className="text-[10px]"
+        style={{
+          color: isAccent || isBrand ? theme.textInverse : theme.textSubtle,
+        }}
+      >
         {helper}
       </Text>
     </View>
@@ -858,20 +943,33 @@ function MetricRow({
   label,
   homeValue,
   awayValue,
+  theme,
 }: {
   label: string;
   homeValue: string;
   awayValue: string;
+  theme: ReturnType<typeof useTheme>;
 }) {
   return (
     <View className="flex-row items-center justify-between gap-3">
-      <Text className="w-20 text-sm text-accent-100" numberOfLines={1}>
+      <Text
+        className="w-20 text-sm"
+        style={{ color: theme.accent }}
+        numberOfLines={1}
+      >
         {homeValue}
       </Text>
-      <Text className="min-w-0 flex-1 text-center text-[10px] uppercase tracking-[1.2px] text-accent-100/60">
+      <Text
+        className="min-w-0 flex-1 text-center text-[10px] uppercase tracking-[1.2px]"
+        style={{ color: theme.textMuted }}
+      >
         {label}
       </Text>
-      <Text className="w-20 text-right text-sm text-accent-100" numberOfLines={1}>
+      <Text
+        className="w-20 text-right text-sm"
+        style={{ color: theme.accent }}
+        numberOfLines={1}
+      >
         {awayValue}
       </Text>
     </View>

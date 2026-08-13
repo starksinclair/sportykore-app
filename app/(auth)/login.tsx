@@ -27,6 +27,8 @@ import {
   AuthAccessoryLink,
   AuthTextField,
 } from "@/components/ui/auth-text-field";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ExternalLink } from "@/components/ui/external-link";
 import { Logo } from "@/components/ui/logo";
@@ -38,6 +40,7 @@ const heroHeight = Math.min(height * 0.5, width * 1.05);
 const KEYBOARD_TOOLBAR_OFFSET = 62;
 
 function LoginCard() {
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
@@ -105,21 +108,30 @@ function LoginCard() {
   };
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+      ]}
+    >
       <View className="gap-5 px-5 pb-8 pt-8">
         {requiresSignup ? (
           <View className="gap-1">
             <Text
-              className="text-base text-neutral-900"
+              className="text-base"
+              style={{ color: theme.text }}
             >
               Create your account
             </Text>
             {signupHint ? (
-              <Text className="text-sm text-slate-500">
+              <Text className="text-sm" style={{ color: theme.textMuted }}>
                 {signupHint}
               </Text>
             ) : (
-              <Text className="text-sm text-slate-500">
+              <Text className="text-sm" style={{ color: theme.textMuted }}>
                 We need a few more details before we send your code.
               </Text>
             )}
@@ -192,10 +204,10 @@ function LoginCard() {
               style={{ marginTop: 2 }}
             />
             <View className="min-w-0 flex-1">
-              <Text className="text-sm text-neutral-950">
+              <Text className="text-sm" style={{ color: colors.darkLabel }}>
                 Already have a code?
               </Text>
-              <Text className="pt-1 text-xs leading-5 text-neutral-700">
+              <Text className="pt-1 text-xs leading-5" style={{ color: colors.darkLabel }}>
                 Continue entering the code sent to {pendingOtp.email}.
               </Text>
             </View>
@@ -208,6 +220,8 @@ function LoginCard() {
 }
 
 export default function LoginScreen() {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const close = () => {
     if (router.canGoBack()) {
       router.back();
@@ -217,8 +231,11 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#0B0B0C]">
-      <BlackPatternBackground />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <BlackPatternBackground
+        baseColor={theme.patternBase}
+        stripeColor={theme.patternStripe}
+      />
       <KeyboardAwareScrollView
         bottomOffset={KEYBOARD_TOOLBAR_OFFSET}
         keyboardShouldPersistTaps="handled"
@@ -276,17 +293,18 @@ export default function LoginScreen() {
 
         <View className="px-6  pt-8">
           <Text
-            className="text-center text-base text-slate-400"
+            className="text-center text-base"
+            style={{ color: isDark ? theme.textSubtle : theme.textMuted }}
           >
             By continuing, you agree to our{" "}
             <ExternalLink href="https://waitlist.sportykore.com/terms">
-              <Text className="text-[#F2A900]">
+              <Text style={{ color: theme.accent }}>
                 Terms of Service
               </Text>
             </ExternalLink>{" "}
             and{" "}
             <ExternalLink href="https://waitlist.sportykore.com/privacy">
-              <Text className="text-[#F2A900]">
+              <Text style={{ color: theme.accent }}>
                 Privacy Policy
               </Text>
             </ExternalLink>
@@ -294,7 +312,12 @@ export default function LoginScreen() {
           </Text>
         </View>
         <View className="flex-col items-center gap-2">
-          <Text className="text-center text-base text-slate-400 py-8">Or</Text>
+          <Text
+            className="py-8 text-center text-base"
+            style={{ color: isDark ? theme.textSubtle : theme.textMuted }}
+          >
+            Or
+          </Text>
 
           <Button
             variant="signInYellow"
@@ -315,7 +338,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },

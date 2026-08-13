@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { useLiveMinute } from "@/hooks/useLiveMinute";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
@@ -21,6 +22,7 @@ type Props = {
 
 export function MatchRow({ game }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const { isTablet } = useAdaptiveLayout();
   const [tvOpen, setTvOpen] = useState(false);
   const isLive = isLiveGameStatus(game.status);
@@ -31,14 +33,14 @@ export function MatchRow({ game }: Props) {
       <Pressable
         onPress={() => router.push(`/match/${game.id}`)}
         className={[
-          "flex-row items-start active:bg-neutral-50",
+          "flex-row items-start active:opacity-85",
           isTablet ? "gap-4 px-5 py-4" : "gap-3 px-3 py-3",
         ].join(" ")}
       >
         <View style={[styles.metaColumn, isTablet ? styles.metaColumnTablet : null]}>
           <Text
-            style={[styles.timeLabel]}
-            className={isTablet ? "text-[12px] text-neutral-950" : "text-[11px] text-neutral-950"}
+            className={isTablet ? "text-[12px]" : "text-[11px]"}
+            style={[styles.timeLabel, { color: theme.text }]}
           >
             {formatPlayedAtTime(game.playedAt)}
           </Text>
@@ -56,7 +58,8 @@ export function MatchRow({ game }: Props) {
             />
             <Text
               numberOfLines={1}
-              className={isTablet ? "flex-1 text-[15px] text-neutral-950" : "flex-1 text-[14px] text-neutral-950"}
+              className={isTablet ? "flex-1 text-[15px]" : "flex-1 text-[14px]"}
+              style={{ color: theme.text }}
             >
               {game.homeTeam?.name ?? "TBD"}
             </Text>
@@ -70,7 +73,8 @@ export function MatchRow({ game }: Props) {
             />
             <Text
               numberOfLines={1}
-              className={isTablet ? "flex-1 text-[15px] text-neutral-950" : "flex-1 text-[14px] text-neutral-950"}
+              className={isTablet ? "flex-1 text-[15px]" : "flex-1 text-[14px]"}
+              style={{ color: theme.text }}
             >
               {game.awayTeam?.name ?? "TBD"}
             </Text>
@@ -100,11 +104,12 @@ export function MatchRow({ game }: Props) {
           accessibilityLabel="Open TV scoreboard"
           hitSlop={8}
           className={[
-            "ml-1 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200",
+            "ml-1 items-center justify-center rounded-full active:opacity-85",
             isTablet ? "h-11 w-11" : "h-9 w-9",
           ].join(" ")}
+          style={{ backgroundColor: theme.cardMuted }}
         >
-          <Ionicons name="tv-outline" size={isTablet ? 18 : 16} color="#111827" />
+          <Ionicons name="tv-outline" size={isTablet ? 18 : 16} color={theme.text} />
         </Pressable>
       </Pressable>
 
@@ -124,6 +129,7 @@ function MatchPhaseBadge({
   game: ApiGame;
   isLive: boolean;
 }) {
+  const theme = useTheme();
   const minute = useLiveMinute(game);
 
   if (game.status === "scheduled") {
@@ -136,8 +142,8 @@ function MatchPhaseBadge({
       <View className="mt-0.5 items-center gap-1">
         {displayMinute ? (
           <Text
-            style={[styles.phaseLabel]}
-            className="text-[10px] tabular-nums text-neutral-500"
+            className="text-[10px] tabular-nums"
+            style={[styles.phaseLabel, { color: theme.textSubtle }]}
           >
             {`${displayMinute}'`}
           </Text>
@@ -155,9 +161,13 @@ function MatchPhaseBadge({
 
   if (game.status === "cancelled") {
     return (
-      <View className="mt-0.5 rounded-md bg-neutral-100 px-1.5 py-0.5">
+      <View
+        className="mt-0.5 rounded-md px-1.5 py-0.5"
+        style={{ backgroundColor: theme.cardMuted }}
+      >
         <Text
-          className="text-[8px] uppercase tracking-wide text-neutral-500"
+          className="text-[8px] uppercase tracking-wide"
+          style={{ color: theme.textSubtle }}
         >
           Can
         </Text>
@@ -181,11 +191,9 @@ function MatchPhaseBadge({
 
   return (
     <Text
-      style={[styles.phaseLabel]}
       numberOfLines={1}
-      className={`mt-0.5 text-[10px] uppercase tracking-wide ${
-        isLive ? "text-[#ba0c2f]" : "text-neutral-500"
-      }`}
+      className="mt-0.5 text-[10px] uppercase tracking-wide"
+      style={[styles.phaseLabel, { color: isLive ? "#ba0c2f" : theme.textSubtle }]}
     >
       {label}
     </Text>

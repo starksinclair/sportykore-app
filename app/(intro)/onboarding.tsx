@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button, Logo } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
@@ -87,6 +89,8 @@ const slides: Slide[] = [
 
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const headerHeight = isTablet ? Math.min(height * 0.43, 430) : height * 0.49;
@@ -127,17 +131,26 @@ export default function OnboardingScreen() {
   const isLast = index === slides.length - 1;
 
   return (
-    <View className="flex-1 bg-slate-50">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <View
         className="absolute top-0 left-0 right-0 overflow-hidden"
         style={{ height: headerHeight }}
         pointerEvents="none"
       >
-        <BlackPatternBackground />
+        <BlackPatternBackground
+          baseColor={theme.patternBase}
+          stripeColor={theme.patternStripe}
+        />
+        <View
+          className="absolute inset-0"
+          pointerEvents="none"
+          style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.3)" }}
+        />
       </View>
       <View
-        className="absolute bg-slate-50 -left-10 -right-10"
+        className="absolute -left-10 -right-10"
         style={{
+          backgroundColor: theme.background,
           top: height * 0.45,
           height: 90,
           transform: [{ rotate: "-7deg" }],
@@ -151,7 +164,12 @@ export default function OnboardingScreen() {
         >
           <Logo variant="full" color={colors.accent} fontSize={24} lineHeight={44} />
           <Pressable hitSlop={10} onPress={() => void completeOnboarding()}>
-            <Text className="text-base text-[#D1D5DB] font-medium">Skip</Text>
+            <Text
+              className="text-base font-medium"
+              style={{ color: isDark ? theme.textMuted : theme.textSubtle }}
+            >
+              Skip
+            </Text>
           </Pressable>
         </View>
 
@@ -194,9 +212,8 @@ export default function OnboardingScreen() {
               className="py-2"
             >
               <View
-                className={`h-2 rounded-full ${
-                  i === index ? "w-8 bg-brand-500" : "w-2 bg-slate-300"
-                }`}
+                className={`h-2 rounded-full ${i === index ? "w-8" : "w-2"}`}
+                style={{ backgroundColor: i === index ? theme.brand : theme.inputBorder }}
               />
             </Pressable>
           ))}
@@ -209,10 +226,11 @@ export default function OnboardingScreen() {
           <Button
             variant="secondary"
             size="icon"
-            icon={<Ionicons name="arrow-back-sharp" size={22} color="#000" />}
+            icon={<Ionicons name="arrow-back-sharp" size={22} color={colors.darkLabel} />}
             onPress={goPrev}
             accessibilityLabel={index === 0 ? "Back to welcome" : "Previous step"}
-            className="border border-[#D1D5DB]"
+            className="border"
+            style={{ borderColor: theme.cardBorder }}
           />
           <Button
             label={isLast ? "Get Started" : "Continue"}
@@ -242,6 +260,8 @@ function SlideContent({
   width: number;
   tabletFrameStyle?: { alignSelf: "center"; width: "100%"; maxWidth: number };
 }) {
+  const theme = useTheme();
+
   return (
     <View style={{ width }} className="flex-1">
       <View className="px-6 pt-4" style={tabletFrameStyle}>
@@ -252,24 +272,37 @@ function SlideContent({
         className="flex-1 px-6 justify-end pb-7 gap-3"
         style={tabletFrameStyle}
       >
-        <Text className="text-5xl font-bold text-slate-900 leading-snug">
+        <Text
+          className="text-5xl font-bold leading-snug"
+          style={{ color: theme.text }}
+        >
           {slide.title}
         </Text>
-        <Text className="text-lg text-slate-600 leading-relaxed">
+        <Text
+          className="text-lg leading-relaxed"
+          style={{ color: theme.textMuted }}
+        >
           {slide.description}
         </Text>
       </View>
 
-      <View className="h-px w-[90%] shrink-0 self-center bg-[#D1D5DB] mb-7 " />
+      <View
+        className="mb-7 h-px w-[90%] shrink-0 self-center"
+        style={{ backgroundColor: theme.cardBorder }}
+      />
     </View>
   );
 }
 
 function MatchCard({ match }: { match: SlideMatch }) {
+  const theme = useTheme();
+
   return (
     <View
-      className="bg-white rounded-2xl p-5 gap-4"
+      className="gap-4 rounded-2xl border p-5"
       style={{
+        backgroundColor: theme.card,
+        borderColor: theme.cardBorder,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.12,
@@ -285,11 +318,17 @@ function MatchCard({ match }: { match: SlideMatch }) {
           </Text>
         </View>
        
-        <Text className="text-xs text-slate-500 font-medium">
+        <Text
+          className="text-xs font-medium"
+          style={{ color: theme.textSubtle }}
+        >
           {match.league}
         </Text>
       </View>
-      <View className="h-px w-full shrink-0 self-center bg-[#D1D5DB]" />
+      <View
+        className="h-px w-full shrink-0 self-center"
+        style={{ backgroundColor: theme.cardBorder }}
+      />
 
       <View className="flex-row items-center justify-between">
         <View className="items-center gap-1 flex-1">
@@ -301,11 +340,14 @@ function MatchCard({ match }: { match: SlideMatch }) {
             style={{ backgroundColor: match.home.color }}
           />
          )}
-          <Text className="text-sm font-semibold text-slate-900">
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: theme.text }}
+          >
             {match.home.name}
           </Text>
         </View>
-        <Text className="text-3xl font-bold text-brand-500">
+        <Text className="text-3xl font-bold" style={{ color: theme.brand }}>
           {match.score}
         </Text>
         <View className="items-center gap-1 flex-1">
@@ -317,13 +359,19 @@ function MatchCard({ match }: { match: SlideMatch }) {
               style={{ backgroundColor: match.away.color }}
             />
           )}
-          <Text className="text-sm font-semibold text-slate-900">
+          <Text
+            className="text-sm font-semibold"
+            style={{ color: theme.text }}
+          >
             {match.away.name}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row gap-3 bg-slate-50 rounded-xl p-3">
+      <View
+        className="flex-row gap-3 rounded-xl p-3"
+        style={{ backgroundColor: theme.cardMuted }}
+      >
         <Stat
           label="Possession"
           value={`${match.possession}%`}
@@ -352,18 +400,25 @@ function Stat({
   percent: number;
   tone: "brand" | "accent";
 }) {
-  const fillClass = tone === "brand" ? "bg-brand-500" : "bg-accent-500";
-  const valueClass = tone === "brand" ? "text-brand-500" : "text-accent-500";
+  const theme = useTheme();
+  const fillColor = tone === "brand" ? theme.brand : theme.accent;
   return (
     <View className="flex-1 gap-1.5">
       <View className="flex-row items-center justify-between">
-        <Text className="text-xs text-slate-500">{label}</Text>
-        <Text className={`text-xs font-bold ${valueClass}`}>{value}</Text>
+        <Text className="text-xs" style={{ color: theme.textSubtle }}>
+          {label}
+        </Text>
+        <Text className="text-xs font-bold" style={{ color: fillColor }}>
+          {value}
+        </Text>
       </View>
-      <View className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+      <View
+        className="h-1.5 overflow-hidden rounded-full"
+        style={{ backgroundColor: theme.inputBorder }}
+      >
         <View
-          className={`h-full rounded-full ${fillClass}`}
-          style={{ width: `${percent}%` }}
+          className="h-full rounded-full"
+          style={{ width: `${percent}%`, backgroundColor: fillColor }}
         />
       </View>
     </View>

@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
@@ -41,6 +43,8 @@ const ENTITY_ICONS: Record<SearchEntityType, keyof typeof Ionicons.glyphMap> = {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const [query, setQuery] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
@@ -122,8 +126,8 @@ export default function SearchScreen() {
   };
 
   return (
-    <View className="flex-1 bg-neutral-950">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <View
           className="flex-row items-center gap-3 px-5 pb-3 pt-2"
@@ -132,22 +136,33 @@ export default function SearchScreen() {
           <Pressable
             onPress={() => router.back()}
             accessibilityLabel="Close search"
-            className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 active:bg-white/15"
+            className="h-11 w-11 items-center justify-center rounded-2xl border active:opacity-80"
+            style={{
+              backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted,
+              borderColor: theme.cardBorder,
+            }}
           >
-            <Ionicons name="chevron-back" size={20} color={colors.white} />
+            <Ionicons name="chevron-back" size={20} color={theme.text} />
           </Pressable>
 
-          <View className="flex-1 flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-white/10 px-4 py-3">
-            <Ionicons name="search-outline" size={18} color={colors.accent} />
+          <View
+            className="flex-1 flex-row items-center gap-2 rounded-[18px] border px-4 py-3"
+            style={{
+              backgroundColor: theme.inputBackground,
+              borderColor: theme.inputBorder,
+            }}
+          >
+            <Ionicons name="search-outline" size={18} color={theme.accent} />
             <TextInput
               autoFocus
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={handleSubmit}
               placeholder="Players, countries, leagues, teams"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={theme.textSubtle}
               returnKeyType="search"
-              className="flex-1 p-0 text-sm text-white"
+              className="flex-1 p-0 text-sm"
+              style={{ color: theme.text }}
             />
             {query.length > 0 ? (
               <Pressable
@@ -155,7 +170,7 @@ export default function SearchScreen() {
                 accessibilityLabel="Clear search"
                 hitSlop={8}
               >
-                <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.45)" />
+                <Ionicons name="close-circle" size={18} color={theme.textSubtle} />
               </Pressable>
             ) : null}
           </View>
@@ -230,19 +245,32 @@ function SearchErrorState({
   onRetry: () => void;
   message?: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="gap-3 rounded-[24px] border border-red-300/25 bg-red-500/10 px-5 py-6">
-      <View className="h-12 w-12 items-center justify-center rounded-[20px] bg-red-500/15">
-        <Ionicons name="warning-outline" size={24} color={colors.white} />
+    <View
+      className="gap-3 rounded-[24px] border px-5 py-6"
+      style={{
+        backgroundColor: theme.dangerMuted,
+        borderColor: theme.danger,
+      }}
+    >
+      <View
+        className="h-12 w-12 items-center justify-center rounded-[20px]"
+        style={{ backgroundColor: theme.card }}
+      >
+        <Ionicons name="warning-outline" size={24} color={theme.danger} />
       </View>
       <View className="gap-1">
         <Text
-          className="text-base text-white"
+          className="text-base"
+          style={{ color: theme.text }}
         >
           Search unavailable
         </Text>
         <Text
-          className="text-sm leading-6 text-white/60"
+          className="text-sm leading-6"
+          style={{ color: theme.textMuted }}
         >
           {message || "Check your connection and try again."}
         </Text>
@@ -253,7 +281,8 @@ function SearchErrorState({
       >
         <Ionicons name="refresh" size={15} color={colors.darkLabel} />
         <Text
-          className="text-sm text-neutral-950"
+          className="text-sm"
+          style={{ color: colors.darkLabel }}
         >
           Retry
         </Text>
@@ -271,20 +300,33 @@ function RecentsBlock({
   onPick: (term: string) => void;
   onRemove: (term: string) => void;
 }) {
+  const theme = useTheme();
+
   if (recents.length === 0) {
     return (
-      <View className="items-center gap-3 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-        <View className="h-14 w-14 items-center justify-center rounded-[22px] bg-accent-500/15">
-          <Ionicons name="search-outline" size={26} color={colors.accent} />
+      <View
+        className="items-center gap-3 rounded-[24px] border border-dashed px-5 py-8"
+        style={{
+          backgroundColor: theme.cardMuted,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <View
+          className="h-14 w-14 items-center justify-center rounded-[22px]"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="search-outline" size={26} color={theme.accent} />
         </View>
         <View className="gap-1">
           <Text
-            className="text-center text-base text-white"
+            className="text-center text-base"
+            style={{ color: theme.text }}
           >
             Nothing here yet
           </Text>
           <Text
-            className="text-center text-sm leading-6 text-white/55"
+            className="text-center text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             Search by player, country, league, or team. Recent searches will show up here.
           </Text>
@@ -296,7 +338,8 @@ function RecentsBlock({
   return (
     <View className="gap-3">
       <Text
-        className="text-xs uppercase tracking-wide text-white/50"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textSubtle }}
       >
         Recent
       </Text>
@@ -304,17 +347,25 @@ function RecentsBlock({
         {recents.map((term) => (
           <View
             key={term}
-            className="flex-row items-center gap-2 rounded-[18px] border border-white/10 bg-white/5 px-3 py-2.5"
+            className="flex-row items-center gap-2 rounded-[18px] border px-3 py-2.5"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
+            }}
           >
             <Pressable
               onPress={() => onPick(term)}
               className="flex-1 flex-row items-center gap-3 py-1"
             >
-              <View className="h-9 w-9 items-center justify-center rounded-2xl bg-accent-500/15">
-                <Ionicons name="time-outline" size={18} color={colors.accent} />
+              <View
+                className="h-9 w-9 items-center justify-center rounded-2xl"
+                style={{ backgroundColor: theme.accentMuted }}
+              >
+                <Ionicons name="time-outline" size={18} color={theme.accent} />
               </View>
               <Text
-                className="min-w-0 flex-1 text-sm text-white"
+                className="min-w-0 flex-1 text-sm"
+                style={{ color: theme.text }}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -325,9 +376,10 @@ function RecentsBlock({
               onPress={() => onRemove(term)}
               accessibilityLabel={`Remove ${term} from recents`}
               hitSlop={8}
-              className="h-8 w-8 items-center justify-center rounded-full bg-white/5 active:bg-white/10"
+              className="h-8 w-8 items-center justify-center rounded-full active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="close" size={16} color="rgba(255,255,255,0.55)" />
+              <Ionicons name="close" size={16} color={theme.textSubtle} />
             </Pressable>
           </View>
         ))}
@@ -337,19 +389,32 @@ function RecentsBlock({
 }
 
 function EmptyResults({ query }: { query: string }) {
+  const theme = useTheme();
+
   return (
-    <View className="items-center gap-3 rounded-[24px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-      <View className="h-14 w-14 items-center justify-center rounded-[22px] bg-white/10">
-        <Ionicons name="search-outline" size={26} color={colors.accent} />
+    <View
+      className="items-center gap-3 rounded-[24px] border border-dashed px-5 py-8"
+      style={{
+        backgroundColor: theme.cardMuted,
+        borderColor: theme.cardBorder,
+      }}
+    >
+      <View
+        className="h-14 w-14 items-center justify-center rounded-[22px]"
+        style={{ backgroundColor: theme.accentMuted }}
+      >
+        <Ionicons name="search-outline" size={26} color={theme.accent} />
       </View>
       <View className="gap-1">
         <Text
-          className="text-center text-base text-white"
+          className="text-center text-base"
+          style={{ color: theme.text }}
         >
           No matches for &ldquo;{query}&rdquo;
         </Text>
         <Text
-          className="text-center text-sm leading-6 text-white/55"
+          className="text-center text-sm leading-6"
+          style={{ color: theme.textSubtle }}
         >
           Try a different spelling, or search by country or league instead.
         </Text>
@@ -366,6 +431,7 @@ function ResultsBlock({
   onPick: (result: SearchResult) => void;
 }) {
   const { isTablet } = useAdaptiveLayout();
+  const theme = useTheme();
 
   return (
     <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-5"}>
@@ -380,27 +446,41 @@ function ResultsBlock({
             style={isTablet ? { width: "48%" } : undefined}
           >
             <View className="flex-row items-center gap-2">
-              <View className="h-7 w-7 items-center justify-center rounded-xl bg-accent-500/15">
-                <Ionicons name={ENTITY_ICONS[type]} size={14} color={colors.accent} />
+              <View
+                className="h-7 w-7 items-center justify-center rounded-xl"
+                style={{ backgroundColor: theme.accentMuted }}
+              >
+                <Ionicons name={ENTITY_ICONS[type]} size={14} color={theme.accent} />
               </View>
               <Text
-                className="text-xs uppercase tracking-wide text-white/50"
+                className="text-xs uppercase tracking-wide"
+                style={{ color: theme.textSubtle }}
               >
                 {ENTITY_LABELS[type]}
               </Text>
             </View>
 
-            <View className="overflow-hidden rounded-[22px] border border-white/10 bg-white/5">
+            <View
+              className="overflow-hidden rounded-[22px] border"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
+            >
               {items.map((result, index) => (
                 <Pressable
                   key={index}
                   onPress={() => onPick(result)}
                   className={[
-                    "flex-row items-center gap-3 px-4 py-3.5 active:bg-white/10",
-                    index !== items.length - 1 ? "border-b border-white/10" : "",
+                    "flex-row items-center gap-3 px-4 py-3.5 active:opacity-85",
+                    index !== items.length - 1 ? "border-b" : "",
                   ].join(" ")}
+                  style={{ borderColor: theme.cardBorder }}
                 >
-                  <View className="h-11 w-11 items-center justify-center rounded-2xl bg-accent-500/15">
+                  <View
+                    className="h-11 w-11 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: theme.accentMuted }}
+                  >
                     {result.type === "country" && result.countryCode ? (
                       <CountryFlag code={result.countryCode} width={20} />
                     ) : result.type === "league" || result.type === "team" ? (
@@ -411,12 +491,13 @@ function ResultsBlock({
                         tone="accent"
                       />
                     ) : (
-                      <Ionicons name={ENTITY_ICONS[type]} size={18} color={colors.accent} />
+                      <Ionicons name={ENTITY_ICONS[type]} size={18} color={theme.accent} />
                     )}
                   </View>
                   <View className="min-w-0 flex-1 gap-0.5">
                     <Text
-                      className="text-sm text-white"
+                      className="text-sm"
+                      style={{ color: theme.text }}
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -428,7 +509,8 @@ function ResultsBlock({
                           <CountryFlag code={result.countryCode} width={14} />
                         ) : null}
                         <Text
-                            className="min-w-0 flex-1 text-xs text-white/50"
+                            className="min-w-0 flex-1 text-xs"
+                          style={{ color: theme.textSubtle }}
                           numberOfLines={1}
                           ellipsizeMode="tail"
                         >
@@ -440,7 +522,7 @@ function ResultsBlock({
                   <Ionicons
                     name="chevron-forward"
                     size={16}
-                    color="rgba(255,255,255,0.45)"
+                    color={theme.textSubtle}
                   />
                 </Pressable>
               ))}

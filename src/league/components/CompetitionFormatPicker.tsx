@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { CompetitionFormat } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
-import { colors } from "@/constants";
 import {
   COMPETITION_FORMAT_COPY,
   competitionFormatLabel,
@@ -53,6 +53,7 @@ export function CompetitionFormatPicker({
   label = "Format",
   required = false,
 }: Props) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
 
   const close = () => setOpen(false);
@@ -70,17 +71,22 @@ export function CompetitionFormatPicker({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${formatLabel(value)}`}
-        className="flex-row items-center justify-between rounded-2xl border border-neutral-200 bg-[#F5F5F5] px-3.5 py-3.5 active:opacity-80"
+        className="flex-row items-center justify-between rounded-2xl border px-3.5 py-3.5 active:opacity-80"
+        style={{
+          backgroundColor: theme.inputBackground,
+          borderColor: theme.inputBorder,
+        }}
       >
         <Text
-          className="flex-1 pr-2 text-base text-neutral-950"
+          className="flex-1 pr-2 text-base"
+          style={{ color: theme.text }}
           numberOfLines={2}
         >
           {formatLabel(value)}
         </Text>
-        <Ionicons name="chevron-down" size={18} color="#6B7280" />
+        <Ionicons name="chevron-down" size={18} color={theme.textMuted} />
       </Pressable>
-      <Text className="text-xs leading-5 text-slate-500">
+      <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
         This format is locked after the season is created. You can create a new
         season later if you need a different structure.
       </Text>
@@ -98,24 +104,25 @@ export function CompetitionFormatPicker({
               <Pressable
                 key={option.id}
                 onPress={() => handleSelect(option.id)}
-                className="flex-row items-start gap-3 border-b border-neutral-100 py-4 active:bg-neutral-50"
+                className="flex-row items-start gap-3 border-b py-4 active:opacity-85"
+                style={{ borderColor: theme.cardBorder }}
               >
                 <View className="flex-1 gap-0.5">
                   <Text
-                    style={{
-                    }}
-                    className="text-sm text-neutral-950"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {option.label}
                   </Text>
                   <Text
-                    className="text-xs leading-4 text-slate-500"
+                    className="text-xs leading-4"
+                    style={{ color: theme.textSubtle }}
                   >
                     {option.description}
                   </Text>
                 </View>
                 {selected ? (
-                  <Ionicons name="checkmark-circle" size={22} color={colors.brand} />
+                  <Ionicons name="checkmark-circle" size={22} color={theme.brand} />
                 ) : (
                   <View className="w-[22px]" />
                 )}

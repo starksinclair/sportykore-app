@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
 import type { SubAssignment } from "@/lineup/types";
 import { MAX_LINEUP_SUBSTITUTES } from "@/lineup/utils";
@@ -21,11 +22,12 @@ export function SubstitutesSection({
   tone = "dark",
 }: Props) {
   const isDark = tone === "dark";
+  const theme = useTheme();
 
   return (
     <View className="gap-3">
       <Text
-        className={isDark ? "text-white" : "text-neutral-900"}
+        style={{ color: theme.text }}
       >
         Substitutes
       </Text>
@@ -35,13 +37,12 @@ export function SubstitutesSection({
           {subs.map((sub) => (
             <View
               key={sub.playerId}
-              className={[
-                "flex-row items-center gap-2 rounded-xl px-3 py-2",
-                isDark ? "bg-white/10" : "bg-neutral-100",
-              ].join(" ")}
+              className="flex-row items-center gap-2 rounded-xl px-3 py-2"
+              style={{ backgroundColor: theme.cardMuted }}
             >
               <Text
-                className={isDark ? "text-sm text-white" : "text-sm text-neutral-900"}
+                className="text-sm"
+                style={{ color: theme.text }}
               >
                 {sub.jerseyNumber != null ? `#${sub.jerseyNumber} ` : ""}
                 {sub.playerName}
@@ -55,7 +56,7 @@ export function SubstitutesSection({
                   <Ionicons
                     name="close-circle"
                     size={18}
-                    color={isDark ? "rgba(255,255,255,0.5)" : "#9CA3AF"}
+                    color={theme.textSubtle}
                   />
                 </Pressable>
               ) : null}
@@ -64,7 +65,8 @@ export function SubstitutesSection({
         </View>
       ) : (
         <Text
-          className={isDark ? "text-sm text-white/45" : "text-sm text-neutral-500"}
+          className="text-sm"
+          style={{ color: theme.textSubtle }}
         >
           No substitutes selected yet.
         </Text>
@@ -76,9 +78,10 @@ export function SubstitutesSection({
           accessibilityRole="button"
           accessibilityLabel="Add substitute"
           className="flex-row items-center justify-center gap-2 rounded-xl border-2 border-dashed border-accent-400 py-3 active:opacity-80"
+          style={{ borderColor: theme.accent }}
         >
           <Ionicons name="add-circle" size={22} color={colors.accent} />
-          <Text className="text-accent-300">
+          <Text style={{ color: isDark ? colors.accent : theme.accent }}>
             Add sub
           </Text>
         </Pressable>

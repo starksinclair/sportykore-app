@@ -7,7 +7,7 @@ import { BlackPatternBackground } from "@/components/ui/black-pattern-background
 import { colors, scoreboardPattern } from "@/constants";
 
 function TabBarPattern() {
-  const pattern = scoreboardPattern("strong");
+  const pattern = scoreboardPattern("default");
   return (
     <View style={StyleSheet.absoluteFill}>
       <BlackPatternBackground
