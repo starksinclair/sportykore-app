@@ -4,14 +4,12 @@ import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { CompetitionFormat } from "@/api/entities";
@@ -277,16 +275,14 @@ export default function CreateScreen() {
         stripeColor={theme.patternStripe}
       />
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="px-5 pt-4"
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 90 
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 90,
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -445,8 +441,7 @@ export default function CreateScreen() {
               )}
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </View>
   );

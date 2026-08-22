@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAppearance } from "@/color/appearance-context";
@@ -95,13 +96,16 @@ export function DetailScreenShell({
           </View>
         ) : null}
 
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="gap-6 px-5 pb-12 pt-3"
-          contentContainerStyle={
-            useTabletWidth ? { alignItems: "center" } : undefined
-          }
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          style={{ flex: 1 }}
+          contentContainerStyle={[
+            { gap: 24, paddingHorizontal: 20, paddingBottom: 48, paddingTop: 12 },
+            useTabletWidth ? { alignItems: "center" } : undefined,
+          ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
           {useTabletWidth ? (
             <View className="w-full gap-6" style={{ maxWidth: tabletMaxWidth }}>
@@ -110,7 +114,7 @@ export function DetailScreenShell({
           ) : (
             children
           )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </ThemedView>
   );

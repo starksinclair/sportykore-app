@@ -50,6 +50,13 @@ import {
   useOwnHighlights,
   usePlayerProfileMutations,
 } from "../hooks";
+import {
+  formatSocialProfile,
+  parseSocialProfile,
+  SOCIAL_PLATFORM_OPTIONS,
+  socialPlatformLabel,
+  type SocialPlatform,
+} from "../social-profile";
 import { aggregatePlayerStats, collectAllStats, countAllGames } from "../utils";
 
 const POSITIONS: PlayerPosition[] = [
@@ -792,6 +799,7 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
 
 function DetailsSection({ player }: { player: ApiPlayer }) {
   const theme = useTheme();
+  const socialProfile = parseSocialProfile(player.socialHandle);
   const rows = [
     { label: "Preferred foot", value: player.preferredFoot },
     { label: "Height", value: formatHeight(player.heightCm) },
@@ -800,7 +808,12 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
       value: [player.city, player.state].filter(Boolean).join(", ") || null,
     },
     { label: "Nationality", value: player.nationality },
-    { label: "Social", value: player.socialHandle },
+    {
+      label: socialProfile.handle
+        ? socialPlatformLabel(socialProfile.platform)
+        : "Social",
+      value: socialProfile.handle || null,
+    },
   ];
   const hasDetails = rows.some((row) => row.value);
   return (
@@ -881,7 +894,11 @@ function PlayerProfileFormSheet({
   const [city, setCity] = useState(player?.city ?? "");
   const [state, setState] = useState(player?.state ?? "");
   const [nationality, setNationality] = useState(player?.nationality ?? "");
-  const [socialHandle, setSocialHandle] = useState(player?.socialHandle ?? "");
+  const initialSocialProfile = parseSocialProfile(player?.socialHandle);
+  const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>(
+    initialSocialProfile.platform,
+  );
+  const [socialHandle, setSocialHandle] = useState(initialSocialProfile.handle);
   const [photo, setPhoto] = useState<PickedImageFile | null>(null);
   const [pickingPhoto, setPickingPhoto] = useState(false);
 
@@ -906,7 +923,9 @@ function PlayerProfileFormSheet({
     setCity(player?.city ?? "");
     setState(player?.state ?? "");
     setNationality(player?.nationality ?? "");
-    setSocialHandle(player?.socialHandle ?? "");
+    const socialProfile = parseSocialProfile(player?.socialHandle);
+    setSocialPlatform(socialProfile.platform);
+    setSocialHandle(socialProfile.handle);
     setPhoto(null);
   }, [initialStep, player, viewerName, visible]);
 
@@ -945,7 +964,7 @@ function PlayerProfileFormSheet({
       city: city.trim() || null,
       state: state.trim() || null,
       nationality: nationality.trim() || null,
-      socialHandle: socialHandle.trim() || null,
+      socialHandle: formatSocialProfile(socialPlatform, socialHandle),
     };
 
     try {
@@ -1082,12 +1101,51 @@ function PlayerProfileFormSheet({
               placeholder="Nigerian"
               autoCapitalize="words"
             />
+            <View className="gap-2">
+              <Text
+                className="text-xs uppercase tracking-wide"
+                style={{ color: theme.textSubtle }}
+              >
+                Social platform
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {SOCIAL_PLATFORM_OPTIONS.map((option) => {
+                  const selected = socialPlatform === option.value;
+                  return (
+                    <Pressable
+                      key={option.value}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      onPress={() => setSocialPlatform(option.value)}
+                      className="rounded-full border px-3 py-2 active:opacity-80"
+                      style={{
+                        backgroundColor: selected ? theme.brandMuted : theme.card,
+                        borderColor: selected ? theme.brand : theme.inputBorder,
+                      }}
+                    >
+                      <Text
+                        className="text-sm"
+                        style={{ color: selected ? theme.brand : theme.text }}
+                      >
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
             <AuthTextField
-              label="Social handle"
+              label={
+                socialPlatform === "other"
+                  ? "Social handle or profile URL"
+                  : `${socialPlatformLabel(socialPlatform)} handle or profile URL`
+              }
               value={socialHandle}
               onChangeText={setSocialHandle}
               placeholder="@yourhandle"
               autoCapitalize="none"
+              autoCorrect={false}
+              maxLength={120}
             />
           </>
         )}

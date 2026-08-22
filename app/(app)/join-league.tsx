@@ -4,13 +4,11 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
@@ -177,17 +175,17 @@ export default function JoinLeagueScreen() {
         ) : !user ? (
           <JoinLeagueLoginPrompt />
         ) : (
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            className="flex-1"
+          <KeyboardAwareScrollView
+            bottomOffset={24}
+            style={{ flex: 1 }}
+            contentContainerStyle={[
+              { gap: 20, paddingHorizontal: 20, paddingBottom: 40, paddingTop: 20 },
+              isTablet ? { alignItems: "center" } : undefined,
+            ]}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="interactive"
+            showsVerticalScrollIndicator={false}
           >
-            <ScrollView
-              className="flex-1"
-              contentContainerClassName="gap-5 px-5 pb-10 pt-5"
-              contentContainerStyle={isTablet ? { alignItems: "center" } : undefined}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-            >
               <View className="w-full gap-5" style={tabletFrameStyle}>
                 <View className="items-center gap-3">
                   <View
@@ -292,8 +290,7 @@ export default function JoinLeagueScreen() {
                   </Text>
                 </Pressable>
               </View>
-            </ScrollView>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
         )}
       </SafeAreaView>
     </View>

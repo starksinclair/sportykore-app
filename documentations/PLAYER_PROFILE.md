@@ -82,6 +82,14 @@ carry their own `visibility === 'private'` check for the same effect.
 See `tests/unit/player_private_stub_surfaces.spec.ts` for the surface-by-surface
 assertions.
 
+## Social profiles
+
+The player form asks for a social platform before the handle or profile URL,
+so a value such as `@sportykore` is not presented without context. The client
+stores the selection in the existing `socialHandle` string (for example,
+`X (Twitter): @sportykore`) to remain compatible with the current API. Older
+unqualified values remain editable and display under `Other`.
+
 ---
 
 ## Highlights - YouTube URL parsing
