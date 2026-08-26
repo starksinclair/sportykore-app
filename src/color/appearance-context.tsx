@@ -30,7 +30,7 @@ function normalizePreference(value: string | null): ThemePreference {
   if (value === "light" || value === "dark" || value === "system") {
     return value;
   }
-  return "dark";
+  return "system";
 }
 
 function resolveColorScheme(
@@ -43,7 +43,7 @@ function resolveColorScheme(
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const systemScheme = useSystemColorScheme();
   const systemColorScheme: AppColorScheme = systemScheme === "dark" ? "dark" : "light";
-  const [preference, setPreferenceState] = useState<ThemePreference>("dark");
+  const [preference, setPreferenceState] = useState<ThemePreference>("system");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {

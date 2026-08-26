@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState, type ReactNode } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import type {
   ApiStage,
@@ -551,6 +551,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         onClose={() => setAdjOpen(false)}
         title="Point adjustment"
         subtitle="Non-zero delta with a required reason. Multiple adjustments sum."
+        contentContainerStyle={styles.keyboardAwareSheetContent}
       >
         <View className="gap-4">
           <SheetBlock title="Team">
@@ -630,6 +631,7 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
         onClose={() => setReorderOpen(false)}
         title="Reorder tied teams"
         subtitle="Send the full cohort as a contiguous 1…N order."
+        contentContainerStyle={styles.keyboardAwareSheetContent}
       >
         <View className="gap-4">
           <SheetBlock title="Order">
@@ -868,6 +870,12 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  keyboardAwareSheetContent: {
+    paddingBottom: 96,
+  },
+});
 
 function zoneScopeLabel(
   stageGroupId: number | null,

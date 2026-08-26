@@ -3,12 +3,13 @@ import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { openBrowserAsync } from "expo-web-browser";
 import type { ReactNode } from "react";
-import { Alert, Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
+import type { AppColorScheme, ThemePreference } from "@/color/theme";
 import { Button } from "@/components/ui/Button";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors, scoreboardPattern } from "@/constants";
@@ -19,7 +20,7 @@ import { useOwnPlayerProfile } from "@/player";
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { isDark, toggleDarkMode } = useAppearance();
+  const { isDark, preference, systemColorScheme, colorScheme, setPreference } = useAppearance();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { isTablet, isWideTablet } = useAdaptiveLayout();
@@ -60,13 +61,17 @@ export default function ProfileScreen() {
     router.push("/player/me");
   };
 
-  const handleAppearanceToggle = () => {
-    const nextTheme = isDark ? "light" : "dark";
+  const handleAppearancePreferenceChange = (nextPreference: ThemePreference) => {
+    if (nextPreference === preference) return;
+
     posthog?.capture("appearance_theme_toggled", {
-      theme: nextTheme,
+      preference: nextPreference,
+      previous_preference: preference,
+      resolved_theme: nextPreference === "system" ? systemColorScheme : nextPreference,
+      system_theme: systemColorScheme,
       source: "profile",
     });
-    void toggleDarkMode();
+    void setPreference(nextPreference);
   };
 
   return (
@@ -186,8 +191,10 @@ export default function ProfileScreen() {
                   </>
                 ) : null}
                 <AppearanceSection
-                  isDark={isDark}
-                  onToggle={handleAppearanceToggle}
+                  colorScheme={colorScheme}
+                  preference={preference}
+                  systemColorScheme={systemColorScheme}
+                  onChange={handleAppearancePreferenceChange}
                 />
               </View>
               <View className="flex-1 gap-6">
@@ -216,8 +223,10 @@ export default function ProfileScreen() {
               ) : null}
 
               <AppearanceSection
-                isDark={isDark}
-                onToggle={handleAppearanceToggle}
+                colorScheme={colorScheme}
+                preference={preference}
+                systemColorScheme={systemColorScheme}
+                onChange={handleAppearancePreferenceChange}
               />
 
               <SupportSection
@@ -351,46 +360,104 @@ function SupportSection({
   );
 }
 
+const appearanceOptions: {
+  value: ThemePreference;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { value: "system", label: "Auto", icon: "phone-portrait-outline" },
+  { value: "light", label: "Light", icon: "sunny-outline" },
+  { value: "dark", label: "Dark", icon: "moon-outline" },
+];
+
 function AppearanceSection({
-  isDark,
-  onToggle,
+  colorScheme,
+  preference,
+  systemColorScheme,
+  onChange,
 }: {
-  isDark: boolean;
-  onToggle: () => void;
+  colorScheme: AppColorScheme;
+  preference: ThemePreference;
+  systemColorScheme: AppColorScheme;
+  onChange: (preference: ThemePreference) => void;
 }) {
   const theme = useTheme();
+  const activeIcon =
+    preference === "system"
+      ? "phone-portrait-outline"
+      : colorScheme === "dark"
+        ? "moon-outline"
+        : "sunny-outline";
+  const resolvedLabel = preference === "system" ? `Auto, ${systemColorScheme}` : preference;
 
   return (
     <Section title="Appearance">
-      <View className="flex-row items-center gap-3 px-4 py-4">
+      <View className="gap-4 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View
+            className="h-10 w-10 items-center justify-center rounded-xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons
+              name={activeIcon}
+              size={20}
+              color={theme.accent}
+            />
+          </View>
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text className="text-[15px]" style={{ color: theme.text }}>
+              Theme mode
+            </Text>
+            <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
+              Auto follows your device. Light helps in direct sun.
+            </Text>
+          </View>
+          <Text
+            className="text-xs capitalize"
+            style={{ color: theme.textSubtle }}
+            numberOfLines={1}
+          >
+            {resolvedLabel}
+          </Text>
+        </View>
         <View
-          className="h-10 w-10 items-center justify-center rounded-xl"
-          style={{ backgroundColor: theme.accentMuted }}
-        >
-          <Ionicons
-            name={isDark ? "moon-outline" : "sunny-outline"}
-            size={20}
-            color={theme.accent}
-          />
-        </View>
-        <View className="min-w-0 flex-1 gap-0.5">
-          <Text className="text-[15px]" style={{ color: theme.text }}>
-            Dark mode
-          </Text>
-          <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
-            Turn it off for better visibility in direct sun.
-          </Text>
-        </View>
-        <Switch
-          value={isDark}
-          onValueChange={onToggle}
-          trackColor={{
-            false: theme.inputBorder,
-            true: "rgba(230,168,23,0.5)",
+          className="flex-row rounded-2xl border p-1"
+          style={{
+            backgroundColor: theme.cardMuted,
+            borderColor: theme.cardBorder,
           }}
-          thumbColor={isDark ? theme.accent : colors.white}
-          ios_backgroundColor={theme.inputBorder}
-        />
+        >
+          {appearanceOptions.map((option) => {
+            const selected = preference === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => onChange(option.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Use ${option.label} theme mode`}
+                className="h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-xl px-2 active:opacity-80"
+                style={{
+                  backgroundColor: selected ? theme.accent : "transparent",
+                }}
+              >
+                <Ionicons
+                  name={option.icon}
+                  size={16}
+                  color={selected ? colors.darkLabel : theme.textMuted}
+                />
+                <Text
+                  className="text-xs"
+                  style={{ color: selected ? colors.darkLabel : theme.text }}
+                  numberOfLines={1}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </Section>
   );

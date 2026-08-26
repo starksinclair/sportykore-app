@@ -7,6 +7,25 @@ export type LeagueNotificationPreference = {
   finalScoreEnabled: boolean;
 };
 
+export type AppNotification = {
+  id: number;
+  type: "league_player_joined";
+  title: string;
+  body: string;
+  route: string | null;
+  leagueId: number | null;
+  playerId: number | null;
+  teamId: number | null;
+  data: Record<string, unknown>;
+  readAt: string | null;
+  createdAt: string | null;
+};
+
+export type NotificationsResponse = {
+  notifications: AppNotification[];
+  unreadCount: number;
+};
+
 export type RegisterPushTokenPayload = {
   provider: "expo";
   token: string;
@@ -34,6 +53,53 @@ export async function fetchLeagueNotificationPreference(
   });
 
   return res.data.preference;
+}
+
+export async function fetchNotifications(limit = 50): Promise<NotificationsResponse> {
+  const res = await apiRequest<{ data: NotificationsResponse }>(
+    `/api/v1/notifications?limit=${limit}`,
+    {
+      auth: true,
+    },
+  );
+
+  return res.data;
+}
+
+export async function fetchUnreadNotificationCount(): Promise<number> {
+  const res = await apiRequest<{ data: { unreadCount: number } }>(
+    "/api/v1/notifications/unread-count",
+    {
+      auth: true,
+    },
+  );
+
+  return res.data.unreadCount;
+}
+
+export async function markNotificationRead(
+  notificationId: number,
+): Promise<{ notification: AppNotification; unreadCount: number }> {
+  const res = await apiRequest<{
+    data: { notification: AppNotification; unreadCount: number };
+  }>(`/api/v1/notifications/${notificationId}/read`, {
+    method: "PUT",
+    auth: true,
+  });
+
+  return res.data;
+}
+
+export async function markAllNotificationsRead(): Promise<{ unreadCount: number }> {
+  const res = await apiRequest<{ data: { unreadCount: number } }>(
+    "/api/v1/notifications/read-all",
+    {
+      method: "PUT",
+      auth: true,
+    },
+  );
+
+  return res.data;
 }
 
 export async function updateLeagueNotificationPreference(

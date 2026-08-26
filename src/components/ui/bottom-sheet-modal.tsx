@@ -7,8 +7,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  type StyleProp,
   Text,
   View,
+  type ViewStyle,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,6 +29,7 @@ type BottomSheetModalProps = {
    * Use this when embedding a VirtualizedList (e.g. Places autocomplete).
    */
   scrollEnabled?: boolean;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
 export function BottomSheetModal({
@@ -37,6 +40,7 @@ export function BottomSheetModal({
   children,
   variant = "light",
   scrollEnabled = true,
+  contentContainerStyle,
 }: BottomSheetModalProps) {
   const forceDark = variant === "dark";
   const theme = useTheme();
@@ -66,7 +70,7 @@ export function BottomSheetModal({
           style={[styles.safeArea, isTablet && styles.safeAreaTablet]}
         >
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
           >
             <View
@@ -121,12 +125,12 @@ export function BottomSheetModal({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   keyboardDismissMode="interactive"
-                  contentContainerStyle={styles.content}
+                  contentContainerStyle={[styles.content, contentContainerStyle]}
                 >
                   {children}
                 </ScrollView>
               ) : (
-                <View style={styles.content}>{children}</View>
+                <View style={[styles.content, contentContainerStyle]}>{children}</View>
               )}
             </View>
           </KeyboardAvoidingView>

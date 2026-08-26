@@ -22,6 +22,7 @@ import type {
 import {
   Button,
   CountryPicker,
+  EntityLogo,
   NativeDatePickerField,
   type CountryPickerOption,
 } from "@/components/ui";
@@ -163,7 +164,6 @@ export function PlayerProfileView({
                 numberOfLines={1}
               >
                 {activeSeason.team.name}
-                {leagues[0] ? ` · ${leagues[0].name}` : ""}
               </Text>
             ) : (
               <Text
@@ -262,6 +262,8 @@ export function PlayerProfileView({
         </View>
       ) : null}
 
+      {!isTablet ? <PlayerLeaguesCard leagues={leagues} /> : null}
+
       {isTablet ? (
         <View className="flex-row items-start gap-5">
           <View className="gap-5" style={{ flex: 1.35 }}>
@@ -275,6 +277,7 @@ export function PlayerProfileView({
             <AwardsSection awards={player.awards ?? []} />
           </View>
           <View className="gap-5" style={{ flex: 1 }}>
+            <PlayerLeaguesCard leagues={leagues} />
             <CareerStatsSection
               goals={stats.goals}
               assists={stats.assists}
@@ -788,6 +791,129 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
       </View>
     </Section>
   );
+}
+
+function PlayerLeaguesCard({ leagues }: { leagues: ApiPlayerLeague[] }) {
+  const theme = useTheme();
+  const { isDark } = useAppearance();
+  const visibleLeagues = leagues.slice(0, 5);
+  const hiddenCount = Math.max(0, leagues.length - visibleLeagues.length);
+  const seasonCount = leagues.reduce(
+    (total, league) => total + league.seasons.length,
+    0,
+  );
+
+  if (leagues.length === 0) {
+    return null;
+  }
+
+  return (
+    <Section title="Leagues">
+      <View
+        className="overflow-hidden rounded-[22px] border"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <View
+          className="flex-row items-center gap-3 border-b px-4 py-4"
+          style={{ borderColor: theme.cardBorder }}
+        >
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="trophy-outline" size={21} color={theme.accent} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-sm" style={{ color: theme.text }}>
+              {leagues.length} league{leagues.length === 1 ? "" : "s"}
+            </Text>
+            <Text
+              className="pt-1 text-xs"
+              style={{ color: theme.textSubtle }}
+              numberOfLines={1}
+            >
+              {seasonCount} season{seasonCount === 1 ? "" : "s"} on this profile
+            </Text>
+          </View>
+        </View>
+
+        {visibleLeagues.map((league, index) => {
+          const isLastVisible = index === visibleLeagues.length - 1;
+          return (
+            <View
+              key={league.id}
+              className="flex-row items-center gap-3 px-4 py-3"
+              style={{
+                borderBottomWidth: isLastVisible && hiddenCount === 0 ? 0 : 1,
+                borderColor: theme.cardBorder,
+              }}
+            >
+              <EntityLogo
+                logoUrl={league.logoUrl}
+                variant="league"
+                size="sm"
+                tone={isDark ? "dark" : "light"}
+              />
+              <View className="min-w-0 flex-1">
+                <Text
+                  className="text-sm"
+                  style={{ color: theme.text }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {league.name}
+                </Text>
+                <Text
+                  className="pt-1 text-xs"
+                  style={{ color: theme.textSubtle }}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {leagueTeamSummary(league)}
+                </Text>
+              </View>
+              <View
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: theme.cardMuted }}
+              >
+                <Text className="text-[11px]" style={{ color: theme.textMuted }}>
+                  {league.seasons.length} season
+                  {league.seasons.length === 1 ? "" : "s"}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+
+        {hiddenCount > 0 ? (
+          <View className="px-4 py-3" style={{ backgroundColor: theme.cardMuted }}>
+            <Text className="text-xs" style={{ color: theme.textSubtle }}>
+              +{hiddenCount} more league{hiddenCount === 1 ? "" : "s"} in career history
+            </Text>
+          </View>
+        ) : null}
+      </View>
+    </Section>
+  );
+}
+
+function leagueTeamSummary(league: ApiPlayerLeague): string {
+  const teamNames = Array.from(
+    new Set(
+      league.seasons
+        .map((season) => season.team?.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  );
+  if (teamNames.length === 0) return "No team listed";
+
+  const visibleTeams = teamNames.slice(0, 2).join(", ");
+  const hiddenCount = Math.max(0, teamNames.length - 2);
+  if (hiddenCount === 0) return visibleTeams;
+  return `${visibleTeams} +${hiddenCount}`;
 }
 
 function DetailsSection({ player }: { player: ApiPlayer }) {

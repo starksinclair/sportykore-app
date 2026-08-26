@@ -34,6 +34,9 @@ type Props = {
   seasonId: number;
   teams: ApiTeam[];
   initialTeamId: number | null;
+  teamsLoading?: boolean;
+  teamsError?: string | null;
+  onRetryTeams?: () => void;
 };
 
 export function InviteLinkSheet({
@@ -44,6 +47,9 @@ export function InviteLinkSheet({
   seasonId,
   teams,
   initialTeamId,
+  teamsLoading = false,
+  teamsError = null,
+  onRetryTeams,
 }: Props) {
   const theme = useTheme();
   const { isDark } = useAppearance();
@@ -123,11 +129,45 @@ export function InviteLinkSheet({
       variant={isDark ? "dark" : "light"}
       title="Invite to team"
       subtitle={
-        inviteUrl
-          ? "Share this link so players know which league and team they are joining."
-          : "Pick a team, then generate an invite link."
+        teamsLoading
+          ? "Loading teams for this league."
+          : teamsError
+            ? "Teams could not be loaded for this league."
+            : inviteUrl
+              ? "Share this link so players know which league and team they are joining."
+              : "Pick a team, then generate an invite link."
       }
     >
+      {teamsLoading ? (
+        <View className="items-center gap-3 py-6">
+          <ActivityIndicator color={theme.accent} />
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
+            Getting teams ready...
+          </Text>
+        </View>
+      ) : teamsError ? (
+        <View className="gap-4 py-2">
+          <View
+            className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
+            style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+          >
+            <Ionicons name="warning-outline" size={18} color={theme.accent} />
+            <Text
+              className="min-w-0 flex-1 text-sm leading-6"
+              style={{ color: theme.textMuted }}
+            >
+              {teamsError}
+            </Text>
+          </View>
+          {onRetryTeams ? (
+            <InviteActionButton
+              icon="refresh-outline"
+              label="Retry"
+              onPress={onRetryTeams}
+            />
+          ) : null}
+        </View>
+      ) : (
       <View className="gap-5">
         {!inviteUrl ? (
           <>
@@ -214,6 +254,7 @@ export function InviteLinkSheet({
           </View>
         )}
       </View>
+      )}
     </BottomSheetModal>
   );
 }

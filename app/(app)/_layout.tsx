@@ -20,6 +20,14 @@ export default function AppGroupLayout() {
         }}
       />
       <Stack.Screen
+        name="notifications"
+        options={{
+          presentation: "card",
+          animation: "slide_from_right",
+          title: "Notifications",
+        }}
+      />
+      <Stack.Screen
         name="join-league"
         options={{
           presentation: "card",

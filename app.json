@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nzenwata.sportykore-app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "SportyKore uses your location while you set or view venue pins on the map for fixtures and league venues."
       }
     },
     "android": {

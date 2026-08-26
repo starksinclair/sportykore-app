@@ -284,6 +284,7 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
     awayTeamId != null &&
     homeTeamId !== awayTeamId &&
     dateStr.trim().length > 0 &&
+    timeStr.trim().length > 0 &&
     !createMutation.isPending;
 
   const resetAndClose = () => {
@@ -309,7 +310,7 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
   const handleSubmit = async () => {
     const playedAt = buildPlayedAtIso(dateStr, timeStr);
     if (!playedAt || homeTeamId == null || awayTeamId == null) {
-      showInfoToast("Missing fields", "Pick both teams and a valid date.");
+      showInfoToast("Missing fields", "Pick both teams and a valid kick-off date and time.");
       return;
     }
     const firstHalfDuration = parseHalfMinutes(firstHalfMinutes, "First half");
@@ -400,12 +401,14 @@ export function AddGameSheet({ visible, onClose, leagueId, seasonId }: Props) {
               variant={isDark ? "dark" : "light"}
               required
             />
-            <AuthTextField
-              label="Kick-off time (HH:mm) uses 24-hour format"
+            <NativeDatePickerField
+              label="Kick-off time"
               value={timeStr}
-              onChangeText={setTimeStr}
-              placeholder="15:00"
-              autoCapitalize="none"
+              onChange={(value) => setTimeStr(value ?? "")}
+              mode="time"
+              placeholder="Pick kick-off time"
+              variant={isDark ? "dark" : "light"}
+              required
             />
           </GameSheetBlock>
           <GameSheetBlock title="Venue" theme={theme}>

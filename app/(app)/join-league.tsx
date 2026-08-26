@@ -212,6 +212,33 @@ export default function JoinLeagueScreen() {
                   </View>
                 </View>
 
+                <View
+                  className="gap-3 rounded-[22px] border px-4 py-4"
+                  style={{
+                    backgroundColor: theme.card,
+                    borderColor: theme.cardBorder,
+                  }}
+                >
+                  <View className="flex-row items-center gap-2">
+                    <View
+                      className="h-8 w-8 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: theme.accentMuted }}
+                    >
+                      <Ionicons name="information-circle-outline" size={18} color={theme.accent} />
+                    </View>
+                    <View className="min-w-0 flex-1">
+                      <Text className="text-base" style={{ color: theme.text }}>
+                        What happens when you join
+                      </Text>
+                    </View>
+                  </View>
+                  <View className="gap-2">
+                    <JoinExpectationRow text="You are added to the league or team connected to this invite." />
+                    <JoinExpectationRow text="You can check out the league page for fixtures, standings, teams, and updates." />
+                    <JoinExpectationRow text="If a player profile is needed first, we will guide you through it before joining." />
+                  </View>
+                </View>
+
                 {leagueName || teamName ? (
                   <View
                     className="gap-3 rounded-[22px] border px-4 py-4"
@@ -296,6 +323,19 @@ export default function JoinLeagueScreen() {
           </KeyboardAvoidingView>
         )}
       </SafeAreaView>
+    </View>
+  );
+}
+
+function JoinExpectationRow({ text }: { text: string }) {
+  const theme = useTheme();
+
+  return (
+    <View className="flex-row gap-2">
+      <Ionicons name="checkmark-circle" size={17} color={theme.accent} />
+      <Text className="flex-1 text-sm leading-5" style={{ color: theme.textMuted }}>
+        {text}
+      </Text>
     </View>
   );
 }
