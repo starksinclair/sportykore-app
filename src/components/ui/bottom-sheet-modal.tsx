@@ -1,17 +1,19 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
 import {
-  KeyboardAvoidingView,
+  Keyboard,
   Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   type StyleProp,
   Text,
   View,
   type ViewStyle,
 } from "react-native";
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+} from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useTheme } from "@/color/use-theme";
@@ -54,6 +56,10 @@ export function BottomSheetModal({
     ? "rgba(255,255,255,0.08)"
     : theme.cardMuted;
   const closeIconColor = forceDark ? "#F9FAFB" : theme.text;
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
 
   return (
     <Modal
@@ -61,16 +67,16 @@ export function BottomSheetModal({
       visible={visible}
       animationType="slide"
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={[styles.root, isTablet && styles.rootTablet]}>
-        <Pressable style={styles.scrim} onPress={onClose} />
+        <Pressable style={styles.scrim} onPress={handleClose} />
         <SafeAreaView
           edges={isTablet ? ["top", "bottom", "left", "right"] : ["bottom"]}
           style={[styles.safeArea, isTablet && styles.safeAreaTablet]}
         >
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            behavior="padding"
             style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
           >
             <View
@@ -109,7 +115,7 @@ export function BottomSheetModal({
                   ) : null}
                 </View>
                 <Pressable
-	                  onPress={onClose}
+                  onPress={handleClose}
 	                  accessibilityRole="button"
 	                  accessibilityLabel="Close modal"
 	                  style={[
@@ -121,14 +127,15 @@ export function BottomSheetModal({
 	                </Pressable>
               </View>
               {scrollEnabled ? (
-                <ScrollView
+                <KeyboardAwareScrollView
+                  bottomOffset={24}
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   keyboardDismissMode="interactive"
                   contentContainerStyle={[styles.content, contentContainerStyle]}
                 >
                   {children}
-                </ScrollView>
+                </KeyboardAwareScrollView>
               ) : (
                 <View style={[styles.content, contentContainerStyle]}>{children}</View>
               )}

@@ -6,10 +6,10 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGameDetail, ApiPlayerAward, ApiStat, GameStatus } from "@/api/entities";
@@ -599,16 +599,19 @@ export default function ManageMatchCenterPage() {
           <View className="w-11" />
         </View>
 
-        <ScrollView
-          className={isTablet ? "flex-1" : "flex-1 px-5"}
-          contentContainerClassName="gap-5 pb-10"
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          style={isTablet ? { flex: 1 } : { flex: 1, paddingHorizontal: 20 }}
           contentContainerStyle={{
+            gap: 20,
             paddingBottom: insets.bottom + (isTablet ? 48 : 90),
             ...(isTablet
               ? { alignItems: "center", paddingHorizontal: 24, paddingTop: 4 }
               : null),
           }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           refreshControl={<RefreshControl refreshing={detailQuery.isFetching} onRefresh={() => void detailQuery.refetch()} />}
         >
           {isTablet ? (
@@ -644,7 +647,7 @@ export default function ManageMatchCenterPage() {
               {activeTabContent}
             </>
           )}
-        </ScrollView>
+        </KeyboardAwareScrollView>
       {/* </SafeAreaView> */}
     </SafeAreaView>
     </SafeAreaProvider>

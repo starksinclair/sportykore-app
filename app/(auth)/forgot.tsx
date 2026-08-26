@@ -3,13 +3,11 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRecoverAccount } from "@/auth";
@@ -51,15 +49,18 @@ export default function RecoverAccountScreen() {
       style={{ backgroundColor: theme.background }}
     >
       <StatusBar style={isDark ? "light" : "dark"} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
+      <KeyboardAwareScrollView
+        bottomOffset={24}
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          gap: 24,
+          paddingHorizontal: 24,
+          paddingBottom: 48,
+          paddingTop: 8,
+        }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerClassName="gap-6 px-6 pb-12 pt-2"
-          showsVerticalScrollIndicator={false}
-        >
           <Pressable
             accessibilityLabel="Back"
             hitSlop={12}
@@ -98,8 +99,7 @@ export default function RecoverAccountScreen() {
             loading={recoverMutation.isPending}
             onPress={onSubmit}
           />
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
