@@ -6,7 +6,6 @@ import type { ApiGame } from "@/api/entities";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
-import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { toCalendarDateParam } from "@/lib/datetime";
@@ -127,12 +126,14 @@ export function EditGameSheet({
             variant={isDark ? "dark" : "light"}
             required
           />
-          <AuthTextField
-            label="Kick-off time (HH:mm) uses 24-hour format"
+          <NativeDatePickerField
+            label="Kick-off time"
             value={timeStr}
-            onChangeText={setTimeStr}
-            placeholder="15:00"
-            autoCapitalize="none"
+            onChange={(value) => setTimeStr(value ?? "")}
+            mode="time"
+            placeholder="Pick kick-off time"
+            variant={isDark ? "dark" : "light"}
+            required
           />
         </GameSheetBlock>
         <GameSheetBlock title="Venue" theme={theme}>

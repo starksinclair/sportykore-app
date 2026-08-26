@@ -5,8 +5,10 @@ import {
   Modal,
   Pressable,
   StyleSheet,
+  type StyleProp,
   Text,
   View,
+  type ViewStyle,
 } from "react-native";
 import {
   KeyboardAvoidingView,
@@ -29,6 +31,7 @@ type BottomSheetModalProps = {
    * Use this when embedding a VirtualizedList (e.g. Places autocomplete).
    */
   scrollEnabled?: boolean;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
 export function BottomSheetModal({
@@ -39,6 +42,7 @@ export function BottomSheetModal({
   children,
   variant = "light",
   scrollEnabled = true,
+  contentContainerStyle,
 }: BottomSheetModalProps) {
   const forceDark = variant === "dark";
   const theme = useTheme();
@@ -128,12 +132,12 @@ export function BottomSheetModal({
                   showsVerticalScrollIndicator={false}
                   keyboardShouldPersistTaps="handled"
                   keyboardDismissMode="interactive"
-                  contentContainerStyle={styles.content}
+                  contentContainerStyle={[styles.content, contentContainerStyle]}
                 >
                   {children}
                 </KeyboardAwareScrollView>
               ) : (
-                <View style={styles.content}>{children}</View>
+                <View style={[styles.content, contentContainerStyle]}>{children}</View>
               )}
             </View>
           </KeyboardAvoidingView>

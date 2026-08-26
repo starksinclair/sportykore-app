@@ -19,7 +19,6 @@ import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
@@ -54,6 +53,9 @@ type InviteTarget = {
   fallbackTeams: ApiTeam[];
   needsTeamFetch: boolean;
 };
+
+/** iOS drops a Modal if Face ID / Alert is still dismissing. */
+const IOS_PRESENTATION_SETTLE_MS = 350;
 
 export default function ManageScreen() {
   const router = useRouter();
@@ -130,6 +132,8 @@ export default function ManageScreen() {
 
     const allowed = await promptBiometricGate();
     if (!allowed) return;
+
+    await new Promise((resolve) => setTimeout(resolve, IOS_PRESENTATION_SETTLE_MS));
 
     setInviteTarget({
       leagueId: league.id,
@@ -340,106 +344,26 @@ export default function ManageScreen() {
             }}
           />
         )}
-        {inviteTarget ? (
-          inviteTarget.needsTeamFetch && inviteTeamsQuery.isLoading ? (
-            <InviteTeamsLoadingSheet
-              visible
-              onClose={() => setInviteTarget(null)}
-            />
-          ) : inviteTarget.needsTeamFetch && inviteTeamsQuery.isError ? (
-            <InviteTeamsErrorSheet
-              visible
-              onClose={() => setInviteTarget(null)}
-              onRetry={() => void inviteTeamsQuery.refetch()}
-              message={messageFromThrown(inviteTeamsQuery.error)}
-            />
-          ) : (
-            <InviteLinkSheet
-              visible
-              onClose={() => setInviteTarget(null)}
-              leagueId={inviteTarget.leagueId}
-              leagueName={inviteTarget.leagueName}
-              seasonId={inviteTarget.seasonId}
-              teams={inviteTeams}
-              initialTeamId={initialInviteTeamId}
-            />
-          )
-        ) : null}
+        <InviteLinkSheet
+          visible={inviteTarget != null}
+          onClose={() => setInviteTarget(null)}
+          leagueId={inviteTarget?.leagueId ?? 0}
+          leagueName={inviteTarget?.leagueName ?? ""}
+          seasonId={inviteTarget?.seasonId ?? 0}
+          teams={inviteTeams}
+          initialTeamId={initialInviteTeamId}
+          teamsLoading={Boolean(
+            inviteTarget?.needsTeamFetch && inviteTeamsQuery.isLoading,
+          )}
+          teamsError={
+            inviteTarget?.needsTeamFetch && inviteTeamsQuery.isError
+              ? messageFromThrown(inviteTeamsQuery.error)
+              : null
+          }
+          onRetryTeams={() => void inviteTeamsQuery.refetch()}
+        />
       </SafeAreaView>
     </View>
-  );
-}
-
-function InviteTeamsErrorSheet({
-  visible,
-  onClose,
-  onRetry,
-  message,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onRetry: () => void;
-  message: string;
-}) {
-  const theme = useTheme();
-
-  return (
-    <BottomSheetModal
-      visible={visible}
-      onClose={onClose}
-      title="Invite to team"
-      subtitle="Teams could not be loaded for this league."
-    >
-      <View className="gap-4 py-2">
-        <View
-          className="flex-row items-start gap-2 rounded-2xl border px-3 py-3"
-          style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
-        >
-          <Ionicons name="warning-outline" size={18} color={theme.accent} />
-          <Text className="min-w-0 flex-1 text-sm leading-6" style={{ color: theme.textMuted }}>
-            {message}
-          </Text>
-        </View>
-        <Pressable
-          onPress={onRetry}
-          accessibilityRole="button"
-          accessibilityLabel="Retry loading teams"
-          className="h-12 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90"
-          style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
-        >
-          <Ionicons name="refresh-outline" size={17} color={theme.textInverse} />
-          <Text className="text-sm" style={{ color: theme.textInverse }}>
-            Retry
-          </Text>
-        </Pressable>
-      </View>
-    </BottomSheetModal>
-  );
-}
-
-function InviteTeamsLoadingSheet({
-  visible,
-  onClose,
-}: {
-  visible: boolean;
-  onClose: () => void;
-}) {
-  const theme = useTheme();
-
-  return (
-    <BottomSheetModal
-      visible={visible}
-      onClose={onClose}
-      title="Invite to team"
-      subtitle="Loading teams for this league."
-    >
-      <View className="items-center gap-3 py-6">
-        <ActivityIndicator color={theme.accent} />
-        <Text className="text-sm" style={{ color: theme.textSubtle }}>
-          Getting teams ready...
-        </Text>
-      </View>
-    </BottomSheetModal>
   );
 }
 

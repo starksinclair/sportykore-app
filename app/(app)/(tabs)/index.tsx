@@ -59,6 +59,7 @@ import {
 } from "@/invite/storage";
 import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
+import { useUnreadNotificationCount } from "@/notifications";
 import { useOwnPlayerProfile } from "@/player";
 import { StatusBar } from "expo-status-bar";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
@@ -87,6 +88,8 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
   const { user } = useAuth();
+  const unreadNotificationsQuery = useUnreadNotificationCount(Boolean(user));
+  const unreadNotificationCount = unreadNotificationsQuery.data ?? 0;
   const { isTablet, isWideTablet } = useAdaptiveLayout();
   const today = useMemo(() => startOfDay(new Date()), []);
   const insets = useSafeAreaInsets();
@@ -446,7 +449,33 @@ export default function HomeScreen() {
                 </Text>
               </Pressable>
 
-              <View className="items-end gap-2 pt-1">
+              <View className="flex-row items-center gap-2 pt-1">
+                <Pressable
+                  onPress={() => router.push("/notifications")}
+                  className="relative h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    unreadNotificationCount > 0
+                      ? `${unreadNotificationCount} unread notifications`
+                      : "Notifications"
+                  }
+                >
+                  <Ionicons name="notifications-outline" size={20} color={theme.text} />
+                  {unreadNotificationCount > 0 ? (
+                    <View
+                      className="absolute -right-0.5 -top-0.5 min-h-5 min-w-5 items-center justify-center rounded-full border px-1"
+                      style={{
+                        backgroundColor: theme.accent,
+                        borderColor: theme.background,
+                      }}
+                    >
+                      <Text className="text-[10px]" style={{ color: colors.darkLabel }}>
+                        {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                      </Text>
+                    </View>
+                  ) : null}
+                </Pressable>
                 <Pressable
                   onPress={() => router.push("/profile")}
                   className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
