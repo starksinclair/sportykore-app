@@ -8,7 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { ThemedView } from "./themed-view";
 
@@ -46,10 +45,10 @@ export function DetailScreenShell({
     <ThemedView type="background" className="flex-1">
       <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
-        <BlackPatternBackground
+        {/* <BlackPatternBackground
           baseColor={theme.patternBase}
           stripeColor={theme.patternStripe}
-        />
+        /> */}
         <View
           className="absolute inset-0"
           pointerEvents="none"

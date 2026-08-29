@@ -10,6 +10,7 @@ import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useDeleteTeam } from "../../hooks";
 import type { ManagedTeam } from "../../types";
+import { ManageTabGuide } from "../ManageTabGuide";
 import { TeamFormSheet } from "../teams/TeamFormSheet";
 
 type Props = {
@@ -71,6 +72,27 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
 
   return (
     <View className="gap-6 pb-8">
+      <ManageTabGuide
+        summary="Create teams, open lineup setup, and keep team records ready for fixtures."
+        items={[
+          {
+            icon: "add-circle-outline",
+            title: "Add teams",
+            body: "Create the teams competing in this league and upload logos when available.",
+          },
+          {
+            icon: "grid-outline",
+            title: "Set lineups",
+            body: "Open a team to prepare the players who can be used on match day.",
+          },
+          {
+            icon: "create-outline",
+            title: "Edit team records",
+            body: "Update team details or remove teams that should no longer be in the league.",
+          },
+        ]}
+      />
+
       <View
         className="rounded-[24px] border px-4 py-4"
         style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}

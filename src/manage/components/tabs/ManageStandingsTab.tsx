@@ -30,6 +30,8 @@ import {
 } from "@/league/components/tabs/StandingsTab";
 import { showInfoToast } from "@/lib/show-error-toast";
 
+import { ManageTabGuide } from "../ManageTabGuide";
+
 type Props = {
   leagueId: number;
   seasonId: number;
@@ -231,6 +233,27 @@ export function ManageStandingsTab({ leagueId, seasonId, stages }: Props) {
 
   return (
     <View className="gap-5 pb-10">
+      <ManageTabGuide
+        summary="Use standings tools for point adjustments, tie decisions, and visible table zones."
+        items={[
+          {
+            icon: "create-outline",
+            title: "Adjust points",
+            body: "Add approved deductions or bonuses with a reason so changes stay auditable.",
+          },
+          {
+            icon: "swap-vertical-outline",
+            title: "Resolve tied teams",
+            body: "Set the order for tied teams when your league rules need a final decision.",
+          },
+          {
+            icon: "color-palette-outline",
+            title: "Mark table zones",
+            body: "Show promotion, playoff, qualification, or relegation positions with color markers.",
+          },
+        ]}
+      />
+
       {candidates.length > 1 ? (
         <View className="flex-row flex-wrap gap-2">
           {candidates.map((s) => {

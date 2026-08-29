@@ -18,7 +18,6 @@ import type { ApiTeam } from "@/api/entities";
 import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { InviteLinkSheet } from "@/invite/components/InviteLinkSheet";
@@ -157,10 +156,10 @@ export default function ManageScreen() {
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
-        <BlackPatternBackground
+        {/* <BlackPatternBackground
           baseColor={theme.patternBase}
           stripeColor={theme.patternStripe}
-        />
+        /> */}
         <View
           className="absolute inset-0"
           pointerEvents="none"

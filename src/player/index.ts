@@ -18,9 +18,13 @@ export {
   usePlayerProfileMutations,
 } from "./hooks";
 export {
-  formatSocialProfile,
-  parseSocialProfile,
+  compactSocialLinks,
+  emptySocialLinks,
   SOCIAL_PLATFORM_OPTIONS,
+  socialPlatformIcon,
   socialPlatformLabel,
+  socialPlatformPlaceholder,
+  toEditableSocialLinks,
+  type EditableSocialLink,
   type SocialPlatform,
-} from "./social-profile";
+} from "./social-links";

@@ -1,12 +1,15 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import { openBrowserAsync, WebBrowserPresentationStyle } from "expo-web-browser";
 import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   Text,
+  useWindowDimensions,
   View,
 } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
@@ -16,9 +19,12 @@ import type {
   ApiPlayerAward,
   ApiPlayerHighlight,
   ApiPlayerLeague,
+  ApiPlayerSeason,
   ApiStatType,
   PlayerPosition,
 } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import {
   Button,
   CountryPicker,
@@ -26,16 +32,14 @@ import {
   NativeDatePickerField,
   type CountryPickerOption,
 } from "@/components/ui";
-import { useAppearance } from "@/color/appearance-context";
-import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
-import { posthog } from "@/lib/posthog";
 import { labelForPosition } from "@/lib/positions";
+import { posthog } from "@/lib/posthog";
 import {
   messageFromThrown,
   showInfoToast,
@@ -45,6 +49,7 @@ import {
 import type {
   PlayerMembership,
   PlayerProfileMissingField,
+  PlayerProfilePayload,
 } from "../api";
 import {
   useHighlightMutations,
@@ -52,13 +57,17 @@ import {
   usePlayerProfileMutations,
 } from "../hooks";
 import {
-  formatSocialProfile,
-  parseSocialProfile,
+  compactSocialLinks,
   SOCIAL_PLATFORM_OPTIONS,
+  socialPlatformIcon,
   socialPlatformLabel,
-  type SocialPlatform,
-} from "../social-profile";
+  socialPlatformPlaceholder,
+  toEditableSocialLinks,
+  type EditableSocialLink,
+} from "../social-links";
 import { aggregatePlayerStats, collectAllStats, countAllGames } from "../utils";
+
+const MAX_HIGHLIGHTS_PER_PLAYER = 3;
 
 const POSITIONS: PlayerPosition[] = [
   "goalkeeper",
@@ -85,6 +94,145 @@ const MISSING_COPY: Record<PlayerProfileMissingField, string> = {
   city: "Add city",
   highlights: "Add highlight",
 };
+
+const DEMO_PLAYER_LEAGUE_HISTORY: ApiPlayerLeague[] = [
+  {
+    id: 9101,
+    name: "Lagos Mainland Youth Championship Invitational",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9201,
+        name: "2017 season",
+        status: "completed",
+        team: { id: 9301, name: "Ikorodu Rising Stars", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9102,
+    name: "South West Community Super League",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9202,
+        name: "2018 season",
+        status: "completed",
+        team: { id: 9302, name: "Mainland Athletic", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+      {
+        id: 9203,
+        name: "2019 season",
+        status: "completed",
+        team: { id: 9302, name: "Mainland Athletic", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9103,
+    name: "SportyKore Elite Development League",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9204,
+        name: "2020 season",
+        status: "completed",
+        team: { id: 9303, name: "Purple Crown FC", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9104,
+    name: "Federal Capital Grassroots Premier Division",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9205,
+        name: "2021 season",
+        status: "completed",
+        team: { id: 9304, name: "Abuja City Lions", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9105,
+    name: "Campus All Stars National Cup",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9206,
+        name: "2022 season",
+        status: "completed",
+        team: { id: 9305, name: "Unilag Falcons", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9106,
+    name: "Lekki Sunday Football Association League",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9207,
+        name: "2023 season",
+        status: "completed",
+        team: { id: 9306, name: "Atlantic Warriors", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9107,
+    name: "West African Amateur Champions Series",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9208,
+        name: "2024 season",
+        status: "completed",
+        team: { id: 9307, name: "Gold Coast United", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+  {
+    id: 9108,
+    name: "SportyKore Saturday Night Football League",
+    logoUrl: null,
+    seasons: [
+      {
+        id: 9209,
+        name: "2025 season",
+        status: "completed",
+        team: { id: 9308, name: "Kore City FC", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+      {
+        id: 9210,
+        name: "2026 season",
+        status: "active",
+        team: { id: 9309, name: "Kore City Royals", logoUrl: null },
+        games: [],
+        stats: [],
+      },
+    ],
+  },
+];
 
 type PlayerProfileViewProps = {
   player: ApiPlayer;
@@ -519,8 +667,11 @@ function HighlightsSection({
   const theme = useTheme();
   const [playingId, setPlayingId] = useState<number | null>(null);
   const mutations = useHighlightMutations(playerId);
-  const atCap = highlights.length >= 10;
+  const atCap = highlights.length >= MAX_HIGHLIGHTS_PER_PLAYER;
   const deletePending = mutations.remove.isPending;
+  const playingHighlight =
+    highlights.find((highlight) => highlight.id === playingId) ?? null;
+  const emptySlots = Math.max(0, MAX_HIGHLIGHTS_PER_PLAYER - highlights.length);
 
   return (
     <Section
@@ -550,13 +701,20 @@ function HighlightsSection({
           <ActivityIndicator color={theme.accent} />
         </View>
       ) : highlights.length ? (
-        <>
+        <View className="gap-3">
           {atCap && isOwner ? (
             <Text className="text-xs" style={{ color: theme.textSubtle }}>
-              You have 10 highlights. Delete one before adding another.
+              You can keep up to 3 highlight clips. Delete one before adding
+              another.
             </Text>
           ) : null}
-          <View className="flex-row flex-wrap">
+          {playingHighlight ? (
+            <ActiveHighlightPlayer
+              item={playingHighlight}
+              onClose={() => setPlayingId(null)}
+            />
+          ) : null}
+          <View className="gap-3">
             {highlights.map((highlight) => (
               <HighlightCard
                 key={highlight.id}
@@ -586,8 +744,17 @@ function HighlightsSection({
                 deletePending={deletePending}
               />
             ))}
+            {isOwner
+              ? Array.from({ length: emptySlots }, (_, index) => (
+                  <AddHighlightSlot
+                    key={`empty-${index}`}
+                    slotNumber={highlights.length + index + 1}
+                    onAdd={onAdd}
+                  />
+                ))
+              : null}
           </View>
-        </>
+        </View>
       ) : (
         <View
           className="items-center gap-3 rounded-[22px] border px-5 py-8"
@@ -605,16 +772,22 @@ function HighlightsSection({
             style={{ color: theme.textSubtle }}
           >
             {isOwner
-              ? "Paste a YouTube clip to make this profile feel alive."
+              ? "Paste up to 3 YouTube clips to make this profile feel alive."
               : "Highlights will appear here when this player adds clips."}
           </Text>
           {isOwner ? (
-            <Button
-              variant="accent"
-              label="Add YouTube clip"
-              className="h-11 px-4"
-              onPress={onAdd}
-            />
+            <View className="w-full gap-3">
+              {Array.from(
+                { length: MAX_HIGHLIGHTS_PER_PLAYER },
+                (_, index) => (
+                  <AddHighlightSlot
+                    key={`empty-${index}`}
+                    slotNumber={index + 1}
+                    onAdd={onAdd}
+                  />
+                ),
+              )}
+            </View>
           ) : null}
         </View>
       )}
@@ -637,26 +810,24 @@ function HighlightCard({
   onDelete: () => void;
   deletePending: boolean;
 }) {
-  const { isTablet } = useAdaptiveLayout();
   const theme = useTheme();
   const thumbnail =
     item.thumbnailUrl ?? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
   return (
     <View
-      className="p-1"
-      style={{ width: isTablet ? "33.3333%" : "50%" }}
+      className="overflow-hidden rounded-[20px] border"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: playing ? theme.accent : theme.cardBorder,
+      }}
     >
-      <View
-        className="overflow-hidden rounded-[18px] border"
-        style={{
-          backgroundColor: theme.card,
-          borderColor: theme.cardBorder,
-        }}
+      <Pressable
+        onPress={onPlay}
+        className="flex-row gap-3 p-3 active:opacity-80"
+        accessibilityRole="button"
+        accessibilityLabel={playing ? "Hide highlight video" : "Play highlight video"}
       >
-        {playing ? (
-          <YoutubePlayer height={isTablet ? 132 : 116} play videoId={item.videoId} />
-        ) : (
-          <Pressable onPress={onPlay}>
+        <View className="w-[42%] overflow-hidden rounded-[14px]">
             <Image
               source={{ uri: thumbnail }}
               style={{ width: "100%", aspectRatio: 16 / 9 }}
@@ -667,18 +838,20 @@ function HighlightCard({
                 <Ionicons name="play" size={20} color="#FFFFFF" />
               </View>
             </View>
-          </Pressable>
-        )}
-        <View className="gap-2 px-3 py-3">
+          </View>
+          <View className="min-w-0 flex-1 justify-center gap-2">
           <Text
-            className="text-xs"
+            className="text-sm"
             style={{ color: theme.text }}
             numberOfLines={2}
           >
             {item.title?.trim() || "Untitled highlight"}
           </Text>
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
+            {playing ? "Playing above" : "Tap to play on this profile"}
+          </Text>
           {isOwner ? (
-            <View className="flex-row justify-end">
+            <View className="flex-row justify-start">
               <IconButton
                 icon="trash-outline"
                 onPress={onDelete}
@@ -688,8 +861,94 @@ function HighlightCard({
             </View>
           ) : null}
         </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function ActiveHighlightPlayer({
+  item,
+  onClose,
+}: {
+  item: ApiPlayerHighlight;
+  onClose: () => void;
+}) {
+  const { width } = useWindowDimensions();
+  const { isTablet } = useAdaptiveLayout();
+  const theme = useTheme();
+  const playerWidth = Math.max(
+    280,
+    Math.min(isTablet ? 720 : width - 40, width - 40),
+  );
+  const playerHeight = Math.round((playerWidth * 9) / 16);
+
+  return (
+    <View
+      className="overflow-hidden rounded-[22px] border"
+      style={{
+        backgroundColor: theme.card,
+        borderColor: theme.accent,
+      }}
+    >
+      <View className="items-center">
+        <YoutubePlayer
+          height={playerHeight}
+          width={playerWidth}
+          play
+          videoId={item.videoId}
+        />
+      </View>
+      <View className="flex-row items-center justify-between gap-3 px-4 py-3">
+        <View className="min-w-0 flex-1">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
+            Now playing
+          </Text>
+          <Text className="text-sm" style={{ color: theme.text }} numberOfLines={1}>
+            {item.title?.trim() || "Untitled highlight"}
+          </Text>
+        </View>
+        <IconButton icon="close-outline" onPress={onClose} />
       </View>
     </View>
+  );
+}
+
+function AddHighlightSlot({
+  slotNumber,
+  onAdd,
+}: {
+  slotNumber: number;
+  onAdd: () => void;
+}) {
+  const theme = useTheme();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={onAdd}
+      className="flex-row items-center gap-3 rounded-[18px] border border-dashed px-4 py-4 active:opacity-80"
+      style={{
+        backgroundColor: theme.cardMuted,
+        borderColor: theme.inputBorder,
+      }}
+    >
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: theme.brandMuted }}
+      >
+        <Text className="text-sm" style={{ color: theme.brand }}>
+          {slotNumber}
+        </Text>
+      </View>
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm" style={{ color: theme.text }}>
+          Add YouTube clip
+        </Text>
+        <Text className="text-xs" style={{ color: theme.textSubtle }}>
+          Highlight slot {slotNumber} of 3
+        </Text>
+      </View>
+      <Ionicons name="add" size={20} color={theme.textSubtle} />
+    </Pressable>
   );
 }
 
@@ -801,21 +1060,32 @@ function AwardsSection({ awards }: { awards: ApiPlayerAward[] }) {
 }
 
 function PlayerLeaguesCard({ leagues }: { leagues: ApiPlayerLeague[] }) {
+  const router = useRouter();
   const theme = useTheme();
   const { isDark } = useAppearance();
-  const visibleLeagues = leagues.slice(0, 5);
-  const hiddenCount = Math.max(0, leagues.length - visibleLeagues.length);
-  const seasonCount = leagues.reduce(
+  const { isTablet } = useAdaptiveLayout();
+  const { width } = useWindowDimensions();
+  // Demo switch: comment this line and uncomment the next line to use live API data.
+  // const leagueHistorySource = DEMO_PLAYER_LEAGUE_HISTORY;
+  const leagueHistorySource = leagues;
+  const isUsingDemoLeagueHistory =
+    leagueHistorySource === DEMO_PLAYER_LEAGUE_HISTORY;
+  const timelineItems = useMemo(
+    () => buildLeagueTimeline(leagueHistorySource),
+    [leagueHistorySource],
+  );
+  const seasonCount = leagueHistorySource.reduce(
     (total, league) => total + league.seasons.length,
     0,
   );
+  const cardWidth = isTablet ? 276 : Math.min(240, Math.max(208, width - 108));
 
-  if (leagues.length === 0) {
+  if (leagueHistorySource.length === 0) {
     return null;
   }
 
   return (
-    <Section title="Leagues">
+    <Section title="League history">
       <View
         className="overflow-hidden rounded-[22px] border"
         style={{
@@ -835,97 +1105,256 @@ function PlayerLeaguesCard({ leagues }: { leagues: ApiPlayerLeague[] }) {
           </View>
           <View className="min-w-0 flex-1">
             <Text className="text-sm" style={{ color: theme.text }}>
-              {leagues.length} league{leagues.length === 1 ? "" : "s"}
+              {seasonCount} season{seasonCount === 1 ? "" : "s"} across{" "}
+              {leagueHistorySource.length} league
+              {leagueHistorySource.length === 1 ? "" : "s"}
             </Text>
             <Text
               className="pt-1 text-xs"
               style={{ color: theme.textSubtle }}
               numberOfLines={1}
             >
-              {seasonCount} season{seasonCount === 1 ? "" : "s"} on this profile
+              Swipe through the player&apos;s football timeline
             </Text>
           </View>
+          {isUsingDemoLeagueHistory ? (
+            <View
+              className="rounded-full px-2.5 py-1"
+              style={{ backgroundColor: theme.brandMuted }}
+            >
+              <Text className="text-[11px]" style={{ color: theme.brand }}>
+                Demo
+              </Text>
+            </View>
+          ) : null}
         </View>
 
-        {visibleLeagues.map((league, index) => {
-          const isLastVisible = index === visibleLeagues.length - 1;
-          return (
-            <View
-              key={league.id}
-              className="flex-row items-center gap-3 px-4 py-3"
-              style={{
-                borderBottomWidth: isLastVisible && hiddenCount === 0 ? 0 : 1,
-                borderColor: theme.cardBorder,
-              }}
-            >
-              <EntityLogo
-                logoUrl={league.logoUrl}
-                variant="league"
-                size="sm"
-                tone={isDark ? "dark" : "light"}
-              />
-              <View className="min-w-0 flex-1">
-                <Text
-                  className="text-sm"
-                  style={{ color: theme.text }}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {league.name}
-                </Text>
-                <Text
-                  className="pt-1 text-xs"
-                  style={{ color: theme.textSubtle }}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {leagueTeamSummary(league)}
-                </Text>
-              </View>
+        {timelineItems.length ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="max-h-[270px]"
+            contentContainerStyle={{
+              paddingHorizontal: isTablet ? 18 : 14,
+              paddingBottom: 16,
+              paddingTop: 12,
+            }}
+          >
+            {timelineItems.map((item, index) => (
               <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: theme.cardMuted }}
+                key={`${item.league.id}-${item.season.id}`}
+                style={{
+                  width: cardWidth,
+                  marginRight: index === timelineItems.length - 1 ? 0 : 14,
+                }}
               >
-                <Text className="text-[11px]" style={{ color: theme.textMuted }}>
-                  {league.seasons.length} season
-                  {league.seasons.length === 1 ? "" : "s"}
+              <Text
+                className="text-lg"
+                style={{ color: theme.accent }}
+                numberOfLines={1}
+              >
+                {item.timelineLabel}
                 </Text>
-              </View>
-            </View>
-          );
-        })}
 
-        {hiddenCount > 0 ? (
-          <View className="px-4 py-3" style={{ backgroundColor: theme.cardMuted }}>
-            <Text className="text-xs" style={{ color: theme.textSubtle }}>
-              +{hiddenCount} more league{hiddenCount === 1 ? "" : "s"} in career history
+                <View className="h-8 flex-row items-center">
+                  <View
+                    className="h-[2px] flex-1"
+                    style={{
+                      backgroundColor:
+                        index === 0 ? "transparent" : theme.cardBorder,
+                    }}
+                  />
+                  <View
+                    className="h-4 w-4 rounded-full border-2"
+                    style={{
+                      backgroundColor: theme.accent,
+                      borderColor: theme.card,
+                    }}
+                  />
+                  <View
+                    className="h-[2px] flex-1"
+                    style={{
+                      backgroundColor:
+                        index === timelineItems.length - 1
+                          ? "transparent"
+                          : theme.cardBorder,
+                    }}
+                  />
+                </View>
+
+                <Pressable
+                  onPress={() => router.push(`/league/${item.league.id}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${item.league.name}`}
+                className="min-h-[168px] rounded-[18px] border p-3 active:opacity-85"
+                style={{
+                  backgroundColor: theme.cardMuted,
+                  borderColor: theme.cardBorder,
+                  }}
+                >
+                  <View className="flex-row items-start gap-2.5">
+                    <EntityLogo
+                      logoUrl={item.league.logoUrl}
+                      variant="league"
+                      size="sm"
+                      tone={isDark ? "dark" : "light"}
+                    />
+                    <View className="min-w-0 flex-1">
+                      <Text
+                        className="text-sm leading-5"
+                        style={{ color: theme.text }}
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                      >
+                        {item.league.name}
+                      </Text>
+                      <Text
+                        className="pt-1 text-xs"
+                        style={{ color: theme.textSubtle }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {item.season.name}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      router.push(`/team/${item.season.team.id}`);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${item.season.team.name}`}
+                    className="mt-4 flex-row items-center gap-2 rounded-2xl px-3 py-2 active:opacity-85"
+                    style={{ backgroundColor: theme.card }}
+                  >
+                    <EntityLogo
+                      logoUrl={item.season.team.logoUrl}
+                      variant="team"
+                      size="xs"
+                      tone={isDark ? "dark" : "light"}
+                    />
+                    <View className="min-w-0 flex-1">
+                      <Text
+                        className="text-xs"
+                        style={{ color: theme.text }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {item.season.team.name}
+                      </Text>
+                      <Text
+                        className="pt-0.5 text-[11px]"
+                        style={{ color: theme.textSubtle }}
+                        numberOfLines={1}
+                      >
+                        {formatSeasonStatus(item.season.status)}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={15}
+                      color={theme.textSubtle}
+                    />
+                  </Pressable>
+
+                  <View className="mt-3 flex-row flex-wrap gap-2">
+                    <View
+                      className="rounded-full px-2.5 py-1"
+                      style={{ backgroundColor: theme.accentMuted }}
+                    >
+                      <Text
+                        className="text-[11px]"
+                        style={{ color: theme.accent }}
+                      >
+                        {(item.season.games ?? []).length} fixture
+                        {(item.season.games ?? []).length === 1 ? "" : "s"}
+                      </Text>
+                    </View>
+                    {item.season.status === "active" ? (
+                      <View
+                        className="rounded-full px-2.5 py-1"
+                        style={{ backgroundColor: theme.brandMuted }}
+                      >
+                        <Text
+                          className="text-[11px]"
+                          style={{ color: theme.brand }}
+                        >
+                          Current
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        ) : (
+          <View className="px-4 py-4">
+            <Text className="text-sm" style={{ color: theme.textSubtle }}>
+              Season history will appear here once roster seasons are available.
             </Text>
           </View>
-        ) : null}
+        )}
       </View>
     </Section>
   );
 }
 
-function leagueTeamSummary(league: ApiPlayerLeague): string {
-  const teamNames = Array.from(
-    new Set(
-      league.seasons
-        .map((season) => season.team?.name)
-        .filter((name): name is string => Boolean(name)),
-    ),
-  );
-  if (teamNames.length === 0) return "No team listed";
+type LeagueTimelineItem = {
+  league: ApiPlayerLeague;
+  season: ApiPlayerSeason;
+  timelineLabel: string;
+  sortYear: number | null;
+  sourceIndex: number;
+};
 
-  const visibleTeams = teamNames.slice(0, 2).join(", ");
-  const hiddenCount = Math.max(0, teamNames.length - 2);
-  if (hiddenCount === 0) return visibleTeams;
-  return `${visibleTeams} +${hiddenCount}`;
+function buildLeagueTimeline(leagues: ApiPlayerLeague[]): LeagueTimelineItem[] {
+  let fallbackLabel = 1;
+  const items = leagues.flatMap((league, leagueIndex) =>
+    league.seasons.map((season, seasonIndex) => {
+      const sortYear = extractYear(season.name);
+      const sourceIndex = leagueIndex * 1000 + seasonIndex;
+      const timelineLabel = sortYear
+        ? String(sortYear)
+        : `Season ${fallbackLabel++}`;
+      return {
+        league,
+        season,
+        timelineLabel,
+        sortYear,
+        sourceIndex,
+      };
+    }),
+  );
+
+  return items.sort((first, second) => {
+    if (first.sortYear != null && second.sortYear != null) {
+      return (
+        first.sortYear - second.sortYear ||
+        first.sourceIndex - second.sourceIndex
+      );
+    }
+    if (first.sortYear != null) return -1;
+    if (second.sortYear != null) return 1;
+    return first.sourceIndex - second.sourceIndex;
+  });
+}
+
+function extractYear(value: string): number | null {
+  const match = value.match(/\b(19|20)\d{2}\b/);
+  return match ? Number(match[0]) : null;
+}
+
+function formatSeasonStatus(status: ApiPlayerSeason["status"]): string {
+  if (status === "active") return "Active";
+  if (status === "completed") return "Completed";
+  return "Inactive";
 }
 
 function DetailsSection({ player }: { player: ApiPlayer }) {
   const theme = useTheme();
-  const socialProfile = parseSocialProfile(player.socialHandle);
   const rows = [
     { label: "Preferred foot", value: player.preferredFoot },
     { label: "Height", value: formatHeight(player.heightCm) },
@@ -933,50 +1362,97 @@ function DetailsSection({ player }: { player: ApiPlayer }) {
       label: "Location",
       value: [player.city, player.state].filter(Boolean).join(", ") || null,
     },
-    { label: "Nationality", value: player.nationality },
-    {
-      label: socialProfile.handle
-        ? socialPlatformLabel(socialProfile.platform)
-        : "Social",
-      value: socialProfile.handle || null,
-    },
+    { label: "Country", value: player.country?.name ?? player.nationality },
   ];
   const hasDetails = rows.some((row) => row.value);
+  const socialLinks = player.socialLinks ?? [];
   return (
-    <Section title="Details">
-      {hasDetails ? (
-        <View
-          className="overflow-hidden rounded-[20px] border"
-          style={{
-            backgroundColor: theme.card,
-            borderColor: theme.cardBorder,
-          }}
-        >
-          {rows.map((row) => (
-            <View
-              key={row.label}
-              className="flex-row items-center justify-between gap-3 border-b px-4 py-3"
-              style={{ borderColor: theme.cardBorder }}
-            >
-                <Text className="text-sm" style={{ color: theme.textSubtle }}>
-                {row.label}
-              </Text>
-              <Text
-                className="min-w-0 flex-1 text-right text-sm"
-                style={{ color: theme.text }}
-                numberOfLines={1}
+    <>
+      <Section title="Details">
+        {hasDetails ? (
+          <View
+            className="overflow-hidden rounded-[20px] border"
+            style={{
+              backgroundColor: theme.card,
+              borderColor: theme.cardBorder,
+            }}
+          >
+            {rows.map((row) => (
+              <View
+                key={row.label}
+                className="flex-row items-center justify-between gap-3 border-b px-4 py-3"
+                style={{ borderColor: theme.cardBorder }}
               >
-                {row.value ?? "-"}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <Text className="text-sm" style={{ color: theme.textSubtle }}>
-          Profile details will appear here as they are added.
-        </Text>
-      )}
-    </Section>
+                <Text className="text-sm" style={{ color: theme.textSubtle }}>
+                  {row.label}
+                </Text>
+                <Text
+                  className="min-w-0 flex-1 text-right text-sm"
+                  style={{ color: theme.text }}
+                  numberOfLines={1}
+                >
+                  {row.value ?? "-"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
+            Profile details will appear here as they are added.
+          </Text>
+        )}
+      </Section>
+      {socialLinks.length ? (
+        <Section title="Links">
+          <View className="gap-2">
+            {socialLinks.map((link) => (
+              <Pressable
+                key={`${link.platform}-${link.id}`}
+                accessibilityRole="link"
+                onPress={() =>
+                  void openBrowserAsync(link.url, {
+                    presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
+                  })
+                }
+                className="flex-row items-center gap-3 rounded-[18px] border px-4 py-3 active:opacity-80"
+                style={{
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                }}
+              >
+                <View
+                  className="h-10 w-10 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.brandMuted }}
+                >
+                  <Ionicons
+                    name={socialPlatformIcon(link.platform)}
+                    size={20}
+                    color={theme.brand}
+                  />
+                </View>
+                <View className="min-w-0 flex-1">
+                  <Text
+                    className="text-sm"
+                    style={{ color: theme.text }}
+                    numberOfLines={1}
+                  >
+                    {socialPlatformLabel(link.platform)}
+                  </Text>
+                  <Text
+                    className="text-xs"
+                    style={{ color: theme.textSubtle }}
+                    numberOfLines={1}
+                  >
+                    {link.handle ?? link.url}
+                  </Text>
+                </View>
+                <Ionicons name="open-outline" size={18} color={theme.textSubtle} />
+              </Pressable>
+            ))}
+          </View>
+        </Section>
+      ) : null}
+    </>
   );
 }
 
@@ -1019,12 +1495,9 @@ function PlayerProfileFormSheet({
   const [dateOfBirth, setDateOfBirth] = useState<string | null>(null);
   const [city, setCity] = useState(player?.city ?? "");
   const [state, setState] = useState(player?.state ?? "");
-  const [nationality, setNationality] = useState(player?.nationality ?? "");
-  const initialSocialProfile = parseSocialProfile(player?.socialHandle);
-  const [socialPlatform, setSocialPlatform] = useState<SocialPlatform>(
-    initialSocialProfile.platform,
+  const [socialLinks, setSocialLinks] = useState<EditableSocialLink[]>(
+    toEditableSocialLinks(player?.socialLinks),
   );
-  const [socialHandle, setSocialHandle] = useState(initialSocialProfile.handle);
   const [photo, setPhoto] = useState<PickedImageFile | null>(null);
   const [pickingPhoto, setPickingPhoto] = useState(false);
 
@@ -1048,10 +1521,7 @@ function PlayerProfileFormSheet({
     setDateOfBirth(null);
     setCity(player?.city ?? "");
     setState(player?.state ?? "");
-    setNationality(player?.nationality ?? "");
-    const socialProfile = parseSocialProfile(player?.socialHandle);
-    setSocialPlatform(socialProfile.platform);
-    setSocialHandle(socialProfile.handle);
+    setSocialLinks(toEditableSocialLinks(player?.socialLinks));
     setPhoto(null);
   }, [initialStep, player, viewerName, visible]);
 
@@ -1069,8 +1539,8 @@ function PlayerProfileFormSheet({
 
   const handleSave = async () => {
     const parsedHeight = heightCm.trim() ? Number(heightCm.trim()) : null;
-    if (parsedHeight != null && (!Number.isFinite(parsedHeight) || parsedHeight < 50 || parsedHeight > 250)) {
-      showInfoToast("Check height", "Use a height between 50 and 250 cm.");
+    if (parsedHeight != null && (!Number.isFinite(parsedHeight) || parsedHeight < 100 || parsedHeight > 250)) {
+      showInfoToast("Check height", "Use a height between 100 and 250 cm.");
       return;
     }
     if (mode === "create" && (!name.trim() || !country)) {
@@ -1078,7 +1548,7 @@ function PlayerProfileFormSheet({
       return;
     }
 
-    const payload = {
+    const payload: PlayerProfilePayload = {
       name: name.trim() || undefined,
       countryId: country?.id,
       bio: bio.trim() || null,
@@ -1086,12 +1556,13 @@ function PlayerProfileFormSheet({
       secondaryPosition,
       preferredFoot,
       heightCm: parsedHeight,
-      dateOfBirth,
       city: city.trim() || null,
       state: state.trim() || null,
-      nationality: nationality.trim() || null,
-      socialHandle: formatSocialProfile(socialPlatform, socialHandle),
+      socialLinks: compactSocialLinks(socialLinks),
     };
+    if (dateOfBirth) {
+      payload.dateOfBirth = dateOfBirth;
+    }
 
     try {
       let savedPlayer: ApiPlayer;
@@ -1115,6 +1586,7 @@ function PlayerProfileFormSheet({
           has_primary_position: primaryPosition !== null,
           has_secondary_position: secondaryPosition !== null,
           has_preferred_foot: preferredFoot !== null,
+          social_links_count: compactSocialLinks(socialLinks).length,
         },
       );
       await onSaved?.(savedPlayer);
@@ -1210,7 +1682,7 @@ function PlayerProfileFormSheet({
               label="City"
               value={city}
               onChangeText={setCity}
-              placeholder="Lagos"
+              placeholder="Ikorodu"
               autoCapitalize="words"
             />
             <AuthTextField
@@ -1220,59 +1692,7 @@ function PlayerProfileFormSheet({
               placeholder="Lagos"
               autoCapitalize="words"
             />
-            <AuthTextField
-              label="Nationality"
-              value={nationality}
-              onChangeText={setNationality}
-              placeholder="Nigerian"
-              autoCapitalize="words"
-            />
-            <View className="gap-2">
-              <Text
-                className="text-xs uppercase tracking-wide"
-                style={{ color: theme.textSubtle }}
-              >
-                Social platform
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {SOCIAL_PLATFORM_OPTIONS.map((option) => {
-                  const selected = socialPlatform === option.value;
-                  return (
-                    <Pressable
-                      key={option.value}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => setSocialPlatform(option.value)}
-                      className="rounded-full border px-3 py-2 active:opacity-80"
-                      style={{
-                        backgroundColor: selected ? theme.brandMuted : theme.card,
-                        borderColor: selected ? theme.brand : theme.inputBorder,
-                      }}
-                    >
-                      <Text
-                        className="text-sm"
-                        style={{ color: selected ? theme.brand : theme.text }}
-                      >
-                        {option.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-            <AuthTextField
-              label={
-                socialPlatform === "other"
-                  ? "Social handle or profile URL"
-                  : `${socialPlatformLabel(socialPlatform)} handle or profile URL`
-              }
-              value={socialHandle}
-              onChangeText={setSocialHandle}
-              placeholder="@yourhandle"
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={120}
-            />
+            <SocialLinksEditor links={socialLinks} onChange={setSocialLinks} />
           </>
         )}
 
@@ -1313,6 +1733,140 @@ function formatHeight(heightCm?: number | null): string | null {
   return `${heightCm} cm (${feet} ft ${inches} in)`;
 }
 
+function SocialLinksEditor({
+  links,
+  onChange,
+}: {
+  links: EditableSocialLink[];
+  onChange: (links: EditableSocialLink[]) => void;
+}) {
+  const theme = useTheme();
+  const usedPlatforms = new Set(links.map((link) => link.platform));
+  const addablePlatform = SOCIAL_PLATFORM_OPTIONS.find(
+    (option) => !usedPlatforms.has(option.value),
+  )?.value;
+
+  const updateLink = (index: number, patch: Partial<EditableSocialLink>) => {
+    onChange(
+      links.map((link, rowIndex) =>
+        rowIndex === index ? { ...link, ...patch } : link,
+      ),
+    );
+  };
+
+  const removeLink = (index: number) => {
+    onChange(links.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  return (
+    <View className="gap-3">
+      <View className="gap-1">
+        <Text
+          className="text-xs uppercase tracking-wide"
+          style={{ color: theme.textSubtle }}
+        >
+          Profile links
+        </Text>
+        <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
+          Add public profile links. YouTube channel links go here, YouTube clips
+          go in Highlights.
+        </Text>
+      </View>
+
+      {links.map((link, index) => (
+        <View
+          key={`${link.platform}-${index}`}
+          className="gap-3 rounded-[18px] border p-3"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <View className="flex-row flex-wrap gap-2">
+            {SOCIAL_PLATFORM_OPTIONS.map((option) => {
+              const selected = link.platform === option.value;
+              const usedElsewhere = links.some(
+                (row, rowIndex) =>
+                  rowIndex !== index && row.platform === option.value,
+              );
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, disabled: usedElsewhere }}
+                  disabled={usedElsewhere}
+                  onPress={() => updateLink(index, { platform: option.value })}
+                  className="flex-row items-center gap-1.5 rounded-full border px-3 py-2 active:opacity-80"
+                  style={{
+                    backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+                    borderColor: selected ? theme.brand : theme.inputBorder,
+                    opacity: usedElsewhere ? 0.4 : 1,
+                  }}
+                >
+                  <Ionicons
+                    name={option.icon}
+                    size={14}
+                    color={selected ? theme.brand : theme.textSubtle}
+                  />
+                  <Text
+                    className="text-xs"
+                    style={{ color: selected ? theme.brand : theme.text }}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <AuthTextField
+            label={`${socialPlatformLabel(link.platform)} link or handle`}
+            value={link.url}
+            onChangeText={(url) => updateLink(index, { url })}
+            placeholder={socialPlatformPlaceholder(link.platform)}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+            maxLength={500}
+          />
+          <Button
+            variant="secondary"
+            label="Remove link"
+            className="h-11"
+            onPress={() => removeLink(index)}
+          />
+        </View>
+      ))}
+
+      {addablePlatform ? (
+        <Pressable
+          accessibilityRole="button"
+          className="h-12 flex-row items-center justify-center gap-2 rounded-[13px] border px-4 active:opacity-80"
+          style={{
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.inputBorder,
+          }}
+          onPress={() =>
+            onChange([...links, { platform: addablePlatform, url: "" }])
+          }
+        >
+          <Ionicons name="add-circle-outline" size={18} color={theme.text} />
+          <Text
+            className="text-center text-base"
+            style={{ color: theme.text }}
+            numberOfLines={1}
+          >
+            {links.length ? "Add another link" : "Add profile link"}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text className="text-xs" style={{ color: theme.textSubtle }}>
+          You have added every supported link type.
+        </Text>
+      )}
+    </View>
+  );
+}
+
 function HighlightFormSheet({
   visible,
   onClose,
@@ -1350,7 +1904,7 @@ function HighlightFormSheet({
       visible={visible}
       onClose={onClose}
       title="Add highlight"
-      subtitle="Paste a YouTube link. SportyKore will validate it."
+      subtitle="Paste one of your 3 YouTube highlight clips. SportyKore will validate it."
     >
       <View className="gap-4">
         <AuthTextField

@@ -16,7 +16,6 @@ import type { ApiGameDetail, ApiPlayerAward, ApiStat, GameStatus } from "@/api/e
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { LiveMinute } from "@/components/ui/live-minute";
 import { colors } from "@/constants";
@@ -570,10 +569,10 @@ export default function ManageMatchCenterPage() {
         edges={["top", "bottom"]}
         style={{ backgroundColor: theme.background }}
       >
-      <BlackPatternBackground
+      {/* <BlackPatternBackground
         baseColor={isDark ? "#0F0F10" : theme.patternBase}
         stripeColor={theme.patternStripe}
-      />
+      /> */}
       {/* <SafeAreaView className="flex-1" edges={["top", "bottom"]}> */}
         <View
           className="flex-row items-center justify-between px-5 pb-2 pt-1"

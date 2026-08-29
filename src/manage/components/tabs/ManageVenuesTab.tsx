@@ -9,6 +9,7 @@ import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import { useDeleteVenue, useLeagueVenues } from "../../hooks";
+import { ManageTabGuide } from "../ManageTabGuide";
 import { VenueFormSheet } from "../venues/VenueFormSheet";
 
 type Props = {
@@ -65,6 +66,27 @@ export function ManageVenuesTab({ leagueId }: Props) {
 
   return (
     <View className="gap-6 pb-8">
+      <ManageTabGuide
+        summary="Save reusable match locations so fixtures can show the right venue and map pin."
+        items={[
+          {
+            icon: "location-outline",
+            title: "Add venues",
+            body: "Create stadiums, community pitches, or name-only grounds for scheduling.",
+          },
+          {
+            icon: "map-outline",
+            title: "Pin locations",
+            body: "Set a map position so players and fans can find the match venue quickly.",
+          },
+          {
+            icon: "create-outline",
+            title: "Maintain venue details",
+            body: "Edit addresses or remove outdated venue records as the season changes.",
+          },
+        ]}
+      />
+
       <View
         className="rounded-[24px] border px-4 py-4"
         style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}

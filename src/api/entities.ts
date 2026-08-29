@@ -67,12 +67,27 @@ export type ApiPlayer = {
   city?: string | null;
   state?: string | null;
   nationality?: string | null;
-  socialHandle?: string | null;
+  socialLinks?: ApiPlayerSocialLink[];
   visibility?: "active" | "private";
   age?: number | null;
   country?: ApiCountry | null;
   highlights?: ApiPlayerHighlight[];
   awards?: ApiPlayerAward[];
+};
+
+export type PlayerSocialPlatform =
+  | "instagram"
+  | "tiktok"
+  | "youtube"
+  | "x"
+  | "facebook"
+  | "website";
+
+export type ApiPlayerSocialLink = {
+  id: number;
+  platform: PlayerSocialPlatform;
+  url: string;
+  handle?: string | null;
 };
 
 export type ApiPlayerHighlight = {

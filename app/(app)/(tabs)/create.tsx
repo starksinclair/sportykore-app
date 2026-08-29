@@ -20,7 +20,6 @@ import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { CountryPicker } from "@/components/ui/country-picker";
 import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
@@ -270,10 +269,10 @@ export default function CreateScreen() {
       <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
       <OfflineBanner />
-      <BlackPatternBackground
+      {/* <BlackPatternBackground
         baseColor={theme.patternBase}
         stripeColor={theme.patternStripe}
-      />
+      /> */}
 
         <KeyboardAwareScrollView
           bottomOffset={24}

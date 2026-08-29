@@ -19,6 +19,7 @@ import {
 } from "../../hooks";
 import type { LeagueRosterRow } from "../../types";
 import { RosterPosition } from "../../types";
+import { ManageTabGuide } from "../ManageTabGuide";
 
 type Props = {
   leagueId: number;
@@ -63,6 +64,27 @@ export function ManagePlayersTab({ leagueId, leagueName, seasonId, teams }: Prop
 
   return (
     <View className="gap-6 pb-8">
+      <ManageTabGuide
+        summary="Invite players, filter by team, and keep the season roster tidy."
+        items={[
+          {
+            icon: "person-add-outline",
+            title: "Invite players",
+            body: "Create an invite for a league or team and copy the code for easy sharing.",
+          },
+          {
+            icon: "people-outline",
+            title: "Assign teams",
+            body: "Move accepted players onto the right team roster for this season.",
+          },
+          {
+            icon: "create-outline",
+            title: "Update roster details",
+            body: "Tap a player to set jersey number, position, or captain status.",
+          },
+        ]}
+      />
+
       <View
         className="rounded-[24px] border px-4 py-4"
         style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}

@@ -8,11 +8,10 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
-import { useTheme } from "@/color/use-theme";
 import type { AppColorScheme, ThemePreference } from "@/color/theme";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { colors, scoreboardPattern } from "@/constants";
+import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { posthog } from "@/lib/posthog";
 import { useOwnPlayerProfile } from "@/player";
@@ -77,10 +76,10 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <BlackPatternBackground
+      {/* <BlackPatternBackground
         baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
         stripeColor={theme.patternStripe}
-      />
+      /> */}
       <View
         className="absolute inset-0"
         pointerEvents="none"
@@ -111,9 +110,9 @@ export default function ProfileScreen() {
             <View className="h-11 w-11" />
           </View>
 
-          <View className="mt-5 gap-5" style={tabletFrameStyle}>
+          <View className="mt-5 gap-5 pb-4" style={tabletFrameStyle}>
             <View
-              className="rounded-[22px] border px-4 py-4"
+              className="rounded-[22px] border px-4 py-3"
               style={{
                 backgroundColor: theme.card,
                 borderColor: theme.cardBorder,

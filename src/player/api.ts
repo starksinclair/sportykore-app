@@ -3,6 +3,7 @@ import { ApiError } from "@/api/errors";
 import type {
   ApiPlayer,
   ApiPlayerHighlight,
+  ApiPlayerSocialLink,
   PlayerPosition,
 } from "@/api/entities";
 import type { PickedImageFile } from "@/lib/picked-image";
@@ -66,7 +67,7 @@ export type PlayerProfilePayload = {
   city?: string | null;
   state?: string | null;
   nationality?: string | null;
-  socialHandle?: string | null;
+  socialLinks?: Pick<ApiPlayerSocialLink, "platform" | "url">[];
 };
 
 export type CreatePlayerProfilePayload = PlayerProfilePayload & {

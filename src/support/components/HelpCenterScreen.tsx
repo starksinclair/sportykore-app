@@ -18,9 +18,8 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { colors, scoreboardPattern } from "@/constants";
+import { colors } from "@/constants";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { posthog } from "@/lib/posthog";
 import {
@@ -145,10 +144,10 @@ export function HelpCenterScreen() {
   return (
     <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <StatusBar style={isDark ? "light" : "dark"} />
-      <BlackPatternBackground
+      {/* <BlackPatternBackground
         baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
         stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
-      />
+      /> */}
       <View
         className="absolute inset-0"
         pointerEvents="none"

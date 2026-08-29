@@ -1,6 +1,8 @@
 export { ManageLeagueRow } from "./ManageLeagueRow";
 export { ManageAdminTeamRow } from "./ManageAdminTeamRow";
 export { ManageLoginPrompt } from "./ManageLoginPrompt";
+export { ManageTabGuide } from "./ManageTabGuide";
+export type { ManageTabGuideItem } from "./ManageTabGuide";
 export { GameControls } from "./GameControls";
 export { MatchSeriesHeader } from "./MatchSeriesHeader";
 export { LiveMinute } from "@/components/ui/live-minute";
