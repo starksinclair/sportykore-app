@@ -1,4 +1,4 @@
-import type { ApiTeam } from "@/api/entities";
+import type { ApiPlayerAward, ApiVenue } from "@/api/entities";
 import { apiRequest } from "@/api/http-client";
 import type { PickedImageFile } from "@/lib/picked-image";
 
@@ -8,6 +8,7 @@ import type {
   CreateGamePayload,
   CreateSeasonPayload,
   CreateStatPayload,
+  CreateVenuePayload,
   CreatedSeason,
   LeagueRosterRow,
   ManagedHub,
@@ -15,9 +16,12 @@ import type {
   OwnedLeague,
   RecordSubstitutionsPayload,
   RecordSubstitutionsResult,
+  RecordTrackingEventsPayload,
+  RecordTrackingEventsResult,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateVenuePayload,
 } from "./types";
 
 export type CreateTeamPayload = {
@@ -69,6 +73,7 @@ export async function createTeam(
   await apiRequest<{ message: string }>(`/api/v1/leagues/${leagueId}/teams`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload.logo
       ? buildCreateTeamFormData(leagueId, payload)
       : { leagueId, name: payload.name },
@@ -85,6 +90,7 @@ export async function updateTeam(
     {
       method: "PUT",
       auth: true,
+      idempotencyKey: true,
       jsonBody: payload.logo
         ? buildUpdateTeamFormData(payload)
         : payload,
@@ -98,6 +104,7 @@ export async function deleteTeam(leagueId: number, teamId: number): Promise<void
     {
       method: "DELETE",
       auth: true,
+      idempotencyKey: true,
     },
   );
 }
@@ -113,7 +120,7 @@ export async function fetchManagedHub(): Promise<ManagedHub> {
   };
 }
 
-/** @deprecated Prefer `fetchManagedHub` — kept for call sites that only need owned leagues. */
+/** @deprecated Prefer `fetchManagedHub` - kept for call sites that only need owned leagues. */
 export async function fetchOwnedLeagues(): Promise<OwnedLeague[]> {
   const hub = await fetchManagedHub();
   return hub.ownedLeagues;
@@ -140,6 +147,7 @@ export async function assignTeamAdmin(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
       jsonBody: { userId },
     },
   );
@@ -155,6 +163,7 @@ export async function removeTeamAdmin(
     {
       method: "DELETE",
       auth: true,
+      idempotencyKey: true,
     },
   );
 }
@@ -179,6 +188,7 @@ export async function updateLeaguePlayer(
     {
       method: "PUT",
       auth: true,
+      idempotencyKey: true,
       jsonBody: payload,
     },
   );
@@ -190,6 +200,7 @@ export async function removeLeaguePlayer(leaguePlayerId: number): Promise<void> 
     {
       method: "DELETE",
       auth: true,
+      idempotencyKey: true,
     },
   );
 }
@@ -198,6 +209,7 @@ export async function createGame(payload: CreateGamePayload): Promise<void> {
   await apiRequest<{ message: string }>("/api/v1/leagues/games", {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -209,6 +221,7 @@ export async function updateGame(
   await apiRequest<{ message: string }>(`/api/v1/leagues/games/${gameId}`, {
     method: "PUT",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -217,13 +230,63 @@ export async function deleteGame(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/leagues/games/${gameId}`, {
     method: "DELETE",
     auth: true,
+    idempotencyKey: true,
   });
+}
+
+export async function fetchLeagueVenues(leagueId: number): Promise<ApiVenue[]> {
+  return apiRequest<{ data: ApiVenue[] }>(
+    `/api/v1/leagues/${leagueId}/venues`,
+    { auth: true },
+  ).then((r) => r.data);
+}
+
+export async function createVenue(
+  leagueId: number,
+  payload: CreateVenuePayload,
+): Promise<{ message: string }> {
+  return apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/venues`,
+    {
+      method: "POST",
+      auth: true,
+      idempotencyKey: true,
+      jsonBody: payload,
+    },
+  );
+}
+
+export async function updateVenue(
+  venueId: number,
+  payload: UpdateVenuePayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/venues/${venueId}`,
+    {
+      method: "PUT",
+      auth: true,
+      idempotencyKey: true,
+      jsonBody: payload,
+    },
+  );
+}
+
+export async function deleteVenue(venueId: number): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/venues/${venueId}`,
+    {
+      method: "DELETE",
+      auth: true,
+      idempotencyKey: true,
+    },
+  );
 }
 
 export async function createStat(payload: CreateStatPayload): Promise<void> {
   await apiRequest<{ message: string }>("/api/v1/leagues/stats", {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -236,6 +299,22 @@ export async function recordSubstitutions(
     {
       method: "POST",
       auth: true,
+      idempotencyKey: true,
+      jsonBody: payload,
+    },
+  );
+}
+
+export async function recordTrackingEvents(
+  gameId: number,
+  payload: RecordTrackingEventsPayload,
+): Promise<RecordTrackingEventsResult> {
+  return apiRequest<RecordTrackingEventsResult>(
+    `/api/v1/games/${gameId}/tracking-events`,
+    {
+      method: "POST",
+      auth: true,
+      idempotencyKey: true,
       jsonBody: payload,
     },
   );
@@ -245,6 +324,7 @@ export async function deleteStat(statId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/leagues/stats/${statId}`, {
     method: "DELETE",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
@@ -255,6 +335,7 @@ export async function updateLeague(
   await apiRequest<{ message: string }>(`/api/v1/leagues/${leagueId}`, {
     method: "PUT",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -266,6 +347,7 @@ export async function createSeason(
   return apiRequest<CreatedSeason>(`/api/v1/leagues/${leagueId}/seasons`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: { ...payload, leagueId },
   });
 }
@@ -280,6 +362,7 @@ export async function updateSeason(
     {
       method: "PUT",
       auth: true,
+      idempotencyKey: true,
       jsonBody: payload,
     },
   );
@@ -288,7 +371,7 @@ export async function updateSeason(
 export async function startFirstHalf(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/games/${gameId}/start-first-half`,
-    { method: "POST", auth: true },
+    { method: "POST", auth: true, idempotencyKey: true },
   );
 }
 
@@ -296,13 +379,14 @@ export async function startHalfTime(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/half-time`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
 export async function startSecondHalf(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(
     `/api/v1/games/${gameId}/start-second-half`,
-    { method: "POST", auth: true },
+    { method: "POST", auth: true, idempotencyKey: true },
   );
 }
 
@@ -310,6 +394,7 @@ export async function startExtraTime(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/extra-time`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
@@ -325,6 +410,7 @@ export async function endGameFullTime(
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/full-time`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -333,6 +419,7 @@ export async function pauseGame(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/pause`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
@@ -340,6 +427,7 @@ export async function resumeGame(gameId: number): Promise<void> {
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/resume`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
   });
 }
 
@@ -364,6 +452,7 @@ export async function updateGameScore(
   return apiRequest<GameScoreResponse>(`/api/v1/games/${gameId}/score`, {
     method: "POST",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }
@@ -372,6 +461,7 @@ export type AccreditStatPayload = {
   playerId: number;
   assistPlayerId?: number | null;
   isOwnGoal: boolean;
+  isPenalty?: boolean;
   minute: number;
 };
 
@@ -385,7 +475,24 @@ export async function accreditStat(
     {
       method: "PATCH",
       auth: true,
+      idempotencyKey: true,
       jsonBody: payload,
     },
   );
+}
+
+export async function setMotmAward(
+  gameId: number,
+  playerId: number,
+): Promise<ApiPlayerAward> {
+  const res = await apiRequest<{ data: ApiPlayerAward }>(
+    `/api/v1/games/${gameId}/awards/motm`,
+    {
+      method: "PUT",
+      auth: true,
+      idempotencyKey: true,
+      jsonBody: { playerId },
+    },
+  );
+  return res.data;
 }

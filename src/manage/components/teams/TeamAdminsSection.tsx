@@ -8,22 +8,26 @@ import {
   View,
 } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { useSearchLeagueUsers } from "@/invite/hooks";
-import { fonts } from "@/theme/fonts";
 
 import {
   useAssignTeamAdmin,
   useLeagueTeams,
   useRemoveTeamAdmin,
 } from "../../hooks";
+import type { TeamAdmin } from "../../types";
 
 type Props = {
   leagueId: number;
   teamId: number;
 };
 
+const EMPTY_ADMINS: TeamAdmin[] = [];
+
 export function TeamAdminsSection({ leagueId, teamId }: Props) {
+  const theme = useTheme();
   const teamsQuery = useLeagueTeams(leagueId);
   const assignMutation = useAssignTeamAdmin(leagueId);
   const removeMutation = useRemoveTeamAdmin(leagueId);
@@ -34,7 +38,7 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
     [teamsQuery.data, teamId],
   );
 
-  const admins = team?.admins ?? [];
+  const admins = team?.admins ?? EMPTY_ADMINS;
   const assignedUserIds = useMemo(
     () => new Set(admins.map((admin) => admin.userId)),
     [admins],
@@ -64,8 +68,8 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
 
   const handleRemove = (userId: number, label: string) => {
     Alert.alert(
-      "Remove team admin",
-      `Remove ${label} as admin for this team?`,
+      "Remove team manager",
+      `Remove ${label} as manager for this team?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -86,24 +90,43 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
   const isBusy = assignMutation.isPending || removeMutation.isPending;
 
   return (
-    <View className="gap-4 border-t border-white/10 pt-5">
-      <View className="gap-1">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
-          Team admins
-        </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
-          Admins can manage lineups and match day for this team.
-        </Text>
+    <View
+      className="gap-4 rounded-[18px] border px-3 py-3"
+      style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+    >
+      <View className="flex-row items-start gap-3">
+        <View
+          className="h-10 w-10 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: theme.accentMuted }}
+        >
+          <Ionicons name="people-outline" size={20} color={theme.accent} />
+        </View>
+        <View className="flex-1 gap-0.5">
+          <Text className="text-base" style={{ color: theme.text }}>
+            Team managers
+          </Text>
+          <Text className="text-sm leading-5" style={{ color: theme.textSubtle }}>
+            Team managers can set lineups for this team.
+          </Text>
+        </View>
       </View>
 
       {teamsQuery.isLoading && !team ? (
-        <View className="items-center py-4">
-          <ActivityIndicator color="#E6A817" />
+        <View
+          className="items-center rounded-2xl border py-4"
+          style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+        >
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : admins.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-          No team admins assigned yet.
-        </Text>
+        <View
+          className="rounded-2xl border px-3 py-3"
+          style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+        >
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
+            No team managers assigned yet.
+          </Text>
+        </View>
       ) : (
         <View className="gap-2">
           {admins.map((admin) => {
@@ -111,20 +134,27 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
             return (
               <View
                 key={admin.id}
-                className="flex-row items-center gap-3 rounded-xl bg-white/6 px-3 py-3"
+                className="flex-row items-center gap-3 rounded-2xl border px-3 py-3"
+                style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
               >
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.accentMuted }}
+                >
+                  <Ionicons name="person-outline" size={16} color={theme.accent} />
+                </View>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className="text-sm text-white"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                   >
                     {label}
                   </Text>
                   {admin?.user?.fullName ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
-                      className="text-xs text-white/45"
+                      className="text-xs"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={1}
                     >
                       {admin?.user?.email}
@@ -135,9 +165,10 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
                   onPress={() => handleRemove(admin.userId, label)}
                   disabled={isBusy}
                   accessibilityLabel={`Remove ${label}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                  className="h-9 w-9 items-center justify-center rounded-full active:opacity-85"
+                  style={{ backgroundColor: theme.cardMuted }}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#fca5a5" />
+                  <Ionicons name="trash-outline" size={17} color={theme.textMuted} />
                 </Pressable>
               </View>
             );
@@ -145,13 +176,19 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
         </View>
       )}
 
-      <View className="gap-3">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-[11px] uppercase tracking-wider text-white/45"
-        >
-          Assign team admin
-        </Text>
+      <View
+        className="gap-3 rounded-2xl border px-3 py-3"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="person-add-outline" size={16} color={theme.accent} />
+          <Text
+            className="text-xs uppercase tracking-wide"
+            style={{ color: theme.textMuted }}
+          >
+            Assign team manager
+          </Text>
+        </View>
 
         <AuthTextField
           label="Search users"
@@ -160,19 +197,23 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
           placeholder="Email or name (min 2 characters)"
           autoCapitalize="none"
           autoCorrect={false}
-          containerClassName="[&_input]:text-neutral-900"
         />
 
         {searchEnabled && searchQueryResult.isLoading ? (
           <View className="items-center py-3">
-            <ActivityIndicator color="#E6A817" />
+            <ActivityIndicator color={theme.accent} />
           </View>
         ) : null}
 
         {searchEnabled && !searchQueryResult.isLoading && searchResults.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
-            No users found. Try another search.
-          </Text>
+          <View
+            className="rounded-2xl border px-3 py-3"
+            style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+          >
+            <Text className="text-sm" style={{ color: theme.textSubtle }}>
+              No users found. Try another search.
+            </Text>
+          </View>
         ) : null}
 
         {searchResults.map((user) => {
@@ -182,31 +223,43 @@ export function TeamAdminsSection({ leagueId, teamId }: Props) {
               key={user.id}
               onPress={() => void handleAssign(user.id)}
               disabled={isBusy}
-              className="flex-row items-center justify-between rounded-xl bg-white/8 px-4 py-3 active:bg-white/12"
+              className="flex-row items-center justify-between rounded-2xl border px-3 py-3 active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
             >
-              <View className="flex-1 pr-3">
-                <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-sm text-white"
-                  numberOfLines={1}
+              <View className="flex-1 flex-row items-center gap-3 pr-3">
+                <View
+                  className="h-9 w-9 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.accentMuted }}
                 >
-                  {label}
-                </Text>
-                {user?.fullName ? (
+                  <Ionicons name="person-outline" size={16} color={theme.accent} />
+                </View>
+                <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.body }}
-                    className="text-xs text-white/45"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                   >
-                    {user?.email}
+                    {label}
                   </Text>
-                ) : null}
+                  {user?.fullName ? (
+                    <Text
+                      className="text-xs"
+                      style={{ color: theme.textSubtle }}
+                      numberOfLines={1}
+                    >
+                      {user?.email}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
-              <View className="flex-row items-center gap-1">
-                <Text style={{ fontFamily: fonts.bodyBold }} className="text-xs text-accent-300">
+              <View
+                className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+                style={{ backgroundColor: theme.accent }}
+              >
+                <Text className="text-xs" style={{ color: theme.textInverse }}>
                   Assign
                 </Text>
-                <Ionicons name="add-circle" size={20} color="#E6A817" />
+                <Ionicons name="add" size={15} color={theme.textInverse} />
               </View>
             </Pressable>
           );

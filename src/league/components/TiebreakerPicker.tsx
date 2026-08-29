@@ -2,9 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
-import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import {
   TIEBREAKER_OPTIONS,
@@ -19,38 +18,14 @@ type Props = {
   label?: string;
 };
 
-const fieldStyles = {
-  light: {
-    label: "text-slate-500",
-    field: "rounded-2xl border border-neutral-200 bg-[#F5F5F5] px-3.5 py-3.5",
-    value: "text-base text-neutral-950",
-    chevron: "#6B7280",
-    rowBorder: "border-neutral-100",
-    rowActive: "active:bg-neutral-50",
-    optionLabel: "text-neutral-950",
-    optionDescription: "text-slate-500",
-  },
-  dark: {
-    label: "text-white/45",
-    field: "rounded-xl border border-white/15 bg-white/5 px-3.5 py-3.5",
-    value: "text-base text-white",
-    chevron: "rgba(255,255,255,0.55)",
-    rowBorder: "border-white/10",
-    rowActive: "active:bg-white/5",
-    optionLabel: "text-white",
-    optionDescription: "text-white/50",
-  },
-} as const;
-
 export function TiebreakerPicker({
   value,
   onChange,
   variant = "light",
   label = "Standings tiebreaker",
 }: Props) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const styles = fieldStyles[variant];
-  const isDark = variant === "dark";
 
   const close = () => setOpen(false);
 
@@ -62,8 +37,8 @@ export function TiebreakerPicker({
   return (
     <View className="gap-1.5">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className={`text-[11px] uppercase tracking-wider ${styles.label}`}
+        className="text-[11px] uppercase tracking-wider"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
@@ -72,16 +47,20 @@ export function TiebreakerPicker({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${tiebreakerLabel(value)}`}
-        className={`flex-row items-center justify-between ${styles.field} active:opacity-80`}
+        className="flex-row items-center justify-between rounded-2xl border px-3.5 py-3.5 active:opacity-80"
+        style={{
+          backgroundColor: theme.inputBackground,
+          borderColor: theme.inputBorder,
+        }}
       >
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
-          className={`flex-1 pr-2 ${styles.value}`}
+          className="flex-1 pr-2 text-base"
+          style={{ color: theme.text }}
           numberOfLines={2}
         >
           {tiebreakerLabel(value)}
         </Text>
-        <Ionicons name="chevron-down" size={18} color={styles.chevron} />
+        <Ionicons name="chevron-down" size={18} color={theme.textMuted} />
       </Pressable>
 
       <BottomSheetModal
@@ -98,18 +77,19 @@ export function TiebreakerPicker({
               <Pressable
                 key={option.id}
                 onPress={() => handleSelect(option.id)}
-                className={`flex-row items-start gap-3 border-b py-4 ${styles.rowBorder} ${styles.rowActive}`}
+                className="flex-row items-start gap-3 border-b py-4 active:opacity-85"
+                style={{ borderColor: theme.cardBorder }}
               >
                 <View className="flex-1 gap-0.5">
                   <Text
-                    style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
-                    className={`text-sm ${styles.optionLabel}`}
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {option.label}
                   </Text>
                   <Text
-                    style={{ fontFamily: fonts.body }}
-                    className={`text-xs leading-4 ${styles.optionDescription}`}
+                    className="text-xs leading-4"
+                    style={{ color: theme.textSubtle }}
                   >
                     {option.description}
                   </Text>
@@ -118,7 +98,7 @@ export function TiebreakerPicker({
                   <Ionicons
                     name="checkmark-circle"
                     size={22}
-                    color={isDark ? colors.accent : colors.brand}
+                    color={theme.brand}
                   />
                 ) : (
                   <View className="w-[22px]" />

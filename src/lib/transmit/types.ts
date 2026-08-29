@@ -23,10 +23,16 @@ export type StatAccreditedPayload = {
   statId: number;
 };
 
+export type TrackingUpdatedPayload = {
+  type: "tracking_updated";
+  gameId: number;
+};
+
 export type GameSSEPayload =
   | GameStatusChangedPayload
   | ScoreUpdatedPayload
-  | StatAccreditedPayload;
+  | StatAccreditedPayload
+  | TrackingUpdatedPayload;
 
 export function parseTransmitMessage(raw: unknown): GameSSEPayload | null {
   if (!isGameSSEPayload(raw)) return null;

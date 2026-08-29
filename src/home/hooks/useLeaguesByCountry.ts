@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 
 import { queryClient } from "@/lib/query-client";
+import { posthog } from "@/lib/posthog";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 
 import {
@@ -78,6 +79,12 @@ function useFavouriteMutation(
         queryClient.setQueryData(homeKeys.leagues(resolved), context.previous);
       }
       showThrownAsToast(error, "Could not update favourite");
+    },
+    onSuccess: (_data, leagueId) => {
+      posthog?.capture("favorite_league_toggled", {
+        league_id: leagueId,
+        favourited: isFavourited,
+      });
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: homeKeys.leagues(resolved) });

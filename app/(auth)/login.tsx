@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   Pressable,
@@ -17,29 +17,47 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { isRequiresSignupError, messageFromBackendBody } from "@/api/errors";
 import { useRequestOtp } from "@/auth";
+import {
+  getPendingOtpAttempt,
+  setPendingOtpAttempt,
+  type PendingOtpAttempt,
+} from "@/auth/storage";
 import { Button } from "@/components/ui/Button";
 import {
   AuthAccessoryLink,
   AuthTextField,
 } from "@/components/ui/auth-text-field";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ExternalLink } from "@/components/ui/external-link";
 import { Logo } from "@/components/ui/logo";
 import { colors } from "@/constants";
 import { showErrorToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 const { width, height } = Dimensions.get("window");
 const heroHeight = Math.min(height * 0.5, width * 1.05);
 const KEYBOARD_TOOLBAR_OFFSET = 62;
 
 function LoginCard() {
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [requiresSignup, setRequiresSignup] = useState(false);
   const [signupHint, setSignupHint] = useState<string | null>(null);
+  const [pendingOtp, setPendingOtp] = useState<PendingOtpAttempt | null>(null);
   const requestMutation = useRequestOtp();
+
+  useEffect(() => {
+    let cancelled = false;
+    getPendingOtpAttempt().then((attempt) => {
+      if (!cancelled) setPendingOtp(attempt);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goToOtp = (trimmedEmail: string) => {
     router.push({
@@ -67,6 +85,7 @@ function LoginCard() {
           name: trimmedName,
           ...(recoveryEmail.trim() ? { recoveryEmail: recoveryEmail.trim() } : {}),
         });
+        await setPendingOtpAttempt(trimmedEmail);
         goToOtp(trimmedEmail);
       } catch (e) {
         showThrownAsToast(e, "Could not send code");
@@ -76,6 +95,7 @@ function LoginCard() {
 
     try {
       await requestMutation.mutateAsync({ email: trimmedEmail });
+      await setPendingOtpAttempt(trimmedEmail);
       goToOtp(trimmedEmail);
     } catch (e) {
       if (isRequiresSignupError(e)) {
@@ -88,22 +108,30 @@ function LoginCard() {
   };
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+      ]}
+    >
       <View className="gap-5 px-5 pb-8 pt-8">
         {requiresSignup ? (
           <View className="gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-base text-neutral-900"
+              className="text-base"
+              style={{ color: theme.text }}
             >
               Create your account
             </Text>
             {signupHint ? (
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+              <Text className="text-sm" style={{ color: theme.textMuted }}>
                 {signupHint}
               </Text>
             ) : (
-              <Text style={{ fontFamily: fonts.body }} className="text-sm text-slate-500">
+              <Text className="text-sm" style={{ color: theme.textMuted }}>
                 We need a few more details before we send your code.
               </Text>
             )}
@@ -162,23 +190,52 @@ function LoginCard() {
           iconPosition="right"
           className="mt-1 h-[52px] rounded-2xl shadow-md"
         />
+
+        {pendingOtp ? (
+          <Pressable
+            onPress={() => goToOtp(pendingOtp.email)}
+            accessibilityRole="button"
+            className="flex-row items-start gap-3 rounded-2xl border border-accent-300 bg-accent-50 px-4 py-3 active:opacity-85"
+          >
+            <Ionicons
+              name="keypad-outline"
+              size={20}
+              color={colors.darkLabel}
+              style={{ marginTop: 2 }}
+            />
+            <View className="min-w-0 flex-1">
+              <Text className="text-sm" style={{ color: colors.darkLabel }}>
+                Already have a code?
+              </Text>
+              <Text className="pt-1 text-xs leading-5" style={{ color: colors.darkLabel }}>
+                Continue entering the code sent to {pendingOtp.email}.
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
+
       </View>
     </View>
   );
 }
 
 export default function LoginScreen() {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const close = () => {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace("/");
+      router.replace("/(app)/(tabs)");
     }
   };
 
   return (
-    <View className="flex-1 bg-[#0B0B0C]">
-      <BlackPatternBackground />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <BlackPatternBackground
+        baseColor={theme.patternBase}
+        stripeColor={theme.patternStripe}
+      />
       <KeyboardAwareScrollView
         bottomOffset={KEYBOARD_TOOLBAR_OFFSET}
         keyboardShouldPersistTaps="handled"
@@ -218,13 +275,11 @@ export default function LoginScreen() {
               />
             </View>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
               className="text-center text-3xl text-white"
             >
               Sign in
             </Text>
-            <Text
-              style={{ fontFamily: fonts.body }}
+            <Text 
               className="text-center text-base text-slate-400"
             >
               Enter your email to continue
@@ -236,25 +291,40 @@ export default function LoginScreen() {
           <LoginCard />
         </View>
 
-        <View className="px-6 pb-12 pt-8">
+        <View className="px-6  pt-8">
           <Text
-            style={{ fontFamily: fonts.body }}
-            className="text-center text-base text-slate-400"
+            className="text-center text-base"
+            style={{ color: isDark ? theme.textSubtle : theme.textMuted }}
           >
             By continuing, you agree to our{" "}
             <ExternalLink href="https://waitlist.sportykore.com/terms">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-[#F2A900]">
+              <Text style={{ color: theme.accent }}>
                 Terms of Service
               </Text>
             </ExternalLink>{" "}
             and{" "}
             <ExternalLink href="https://waitlist.sportykore.com/privacy">
-              <Text style={{ fontFamily: fonts.bodyBold }} className="text-[#F2A900]">
+              <Text style={{ color: theme.accent }}>
                 Privacy Policy
               </Text>
             </ExternalLink>
             .
           </Text>
+        </View>
+        <View className="flex-col items-center gap-2">
+          <Text
+            className="py-8 text-center text-base"
+            style={{ color: isDark ? theme.textSubtle : theme.textMuted }}
+          >
+            Or
+          </Text>
+
+          <Button
+            variant="signInYellow"
+            label="Continue as guest"
+            onPress={() => close()}
+            className="mt-1 h-[52px] rounded-2xl shadow-md"
+          />
         </View>
       </KeyboardAwareScrollView>
       <KeyboardToolbar />
@@ -268,7 +338,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -4 },

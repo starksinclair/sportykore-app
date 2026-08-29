@@ -1,8 +1,9 @@
 import { Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
-import { fonts } from "@/theme/fonts";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 import { ManageGameRow } from "./ManageGameRow";
 
@@ -25,33 +26,42 @@ export function GamesSection({
   emptyMessage,
   showLiveDot,
 }: Props) {
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+
   return (
     <View className="gap-3">
       {title ? (
         <View className="flex-row items-center gap-2">
-          {showLiveDot ? <PulsingDot color="#E6A817" size={8} /> : null}
+          {showLiveDot ? <PulsingDot color={theme.accent} size={8} /> : null}
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-xs uppercase tracking-[2px] text-white/45"
+            className="text-xs uppercase tracking-[2px]"
+            style={{ color: theme.textSubtle }}
           >
             {title}
           </Text>
         </View>
       ) : null}
       {games.length === 0 ? (
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           {emptyMessage}
         </Text>
       ) : (
-        games.map((game) => (
-          <ManageGameRow
-            key={game.id}
-            game={game}
-            leagueId={leagueId}
-            seasonId={seasonId}
-            variant={variant}
-          />
-        ))
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
+          {games.map((game) => (
+            <View
+              key={game.id}
+              style={isTablet ? { width: "48%" } : undefined}
+            >
+              <ManageGameRow
+                game={game}
+                leagueId={leagueId}
+                seasonId={seasonId}
+                variant={variant}
+              />
+            </View>
+          ))}
+        </View>
       )}
     </View>
   );

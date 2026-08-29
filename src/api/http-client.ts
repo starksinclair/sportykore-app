@@ -8,17 +8,22 @@ export type ApiAuthMode = boolean | "optional";
 export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   /**
    * Auth behaviour for the request. Default `false`.
-   * - `true` — require a Bearer token; throw if none is stored
-   * - `"optional"` — attach Bearer when a token exists; still call without one
-   * - `false` — never attach Authorization
+   * - `true` - require a Bearer token; throw if none is stored
+   * - `"optional"` - attach Bearer when a token exists; still call without one
+   * - `false` - never attach Authorization
    */
   auth?: ApiAuthMode;
   /**
-   * When a Bearer token was sent and the server responds 401/403, do not run
+   * When a Bearer token was sent and the server responds 401, do not run
    * global session teardown (used for logout with an already-invalid token).
    */
   muteGlobalUnauthorized?: boolean;
   jsonBody?: unknown;
+  /**
+   * Attach a client-generated idempotency key for write requests. Pass `true`
+   * to generate a UUID, or provide a stable key when retrying the same action.
+   */
+  idempotencyKey?: string | true;
 };
 
 function buildUrl(path: string): string {
@@ -36,6 +41,13 @@ async function readJsonSafe(res: Response): Promise<unknown> {
   }
 }
 
+function createClientIdempotencyKey(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 /**
  * Single HTTP entry-point for backend calls. Parses JSON safely, maps errors to `ApiError`,
  * and triggers global teardown on invalid sessions for authenticated routes.
@@ -44,14 +56,26 @@ export async function apiRequest<T = unknown>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
-  const { auth = false, muteGlobalUnauthorized = false, jsonBody, headers: baseHeaders, ...rest } =
-    options;
+  const {
+    auth = false,
+    muteGlobalUnauthorized = false,
+    jsonBody,
+    headers: baseHeaders,
+    idempotencyKey,
+    ...rest
+  } = options;
 
   const headers = new Headers(baseHeaders ?? undefined);
   if (jsonBody !== undefined && !(jsonBody instanceof FormData)) {
     headers.set("Content-Type", headers.get("Content-Type") ?? "application/json");
   }
   headers.set("Accept", "application/json");
+  if (idempotencyKey) {
+    headers.set(
+      "Idempotency-Key",
+      idempotencyKey === true ? createClientIdempotencyKey() : idempotencyKey,
+    );
+  }
 
   let tokenValue: string | null = null;
   if (auth === true || auth === "optional") {
@@ -97,8 +121,10 @@ export async function apiRequest<T = unknown>(
   if (!res.ok) {
     const message =
       messageFromBackendBody(parsed as ApiParsedErrorPayload) ??
-      (res.status === 401 || res.status === 403
+      (res.status === 401
         ? "Your session could not be verified."
+        : res.status === 403
+          ? "You do not have permission to do that."
         : res.status >= 500
           ? `Server error (${res.status}).`
           : `Request failed (${res.status}).`);
@@ -106,7 +132,7 @@ export async function apiRequest<T = unknown>(
     if (
       auth &&
       tokenValue &&
-      (res.status === 401 || res.status === 403) &&
+      res.status === 401 &&
       !muteGlobalUnauthorized
     ) {
       await notifyUnauthorized();

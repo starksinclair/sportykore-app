@@ -4,8 +4,9 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat, ApiStatType } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   statTypes: ApiStatType[];
@@ -45,6 +46,8 @@ const TITLE_BY_SLUG: Record<string, string> = {
 
 export function LeagueStatsTab({ statTypes, stats }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const groups = useMemo(
     () => buildGroups(statTypes, stats),
     [statTypes, stats],
@@ -52,26 +55,33 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
 
   if (!groups.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No stat events recorded for this season yet.
       </Text>
     );
   }
 
   return (
-    <View className="gap-6">
+    <View className={isTablet ? "flex-row flex-wrap gap-5" : "gap-6"}>
       {groups.map((group) => (
-        <View key={group.type.id} className="gap-3">
+        <View
+          key={group.type.id}
+          className="gap-3"
+          style={isTablet ? { width: "48%" } : undefined}
+        >
           <View className="flex-row items-center gap-2">
-            <Ionicons name={group.icon} size={16} color="#E6A817" />
+            <Ionicons name={group.icon} size={16} color={theme.accent} />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-[12px] uppercase tracking-[2px] text-white/55"
+              className="text-[12px] uppercase tracking-[2px]"
+              style={{ color: theme.textSubtle }}
             >
               {group.title}
             </Text>
           </View>
-          <View className="overflow-hidden rounded-[20px] bg-white/6">
+          <View
+            className="overflow-hidden rounded-[20px] border"
+            style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+          >
             {group.entries.slice(0, 8).map((entry, index, arr) => (
               <Pressable
                 key={entry.key}
@@ -82,25 +92,25 @@ export function LeagueStatsTab({ statTypes, stats }: Props) {
                 }
                 className={[
                   "flex-row items-center gap-3 px-4 py-3",
-                  index !== arr.length - 1 ? "border-b border-white/10" : "",
+                  index !== arr.length - 1 ? "border-b" : "",
                 ].join(" ")}
+                style={{ borderColor: theme.cardBorder }}
               >
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="w-6 text-[12px] text-white/55"
+                  className="w-6 text-[12px]"
+                  style={{ color: theme.textSubtle }}
                 >
                   {index + 1}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="flex-1 text-white"
+                  className="flex-1"
+                  style={{ color: theme.text }}
                   numberOfLines={1}
                 >
                   {entry.playerName}
                 </Text>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-[#E6A817]"
+                  style={{ color: theme.accent }}
                 >
                   {entry.total}
                 </Text>

@@ -1,13 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Alert, Pressable, Text, View } from "react-native";
 import { useMemo, useState } from "react";
+import { Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiGameDetail, ApiStat } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { DetailTabs } from "@/components/ui/detail-tabs";
 import { colors } from "@/constants";
 import { iconForStatType } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 import type { LeagueRosterRow, MatchEventKey } from "../../types";
 import { RosterPosition } from "../../types";
@@ -50,6 +50,7 @@ export function MatchCenterStatsTab({
   onRecordStat,
   onDeleteStat,
 }: Props) {
+  const theme = useTheme();
   const [eventTab, setEventTab] = useState<EventTab>("cards");
   const [activeSide, setActiveSide] = useState<TeamSide>("home");
 
@@ -81,7 +82,10 @@ export function MatchCenterStatsTab({
         />
       </View>
 
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-4">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
         <DetailTabs
           tabs={EVENT_TABS}
           activeTab={eventTab}
@@ -95,14 +99,14 @@ export function MatchCenterStatsTab({
           onSideChange={setActiveSide}
         />
 
-        <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/40">
+        <Text className="text-xs" style={{ color: theme.textSubtle }}>
           {eventTab === "cards"
             ? "Tap yellow or red beside a player to record a card."
             : "Tap the save icon beside a goalkeeper."}
         </Text>
 
         {players.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             {eventTab === "saves"
               ? "No goalkeepers on this team."
               : "No active players on this team."}
@@ -168,13 +172,13 @@ export function MatchCenterStatsTab({
 
       <View className="gap-3">
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-xs uppercase tracking-wide text-white/45"
+          className="text-xs uppercase tracking-wide"
+          style={{ color: theme.textMuted }}
         >
           Recorded events
         </Text>
         {nonGoalStats.length === 0 ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/45">
+          <Text className="text-sm" style={{ color: theme.textSubtle }}>
             No cards, saves, or other events yet.
           </Text>
         ) : (
@@ -182,6 +186,7 @@ export function MatchCenterStatsTab({
             <StatRow
               key={stat.id}
               stat={stat}
+              theme={theme}
               onDelete={() => {
                 Alert.alert("Delete event", "Remove this stat?", [
                   { text: "Cancel", style: "cancel" },
@@ -200,7 +205,15 @@ export function MatchCenterStatsTab({
   );
 }
 
-function StatRow({ stat, onDelete }: { stat: ApiStat; onDelete: () => void }) {
+function StatRow({
+  stat,
+  onDelete,
+  theme,
+}: {
+  stat: ApiStat;
+  onDelete: () => void;
+  theme: ReturnType<typeof useTheme>;
+}) {
   const icon = stat.type ? iconForStatType(stat.type) : "stats-chart-outline";
   const minute =
     stat.minute != null
@@ -210,14 +223,15 @@ function StatRow({ stat, onDelete }: { stat: ApiStat; onDelete: () => void }) {
   return (
     <Pressable
       onLongPress={onDelete}
-      className="flex-row items-center gap-3 rounded-2xl bg-white/6 px-3 py-3"
+      className="flex-row items-center gap-3 rounded-2xl px-3 py-3 active:opacity-85"
+      style={{ backgroundColor: theme.cardMuted }}
     >
-      <Ionicons name={icon} size={20} color={colors.accent} />
+      <Ionicons name={icon} size={20} color={theme.accent} />
       <View className="flex-1">
-        <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
-          {stat.type?.displayName ?? "Event"} — {stat.player?.name ?? "Player"}
+        <Text className="text-sm" style={{ color: theme.text }}>
+          {stat.type?.displayName ?? "Event"} - {stat.player?.name ?? "Player"}
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-xs text-white/45">
+        <Text className="text-xs" style={{ color: theme.textSubtle }}>
           {stat.team?.name}
           {stat.relatedPlayer ? ` · Assist: ${stat.relatedPlayer.name}` : ""}
           {minute ? ` · ${minute}` : ""}

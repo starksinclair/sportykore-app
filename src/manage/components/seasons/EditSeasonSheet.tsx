@@ -1,12 +1,12 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiSeason, SeasonStatus } from "@/api/entities";
-import { Button } from "@/components/ui/Button";
+import { useTheme } from "@/color/use-theme";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useUpdateSeason } from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
@@ -27,6 +27,7 @@ export function EditSeasonSheet({
   season,
   onUpdated,
 }: Props) {
+  const theme = useTheme();
   const seasonId = season?.id ?? 0;
   const updateMutation = useUpdateSeason(leagueId, seasonId);
 
@@ -75,29 +76,44 @@ export function EditSeasonSheet({
       onClose={handleClose}
       title="Edit season"
       subtitle="Marking Active completes any other active season in this league."
-      variant="dark"
     >
       <View className="gap-5">
         <AuthTextField
           label="Season name"
           value={name}
           onChangeText={setName}
-          placeholder="2026 — Spring"
-          containerClassName="[&_input]:text-neutral-900"
+          placeholder="2026 - Spring"
         />
 
         <SeasonStatusPicker label="Status" value={status} onChange={setStatus} />
 
-        <Button
-          variant="authPurple"
-          label={updateMutation.isPending ? "Saving…" : "Save season"}
-          loading={updateMutation.isPending}
-          disabled={updateMutation.isPending}
+        <Pressable
           onPress={() => void handleSave()}
-          className="h-11"
-        />
+          disabled={updateMutation.isPending}
+          accessibilityRole="button"
+          className={`h-11 flex-row items-center justify-center gap-2 rounded-full border px-4 active:opacity-90 ${
+            updateMutation.isPending ? "opacity-50" : ""
+          }`}
+          style={{ backgroundColor: theme.accent, borderColor: theme.accent }}
+        >
+          {updateMutation.isPending ? (
+            <ActivityIndicator color={theme.textInverse} size="small" />
+          ) : (
+            <Ionicons name="save-outline" size={16} color={theme.textInverse} />
+          )}
+          <Text
+            className="text-sm"
+            style={{ color: theme.textInverse }}
+            numberOfLines={1}
+          >
+            {updateMutation.isPending ? "Saving..." : "Save season"}
+          </Text>
+        </Pressable>
 
-        <Text style={{ fontFamily: fonts.body }} className="text-center text-xs text-white/45">
+        <Text
+          className="text-center text-xs"
+          style={{ color: theme.textSubtle }}
+        >
           Use the season picker at the top of Manage to switch which season you are viewing.
         </Text>
       </View>

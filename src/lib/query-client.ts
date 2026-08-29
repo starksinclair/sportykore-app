@@ -9,7 +9,7 @@ export const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5,
       // keep in cache for 24 hours (for offline use)
       gcTime: 1000 * 60 * 60 * 24,
-      // don't retry when offline — fail fast and use cache
+      // don't retry when offline - fail fast and use cache
       retry: (failureCount, error: any) => {
         if (error?.status === 403 || error?.status === 404) return false;
         return failureCount < 2;

@@ -2,6 +2,8 @@ import { forwardRef } from "react";
 import type { TextInputProps } from "react-native";
 import { Text, TextInput, View } from "react-native";
 
+import { useTheme } from "@/color/use-theme";
+
 export type InputProps = TextInputProps & {
   label?: string;
   error?: string;
@@ -12,24 +14,40 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   { label, error, containerClassName, className, ...rest },
   ref
 ) {
+  const theme = useTheme();
+
   return (
     <View className={`gap-1.5 ${containerClassName ?? ""}`}>
       {label ? (
-        <Text className="text-sm font-medium text-slate-700">{label}</Text>
+        <Text className="text-sm font-medium" style={{ color: theme.textMuted }}>
+          {label}
+        </Text>
       ) : null}
       <TextInput
         ref={ref}
-        placeholderTextColor="#94a3b8"
+        placeholderTextColor={theme.textSubtle}
         className={[
-          "h-12 px-4 rounded-xl border border-slate-200 bg-white text-base text-slate-900",
+          "h-12 rounded-xl border px-4 text-base",
           error ? "border-red-500" : "",
           className ?? "",
         ]
           .filter(Boolean)
           .join(" ")}
         {...rest}
+        style={[
+          {
+            backgroundColor: theme.inputBackground,
+            borderColor: error ? theme.danger : theme.inputBorder,
+            color: theme.text,
+          },
+          rest.style,
+        ]}
       />
-      {error ? <Text className="text-xs text-red-600">{error}</Text> : null}
+      {error ? (
+        <Text className="text-xs" style={{ color: theme.danger }}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 });

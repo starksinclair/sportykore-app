@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import { NotFound } from "@/components/not-found";
@@ -11,23 +11,35 @@ import {
 } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
+import { hasGroupStage, standingStages } from "@/groups";
+import { hasRoundRobinStage, knockoutStages } from "@/knockout";
+import { SeasonFormatBanner } from "@/league";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import {
+  ManageActivityTab,
   ManageGamesTab,
+  ManageGroupsTab,
+  ManageKnockoutTab,
   ManagePlayersTab,
   ManageSettingsTab,
+  ManageStandingsTab,
   ManageTeamsTab,
+  ManageVenuesTab,
   useLeagueTeams,
   useManageLeagueDetail,
 } from "@/manage";
 
-type TabKey = "games" | "teams" | "players" | "settings";
-
-const TABS: readonly DetailTab<TabKey>[] = [
-  { key: "games", label: "Games" },
-  { key: "teams", label: "Teams" },
-  { key: "players", label: "Players" },
-  { key: "settings", label: "Settings" },
-];
+type TabKey =
+  | "games"
+  | "groups"
+  | "standings"
+  | "knockout"
+  | "teams"
+  | "players"
+  | "venues"
+  | "settings"
+  | "activity";
 
 export default function ManageLeagueRoute() {
   const { leagueId: leagueIdParam } = useLocalSearchParams<{ leagueId: string }>();
@@ -39,16 +51,61 @@ export default function ManageLeagueRoute() {
   const query = useManageLeagueDetail(isValidId ? leagueId : 0, seasonId);
   const teamsQuery = useLeagueTeams(leagueId, isValidId);
 
-  // Keep query key aligned with the resolved season so invalidations refetch this query.
+  useTrackView(
+    "manage_hub_opened",
+    query.data ? leagueId : null,
+    query.data
+      ? {
+          league_id: leagueId,
+          league_name: query.data.season.league.name,
+          season_id: query.data.season.id,
+          format: query.data.season.stages?.[0]?.stageType,
+        }
+      : undefined,
+  );
+
   useEffect(() => {
     if (query.data?.season.id != null && seasonId === null) {
       setSeasonId(query.data.season.id);
     }
   }, [query.data?.season.id, seasonId]);
 
+  const stages = query.data?.season.stages ?? [];
+  const hasRr = hasRoundRobinStage(stages);
+  const hasGroup = hasGroupStage(stages);
+  const hasStandings = standingStages(stages).length > 0;
+  const knockouts = knockoutStages(stages);
+  const showKnockout = knockouts.length > 0;
+  const canScheduleRoundRobin = hasRr || stages.length === 0;
+
+  const tabs: readonly DetailTab<TabKey>[] = useMemo(
+    () => [
+      { key: "games", label: "Games" },
+      ...(hasGroup ? ([{ key: "groups", label: "Groups" }] as const) : []),
+      ...(hasStandings
+        ? ([{ key: "standings", label: "Standings" }] as const)
+        : []),
+      ...(showKnockout
+        ? ([{ key: "knockout", label: "Knockout" }] as const)
+        : []),
+      { key: "teams", label: "Teams" },
+      { key: "players", label: "Players" },
+      { key: "venues", label: "Venues" },
+      { key: "settings", label: "Settings" },
+      { key: "activity", label: "Activity" },
+    ],
+    [hasGroup, hasStandings, showKnockout],
+  );
+
+  useEffect(() => {
+    if (!tabs.some((t) => t.key === activeTab)) {
+      setActiveTab("games");
+    }
+  }, [tabs, activeTab]);
+
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Manage">
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
         <NotFound message="Invalid league id" />
       </DetailScreenShell>
     );
@@ -56,7 +113,7 @@ export default function ManageLeagueRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Manage">
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -66,8 +123,14 @@ export default function ManageLeagueRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Manage">
-        <NotFound message="League not found or you do not have access" />
+      <DetailScreenShell title="Manage" tabletMaxWidth={1120}>
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "League")
+              : "League not found."
+          }
+        />
       </DetailScreenShell>
     );
   }
@@ -84,7 +147,8 @@ export default function ManageLeagueRoute() {
   return (
     <DetailScreenShell
       title={season.league.name}
-      subtitle="League admin"
+      subtitle="Competition admin"
+      tabletMaxWidth={1120}
       headerContent={
         <>
           <SeasonPicker
@@ -92,10 +156,12 @@ export default function ManageLeagueRoute() {
             activeSeasonId={activeSeasonId}
             onSelect={setSeasonId}
           />
+          <SeasonFormatBanner stages={stages} compact />
           <DetailTabs
-            tabs={TABS}
+            tabs={tabs}
             activeTab={activeTab}
             onTabChange={setActiveTab}
+            scrollable
           />
         </>
       }
@@ -106,6 +172,32 @@ export default function ManageLeagueRoute() {
           seasonId={activeSeasonId}
           games={season.games ?? []}
           statTypes={statTypes}
+          canScheduleRoundRobin={canScheduleRoundRobin}
+        />
+      ) : null}
+      {activeTab === "groups" && hasGroup ? (
+        <ManageGroupsTab
+          leagueId={leagueId}
+          seasonId={activeSeasonId}
+          stages={stages}
+          teams={teamsQuery.data ?? []}
+          games={season.games ?? []}
+          onKnockoutGenerated={() => setActiveTab("knockout")}
+        />
+      ) : null}
+      {activeTab === "standings" && hasStandings ? (
+        <ManageStandingsTab
+          leagueId={leagueId}
+          seasonId={activeSeasonId}
+          stages={stages}
+        />
+      ) : null}
+      {activeTab === "knockout" && showKnockout ? (
+        <ManageKnockoutTab
+          leagueId={leagueId}
+          seasonId={activeSeasonId}
+          stages={stages}
+          teams={teamsQuery.data ?? []}
         />
       ) : null}
       {activeTab === "teams" ? (
@@ -124,6 +216,7 @@ export default function ManageLeagueRoute() {
           teams={teamsQuery.data ?? []}
         />
       ) : null}
+      {activeTab === "venues" ? <ManageVenuesTab leagueId={leagueId} /> : null}
       {activeTab === "settings" ? (
         <ManageSettingsTab
           leagueId={leagueId}
@@ -132,6 +225,9 @@ export default function ManageLeagueRoute() {
           activeSeasonId={activeSeasonId}
           onSeasonCreated={(id) => setSeasonId(id)}
         />
+      ) : null}
+      {activeTab === "activity" ? (
+        <ManageActivityTab leagueId={leagueId} />
       ) : null}
     </DetailScreenShell>
   );

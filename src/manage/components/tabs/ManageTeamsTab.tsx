@@ -3,13 +3,14 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 
-import { Button } from "@/components/ui/Button";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
-import type { ManagedTeam } from "../../types";
 import { useDeleteTeam } from "../../hooks";
+import type { ManagedTeam } from "../../types";
+import { ManageTabGuide } from "../ManageTabGuide";
 import { TeamFormSheet } from "../teams/TeamFormSheet";
 
 type Props = {
@@ -21,6 +22,8 @@ type Props = {
 
 export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const deleteMutation = useDeleteTeam(leagueId, seasonId);
   const [formOpen, setFormOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<ManagedTeam | null>(null);
@@ -41,6 +44,7 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
   };
 
   const handleDelete = (team: ManagedTeam) => {
+    if (deleteMutation.isPending) return;
     const fewTeamsWarning =
       teams.length <= 2
         ? "\n\nYou need at least two teams to schedule new games."
@@ -68,41 +72,99 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
 
   return (
     <View className="gap-6 pb-8">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
-          Teams belong to the whole league — use them for fixtures, standings, and player
-          invites.
-        </Text>
-        <Button
-          variant="authPurple"
-          label="Add team"
-          onPress={openAdd}
-          className="h-11 px-4"
-        />
+      <ManageTabGuide
+        summary="Create teams, open lineup setup, and keep team records ready for fixtures."
+        items={[
+          {
+            icon: "add-circle-outline",
+            title: "Add teams",
+            body: "Create the teams competing in this league and upload logos when available.",
+          },
+          {
+            icon: "grid-outline",
+            title: "Set lineups",
+            body: "Open a team to prepare the players who can be used on match day.",
+          },
+          {
+            icon: "create-outline",
+            title: "Edit team records",
+            body: "Update team details or remove teams that should no longer be in the league.",
+          },
+        ]}
+      />
+
+      <View
+        className="rounded-[24px] border px-4 py-4"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <View className="flex-row items-center gap-3">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons name="shirt-outline" size={22} color={theme.accent} />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text style={{ color: theme.text }}>
+              League teams
+            </Text>
+            <Text
+              className="text-xs leading-5"
+              style={{ color: theme.textSubtle }}
+              numberOfLines={2}
+            >
+              Teams power fixtures, standings, and player invites.
+            </Text>
+          </View>
+          <Pressable
+            onPress={openAdd}
+            accessibilityRole="button"
+            accessibilityLabel="Add team"
+            className="h-10 flex-row items-center gap-1.5 rounded-full px-3 active:opacity-90"
+            style={{ backgroundColor: theme.accent }}
+          >
+            <Ionicons name="add" size={16} color={theme.textInverse} />
+            <Text
+              className="text-xs"
+              style={{ color: theme.textInverse }}
+              numberOfLines={1}
+            >
+              Add
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {isLoading ? (
         <View className="items-center py-12">
-          <ActivityIndicator color="#E6A817" />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : teams.length === 0 ? (
-        <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-          <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-white">
+        <View
+          className="rounded-[22px] border border-dashed px-5 py-8"
+          style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+        >
+          <Text className="text-base" style={{ color: theme.text }}>
             No teams yet
           </Text>
           <Text
-            style={{ fontFamily: fonts.body }}
-            className="pt-2 text-sm leading-6 text-white/55"
+            className="pt-2 text-sm leading-6"
+            style={{ color: theme.textSubtle }}
           >
             Add at least two teams before you can schedule games or invite players.
           </Text>
         </View>
       ) : (
-        <View className="gap-2">
+        <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-2"}>
           {teams.map((team) => (
             <View
               key={team.id}
-              className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-3"
+              className="flex-row items-center gap-3 rounded-[20px] border px-4 py-3"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+                ...(isTablet ? { width: "48%" } : null),
+              }}
             >
               <EntityLogo
                 logoUrl={team.logoUrl}
@@ -112,8 +174,8 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
                 accessibilityLabel={`${team.name} logo`}
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="flex-1 text-white"
+                className="flex-1"
+                style={{ color: theme.text }}
                 numberOfLines={1}
               >
                 {team.name}
@@ -125,24 +187,29 @@ export function ManageTeamsTab({ leagueId, seasonId, teams, isLoading }: Props) 
                   )
                 }
                 accessibilityLabel={`Lineups for ${team.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                className="h-10 w-10 items-center justify-center rounded-xl active:opacity-85"
+                style={{ backgroundColor: theme.cardMuted }}
               >
-                <Ionicons name="grid-outline" size={18} color="#E6A817" />
+                <Ionicons name="grid-outline" size={18} color={theme.accent} />
               </Pressable>
               <Pressable
                 onPress={() => openEdit(team)}
                 accessibilityLabel={`Edit ${team.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                className="h-10 w-10 items-center justify-center rounded-xl active:opacity-85"
+                style={{ backgroundColor: theme.cardMuted }}
               >
-                <Ionicons name="create-outline" size={18} color="#FFFFFF" />
+                <Ionicons name="create-outline" size={18} color={theme.textMuted} />
               </Pressable>
               <Pressable
                 onPress={() => handleDelete(team)}
                 disabled={deleteMutation.isPending}
                 accessibilityLabel={`Delete ${team.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                className={`h-10 w-10 items-center justify-center rounded-xl active:opacity-85 ${
+                  deleteMutation.isPending ? "opacity-45" : ""
+                }`}
+                style={{ backgroundColor: theme.cardMuted }}
               >
-                <Ionicons name="trash-outline" size={18} color="#fca5a5" />
+                <Ionicons name="trash-outline" size={18} color={theme.danger} />
               </Pressable>
             </View>
           ))}

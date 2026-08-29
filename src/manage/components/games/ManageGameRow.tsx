@@ -4,8 +4,11 @@ import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import type { ApiGame } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo, GamePhaseLabel } from "@/components/ui";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { formatPlayedAt } from "@/lib/datetime";
+import { posthog } from "@/lib/posthog";
 import { showThrownAsToast } from "@/lib/show-error-toast";
 import { fonts } from "@/theme/fonts";
 
@@ -14,6 +17,7 @@ import { EditGameSheet } from "./EditGameSheet";
 import { EditScoreSheet } from "./EditScoreSheet";
 
 type RowVariant = "live" | "upcoming" | "results";
+type ActionsMenu = "upcoming" | "results" | null;
 
 type Props = {
   game: ApiGame;
@@ -24,11 +28,13 @@ type Props = {
 
 export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const updateMutation = useUpdateGame(leagueId, seasonId);
   const deleteMutation = useDeleteGame(leagueId, seasonId);
   const gameTimeActions = useGameTimeActions(game.id, leagueId, seasonId);
   const [editScoreOpen, setEditScoreOpen] = useState(false);
   const [editGameOpen, setEditGameOpen] = useState(false);
+  const [actionsMenu, setActionsMenu] = useState<ActionsMenu>(null);
 
   const showScore =
     variant !== "upcoming" ||
@@ -45,6 +51,12 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
   const handleStart = async () => {
     try {
       await gameTimeActions.startFirstHalf.mutateAsync();
+      posthog?.capture("match_started", {
+        league_id: leagueId,
+        season_id: seasonId,
+        game_id: game.id,
+        start_source: "upcoming_fixture",
+      });
       openMatchCenter();
     } catch (err) {
       showThrownAsToast(err, "Could not start match");
@@ -61,6 +73,12 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         onPress: async () => {
           try {
             await gameTimeActions.startFirstHalf.mutateAsync();
+            posthog?.capture("match_started", {
+              league_id: leagueId,
+              season_id: seasonId,
+              game_id: game.id,
+              start_source: "reopened_match",
+            });
             openMatchCenter();
           } catch (err) {
             showThrownAsToast(err);
@@ -104,21 +122,12 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
     );
   };
 
-  const handleResultsActions = () => {
-    Alert.alert("Game actions", undefined, [
-      { text: "Edit score", onPress: handleEditScore },
-      { text: "Reopen match", onPress: handleReopen },
-      { text: "Delete", style: "destructive", onPress: handleDelete },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
+  const closeActionsMenu = () => setActionsMenu(null);
 
-  const handleUpcomingActions = () => {
-    Alert.alert("Game actions", undefined, [
-      { text: "Edit fixture", onPress: () => setEditGameOpen(true) },
-      { text: "Delete", style: "destructive", onPress: handleDelete },
-      { text: "Cancel", style: "cancel" },
-    ]);
+  const runAction = (action: () => void) => {
+    closeActionsMenu();
+    // Let the sheet dismiss before opening the next alert/sheet.
+    requestAnimationFrame(action);
   };
 
   return (
@@ -137,10 +146,63 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         seasonId={seasonId}
         onClose={() => setEditGameOpen(false)}
       />
+      <BottomSheetModal
+        visible={actionsMenu != null}
+        onClose={closeActionsMenu}
+        title="Game actions"
+        subtitle="Select an action"
+        scrollEnabled={false}
+      >
+        <View className="gap-2 pb-2">
+          {actionsMenu === "results" ? (
+            <>
+              <ActionMenuRow
+                label="Edit score"
+                icon="create-outline"
+                onPress={() => runAction(handleEditScore)}
+              />
+              <ActionMenuRow
+                label="Reopen match"
+                icon="refresh-outline"
+                onPress={() => runAction(handleReopen)}
+              />
+              <ActionMenuRow
+                label="Delete"
+                icon="trash-outline"
+                destructive
+                onPress={() => runAction(handleDelete)}
+              />
+            </>
+          ) : null}
+          {actionsMenu === "upcoming" ? (
+            <>
+              <ActionMenuRow
+                label="Edit fixture"
+                icon="calendar-outline"
+                onPress={() =>
+                  runAction(() => setEditGameOpen(true))
+                }
+              />
+              <ActionMenuRow
+                label="Delete"
+                icon="trash-outline"
+                destructive
+                onPress={() => runAction(handleDelete)}
+              />
+            </>
+          ) : null}
+          <ActionMenuRow
+            label="Cancel"
+            icon="close-outline"
+            onPress={closeActionsMenu}
+          />
+        </View>
+      </BottomSheetModal>
       <Pressable
-      onPress={variant === "live" ? openMatchCenter : undefined}
-      className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
-    >
+        onPress={variant === "live" ? openMatchCenter : undefined}
+        className="rounded-[22px] border px-4 py-4 active:opacity-85"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-2">
           <View className="flex-row items-center gap-2">
@@ -150,7 +212,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.homeTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -161,7 +223,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
@@ -169,14 +231,12 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         {showScore ? (
           <View className="items-end gap-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-[#E6A817]"
+              style={{ color: theme.accent }}
             >
               {game.homeScore ?? "-"}
             </Text>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-[#E6A817]"
+              style={{ color: theme.accent }}
             >
               {game.awayScore ?? "-"}
             </Text>
@@ -186,14 +246,15 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
 
       <View className="flex-row flex-wrap items-center pt-3">
         <Text
-          style={{ fontFamily: fonts.body }}
-          className="text-xs uppercase tracking-[1.5px] text-white/45"
+          className="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         >
           {formatPlayedAt(game.playedAt)} ·{" "}
         </Text>
         <GamePhaseLabel
           game={game}
-          textClassName="text-xs uppercase tracking-[1.5px] text-white/45"
+          textClassName="text-xs uppercase tracking-[1.5px]"
+          style={{ color: theme.textSubtle }}
         />
       </View>
 
@@ -218,7 +279,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
             <ActionChip
               label="Actions"
               icon="ellipsis-horizontal"
-              onPress={handleUpcomingActions}
+              onPress={() => setActionsMenu("upcoming")}
             />
           </>
         ) : null}
@@ -227,7 +288,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
             <ActionChip
               label="Actions"
               icon="ellipsis-horizontal"
-              onPress={handleResultsActions}
+              onPress={() => setActionsMenu("results")}
             />
             <ActionChip
               label="Match center"
@@ -255,22 +316,60 @@ function ActionChip({
   accent?: boolean;
   loading?: boolean;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={loading}
-      className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-        accent ? "bg-[#E6A817]" : "bg-white/10"
-      }`}
+      className="flex-row items-center gap-1.5 rounded-full px-3 py-1.5 active:opacity-85"
+      style={{ backgroundColor: accent ? theme.accent : theme.cardMuted }}
     >
       <Ionicons
         name={icon}
         size={14}
-        color={accent ? "#1a1a1a" : "rgba(255,255,255,0.85)"}
+        color={accent ? theme.textInverse : theme.textMuted}
       />
       <Text
-        style={{ fontFamily: fonts.bodySemibold }}
-        className={`text-xs ${accent ? "text-neutral-950" : "text-white/85"}`}
+        className="text-xs"
+        style={{ color: accent ? theme.textInverse : theme.text }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function ActionMenuRow({
+  label,
+  icon,
+  onPress,
+  destructive,
+}: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  onPress: () => void;
+  destructive?: boolean;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-2xl px-4 py-3.5 active:opacity-85"
+      style={{ backgroundColor: theme.cardMuted }}
+    >
+      <Ionicons
+        name={icon}
+        size={18}
+        color={destructive ? theme.danger : theme.textMuted}
+      />
+      <Text
+        className="text-base"
+        style={{
+          fontFamily: fonts.bodySemibold,
+          color: destructive ? theme.danger : theme.text,
+        }}
       >
         {label}
       </Text>

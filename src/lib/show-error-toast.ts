@@ -38,6 +38,7 @@ export function messageFromThrown(error: unknown): string {
   if (typeof error === "string" && error.trim()) return error.trim();
 
   if (isApiError(error)) {
+    if (error.status >= 500) return defaultDetailFor(error) ?? DEFAULT_GENERIC;
     const fromBody = messageFromBackendBody(error.body);
     if (fromBody) return fromBody;
     if (error.message.trim()) return error.message.trim();
@@ -88,5 +89,31 @@ function defaultDetailFor(error: ApiError): string | undefined {
     return "Check your connection and that the API is running.";
   if (error.kind === "parse") return "The server sent data we couldn't read.";
   if (error.status === 429) return "Too many attempts. Wait a moment and try again.";
+  if (error.status >= 500) return "The server had a problem. Please try again soon.";
   return DEFAULT_GENERIC;
+}
+
+export function messageForResourceLoad(
+  error: unknown,
+  resourceName: string,
+): string {
+  if (!isApiError(error)) return messageFromThrown(error);
+
+  const label = resourceName.toLowerCase();
+  if (error.kind === "network") {
+    return `Could not load this ${label}. Check your connection and try again.`;
+  }
+  if (error.kind === "parse") {
+    return `Could not load this ${label}. The server sent data we couldn't read.`;
+  }
+  if (error.status === 401) return "Please sign in to continue.";
+  if (error.status === 403) {
+    return `You do not have permission to view this ${label}.`;
+  }
+  if (error.status === 404) return `${resourceName} not found.`;
+  if (error.status >= 500) {
+    return `Something went wrong loading this ${label}. Please try again.`;
+  }
+
+  return messageFromThrown(error);
 }

@@ -3,11 +3,12 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiSeasonDetail } from "@/api/entities";
-import { colors } from "@/constants";
+import { useTheme } from "@/color/use-theme";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAt } from "@/lib/datetime";
 import { isLiveGameStatus } from "@/lib/general-utils";
 import { isGoalsStat } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
+import { SeasonFormatBanner } from "../SeasonFormatBanner";
 
 type Props = {
   season: ApiSeasonDetail;
@@ -15,6 +16,8 @@ type Props = {
 
 export function LeagueOverviewTab({ season }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
   const counts = useMemo(() => deriveCounts(season), [season]);
   const topScorer = useMemo(() => deriveTopScorer(season), [season]);
   const recentResults = useMemo(
@@ -29,82 +32,111 @@ export function LeagueOverviewTab({ season }: Props) {
     [season.games],
   );
 
-  return (
-    <View className="gap-6">
+  const introContent = (
+    <>
+      {season.league.description ? (
+        <View className="flex-row items-center gap-3">
+          <Text className="text-[16px]" style={{ color: theme.textMuted }}>
+            {season.league.description}
+          </Text>
+        </View>
+      ) : null}
 
-       {season.league.description && (
-          <View className="flex-row items-center gap-3">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white text-[16px]"> {season.league.description}</Text>
-          </View>
-       ) }
+      <SeasonFormatBanner stages={season.stages ?? []} />
 
       <View className="flex-row gap-3">
         <StatCard label="Teams" value={counts.teams} />
         <StatCard label="Matches" value={counts.matches} />
         <StatCard label="Live" value={counts.live} />
       </View>
+    </>
+  );
 
-      {topScorer ? (
-        <Section title="Player Of The Season">
-          <Pressable
-            onPress={() => router.push(`/player/${topScorer.player.id}`)}
-            className="rounded-[24px] bg-white/6 px-5 py-5 active:bg-white/10"
+  const topScorerContent = topScorer ? (
+    <Section title="Player Of The Season">
+      <Pressable
+        onPress={() => router.push(`/player/${topScorer.player.id}`)}
+        className="rounded-[24px] border px-5 py-5 active:opacity-85"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <View className="flex-row items-center gap-4">
+          <View
+            className="h-16 w-16 items-center justify-center rounded-full"
+            style={{ backgroundColor: theme.brand }}
           >
-            <View className="flex-row items-center gap-4">
-              <View className="h-16 w-16 items-center justify-center rounded-full bg-[#364156]">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-xl text-white"
-                >
-                  {initials(topScorer.player.name)}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-[20px] text-white"
-                >
-                  {topScorer.player.name}
-                </Text>
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="pt-2 text-sm text-[#E6A817]"
-                >
-                  {topScorer.goals} goals · {topScorer.assists} assists
-                </Text>
-              </View>
-            </View>
-          </Pressable>
-        </Section>
-      ) : null}
-
-      <Section title="Recent Results">
-        {recentResults.length ? (
-          recentResults.map((game) => (
-            <Pressable
-              key={game.id}
-              onPress={() => router.push(`/match/${game.id}`)}
-              className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+            <Text
+              className="text-xl"
+              style={{ color: theme.textInverse }}
             >
-              <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-white"
-              >
-                {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
-                {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
-              </Text>
-              <Text
-                style={{ fontFamily: fonts.body }}
-                className="pt-2 text-sm text-white/55"
-              >
-                {formatPlayedAt(game.playedAt)}
-              </Text>
-            </Pressable>
-          ))
-        ) : (
-          <EmptyText>No recent results yet.</EmptyText>
-        )}
-      </Section>
+              {initials(topScorer.player.name)}
+            </Text>
+          </View>
+          <View className="flex-1">
+            <Text
+              className="text-[20px]"
+              style={{ color: theme.text }}
+            >
+              {topScorer.player.name}
+            </Text>
+            <Text
+              className="pt-2 text-sm"
+              style={{ color: theme.accent }}
+            >
+              {topScorer.goals} goals · {topScorer.assists} assists
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    </Section>
+  ) : null;
+
+  const recentResultsContent = (
+    <Section title="Recent Results">
+      {recentResults.length ? (
+        recentResults.map((game) => (
+          <Pressable
+            key={game.id}
+            onPress={() => router.push(`/match/${game.id}`)}
+            className="rounded-[22px] border px-4 py-4 active:opacity-85"
+            style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+          >
+            <Text
+              style={{ color: theme.text }}
+            >
+              {game.homeTeam?.name ?? "TBD"} {game.homeScore ?? "-"} -{" "}
+              {game.awayScore ?? "-"} {game.awayTeam?.name ?? "TBD"}
+            </Text>
+            <Text
+              className="pt-2 text-sm"
+              style={{ color: theme.textSubtle }}
+            >
+              {formatPlayedAt(game.playedAt)}
+            </Text>
+          </Pressable>
+        ))
+      ) : (
+        <EmptyText>No recent results yet.</EmptyText>
+      )}
+    </Section>
+  );
+
+  if (isTablet) {
+    return (
+      <View className="gap-6">
+        <View className="gap-6">{introContent}</View>
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1">{topScorerContent}</View>
+          <View className="min-w-0 flex-1">{recentResultsContent}</View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-6">
+      {introContent}
+      {topScorerContent}
+      {recentResultsContent}
     </View>
   );
 }
@@ -157,17 +189,22 @@ function initials(name: string): string {
 }
 
 function StatCard({ label, value }: { label: string; value: number }) {
+  const theme = useTheme();
+
   return (
-    <View className="flex-1 rounded-[22px] bg-white/6 px-3 py-4">
+    <View
+      className="flex-1 rounded-[22px] border px-3 py-4"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+    >
       <Text
-        style={{ fontFamily: fonts.bodyBold, color: colors.accent }}
+        style={{ color: theme.accent }}
         className="text-center text-[24px]"
       >
         {value}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-1 text-center text-xs text-white/55"
+        className="pt-1 text-center text-xs"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>
@@ -182,11 +219,13 @@ function Section({
   title: string;
   children: import("react").ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[12px] uppercase tracking-[2px] text-white/55"
+        className="text-[12px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
@@ -196,10 +235,12 @@ function Section({
 }
 
 function EmptyText({ children }: { children: string }) {
+  const theme = useTheme();
+
   return (
     <Text
-      style={{ fontFamily: fonts.body }}
-      className="text-sm text-white/55"
+      className="text-sm"
+      style={{ color: theme.textSubtle }}
     >
       {children}
     </Text>

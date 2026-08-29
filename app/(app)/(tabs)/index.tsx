@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -13,8 +13,12 @@ import {
   View,
 } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { ApiError } from "@/api/errors";
+import { useAuth } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { CountryFlag } from "@/components/ui/CountryFlag";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
@@ -47,9 +51,18 @@ import {
   startOfDay,
   startOfMonth,
 } from "@/home/utils";
+import { acceptInvite } from "@/invite/api";
+import {
+  clearPendingInviteToken,
+  getPendingInviteContext,
+  getPendingInviteToken,
+} from "@/invite/storage";
+import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
+import { useUnreadNotificationCount } from "@/notifications";
+import { useOwnPlayerProfile } from "@/player";
 import { StatusBar } from "expo-status-bar";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 import useRefresh from "hooks/useRefresh";
 
@@ -70,10 +83,17 @@ function isFavoriteLeagueEntry(item: MatchFeedItem): item is FavoriteLeagueEntry
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const queryClient = useQueryClient();
   const { isOnline } = useNetworkStatus();
+  const { user } = useAuth();
+  const unreadNotificationsQuery = useUnreadNotificationCount(Boolean(user));
+  const unreadNotificationCount = unreadNotificationsQuery.data ?? 0;
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
   const today = useMemo(() => startOfDay(new Date()), []);
-
+  const insets = useSafeAreaInsets();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
   const [activeTab, setActiveTab] = useState<FeedTab>("matches");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -81,6 +101,24 @@ export default function HomeScreen() {
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [selectedDateOffset, setSelectedDateOffset] = useState(0);
   const [liveOnly, setLiveOnly] = useState(false);
+  const [pendingInvite, setPendingInvite] = useState<{
+    token: string;
+    leagueName?: string;
+    teamName?: string;
+  } | null>(null);
+  const ownProfileQuery = useOwnPlayerProfile(Boolean(user));
+  const canSafelyVerifyPendingInvite =
+    Boolean(user && pendingInvite?.token) &&
+    ownProfileQuery.data?.kind === "missing";
+  const pendingInviteQuery = useQuery({
+    queryKey: ["invite", "pending", pendingInvite?.token],
+    queryFn: () => acceptInvite(pendingInvite!.token),
+    enabled: canSafelyVerifyPendingInvite,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+  const showPendingInviteBanner =
+    pendingInviteQuery.data?.requiresProfile === true;
 
   const selectedDate = getDateMeta(today, selectedDateOffset);
   const calendarCells = buildCalendarCells(calendarMonth);
@@ -101,8 +139,14 @@ export default function HomeScreen() {
     error: leagueResponseErr,
     refetch: refetchLeagueResponse,
   } = useLeaguesByCountry(leagueParams);
-  const matches = leagueResponse?.matches ?? [];
-  const leagues = leagueResponse?.leagues ?? [];
+  const matches = useMemo(
+    () => leagueResponse?.matches ?? [],
+    [leagueResponse?.matches],
+  );
+  const leagues = useMemo(
+    () => leagueResponse?.leagues ?? [],
+    [leagueResponse?.leagues],
+  );
   const feedErrorMessage = leagueResponseError
     ? messageFromThrown(leagueResponseErr)
     : undefined;
@@ -155,6 +199,26 @@ export default function HomeScreen() {
   const [refreshing, onRefresh] = useRefresh([
     refetchLeagueResponse,
   ]);
+
+  useEffect(() => {
+    void (async () => {
+      const token = await getPendingInviteToken();
+      if (!token) {
+        setPendingInvite(null);
+        return;
+      }
+      const context = await getPendingInviteContext();
+      setPendingInvite({ token, ...context });
+    })();
+  }, []);
+
+  useEffect(() => {
+    const error = pendingInviteQuery.error;
+    if (!(error instanceof ApiError)) return;
+    if (error.status === 403 || error.status === 404 || error.status === 409) {
+      void clearPendingInviteToken().then(() => setPendingInvite(null));
+    }
+  }, [pendingInviteQuery.error]);
   useEffect(() => {
     if (!isOnline) return;
     const prevParams = resolveLeaguesParams({
@@ -181,33 +245,51 @@ export default function HomeScreen() {
   const feedControls = (
     <>
       <Animated.View entering={FadeInDown.delay(80).duration(350)}>
-        <View className="rounded-[13px] bg-[#F5F1FA] p-1.5">
+        <View
+          className="rounded-[13px] p-1.5"
+          style={{ backgroundColor: theme.brandMuted }}
+        >
           <View className="flex-row gap-2">
             <SegmentButton
               label="Matches"
               active={activeTab === "matches"}
-              onPress={() => setActiveTab("matches")}
+              onPress={() => {
+                if (activeTab === "matches") return;
+                setActiveTab("matches");
+                posthog?.capture("home_segment_changed", { segment: "matches" });
+              }}
             />
             <SegmentButton
               label="Leagues"
               active={activeTab === "leagues"}
-              onPress={() => setActiveTab("leagues")}
+              onPress={() => {
+                if (activeTab === "leagues") return;
+                setActiveTab("leagues");
+                posthog?.capture("home_segment_changed", { segment: "leagues" });
+              }}
             />
           </View>
         </View>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(140).duration(350)}>
-        <View className="gap-3 rounded-[13px] border border-neutral-200 bg-white p-2">
+        <View
+          className="gap-3 rounded-[13px] border p-2"
+          style={{
+            backgroundColor: theme.card,
+            borderColor: theme.cardBorder,
+          }}
+        >
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={() => setFiltersOpen(true)}
-              className="h-12 flex-row items-center gap-1.5 rounded-[13px] bg-neutral-100 px-3 active:opacity-85"
+              className="h-12 flex-row items-center gap-1.5 rounded-[13px] px-3 active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="options-outline" size={18} color={colors.brand} />
+              <Ionicons name="options-outline" size={18} color={theme.brand} />
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-neutral-900"
+                className="text-sm"
+                style={{ color: theme.text }}
               >
                 {selectedCountry ? selectedCountry.name : "Filters"}
               </Text>
@@ -215,129 +297,195 @@ export default function HomeScreen() {
 
             {activeTab === "matches" ? (
               <Pressable
-                onPress={() => setLiveOnly((v) => !v)}
+                onPress={() => {
+                  setLiveOnly((v) => {
+                    const next = !v;
+                    posthog?.capture("home_live_filter_toggled", {
+                      live_only: next,
+                    });
+                    return next;
+                  });
+                }}
                 className={[
                   "h-12 flex-row items-center gap-1.5 rounded-[13px] px-3",
-                  liveOnly ? "border border-[#ba0c2f]" : "bg-neutral-100",
+                  liveOnly ? "border border-[#ba0c2f]" : "",
                 ].join(" ")}
+                style={{ backgroundColor: liveOnly ? "transparent" : theme.cardMuted }}
               >
                 <PulsingDot size={6} color="#ba0c2f" />
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
                   className="text-sm text-[#ba0c2f]"
                 >
                   Live
                 </Text>
               </Pressable>
             ) : null}
-
             {activeTab === "matches" ? (
               <View
-                style={styles.dateControl}
-                className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] bg-neutral-100 px-2"
+                className="h-12 min-w-0 flex-1 flex-row items-center gap-1 rounded-[13px] px-2"
+                style={[styles.dateControl, { backgroundColor: theme.cardMuted }]}
               >
                 <Pressable
                   onPress={() => cycleDate(-1)}
-                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                  className="h-10 w-10 items-center justify-center rounded-full active:opacity-85"
                 >
-                  <Ionicons name="chevron-back" size={18} color={colors.brand} />
+                  <Ionicons name="chevron-back" size={18} color={theme.brand} />
                 </Pressable>
                 <Pressable
                   onPress={() => {
                     setCalendarMonth(startOfMonth(selectedDate.date));
                     setCalendarOpen(true);
                   }}
-                  className="flex-1 items-center rounded-[10px] px-1 py-1 active:bg-white"
+                  className="flex-1 items-center rounded-[10px] px-1 py-1 active:opacity-85"
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodyBold }}
-                    className="text-sm text-neutral-950"
+                    className="text-sm"
+                    style={{ color: theme.text }}
                   >
                     {selectedDate.displayLabel}
                   </Text>
                 </Pressable>
                 <Pressable
                   onPress={() => cycleDate(1)}
-                  className="h-10 w-10 items-center justify-center rounded-full active:bg-white"
+                  className="h-10 w-10 items-center justify-center rounded-full active:opacity-85"
                 >
-                  <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+                  <Ionicons name="chevron-forward" size={18} color={theme.brand} />
                 </Pressable>
               </View>
             ) : null}
           </View>
         </View>
       </Animated.View>
+      {showPendingInviteBanner && pendingInvite ? (
+        <PendingInviteBanner
+          leagueName={pendingInvite.leagueName}
+          teamName={pendingInvite.teamName}
+          onPress={() => router.push("/join/create-profile")}
+        />
+      ) : null}
     </>
+  );
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
+
+  const renderFeedControls = (
+    <View className="w-full gap-5" style={tabletFrameStyle}>
+      {feedControls}
+    </View>
   );
 
   const matchListEmpty = () => {
     if (leagueResponseError) {
       return (
-        <ErrorState
-          message={feedErrorMessage}
-          onRetry={() => refetchLeagueResponse()}
-        />
+        <View className="w-full" style={tabletFrameStyle}>
+          <ErrorState
+            message={feedErrorMessage}
+            onRetry={() => refetchLeagueResponse()}
+          />
+        </View>
       );
     }
     if (leagueResponseLoading && matches.length === 0) {
       return (
-        <View className="items-center py-10">
+        <View className="w-full items-center py-10" style={tabletFrameStyle}>
           <ActivityIndicator color={colors.brand} />
         </View>
       );
     }
     if (matches.length === 0) {
       return (
-        <EmptyState
-          title={matchesEmptyCopy.title}
-          body={matchesEmptyCopy.body}
-        />
+        <View className="w-full py-5" style={tabletFrameStyle}>
+          <EmptyState
+            title={matchesEmptyCopy.title}
+            body={matchesEmptyCopy.body}
+          />
+        </View>
       );
     }
     return null;
   };
 
   return (
-    <View className="flex-1 bg-[#121212]">
-       <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+       <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
         <OfflineBanner />
 
         {/*<View className="relative overflow-hidden bg-[#121212] px-5 pb-8 pt-4">*/}
           <BlackPatternBackground
-            baseColor={scoreboardPattern().baseColor}
-            stripeColor={scoreboardPattern().stripeColor}
+            baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+            stripeColor={isDark ? scoreboardPattern().stripeColor : theme.patternStripe}
+          />
+          <View
+            className="absolute inset-0"
+            pointerEvents="none"
+            style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.68)" }}
           />
 
-          <Animated.View entering={FadeInDown.duration(350)} className="gap-6  px-5 pb-8 pt-4">
+          <Animated.View
+            entering={FadeInDown.duration(350)}
+            className="relative gap-6 px-5 pb-5 pt-4"
+            style={tabletFrameStyle}
+          >
             <View className="flex-row items-center gap-3">
               <View className="shrink-0">
-                <Logo variant="full" color={colors.accent} fontSize={18} lineHeight={25} />
+                <Logo variant="image" fontSize={18} lineHeight={25} />
               </View>
 
               <Pressable
                 onPress={() => router.push("/search")}
                 accessibilityRole="search"
                 accessibilityLabel="Search players, countries, leagues, teams"
-                className="flex-1 flex-row items-center gap-2 rounded-2xl border border-white/10 bg-white/8 px-4 py-3 active:opacity-80"
+                className="flex-1 flex-row items-center gap-2 rounded-2xl border px-4 py-3 active:opacity-80"
+                style={{
+                  backgroundColor: isDark ? "rgba(255,255,255,0.08)" : theme.card,
+                  borderColor: theme.cardBorder,
+                }}
               >
-                <Ionicons name="search-outline" size={14} color="#FFFFFF" />
-                <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm text-white/55">
+                <Ionicons name="search-outline" size={14} color={theme.accent} />
+                <Text className="flex-1 text-sm" style={{ color: theme.textSubtle }}>
                   Players, leagues, teams
                 </Text>
               </Pressable>
 
-              <View className="items-end gap-2 pt-1">
+              <View className="flex-row items-center gap-2 pt-1">
+                <Pressable
+                  onPress={() => router.push("/notifications")}
+                  className="relative h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    unreadNotificationCount > 0
+                      ? `${unreadNotificationCount} unread notifications`
+                      : "Notifications"
+                  }
+                >
+                  <Ionicons name="notifications-outline" size={20} color={theme.text} />
+                  {unreadNotificationCount > 0 ? (
+                    <View
+                      className="absolute -right-0.5 -top-0.5 min-h-5 min-w-5 items-center justify-center rounded-full border px-1"
+                      style={{
+                        backgroundColor: theme.accent,
+                        borderColor: theme.background,
+                      }}
+                    >
+                      <Text className="text-[10px]" style={{ color: colors.darkLabel }}>
+                        {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
+                      </Text>
+                    </View>
+                  ) : null}
+                </Pressable>
                 <Pressable
                   onPress={() => router.push("/profile")}
-                  className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+                  className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+                  style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
                   accessibilityRole="button"
                   accessibilityLabel="Profile and settings"
                 >
-                  <Ionicons name="person-outline" size={20} color="#FFFFFF" />
+                  <Ionicons name="person-outline" size={20} color={theme.text} />
                 </Pressable>
                 {/* <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
                   className="text-xs uppercase tracking-[2px] text-white/45"
                 >
                   {selectedDate.shortDate}
@@ -349,8 +497,15 @@ export default function HomeScreen() {
 
         {activeTab === "matches" ? (
           <SectionList<MatchFeedItem, MatchFeedSection>
-            className="flex-1 bg-white"
+            className="flex-1"
+            style={{ backgroundColor: theme.background }}
+            ListHeaderComponentStyle={
+              isTablet ? styles.tabletListCell : undefined
+            }
             contentContainerClassName="px-5 pb-32 pt-5"
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 90,
+            }}
             showsVerticalScrollIndicator={false}
             stickySectionHeadersEnabled={false}
             sections={showMatchFeedList ? matchSections : []}
@@ -358,10 +513,10 @@ export default function HomeScreen() {
               isFavoriteLeagueEntry(item) ? item.key : String(item.id ?? index)
             }
             renderSectionHeader={({ section }) => (
-              <View className="pb-2 pt-4">
+              <View className="w-full pb-2 pt-4" style={tabletFrameStyle}>
                 <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-xs uppercase tracking-[1.5px] text-slate-500"
+                  className="text-xs uppercase tracking-[1.5px]"
+                  style={{ color: theme.textSubtle }}
                 >
                   {section.title}
                 </Text>
@@ -372,30 +527,45 @@ export default function HomeScreen() {
                 return null;
               }
               return (
-                <View className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                <View
+                  className="w-full rounded-2xl border px-4 py-3"
+                  style={[
+                    tabletFrameStyle,
+                    {
+                      backgroundColor: theme.cardMuted,
+                      borderColor: theme.cardBorder,
+                    },
+                  ]}
+                >
                   <Text
-                    style={{ fontFamily: fonts.body }}
-                    className="text-sm leading-5 text-slate-600"
+                    className="text-sm leading-5"
+                    style={{ color: theme.textMuted }}
                   >
-                    No favourite leagues yet — tap the heart on a league to pin it here.
+                    No favourite leagues yet - tap the heart on a league to pin it here.
                   </Text>
                 </View>
               );
             }}
             renderItem={({ item, section }) => {
               if (section.key === "favourites" && isFavoriteLeagueEntry(item)) {
-                return <FavoriteLeagueCard entry={item} params={leagueParams} />;
+                return (
+                  <View className="w-full" style={tabletFrameStyle}>
+                    <FavoriteLeagueCard entry={item} params={leagueParams} />
+                  </View>
+                );
               }
               return (
-                <CountryAccordion
-                  entry={item as ApiCountryWithLeagues}
-                  defaultOpen={false}
-                  params={leagueParams}
-                />
+                <View className="w-full" style={tabletFrameStyle}>
+                  <CountryAccordion
+                    entry={item as ApiCountryWithLeagues}
+                    defaultOpen={false}
+                    params={leagueParams}
+                  />
+                </View>
               );
             }}
             ItemSeparatorComponent={() => <View className="h-4" />}
-            ListHeaderComponent={<View className="gap-5">{feedControls}</View>}
+            ListHeaderComponent={renderFeedControls}
             ListEmptyComponent={matchListEmpty}
             refreshControl={
               <RefreshControl
@@ -408,8 +578,10 @@ export default function HomeScreen() {
           />
         ) : (
         <ScrollView
-          className="flex-1 bg-white"
+          className="flex-1"
+          style={{ backgroundColor: theme.background }}
           contentContainerClassName="gap-5 px-5 pb-32 pt-5"
+          contentContainerStyle={isTablet ? { alignItems: "center" } : undefined}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -420,9 +592,13 @@ export default function HomeScreen() {
             />
           }
         >
-          {feedControls}
+          {renderFeedControls}
 
-          <Animated.View entering={FadeInDown.delay(200).duration(350)} className="gap-4">
+          <Animated.View
+            entering={FadeInDown.delay(200).duration(350)}
+            className={isTablet ? "flex-row flex-wrap gap-4" : "gap-4"}
+            style={tabletFrameStyle}
+          >
               {leagueResponseError ? (
                 <ErrorState
                   message={feedErrorMessage}
@@ -434,7 +610,12 @@ export default function HomeScreen() {
                 </View>
               ) : (leagues ?? []).length ? (
                 (leagues ?? []).map((entry, index) => (
-                  <LeagueDirectoryRow key={entry.id} entry={entry} defaultOpen={index === 0} />
+                  <View
+                    key={entry.id}
+                    style={isTablet ? { width: "48%" } : undefined}
+                  >
+                    <LeagueDirectoryRow entry={entry} defaultOpen={index === 0} />
+                  </View>
                 ))
               ) : (
                 <EmptyState
@@ -466,28 +647,27 @@ export default function HomeScreen() {
             setSelectedCountry(null);
             setFiltersOpen(false);
           }}
-          className={[
-            "flex-row items-center justify-between rounded-2xl px-4 py-4",
-            selectedCountry === null ? "bg-[#F3E8FF]" : "bg-neutral-50",
-          ].join(" ")}
+          className="flex-row items-center justify-between rounded-2xl px-4 py-4"
+          style={{
+            backgroundColor: selectedCountry === null ? theme.brandMuted : theme.cardMuted,
+          }}
         >
           <View className="flex-row items-center gap-3">
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <Ionicons name="globe-outline" size={17} color={colors.brand} />
+            <View
+              className="h-8 w-8 items-center justify-center rounded-full"
+              style={{ backgroundColor: theme.card }}
+            >
+              <Ionicons name="globe-outline" size={17} color={theme.brand} />
             </View>
             <Text
-              style={{
-                fontFamily: selectedCountry === null ? fonts.bodyBold : fonts.bodySemibold,
-              }}
-              className={
-                selectedCountry === null ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"
-              }
+              className="text-sm"
+              style={{ color: selectedCountry === null ? theme.brand : theme.text }}
             >
               All Countries
             </Text>
           </View>
           {selectedCountry === null ? (
-            <Ionicons name="checkmark-circle" size={20} color={colors.brand} />
+            <Ionicons name="checkmark-circle" size={20} color={theme.brand} />
           ) : null}
         </Pressable>
 
@@ -500,24 +680,27 @@ export default function HomeScreen() {
                 setSelectedCountry(option);
                 setFiltersOpen(false);
               }}
-              className={[
-                "flex-row items-center justify-between rounded-2xl px-4 py-4",
-                selected ? "bg-[#F3E8FF]" : "bg-neutral-50",
-              ].join(" ")}
+              className="flex-row items-center justify-between rounded-2xl px-4 py-4"
+              style={{
+                backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+              }}
             >
               <View className="flex-row items-center gap-3">
-                <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
+                <View
+                  className="h-8 w-8 items-center justify-center rounded-full"
+                  style={{ backgroundColor: theme.card }}
+                >
                   <CountryFlag code={option.code} width={22} />
                 </View>
-                <Text
-                  style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
-                  className={selected ? "text-sm text-[#4A148C]" : "text-sm text-neutral-800"}
+                <Text 
+                  className="text-sm"
+                  style={{ color: selected ? theme.brand : theme.text }}
                 >
                   {option.name}
                 </Text>
               </View>
               {selected ? (
-                <Ionicons name="checkmark-circle" size={20} color={colors.brand} />
+                <Ionicons name="checkmark-circle" size={20} color={theme.brand} />
               ) : null}
             </Pressable>
           );
@@ -534,18 +717,20 @@ export default function HomeScreen() {
           <View className="flex-row items-center justify-between">
             <Pressable
               onPress={() => setCalendarMonth((current) => addMonths(current, -1))}
-              className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="chevron-back" size={18} color={colors.brand} />
+              <Ionicons name="chevron-back" size={18} color={theme.brand} />
             </Pressable>
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
+            <Text className="text-base" style={{ color: theme.text }}>
               {calendar.monthLabelFormat.format(calendarMonth)}
             </Text>
             <Pressable
               onPress={() => setCalendarMonth((current) => addMonths(current, 1))}
-              className="h-11 w-11 items-center justify-center rounded-full bg-neutral-100 active:bg-neutral-200"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
-              <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+              <Ionicons name="chevron-forward" size={18} color={theme.brand} />
             </Pressable>
           </View>
 
@@ -553,8 +738,8 @@ export default function HomeScreen() {
             {calendar.weekdayLabels.map((day, index) => (
               <Text
                 key={`${day}-${index}`}
-                style={{ fontFamily: fonts.bodyBold }}
-                className="w-10 text-center text-xs uppercase tracking-[1.5px] text-slate-400"
+                className="w-10 text-center text-xs uppercase tracking-[1.5px]"
+                style={{ color: theme.textSubtle }}
               >
                 {day}
               </Text>
@@ -583,25 +768,31 @@ export default function HomeScreen() {
                       setSelectedDateOffset(dayOffset(today, cell));
                       setCalendarOpen(false);
                     }}
-                    className={[
-                      "items-center rounded-2xl py-3",
-                      selected ? "bg-[#4A148C]" : "bg-neutral-50",
-                    ].join(" ")}
+                    className="items-center rounded-2xl py-3"
+                    style={{
+                      backgroundColor: selected ? theme.brand : theme.cardMuted,
+                    }}
                   >
                     <Text
-                      style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
-                      className={selected ? "text-sm text-white" : "text-sm text-neutral-900"}
+                      className="text-sm"
+                      style={{ color: selected ? theme.textInverse : theme.text }}
                     >
                       {cell.getDate()}
                     </Text>
                     <Text
-                      style={{ fontFamily: fonts.body }}
                       className={
                         selected
-                          ? "pt-1 text-[10px] text-white/70"
+                          ? "pt-1 text-[10px]"
                           : isToday
-                            ? "pt-1 text-[10px] text-[#4A148C]"
+                            ? "pt-1 text-[10px]"
                             : "pt-1 text-[10px] text-transparent"
+                      }
+                      style={
+                        selected
+                          ? { color: theme.textInverse }
+                          : isToday
+                            ? { color: theme.brand }
+                            : undefined
                       }
                     >
                       {isToday ? "Today" : " "}
@@ -617,9 +808,63 @@ export default function HomeScreen() {
   );
 }
 
+function PendingInviteBanner({
+  leagueName,
+  teamName,
+  onPress,
+}: {
+  leagueName?: string;
+  teamName?: string;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  const target = [teamName, leagueName].filter(Boolean).join(" · ");
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-[16px] border px-4 py-4 active:opacity-85"
+      style={{
+        backgroundColor: theme.accentMuted,
+        borderColor: theme.accent,
+      }}
+      accessibilityRole="button"
+      accessibilityLabel="Complete invite"
+    >
+      <View
+        className="h-10 w-10 items-center justify-center rounded-full"
+        style={{ backgroundColor: theme.brand }}
+      >
+        <Ionicons name="mail-unread-outline" size={19} color={theme.accent} />
+      </View>
+      <View className="min-w-0 flex-1 gap-0.5">
+        <Text
+          className="text-sm"
+          style={{ color: theme.text }}
+        >
+          Finish your invite
+        </Text>
+        <Text
+          className="text-xs leading-5"
+          style={{ color: theme.textMuted }}
+          numberOfLines={2}
+        >
+          {target
+            ? `Create your player profile to join ${target}.`
+            : "Create your player profile to join this league."}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={theme.brand} />
+    </Pressable>
+  );
+}
+
 
 
 const styles = StyleSheet.create({
   calendarCell: { width: "14.2857%" },
   dateControl: { flex: 1.35 },
+  tabletListCell: {
+    width: "100%",
+    alignItems: "center",
+  },
 });

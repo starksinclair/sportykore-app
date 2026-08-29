@@ -1,5 +1,5 @@
 import * as LocalAuthentication from "expo-local-authentication";
-import { Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 
 /**
  * Client-only gate before league admin screens. Per product rules, skips when
@@ -18,15 +18,42 @@ export async function promptBiometricGate(): Promise<boolean> {
       return true;
     }
 
+    const confirmed = await confirmManageUnlock();
+    if (!confirmed) {
+      return false;
+    }
+
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: "Unlock league management",
+      promptMessage: "Unlock SportyKore manage tools",
       cancelLabel: "Cancel",
+      fallbackLabel: "Use device passcode",
       disableDeviceFallback: false,
     });
     return result.success;
   } catch {
-    // Native module missing (dev client not rebuilt) — allow through so manage
+    // Native module missing (dev client not rebuilt) - allow through so manage
     // remains usable until a fresh build includes expo-local-authentication.
     return true;
   }
+}
+
+function confirmManageUnlock(): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value: boolean) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+
+    Alert.alert(
+      "Protect league management",
+      "SportyKore asks for your device unlock before opening admin tools so league changes stay protected on shared phones.",
+      [
+        { text: "Not now", style: "cancel", onPress: () => finish(false) },
+        { text: "Continue", onPress: () => finish(true) },
+      ],
+      { cancelable: true, onDismiss: () => finish(false) },
+    );
+  });
 }

@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nzenwata.sportykore-app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "SportyKore uses your location while you set or view venue pins on the map for fixtures and league venues."
       }
     },
     "android": {
@@ -26,7 +27,8 @@
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "pan",
       "usesCleartextTraffic": true,
-      "package": "com.nzenwata.sportykoreapp"
+      "package": "com.nzenwata.sportykoreapp",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
@@ -51,6 +53,24 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow SportyKore to access your photos for your player profile picture."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keepattributes SourceFile,LineNumberTable\n-keepattributes *Annotation*"
+          }
+        }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "sportykore"
         }
       ]
     ],

@@ -3,23 +3,24 @@ import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useRecoverAccount } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
 import { colors } from "@/constants";
 import { showErrorToast, showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 export default function RecoverAccountScreen() {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const recoverMutation = useRecoverAccount();
   const [recoveryEmail, setRecoveryEmail] = useState("");
 
@@ -42,31 +43,39 @@ export default function RecoverAccountScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
-      <StatusBar style="dark" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
+    <SafeAreaView
+      className="flex-1"
+      edges={["top", "bottom"]}
+      style={{ backgroundColor: theme.background }}
+    >
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <KeyboardAwareScrollView
+        bottomOffset={24}
+        style={{ flex: 1 }}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          gap: 24,
+          paddingHorizontal: 24,
+          paddingBottom: 48,
+          paddingTop: 8,
+        }}
+        showsVerticalScrollIndicator={false}
       >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerClassName="gap-6 px-6 pb-12 pt-2"
-          showsVerticalScrollIndicator={false}
-        >
           <Pressable
             accessibilityLabel="Back"
             hitSlop={12}
             onPress={() => (router.canGoBack() ? router.back() : router.replace("/login"))}
-            className="h-11 w-11 items-center justify-center self-start rounded-full bg-neutral-100 active:bg-neutral-200"
+            className="h-11 w-11 items-center justify-center self-start rounded-full active:opacity-80"
+            style={{ backgroundColor: theme.brandMuted }}
           >
-            <Ionicons name="chevron-back" size={22} color="#111827" />
+            <Ionicons name="chevron-back" size={22} color={theme.text} />
           </Pressable>
 
           <View className="gap-2">
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-2xl text-neutral-950">
+            <Text className="text-2xl" style={{ color: theme.text }}>
               Recover account
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
+            <Text className="text-sm leading-6" style={{ color: theme.textMuted }}>
               Enter the recovery email you set on your account. We will send a sign-in code to your
               primary email address.
             </Text>
@@ -90,8 +99,7 @@ export default function RecoverAccountScreen() {
             loading={recoverMutation.isPending}
             onPress={onSubmit}
           />
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

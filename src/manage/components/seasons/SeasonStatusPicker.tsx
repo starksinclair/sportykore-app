@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from "react-native";
 
 import type { SeasonStatus } from "@/api/entities";
-import { fonts } from "@/theme/fonts";
+import { useTheme } from "@/color/use-theme";
 
 import { SeasonStatusEnum } from "../../types";
 
@@ -18,11 +18,13 @@ type Props = {
 };
 
 export function SeasonStatusPicker({ label, value, onChange }: Props) {
+  const theme = useTheme();
+
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-xs uppercase tracking-wide text-white/45"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
@@ -33,13 +35,14 @@ export function SeasonStatusPicker({ label, value, onChange }: Props) {
             <Pressable
               key={status}
               onPress={() => onChange(status)}
-              className={`rounded-xl border px-3 py-2 capitalize ${
-                active ? "border-accent-400 bg-accent-500/20" : "border-white/15 bg-white/5"
-              }`}
+              className="rounded-xl border px-3 py-2 capitalize active:opacity-85"
+              style={{
+                backgroundColor: active ? theme.accentMuted : theme.cardMuted,
+                borderColor: active ? theme.accent : theme.cardBorder,
+              }}
             >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className={active ? "text-accent-300" : "text-white/70"}
+                style={{ color: active ? theme.accent : theme.textSubtle }}
               >
                 {status}
               </Text>

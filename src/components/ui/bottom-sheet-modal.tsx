@@ -1,16 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type ReactNode } from "react";
 import {
+  Keyboard,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
+  type StyleProp,
   Text,
   View,
+  type ViewStyle,
 } from "react-native";
+import {
+  KeyboardAvoidingView,
+  KeyboardAwareScrollView,
+} from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { fonts } from "@/theme/fonts";
+import { useTheme } from "@/color/use-theme";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 
 type BottomSheetModalProps = {
   visible: boolean;
@@ -19,6 +26,12 @@ type BottomSheetModalProps = {
   subtitle?: string;
   children: ReactNode;
   variant?: "light" | "dark";
+  /**
+   * When false, children render in a plain View instead of ScrollView.
+   * Use this when embedding a VirtualizedList (e.g. Places autocomplete).
+   */
+  scrollEnabled?: boolean;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 };
 
 export function BottomSheetModal({
@@ -28,60 +41,106 @@ export function BottomSheetModal({
   subtitle,
   children,
   variant = "light",
+  scrollEnabled = true,
+  contentContainerStyle,
 }: BottomSheetModalProps) {
-  const isDark = variant === "dark";
+  const forceDark = variant === "dark";
+  const theme = useTheme();
+  const { isTablet } = useAdaptiveLayout();
+  const sheetBackgroundColor = forceDark ? "#121212" : theme.surfaceRaised;
+  const sheetBorderColor = forceDark ? "rgba(255,255,255,0.08)" : theme.cardBorder;
+  const handleColor = forceDark ? "rgba(255,255,255,0.2)" : theme.inputBorder;
+  const titleColor = forceDark ? "#FFFFFF" : theme.text;
+  const subtitleColor = forceDark ? "rgba(255,255,255,0.55)" : theme.textMuted;
+  const closeButtonBackground = forceDark
+    ? "rgba(255,255,255,0.08)"
+    : theme.cardMuted;
+  const closeIconColor = forceDark ? "#F9FAFB" : theme.text;
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
+
   return (
     <Modal
       transparent
       visible={visible}
       animationType="slide"
       statusBarTranslucent
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View style={styles.root}>
-        <Pressable style={styles.scrim} onPress={onClose} />
-        <SafeAreaView edges={["bottom"]} style={styles.safeArea}>
-          <View style={[styles.sheet, isDark && styles.sheetDark]}>
-            <View style={[styles.handle, isDark && styles.handleDark]} />
-            <View style={styles.header}>
-              <View style={styles.headerCopy}>
-                <Text
-                  style={[
-                    styles.title,
-                    isDark && styles.titleDark,
-                    { fontFamily: fonts.bodyBold },
-                  ]}
-                >
-                  {title}
-                </Text>
-                {subtitle ? (
-                  <Text
-                    style={[
-                      styles.subtitle,
-                      isDark && styles.subtitleDark,
-                      { fontFamily: fonts.body },
-                    ]}
-                  >
-                    {subtitle}
-                  </Text>
-                ) : null}
-              </View>
-              <Pressable
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close modal"
-                style={[styles.closeButton, isDark && styles.closeButtonDark]}
-              >
-                <Ionicons name="close" size={20} color={isDark ? "#F9FAFB" : "#111827"} />
-              </Pressable>
-            </View>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.content}
+      <View style={[styles.root, isTablet && styles.rootTablet]}>
+        <Pressable style={styles.scrim} onPress={handleClose} />
+        <SafeAreaView
+          edges={isTablet ? ["top", "bottom", "left", "right"] : ["bottom"]}
+          style={[styles.safeArea, isTablet && styles.safeAreaTablet]}
+        >
+          <KeyboardAvoidingView
+            behavior="padding"
+            style={[styles.keyboardAvoiding, isTablet && styles.keyboardAvoidingTablet]}
+          >
+            <View
+              style={[
+                styles.sheet,
+                {
+                  backgroundColor: sheetBackgroundColor,
+                  borderColor: sheetBorderColor,
+                  borderTopWidth: 1,
+                },
+                isTablet && styles.sheetTablet,
+              ]}
             >
-              {children}
-            </ScrollView>
-          </View>
+              <View style={[styles.handle, { backgroundColor: handleColor }]} />
+              <View style={styles.header}>
+                <View style={styles.headerCopy}>
+	                  <Text
+	                    style={[
+	                      styles.title,
+	                      { color: titleColor },
+	                    ]}
+                    numberOfLines={2}
+                  >
+                    {title}
+                  </Text>
+                  {subtitle ? (
+	                    <Text
+	                      style={[
+	                        styles.subtitle,
+	                        { color: subtitleColor },
+	                      ]}
+                      numberOfLines={3}
+                    >
+                      {subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+                <Pressable
+                  onPress={handleClose}
+	                  accessibilityRole="button"
+	                  accessibilityLabel="Close modal"
+	                  style={[
+                      styles.closeButton,
+                      { backgroundColor: closeButtonBackground },
+                    ]}
+	                >
+	                  <Ionicons name="close" size={20} color={closeIconColor} />
+	                </Pressable>
+              </View>
+              {scrollEnabled ? (
+                <KeyboardAwareScrollView
+                  bottomOffset={24}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  keyboardDismissMode="interactive"
+                  contentContainerStyle={[styles.content, contentContainerStyle]}
+                >
+                  {children}
+                </KeyboardAwareScrollView>
+              ) : (
+                <View style={[styles.content, contentContainerStyle]}>{children}</View>
+              )}
+            </View>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
     </Modal>
@@ -94,20 +153,44 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "rgba(0,0,0,0.28)",
   },
+  rootTablet: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+  },
   scrim: {
     ...StyleSheet.absoluteFillObject,
   },
   safeArea: {
     justifyContent: "flex-end",
   },
+  safeAreaTablet: {
+    width: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  keyboardAvoiding: {
+    width: "100%",
+  },
+  keyboardAvoidingTablet: {
+    maxWidth: 720,
+  },
   sheet: {
-    maxHeight: "72%",
+    maxHeight: "97%",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 8,
+  },
+  sheetTablet: {
+    width: "100%",
+    maxHeight: "88%",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 12,
   },
   handle: {
     alignSelf: "center",
@@ -121,11 +204,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 16,
+    gap: 10,
     marginBottom: 12,
   },
   headerCopy: {
     flex: 1,
+    minWidth: 0,
     gap: 4,
   },
   title: {
@@ -138,8 +222,8 @@ const styles = StyleSheet.create({
     color: "#6B7280",
   },
   closeButton: {
-    height: 40,
-    width: 40,
+    height: 36,
+    width: 36,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 999,

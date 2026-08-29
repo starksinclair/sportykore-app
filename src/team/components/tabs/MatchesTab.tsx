@@ -3,10 +3,10 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiGame, ApiTeam, ApiTeamSeason } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
-import { formatPlayedAt } from "@/lib/datetime";
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
-import { fonts } from "@/theme/fonts";
+import { formatPlayedAt } from "@/lib/datetime";
 
 type Props = {
   team: ApiTeam;
@@ -14,6 +14,7 @@ type Props = {
 };
 
 export function TeamMatchesTab({ team, season }: Props) {
+  const theme = useTheme();
   const games = useMemo(
     () =>
       [...(season?.games ?? [])].sort(
@@ -25,10 +26,7 @@ export function TeamMatchesTab({ team, season }: Props) {
 
   if (!season) {
     return (
-      <Text
-        style={{ fontFamily: fonts.body }}
-        className="text-sm text-white/55"
-      >
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         Select a league and season to view fixtures.
       </Text>
     );
@@ -36,10 +34,7 @@ export function TeamMatchesTab({ team, season }: Props) {
 
   if (!games.length) {
     return (
-      <Text
-        style={{ fontFamily: fonts.body }}
-        className="text-sm text-white/55"
-      >
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No fixtures recorded for {season.name} yet.
       </Text>
     );
@@ -56,6 +51,7 @@ export function TeamMatchesTab({ team, season }: Props) {
 
 function TeamMatchRow({ game, team }: { game: ApiGame; team: ApiTeam }) {
   const router = useRouter();
+  const theme = useTheme();
   const phase = useGamePhaseLabel(game);
   const isHome = game.homeTeam?.id === team.id;
   const venue = isHome ? "Home" : "Away";
@@ -63,7 +59,8 @@ function TeamMatchRow({ game, team }: { game: ApiGame; team: ApiTeam }) {
   return (
     <Pressable
       onPress={() => router.push(`/match/${game.id}`)}
-      className="rounded-[22px] bg-white/6 px-4 py-4 active:bg-white/10"
+      className="rounded-[22px] border px-4 py-4 active:opacity-85"
+      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
     >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 gap-1.5">
@@ -74,10 +71,10 @@ function TeamMatchRow({ game, team }: { game: ApiGame; team: ApiTeam }) {
               size="xs"
               tone="dark"
             />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-white">
+            <Text style={{ color: theme.text }}>
               {game.homeTeam?.name ?? "TBD"}
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-white/45">
+            <Text style={{ color: theme.textSubtle }}>
               vs
             </Text>
             <EntityLogo
@@ -87,24 +84,23 @@ function TeamMatchRow({ game, team }: { game: ApiGame; team: ApiTeam }) {
               tone="dark"
             />
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="flex-1 text-white"
+              className="flex-1"
+              style={{ color: theme.text }}
               numberOfLines={1}
             >
               {game.awayTeam?.name ?? "TBD"}
             </Text>
           </View>
           <Text
-            style={{ fontFamily: fonts.body }}
-            className="pt-1 text-xs text-white/55"
+            className="pt-1 text-xs"
+            style={{ color: theme.textSubtle }}
           >
             {venue} · {formatPlayedAt(game.playedAt)} · {phase}
           </Text>
         </View>
         {game.homeScore != null && game.awayScore != null ? (
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[#E6A817]"
+            style={{ color: theme.accent }}
           >
             {game.homeScore}-{game.awayScore}
           </Text>

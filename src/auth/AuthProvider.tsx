@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import * as Sentry from "@sentry/react-native";
 import {
   useCallback,
   useLayoutEffect,
@@ -7,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { posthog } from "@/lib/posthog";
 import { queryClient } from "@/lib/query-client";
 import { showErrorToast } from "@/lib/show-error-toast";
 
@@ -56,6 +58,14 @@ function toPersistedProfile(user: AuthUser): PersistedUserProfile {
   };
 }
 
+function identifyUser(user: AuthUser): void {
+  Sentry.setUser({ id: user.id });
+  posthog?.identify(user.id, {
+    email: user.email,
+    ...(user.name ? { name: user.name } : {}),
+  });
+}
+
 async function persistSessionFromPayload(user: BackendAuthUser, rawTokenValue: string) {
   await setToken(rawTokenValue);
   const mapped = mapBackendUser(user);
@@ -80,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ),
         queryFn: () => fetchLeagues({ gameDate: today }),
       });
+      posthog?.reset();
+      Sentry.setUser(null);
       setUser(null);
       showErrorToast("Session expired", "Please sign in again.");
       router.replace("/login");
@@ -102,7 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         const profileOk = Boolean(profile?.email?.trim() && profile?.id);
         if (token && profileOk && profile) {
-          setUser(mapPersisted(profile));
+          const restoredUser = mapPersisted(profile);
+          identifyUser(restoredUser);
+          setUser(restoredUser);
         } else if (token || profileOk) {
           await clearSessionCredentials();
         }
@@ -123,6 +137,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   >(async ({ email, code }) => {
     const payload = await postVerifyOtp({ email, code });
     const mapped = await persistSessionFromPayload(payload.user, payload.token.value);
+    identifyUser(mapped);
+    posthog?.capture("authentication_completed", {
+      authentication_method: "email_otp",
+    });
     setUser(mapped);
   }, []);
 
@@ -142,6 +160,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await clearSessionCredentials();
     queryClient.clear();
+    posthog?.reset();
+    Sentry.setUser(null);
     setUser(null);
   }, []);
 
@@ -157,13 +177,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     await clearSessionCredentials();
     queryClient.clear();
+    posthog?.reset();
+    Sentry.setUser(null);
     setUser(null);
   }, []);
 
   const completeOnboarding = useCallback<AuthContextValue["completeOnboarding"]>(async () => {
     await setOnboarded(true);
     setHasOnboarded(true);
-    router.replace("/login");
+    router.replace("/(app)/(tabs)");
   }, []);
 
   const deleteOnboardingCompleted = useCallback<

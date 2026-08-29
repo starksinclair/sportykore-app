@@ -8,12 +8,16 @@ import {
   type ViewStyle,
 } from "react-native";
 
-import { fonts } from "@/theme/fonts";
+import { useTheme } from "@/color/use-theme";
+import { FormFieldLabel } from "./form-field-label";
 
 export type AuthTextFieldProps = TextInputProps & {
   label: string;
+  /** Shows a red asterisk next to the label. */
+  required?: boolean;
   /** Renders aligned with the label row (e.g. “Forgot?”). */
   labelAccessory?: ReactNode;
+  labelClassName?: string;
   leftIcon?: ReactNode;
   rightAccessory?: ReactNode;
   containerClassName?: string;
@@ -25,41 +29,52 @@ export const AuthTextField = forwardRef<TextInput, AuthTextFieldProps>(
   function AuthTextField(
     {
       label,
+      required = false,
       labelAccessory,
+      labelClassName,
       leftIcon,
       rightAccessory,
       containerClassName,
       inputRowStyle,
       editable = true,
       className,
+      placeholderTextColor,
+      style,
       ...rest
     },
     ref,
   ) {
+    const theme = useTheme();
+
     return (
       <View className={`gap-1.5 ${containerClassName ?? ""}`}>
         <View className="flex-row items-center justify-between gap-2">
-          <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[11px] uppercase tracking-wider text-slate-500"
-          >
-            {label}
-          </Text>
+          <FormFieldLabel
+            label={label}
+            required={required}
+            className={labelClassName}
+          />
           {labelAccessory}
         </View>
         <View
-          style={[{ backgroundColor: "#F5F5F5" }, inputRowStyle]}
+          style={[
+            {
+              backgroundColor: theme.inputBackground,
+              borderColor: theme.inputBorder,
+            },
+            inputRowStyle,
+          ]}
           className={[
-            "flex-row items-center rounded-2xl border border-transparent px-3.5 py-3",
+            "flex-row items-center rounded-2xl border px-3.5 py-3",
             !editable ? "opacity-55" : "",
           ].join(" ")}
         >
           {leftIcon ? <View className="mr-2.5 opacity-55">{leftIcon}</View> : null}
           <TextInput
             ref={ref}
-            placeholderTextColor="#9CA3AF"
-            className={`min-h-[22px] flex-1 px-0 py-0 text-base text-neutral-950 ${className ?? ""}`}
-            style={{ fontFamily: fonts.body }}
+            placeholderTextColor={placeholderTextColor ?? theme.textSubtle}
+            className={`min-h-[22px] flex-1 px-0 py-0 text-base ${className ?? ""}`}
+            style={[{ color: theme.text }, style]}
             editable={editable}
             {...rest}
           />
@@ -81,7 +96,6 @@ export function AuthAccessoryLink({
   return (
     <Pressable hitSlop={8} onPress={onPress} accessibilityRole="link">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className="text-xs font-semibold text-[#5D2A8E]"
       >
         {label}

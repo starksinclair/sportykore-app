@@ -5,6 +5,7 @@ export function isLiveGameStatus(status: GameStatus): boolean {
     status === "first_half" ||
     status === "second_half" ||
     status === "extra_time" ||
+    status === "penalty_shootout" ||
     status === "half_time" ||
     status === "paused" ||
     status === "live" ||
@@ -18,6 +19,7 @@ export function isActivePlayStatus(status: GameStatus): boolean {
     status === "half_time" ||
     status === "second_half" ||
     status === "extra_time" ||
+    status === "penalty_shootout" ||
     status === "live" ||
     status === "full_time" ||
     status === "completed" ||

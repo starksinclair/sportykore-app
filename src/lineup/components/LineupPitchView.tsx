@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiStat } from "@/api/entities";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { FootballPitch } from "@/lineup/components/FootballPitch";
 import { BadgeCluster, PitchSlot } from "@/lineup/components/PitchSlot";
@@ -11,7 +12,6 @@ import {
   aggregatePlayerMatchBadges,
   slotCoordinates,
 } from "@/lineup/utils";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   group: TeamLineupGroup;
@@ -29,6 +29,7 @@ export function LineupPitchView({
   stats = [],
 }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const isDark = tone === "dark";
   const activeFormation = formation ?? group.formation;
   const coaches = group.team.admins ?? [];
@@ -44,11 +45,6 @@ export function LineupPitchView({
       .map((s) => [s.slotKey as string, s]),
   );
 
-  const mutedLabel = isDark ? "text-xs uppercase text-white/45" : "text-xs uppercase text-neutral-500";
-  const rowBg = isDark ? "bg-white/6" : "bg-neutral-50";
-  const nameColor = isDark ? "text-white" : "text-neutral-900";
-  const accentColor = isDark ? "text-accent-300" : "text-brand-600";
-
   return (
     <View className="gap-4">
       <View className="flex-row items-center gap-2">
@@ -60,15 +56,14 @@ export function LineupPitchView({
         />
         <View className="flex-1">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className={isDark ? "text-white" : "text-neutral-900"}
+            style={{ color: theme.text }}
           >
             {group.team.name}
           </Text>
           {activeFormation ? (
             <Text
-              style={{ fontFamily: fonts.body }}
-              className={isDark ? "text-xs text-white/45" : "text-xs text-neutral-500"}
+              className="text-xs"
+              style={{ color: theme.textSubtle }}
             >
               {activeFormation.displayName || activeFormation.name}
             </Text>
@@ -102,14 +97,12 @@ export function LineupPitchView({
         </FootballPitch>
       ) : (
         <View
-          className={[
-            "items-center rounded-[20px] px-4 py-8",
-            isDark ? "bg-white/5" : "bg-neutral-100",
-          ].join(" ")}
+          className="items-center rounded-[20px] px-4 py-8"
+          style={{ backgroundColor: theme.cardMuted }}
         >
           <Text
-            style={{ fontFamily: fonts.body }}
-            className={isDark ? "text-sm text-white/55" : "text-sm text-neutral-500"}
+            className="text-sm"
+            style={{ color: theme.textSubtle }}
           >
             Formation not set.
           </Text>
@@ -118,7 +111,10 @@ export function LineupPitchView({
 
       {coaches.length > 0 ? (
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.bodyBold }} className={mutedLabel}>
+          <Text
+            className="text-xs uppercase"
+            style={{ color: theme.textSubtle }}
+          >
             {coaches.length === 1 ? "Coach" : "Coaches"}
           </Text>
           {coaches.slice(0, 1).map((admin) => {
@@ -126,23 +122,23 @@ export function LineupPitchView({
             return (
               <View
                 key={admin.id}
-                className={["flex-row items-center gap-3 rounded-xl px-3 py-2.5", rowBg].join(" ")}
+                className="flex-row items-center gap-3 rounded-xl px-3 py-2.5"
+                style={{ backgroundColor: theme.cardMuted }}
               >
-                <Text style={{ fontFamily: fonts.bodyBold }} className={["w-8", accentColor].join(" ")}>
+                <Text className="w-8" style={{ color: theme.accent }}>
                   C
                 </Text>
                 <View className="flex-1">
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className={nameColor}
+                    style={{ color: theme.text }}
                     numberOfLines={1}
                   >
                     {label}
                   </Text>
                   {admin.user?.fullName && admin.user?.email ? (
                     <Text
-                      style={{ fontFamily: fonts.body }}
-                      className={isDark ? "text-xs text-white/45" : "text-xs text-neutral-500"}
+                      className="text-xs"
+                      style={{ color: theme.textSubtle }}
                       numberOfLines={1}
                     >
                       {admin.user.email}
@@ -157,17 +153,18 @@ export function LineupPitchView({
 
       {linkPlayers && group.substitutes.length > 0 ? (
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.bodyBold }} className={mutedLabel}>
+          <Text
+            className="text-xs uppercase"
+            style={{ color: theme.textSubtle }}
+          >
             Substitutes
           </Text>
           {group.substitutes.map((sub) => (
             <Pressable
               key={sub.id}
               onPress={() => router.push(`/player/${sub.playerId}`)}
-              className={[
-                "flex-row items-center gap-3 rounded-xl px-3 py-2.5 active:opacity-80",
-                rowBg,
-              ].join(" ")}
+              className="flex-row items-center gap-3 rounded-xl px-3 py-2.5 active:opacity-80"
+              style={{ backgroundColor: theme.cardMuted }}
             >
               <View className="relative">
                 <EntityLogo
@@ -179,12 +176,12 @@ export function LineupPitchView({
                 />
                 <BadgeCluster badges={badgeByPlayer.get(sub.playerId)} />
               </View>
-              <Text style={{ fontFamily: fonts.bodyBold }} className={["w-8", accentColor].join(" ")}>
-                {sub.jerseyNumber != null ? `#${sub.jerseyNumber}` : "—"}
+                <Text className="w-8" style={{ color: theme.accent }}>
+                {sub.jerseyNumber != null ? `#${sub.jerseyNumber}` : "-"}
               </Text>
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className={["flex-1", nameColor].join(" ")}
+                className="flex-1"
+                style={{ color: theme.text }}
               >
                 {sub.player?.name ?? "Unknown"}
               </Text>

@@ -23,6 +23,7 @@ export async function postRequestOtp(
 ): Promise<OtpSentResponse> {
   return apiRequest<OtpSentResponse>(`${PREFIX}/request-otp`, {
     method: "POST",
+    idempotencyKey: true,
     jsonBody: {
       email: params.email.trim(),
       ...(params.name?.trim() ? { name: params.name.trim() } : {}),
@@ -40,6 +41,7 @@ export async function postVerifyOtp(params: {
 }): Promise<AuthPayload> {
   const body = await apiRequest<WrappedAuthSuccess>(`${PREFIX}/verify-otp`, {
     method: "POST",
+    idempotencyKey: true,
     jsonBody: {
       email: params.email.trim(),
       code: params.code.trim(),
@@ -54,6 +56,7 @@ export async function postRecover(
 ): Promise<OtpSentResponse> {
   return apiRequest<OtpSentResponse>(`${PREFIX}/recover`, {
     method: "POST",
+    idempotencyKey: true,
     jsonBody: { recoveryEmail: recoveryEmail.trim() },
     auth: false,
   });
@@ -64,6 +67,7 @@ export async function postLogout(): Promise<void> {
     method: "POST",
     auth: true,
     muteGlobalUnauthorized: true,
+    idempotencyKey: true,
   });
 }
 
@@ -75,5 +79,6 @@ export async function deleteAccount(): Promise<DeleteAccountResponse> {
   return apiRequest<DeleteAccountResponse>(`${PREFIX}/account`, {
     method: "DELETE",
     auth: true,
+    idempotencyKey: true,
   });
 }

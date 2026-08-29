@@ -1,13 +1,12 @@
 import { Text, View } from "react-native";
 
+import { PulsingDot } from "@/components/ui/pulsing-dot";
+import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import type { GameClockFields } from "@/lib/game-time";
 import {
   isGameClockTicking,
   isGameLivePeriod,
 } from "@/lib/game-time";
-import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
-import { PulsingDot } from "@/components/ui/pulsing-dot";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   game: GameClockFields;
@@ -26,7 +25,6 @@ export function LiveMinute({ game, textClassName, showLiveDot = true }: Props) {
         <PulsingDot color="#ef4444" size={8} />
       ) : null}
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
         className={textClassName ?? "text-xs uppercase tracking-wide text-white/45"}
       >
         {label}

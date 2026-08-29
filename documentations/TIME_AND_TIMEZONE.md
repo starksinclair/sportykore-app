@@ -68,7 +68,7 @@ export function formatPlayedAt(playedAtIso: string): string {
 }
 ```
 
-Rename your existing `toUtcIsoDate` to `toCalendarDateParam` if you like — it already sends the **local calendar date**, which is what Option 2 expects. You do **not** need to convert that string to UTC on the client; send `timeZone` instead.
+Rename your existing `toUtcIsoDate` to `toCalendarDateParam` if you like - it already sends the **local calendar date**, which is what Option 2 expects. You do **not** need to convert that string to UTC on the client; send `timeZone` instead.
 
 ### 2. Fetching the leagues index (matches)
 
@@ -113,7 +113,7 @@ useEffect(() => {
     gameDate: selectedDate,
     gameStatus: 'live', // optional
   }).then((payload) => {
-    // payload.data.matches — countries with leagues/games that day (user's TZ)
+    // payload.data.matches - countries with leagues/games that day (user's TZ)
   })
 }, [selectedDate])
 ```
@@ -124,21 +124,21 @@ useEffect(() => {
 
 ### 5. What not to do
 
-- Do **not** send only `gameDate` without a timezone — set `timeZone` on the query string **or** send a `Time-Zone` / `X-Timezone` header on every request (e.g. from `getUserTimeZone()`). If both are omitted, the server defaults to `UTC`, which is wrong for most users.
-- Do **not** filter match-day results on the client using `new Date(playedAt)` alone — use `gameDate` + timezone (query or header) and read `data.matchDay` from the response to confirm the filter.
-- Do **not** use `date.toISOString().slice(0, 10)` for the picker day near midnight — that can shift the calendar day. Use local `getFullYear()` / `getMonth()` / `getDate()` (your helper already does this).
+- Do **not** send only `gameDate` without a timezone - set `timeZone` on the query string **or** send a `Time-Zone` / `X-Timezone` header on every request (e.g. from `getUserTimeZone()`). If both are omitted, the server defaults to `UTC`, which is wrong for most users.
+- Do **not** filter match-day results on the client using `new Date(playedAt)` alone - use `gameDate` + timezone (query or header) and read `data.matchDay` from the response to confirm the filter.
+- Do **not** use `date.toISOString().slice(0, 10)` for the picker day near midnight - that can shift the calendar day. Use local `getFullYear()` / `getMonth()` / `getDate()` (your helper already does this).
 - Do **not** store local times in the DB from the client; send UTC ISO for create/update of `playedAt` when you add those forms.
 
 ## Backend reference
 
-- `resolveRequestTimeZone(query, request)` — `app/helpers/time_zone.ts`; query param, then `Time-Zone` / `X-Timezone` headers.
-- `LeagueService.resolveMatchDayContext(gameDate?, timeZone?)` — resolved `gameDate`, `timeZone`, and UTC SQL bounds.
-- `LeagueService.resolveMatchDayWindow(gameDate?, timeZone?)` — UTC bounds only (tests).
-- `LeagueService.listLeagueByCountry(..., timeZone, ...)` — matches index.
+- `resolveRequestTimeZone(query, request)` - `app/helpers/time_zone.ts`; query param, then `Time-Zone` / `X-Timezone` headers.
+- `LeagueService.resolveMatchDayContext(gameDate?, timeZone?)` - resolved `gameDate`, `timeZone`, and UTC SQL bounds.
+- `LeagueService.resolveMatchDayWindow(gameDate?, timeZone?)` - UTC bounds only (tests).
+- `LeagueService.listLeagueByCountry(..., timeZone, ...)` - matches index.
 - `GET /api/v1/leagues` returns `matchDay: { gameDate, timeZone }` alongside `matches`.
 - Implementation: `app/services/league_service.ts`, `app/controllers/leagues_controller.ts`
 
 ## Related
 
-- [ROUTES.md](../ROUTES.md) — full API table
-- [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md) — auth only
+- [ROUTES.md](../ROUTES.md) - full API table
+- [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md) - auth only

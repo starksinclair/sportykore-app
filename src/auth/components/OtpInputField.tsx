@@ -1,7 +1,8 @@
+import { useWindowDimensions } from "react-native";
 import { OtpInput } from "react-native-otp-entry";
 
+import { useTheme } from "@/color/use-theme";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   onComplete: (code: string) => void;
@@ -9,6 +10,17 @@ type Props = {
 };
 
 export function OtpInputField({ onComplete, disabled }: Props) {
+  const theme = useTheme();
+  const { width } = useWindowDimensions();
+  const gap = width < 360 ? 4 : 8;
+  const availableWidth = Math.max(220, width - 88);
+  const boxSize = Math.max(
+    34,
+    Math.min(48, Math.floor((availableWidth - gap * 5) / 6)),
+  );
+  const boxHeight = Math.max(46, Math.min(56, boxSize + 8));
+  const fontSize = boxSize < 40 ? 18 : 24;
+
   return (
     <OtpInput
       numberOfDigits={6}
@@ -22,22 +34,21 @@ export function OtpInputField({ onComplete, disabled }: Props) {
       }}
       theme={{
         containerStyle: {
-          gap: 8,
+          gap,
         },
         pinCodeContainerStyle: {
-          width: 48,
-          height: 56,
+          width: boxSize,
+          height: boxHeight,
           borderRadius: 12,
-          borderColor: "#E2E8F0",
-          backgroundColor: "#F8FAFC",
+          borderColor: theme.inputBorder,
+          backgroundColor: theme.inputBackground,
         },
         focusedPinCodeContainerStyle: {
           borderColor: colors.brand,
         },
         pinCodeTextStyle: {
-          fontFamily: fonts.bodyBold,
-          fontSize: 24,
-          color: "#0F172A",
+          fontSize,
+          color: theme.text,
         },
       }}
     />

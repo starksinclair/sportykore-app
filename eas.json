@@ -12,10 +12,20 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildArtifactPaths": [
+          "android/app/build/outputs/mapping/release/mapping.txt"
+        ]
+      }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+      "serviceAccountKeyPath": "./sportykore-ef754fbf3563.json",
+      "track": "internal"
+    }
+    }
   }
 }

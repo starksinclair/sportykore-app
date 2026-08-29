@@ -4,10 +4,11 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-import { CountryLabel } from "@/components/ui/CountryFlag";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
+import { LeagueNotificationToggle } from "@/notifications";
 
 import type { ApiCountryWithLeagues } from "../types";
 
@@ -18,15 +19,22 @@ type Props = {
 
 export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
 
   return (
     <View
-      className="overflow-hidden rounded-[20px] border border-neutral-200 bg-white"
-      style={styles.card}
+      className="overflow-hidden rounded-[20px] border"
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+      ]}
     >
       <View
-        className="flex-row items-center justify-between gap-3 px-4 py-4 active:bg-neutral-50"
+        className="flex-row items-center justify-between gap-3 px-4 py-4 active:opacity-85"
       >
         <TouchableOpacity onPress={() => router.push(`/country/${entry.id}`)}>
         <CountryLabel
@@ -34,7 +42,8 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
           name={entry.name}
           className="gap-3"
           flagWidth={26}
-          textClassName="text-[16px] text-neutral-950 font-bold"
+          textClassName="text-[16px] font-bold"
+          textStyle={{ color: theme.text }}
         />
         </TouchableOpacity>
 
@@ -42,7 +51,7 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#6B7280"
+          color={theme.textSubtle}
         />
         </Pressable>
         
@@ -54,7 +63,8 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
             <Pressable
               key={league.id}
               onPress={() => router.push(`/league/${league.id}`)}
-              className="flex-row items-center gap-3 rounded-[14px] bg-[#F8F8FA] px-4 py-3 active:bg-neutral-100"
+              className="flex-row items-center gap-3 rounded-[14px] px-4 py-3 active:opacity-85"
+              style={{ backgroundColor: theme.cardMuted }}
             >
               <EntityLogo
                 logoUrl={league.logoUrl}
@@ -64,13 +74,20 @@ export function LeagueDirectoryRow({ entry, defaultOpen = false }: Props) {
                 accessibilityLabel={`${league.name} logo`}
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="flex-1 text-[14px] text-neutral-950"
+                className="flex-1 text-[14px]"
+                style={{ color: theme.text }}
                 numberOfLines={1}
               >
                 {league.name}
               </Text>
-              <Ionicons name="chevron-forward" size={14} color="#9CA3AF" />
+              <View className="flex-row items-center gap-2">
+                <LeagueNotificationToggle
+                  leagueId={league.id}
+                  initialEnabled={league.notificationsEnabled}
+                  variant="icon"
+                />
+                <Ionicons name="chevron-forward" size={14} color={theme.textSubtle} />
+              </View>
             </Pressable>
           ))}
         </Animated.View>

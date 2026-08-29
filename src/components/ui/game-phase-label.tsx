@@ -2,7 +2,6 @@ import { Text, type TextProps } from "react-native";
 
 import { useGamePhaseLabel } from "@/hooks/useGamePhaseLabel";
 import type { GameClockFields } from "@/lib/game-time";
-import { fonts } from "@/theme/fonts";
 
 type Props = TextProps & {
   game: GameClockFields;
@@ -19,7 +18,7 @@ export function GamePhaseLabel({
 
   return (
     <Text
-      style={[{ fontFamily: fonts.bodySemibold }, style]}
+      style={style}
       className={textClassName}
       {...rest}
     >

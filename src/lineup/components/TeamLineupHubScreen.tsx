@@ -8,16 +8,19 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import type { ApiGame, ApiPlayerWithStats, GameStatus } from "@/api/entities";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
+import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { ErrorState } from "@/components/ui/error-state";
 import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { formatPlayedAtShortDate, formatPlayedAtTime } from "@/lib/datetime";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
 import { useTeamDetail } from "@/team";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   leagueId: number;
@@ -52,14 +55,21 @@ function opponentFor(game: ApiGame, teamId: number) {
 }
 
 function positionLabel(position: ApiPlayerWithStats["position"]): string {
-  if (!position) return "—";
+  if (!position) return "-";
   return position.charAt(0).toUpperCase() + position.slice(1);
 }
 
 export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   const router = useRouter();
   const teamQuery = useTeamDetail(teamId);
-
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
   const leagueBlock = useMemo(() => {
     const leagues = teamQuery.data?.leagues ?? [];
     return (
@@ -101,33 +111,35 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
   };
 
   return (
-    <View className="flex-1 bg-[#121212]">
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
       <SafeAreaView className="flex-1" edges={["top"]}>
         <BlackPatternBackground
-          baseColor={colors.scoreboardBlack}
-          stripeColor={colors.patternStripe}
+          baseColor={isDark ? colors.scoreboardBlack : theme.patternBase}
+          stripeColor={theme.patternStripe}
         />
 
         <View className="px-5 pb-2">
+          <View style={tabletFrameStyle}>
           <View className="flex-row items-center gap-3 pb-4 pt-2">
             <Pressable
               onPress={() => router.back()}
               accessibilityLabel="Go back"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/15"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? theme.card : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <View className="flex-1">
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-xl text-white"
+                className="text-xl"
+                style={{ color: theme.text }}
               >
                 {teamInfo?.name ?? "Team"}
               </Text>
               {leagueName ? (
                 <Text
-                  style={{ fontFamily: fonts.body }}
-                  className="text-sm text-white/55"
+                  className="text-sm"
+                  style={{ color: theme.textSubtle }}
                 >
                   {leagueName}
                 </Text>
@@ -141,177 +153,223 @@ export function TeamLineupHubScreen({ leagueId, teamId, seasonId }: Props) {
                 logoUrl={teamInfo.logoUrl}
                 variant="team"
                 size="sm"
-                tone="dark"
+                tone={isDark ? "dark" : "light"}
               />
               <Text
-                style={{ fontFamily: fonts.body }}
-                className="flex-1 text-sm text-white/55"
+                className="flex-1 text-sm"
+                style={{ color: theme.textSubtle }}
               >
                 Set lineups for fixtures. Roster is view-only.
               </Text>
             </View>
           ) : null}
+          </View>
         </View>
 
         <ScrollView
           className="flex-1 px-5"
           contentContainerClassName="gap-6 pb-12"
+          contentContainerStyle={{
+            paddingBottom: insets.bottom + 90,
+            ...(isTablet ? { alignItems: "center" as const } : null),
+          }}
           showsVerticalScrollIndicator={false}
         >
+          <View className="w-full" style={tabletFrameStyle}>
           {teamQuery.isLoading ? (
             <View className="items-center py-16">
               <ActivityIndicator color={colors.accent} />
             </View>
           ) : teamQuery.isError || !teamQuery.data ? (
             <ErrorState
-              message="Could not load team."
+              message={
+                teamQuery.isError
+                  ? messageForResourceLoad(teamQuery.error, "Team")
+                  : "Team not found."
+              }
               onRetry={() => teamQuery.refetch()}
             />
           ) : !seasonBlock ? (
-            <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
+            <View
+              className="rounded-[22px] border border-dashed px-5 py-8"
+              style={{
+                backgroundColor: theme.cardMuted,
+                borderColor: theme.cardBorder,
+              }}
+            >
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-base text-white"
+                className="text-base"
+                style={{ color: theme.text }}
               >
                 No active season
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
-                className="pt-2 text-sm leading-6 text-white/55"
+                className="pt-2 text-sm leading-6"
+                style={{ color: theme.textSubtle }}
               >
-                Ask the league owner to activate a season before setting
+                Ask the league admin to activate a season before setting
                 lineups.
               </Text>
             </View>
           ) : (
-            <>
-              <View className="gap-3">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                >
-                  Fixtures
-                </Text>
-                {teamGames.length === 0 ? (
-                  <View className="rounded-[22px] border border-dashed border-white/15 bg-white/5 px-5 py-8">
-                    <Text
-                      style={{ fontFamily: fonts.bodyBold }}
-                      className="text-base text-white"
-                    >
-                      No fixtures yet
-                    </Text>
-                    <Text
-                      style={{ fontFamily: fonts.body }}
-                      className="pt-2 text-sm leading-6 text-white/55"
-                    >
-                      When the league owner schedules games for this team,
-                      they will show up here for lineup setup.
-                    </Text>
-                  </View>
-                ) : (
-                  teamGames.map((game) => {
-                    const opponent = opponentFor(game, teamId);
-                    const editable = EDITABLE_STATUSES.includes(game.status);
-                    return (
-                      <Pressable
-                        key={game.id}
-                        onPress={() => openLineup(game.id)}
-                        className="flex-row items-center gap-3 rounded-[20px] bg-white/6 px-4 py-4 active:bg-white/10"
-                      >
-                        <View className="flex-1 gap-1">
-                          <Text
-                            style={{ fontFamily: fonts.bodyBold }}
-                            className="text-white"
-                          >
-                            vs {opponent?.name ?? "TBD"}
-                          </Text>
-                          <Text
-                            style={{ fontFamily: fonts.body }}
-                            className="text-sm text-white/55"
-                          >
-                            {formatPlayedAtShortDate(game.playedAt)} ·{" "}
-                            {formatPlayedAtTime(game.playedAt)}
-                            {game.venueName ? ` · ${game.venueName}` : ""}
-                          </Text>
-                        </View>
-                        <View
-                          className={[
-                            "rounded-full px-2.5 py-1",
-                            editable ? "bg-accent-400/20" : "bg-white/10",
-                          ].join(" ")}
-                        >
-                          <Text
-                            style={{ fontFamily: fonts.bodySemibold }}
-                            className={
-                              editable
-                                ? "text-xs text-accent-300"
-                                : "text-xs text-white/55"
-                            }
-                          >
-                            {statusLabel(game.status)}
-                          </Text>
-                        </View>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={18}
-                          color="rgba(255,255,255,0.45)"
-                        />
-                      </Pressable>
-                    );
-                  })
-                )}
+            <View className={isTablet ? "flex-row items-start gap-5" : "gap-6"}>
+              <View className="gap-3" style={isTablet ? { flex: 1.25 } : undefined}>
+                <FixturesList
+                  games={teamGames}
+                  teamId={teamId}
+                  onOpenLineup={openLineup}
+                />
               </View>
-
-              <View className="gap-3">
-                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="text-xs uppercase tracking-[2px] text-white/45"
-                >
-                  Squad
-                </Text>
-                {roster.length === 0 ? (
-                  <Text
-                    style={{ fontFamily: fonts.body }}
-                    className="text-sm text-white/45"
-                  >
-                    No players on this team for the season yet.
-                  </Text>
-                ) : (
-                  roster.map((player) => (
-                    <View
-                      key={player.id}
-                      className="flex-row items-center gap-3 rounded-[16px] bg-white/6 px-4 py-3"
-                    >
-                      <EntityLogo
-                        logoUrl={player.avatarUrl}
-                        variant="player"
-                        size="sm"
-                        tone="brand"
-                        accessibilityLabel={player.name}
-                      />
-                      <View className="flex-1">
-                        <Text
-                          style={{ fontFamily: fonts.bodySemibold }}
-                          className="text-sm text-white"
-                          numberOfLines={1}
-                        >
-                          {player.name}
-                        </Text>
-                        <Text
-                          style={{ fontFamily: fonts.body }}
-                          className="text-xs text-white/45"
-                        >
-                          {positionLabel(player.position)}
-                        </Text>
-                      </View>
-                    </View>
-                  ))
-                )}
+              <View className="gap-3" style={isTablet ? { flex: 1 } : undefined}>
+                <SquadList roster={roster} isDark={isDark} />
               </View>
-            </>
+            </View>
           )}
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
+  );
+}
+
+function FixturesList({
+  games,
+  teamId,
+  onOpenLineup,
+}: {
+  games: ApiGame[];
+  teamId: number;
+  onOpenLineup: (gameId: number) => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <>
+      <Text
+        className="text-xs uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
+      >
+        Fixtures
+      </Text>
+      {games.length === 0 ? (
+        <View
+          className="rounded-[22px] border border-dashed px-5 py-8"
+          style={{
+            backgroundColor: theme.cardMuted,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          <Text className="text-base" style={{ color: theme.text }}>
+            No fixtures yet
+          </Text>
+          <Text
+            className="pt-2 text-sm leading-6"
+            style={{ color: theme.textSubtle }}
+          >
+            When the league admin schedules games for this team, they will show
+            up here for lineup setup.
+          </Text>
+        </View>
+      ) : (
+        games.map((game) => {
+          const opponent = opponentFor(game, teamId);
+          const editable = EDITABLE_STATUSES.includes(game.status);
+          return (
+            <Pressable
+              key={game.id}
+              onPress={() => onOpenLineup(game.id)}
+              className="flex-row items-center gap-3 rounded-[20px] px-4 py-4"
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? theme.cardMuted : theme.card,
+              })}
+            >
+              <View className="flex-1 gap-1">
+                <Text style={{ color: theme.text }}>
+                  vs {opponent?.name ?? "TBD"}
+                </Text>
+                <Text className="text-sm" style={{ color: theme.textSubtle }}>
+                  {formatPlayedAtShortDate(game.playedAt)} ·{" "}
+                  {formatPlayedAtTime(game.playedAt)}
+                  {game.venueName ? ` · ${game.venueName}` : ""}
+                </Text>
+              </View>
+              <View
+                className={[
+                  "rounded-full px-2.5 py-1",
+                  editable ? "bg-accent-400/20" : "",
+                ].join(" ")}
+                style={!editable ? { backgroundColor: theme.cardMuted } : undefined}
+              >
+                <Text
+                  className="text-xs"
+                  style={{ color: editable ? theme.accent : theme.textSubtle }}
+                >
+                  {statusLabel(game.status)}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={theme.textSubtle}
+              />
+            </Pressable>
+          );
+        })
+      )}
+    </>
+  );
+}
+
+function SquadList({
+  roster,
+  isDark,
+}: {
+  roster: ApiPlayerWithStats[];
+  isDark: boolean;
+}) {
+  const theme = useTheme();
+
+  return (
+    <>
+      <Text
+        className="text-xs uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
+      >
+        Squad
+      </Text>
+      {roster.length === 0 ? (
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
+          No players on this team for the season yet.
+        </Text>
+      ) : (
+        roster.map((player) => (
+          <View
+            key={player.id}
+            className="flex-row items-center gap-3 rounded-[16px] px-4 py-3"
+            style={{ backgroundColor: theme.card }}
+          >
+            <EntityLogo
+              logoUrl={player.avatarUrl}
+              variant="player"
+              size="sm"
+              tone={isDark ? "brand" : "light"}
+              accessibilityLabel={player.name}
+            />
+            <View className="flex-1">
+              <Text
+                className="text-sm"
+                style={{ color: theme.text }}
+                numberOfLines={1}
+              >
+                {player.name}
+              </Text>
+              <Text className="text-xs" style={{ color: theme.textSubtle }}>
+                {positionLabel(player.position)}
+              </Text>
+            </View>
+          </View>
+        ))
+      )}
+    </>
   );
 }

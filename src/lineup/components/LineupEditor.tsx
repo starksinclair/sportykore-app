@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import type { GameStatus } from "@/api/entities";
 import { Button } from "@/components/ui/Button";
 import { ErrorState } from "@/components/ui/error-state";
-import { FormationChips } from "@/lineup/components/FormationChips";
+import { messageFromThrown, showSuccessToast } from "@/lib/show-error-toast";
+import { posthog } from "@/lib/posthog";
 import { FootballPitch } from "@/lineup/components/FootballPitch";
+import { FormationChips } from "@/lineup/components/FormationChips";
 import {
   LineupPlayerPickerSheet,
   type PickerMode,
@@ -28,9 +32,7 @@ import {
   rosterToPickerPlayers,
   slotCoordinates,
 } from "@/lineup/utils";
-import { messageFromThrown, showSuccessToast } from "@/lib/show-error-toast";
 import type { LeagueRosterRow } from "@/manage/types";
-import { fonts } from "@/theme/fonts";
 
 type Props = {
   gameId: number;
@@ -57,6 +59,8 @@ export function LineupEditor({
   const formationsQuery = useFormations();
   const lineupsQuery = useGameLineups(gameId);
   const saveMutation = useSetLineup(gameId);
+  const theme = useTheme();
+  const { isDark } = useAppearance();
 
   const [selectedFormation, setSelectedFormation] = useState<Formation | null>(null);
   const [slots, setSlots] = useState<Record<string, SlotAssignment>>({});
@@ -184,6 +188,13 @@ export function LineupEditor({
     try {
       const payload = buildSetLineupPayload(teamId, selectedFormation, slots, subs);
       await saveMutation.mutateAsync(payload);
+      posthog?.capture("lineup_saved", {
+        game_id: gameId,
+        team_id: teamId,
+        formation: selectedFormation.name,
+        starter_count: Object.keys(slots).length,
+        substitute_count: subs.length,
+      });
       showSuccessToast("Lineup saved", "Your team sheet has been confirmed.");
       onSaved?.();
     } catch (err) {
@@ -200,7 +211,7 @@ export function LineupEditor({
   if (formationsQuery.isLoading || lineupsQuery.isLoading) {
     return (
       <View className="items-center py-12">
-        <ActivityIndicator color="#E6A817" />
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
@@ -216,7 +227,7 @@ export function LineupEditor({
 
   if (!formationsQuery.data?.length) {
     return (
-      <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+      <Text className="text-sm" style={{ color: theme.textSubtle }}>
         No formations available.
       </Text>
     );
@@ -230,9 +241,12 @@ export function LineupEditor({
   return (
     <View className={embedded ? "gap-5" : "gap-5 pb-28"}>
       {locked ? (
-        <View className="rounded-xl bg-white/8 px-4 py-3">
-          <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/70">
-            This match is finished — lineup is read-only.
+        <View
+          className="rounded-xl px-4 py-3"
+          style={{ backgroundColor: theme.cardMuted }}
+        >
+          <Text className="text-sm" style={{ color: theme.textMuted }}>
+            This match is finished - lineup is read-only.
           </Text>
         </View>
       ) : null}
@@ -241,6 +255,7 @@ export function LineupEditor({
         formations={formationsQuery.data}
         selectedId={selectedFormation?.id ?? null}
         onSelect={locked ? () => {} : handleFormationSelect}
+        tone={isDark ? "dark" : "light"}
       />
 
       {selectedFormation ? (
@@ -280,6 +295,7 @@ export function LineupEditor({
         onRemove={(playerId) =>
           setSubs((prev) => prev.filter((s) => s.playerId !== playerId))
         }
+        tone={isDark ? "dark" : "light"}
       />
 
       {canConfirm ? (
@@ -298,7 +314,7 @@ export function LineupEditor({
         slot={picker?.mode === "starter" ? picker.slot : null}
         players={availablePlayers(pickerExceptId)}
         onSelect={handlePlayerSelect}
-        variant="dark"
+        variant={isDark ? "dark" : "light"}
       />
     </View>
   );

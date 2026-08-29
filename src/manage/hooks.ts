@@ -1,6 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNetworkStatus } from "hooks/useNetworkStatus";
 
+import type {
+  ApiGameDetail,
+  ApiPlayer,
+  ApiPlayerAward,
+  ApiVenue,
+} from "@/api/entities";
 import { fetchLeagueDetail } from "@/league/api";
 
 import {
@@ -10,9 +16,12 @@ import {
   createSeason,
   createStat,
   createTeam,
+  createVenue,
   deleteGame,
   deleteStat,
   deleteTeam,
+  deleteVenue,
+  fetchLeagueVenues,
   endGameFullTime,
   fetchLeagueTeams,
   fetchManagedHub,
@@ -21,8 +30,10 @@ import {
   removeLeaguePlayer,
   removeTeamAdmin,
   pauseGame,
+  recordTrackingEvents,
   recordSubstitutions,
   resumeGame,
+  setMotmAward,
   startExtraTime,
   startFirstHalf,
   startHalfTime,
@@ -33,6 +44,7 @@ import {
   updateLeaguePlayer,
   updateSeason,
   updateTeam,
+  updateVenue,
 } from "./api";
 import type { AccreditStatPayload, CreateTeamPayload, GameScorePayload, UpdateTeamPayload } from "./api";
 import {
@@ -47,11 +59,62 @@ import type {
   CreateGamePayload,
   CreateSeasonPayload,
   CreateStatPayload,
+  CreateVenuePayload,
+  LeagueRosterRow,
+  ManagedTeam,
   RecordSubstitutionsPayload,
+  RecordTrackingEventsPayload,
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateVenuePayload,
 } from "./types";
+
+type QuerySnapshot<T> = {
+  previous?: T;
+};
+
+function patchArrayItem<T extends { id: number }>(
+  rows: T[] | undefined,
+  id: number,
+  patch: Partial<T>,
+): T[] | undefined {
+  if (!rows) return rows;
+  return rows.map((row) => (row.id === id ? { ...row, ...patch } : row));
+}
+
+function removeArrayItem<T extends { id: number }>(
+  rows: T[] | undefined,
+  id: number,
+): T[] | undefined {
+  if (!rows) return rows;
+  return rows.filter((row) => row.id !== id);
+}
+
+function findPlayerInGame(
+  game: ApiGameDetail | undefined,
+  playerId: number,
+): ApiPlayer | undefined {
+  for (const group of game?.lineups ?? []) {
+    for (const entry of [...group.starters, ...group.substitutes]) {
+      if (entry.playerId === playerId) {
+        return entry.player;
+      }
+    }
+  }
+  return undefined;
+}
+
+function withMotmAward(
+  game: ApiGameDetail | undefined,
+  award: ApiPlayerAward,
+): ApiGameDetail | undefined {
+  if (!game) return game;
+  const otherAwards = (game.awards ?? []).filter(
+    (row) => row.awardType !== "motm",
+  );
+  return { ...game, awards: [...otherAwards, award] };
+}
 
 export function useManagedHub(enabled: boolean) {
   const { isOnline } = useNetworkStatus();
@@ -105,6 +168,81 @@ export function useLeagueTeams(leagueId: number, enabled = true) {
   });
 }
 
+export function useLeagueVenues(leagueId: number, enabled = true) {
+  const { isOnline } = useNetworkStatus();
+  return useQuery({
+    queryKey: manageKeys.venues(leagueId),
+    queryFn: () => fetchLeagueVenues(leagueId),
+    enabled: leagueId > 0 && enabled,
+    staleTime: 60 * 1000,
+    networkMode: isOnline ? "online" : "offlineFirst",
+  });
+}
+
+export function useCreateVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateVenuePayload) => createVenue(leagueId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
+  });
+}
+
+export function useUpdateVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      venueId,
+      payload,
+    }: {
+      venueId: number;
+      payload: UpdateVenuePayload;
+    }) => updateVenue(venueId, payload),
+    onMutate: async ({ venueId, payload }): Promise<QuerySnapshot<ApiVenue[]>> => {
+      const queryKey = manageKeys.venues(leagueId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ApiVenue[]>(queryKey);
+      queryClient.setQueryData<ApiVenue[]>(queryKey, (old) =>
+        patchArrayItem(old, venueId, payload),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(manageKeys.venues(leagueId), context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
+  });
+}
+
+export function useDeleteVenue(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (venueId: number) => deleteVenue(venueId),
+    onMutate: async (venueId): Promise<QuerySnapshot<ApiVenue[]>> => {
+      const queryKey = manageKeys.venues(leagueId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ApiVenue[]>(queryKey);
+      queryClient.setQueryData<ApiVenue[]>(queryKey, (old) =>
+        removeArrayItem(old, venueId),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(manageKeys.venues(leagueId), context.previous);
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: manageKeys.venues(leagueId) });
+    },
+  });
+}
+
 function useInvalidateTeamsData(leagueId: number, seasonId: number) {
   const queryClient = useQueryClient();
   return () => {
@@ -126,6 +264,7 @@ export function useCreateTeam(leagueId: number, seasonId: number) {
 
 export function useUpdateTeam(leagueId: number, seasonId: number) {
   const invalidate = useInvalidateTeamsData(leagueId, seasonId);
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       teamId,
@@ -134,15 +273,51 @@ export function useUpdateTeam(leagueId: number, seasonId: number) {
       teamId: number;
       payload: UpdateTeamPayload;
     }) => updateTeam(leagueId, teamId, payload),
-    onSuccess: invalidate,
+    onMutate: async ({ teamId, payload }): Promise<QuerySnapshot<ManagedTeam[]>> => {
+      const queryKey = manageKeys.teams(leagueId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ManagedTeam[]>(queryKey);
+      queryClient.setQueryData<ManagedTeam[]>(queryKey, (old) =>
+        old?.map((team) =>
+          team.id === teamId
+            ? {
+                ...team,
+                name: payload.name ?? team.name,
+              }
+            : team,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(manageKeys.teams(leagueId), context.previous);
+      }
+    },
+    onSettled: invalidate,
   });
 }
 
 export function useDeleteTeam(leagueId: number, seasonId: number) {
   const invalidate = useInvalidateTeamsData(leagueId, seasonId);
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (teamId: number) => deleteTeam(leagueId, teamId),
-    onSuccess: invalidate,
+    onMutate: async (teamId): Promise<QuerySnapshot<ManagedTeam[]>> => {
+      const queryKey = manageKeys.teams(leagueId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ManagedTeam[]>(queryKey);
+      queryClient.setQueryData<ManagedTeam[]>(queryKey, (old) =>
+        removeArrayItem(old, teamId),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(manageKeys.teams(leagueId), context.previous);
+      }
+    },
+    onSettled: invalidate,
   });
 }
 
@@ -161,28 +336,50 @@ export function useAssignTeamAdmin(leagueId: number) {
     onSuccess: () => {
       invalidate();
       showSuccessToast(
-        "Team admin assigned",
-        "They can manage this team's lineups and match day.",
+        "Team manager assigned",
+        "They can set this team's lineups.",
       );
     },
     onError: (error) => {
-      showThrownAsToast(error, "Could not assign admin");
+      showThrownAsToast(error, "Could not assign team manager");
     },
   });
 }
 
 export function useRemoveTeamAdmin(leagueId: number) {
   const invalidate = useInvalidateTeamAdmins(leagueId);
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
       removeTeamAdmin(leagueId, teamId, userId),
+    onMutate: async ({ teamId, userId }): Promise<QuerySnapshot<ManagedTeam[]>> => {
+      const queryKey = manageKeys.teams(leagueId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ManagedTeam[]>(queryKey);
+      queryClient.setQueryData<ManagedTeam[]>(queryKey, (old) =>
+        old?.map((team) =>
+          team.id === teamId
+            ? {
+                ...team,
+                admins: (team.admins ?? []).filter(
+                  (admin) => admin.userId !== userId,
+                ),
+              }
+            : team,
+        ),
+      );
+      return { previous };
+    },
     onSuccess: () => {
-      invalidate();
-      showSuccessToast("Team admin removed");
+      showSuccessToast("Team manager removed");
     },
-    onError: (error) => {
-      showThrownAsToast(error, "Could not remove admin");
+    onError: (error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(manageKeys.teams(leagueId), context.previous);
+      }
+      showThrownAsToast(error, "Could not remove team manager");
     },
+    onSettled: invalidate,
   });
 }
 
@@ -211,8 +408,45 @@ export function useUpdateLeaguePlayer(leagueId: number, seasonId: number) {
       leaguePlayerId: number;
       payload: UpdateLeaguePlayerPayload;
     }) => updateLeaguePlayer(leaguePlayerId, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async ({
+      leaguePlayerId,
+      payload,
+    }): Promise<QuerySnapshot<LeagueRosterRow[]>> => {
+      const queryKey = manageKeys.roster(leagueId, seasonId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<LeagueRosterRow[]>(queryKey);
+      queryClient.setQueryData<LeagueRosterRow[]>(queryKey, (old) =>
+        old?.map((row) =>
+          row.id === leaguePlayerId
+            ? {
+                ...row,
+                jerseyNumber:
+                  payload.jerseyNumber !== undefined
+                    ? payload.jerseyNumber
+                    : row.jerseyNumber,
+                position:
+                  payload.position !== undefined ? payload.position : row.position,
+                isCaptain:
+                  payload.isCaptain !== undefined
+                    ? payload.isCaptain
+                    : row.isCaptain,
+                status: payload.status !== undefined ? payload.status : row.status,
+              }
+            : row,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          manageKeys.roster(leagueId, seasonId),
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
         queryKey: manageKeys.roster(leagueId, seasonId),
       });
     },
@@ -223,8 +457,27 @@ export function useRemoveLeaguePlayer(leagueId: number, seasonId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (leaguePlayerId: number) => removeLeaguePlayer(leaguePlayerId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onMutate: async (
+      leaguePlayerId,
+    ): Promise<QuerySnapshot<LeagueRosterRow[]>> => {
+      const queryKey = manageKeys.roster(leagueId, seasonId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<LeagueRosterRow[]>(queryKey);
+      queryClient.setQueryData<LeagueRosterRow[]>(queryKey, (old) =>
+        removeArrayItem(old, leaguePlayerId),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          manageKeys.roster(leagueId, seasonId),
+          context.previous,
+        );
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({
         queryKey: manageKeys.roster(leagueId, seasonId),
       });
     },
@@ -300,6 +553,21 @@ export function useRecordSubstitutions(
     },
     onError: (error) => {
       showThrownAsToast(error, "Could not record substitution");
+    },
+  });
+}
+
+export function useRecordTrackingEvents(
+  gameId: number,
+  leagueId: number,
+  _seasonId: number,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: RecordTrackingEventsPayload) =>
+      recordTrackingEvents(gameId, payload),
+    onSuccess: () => {
+      invalidateGameDetail(queryClient, gameId, leagueId);
     },
   });
 }
@@ -425,13 +693,11 @@ export function useGameTimeActions(
 
 export function useUpdateGameScore(
   gameId: number,
-  leagueId: number,
+  _leagueId: number,
   _seasonId: number,
 ) {
-  const invalidate = useInvalidateGameQueries(gameId, leagueId);
   return useMutation({
     mutationFn: (payload: GameScorePayload) => updateGameScore(gameId, payload),
-    onSuccess: invalidate,
   });
 }
 
@@ -450,5 +716,48 @@ export function useAccreditStat(
       payload: AccreditStatPayload;
     }) => accreditStat(gameId, statId, payload),
     onSuccess: invalidate,
+  });
+}
+
+export function useSetMotmAward(
+  gameId: number,
+  leagueId: number,
+  _seasonId: number,
+) {
+  const invalidate = useInvalidateGameQueries(gameId, leagueId);
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (playerId: number) => setMotmAward(gameId, playerId),
+    onMutate: async (playerId): Promise<QuerySnapshot<ApiGameDetail>> => {
+      const queryKey = ["match", gameId] as const;
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<ApiGameDetail>(queryKey);
+      const player = findPlayerInGame(previous, playerId);
+      const optimisticAward: ApiPlayerAward = {
+        id: -Date.now(),
+        gameId,
+        playerId,
+        awardType: "motm",
+        player,
+        createdAt: new Date().toISOString(),
+      };
+      queryClient.setQueryData<ApiGameDetail>(queryKey, (old) =>
+        withMotmAward(old, optimisticAward),
+      );
+      return { previous };
+    },
+    onSuccess: (award) => {
+      queryClient.setQueryData<ApiGameDetail>(["match", gameId], (old) =>
+        withMotmAward(old, award),
+      );
+      showSuccessToast("Man of the match saved");
+    },
+    onError: (error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["match", gameId], context.previous);
+      }
+      showThrownAsToast(error, "Could not save man of the match");
+    },
+    onSettled: invalidate,
   });
 }

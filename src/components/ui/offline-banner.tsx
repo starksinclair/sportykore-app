@@ -9,7 +9,7 @@ export function OfflineBanner() {
   return (
     <View className="items-center bg-amber-500 px-3 py-1.5">
       <Text className="text-xs font-medium text-white">
-        You&apos;re offline — showing saved data
+        You&apos;re offline - showing saved data
       </Text>
     </View>
   );

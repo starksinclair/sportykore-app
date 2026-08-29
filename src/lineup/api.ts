@@ -27,6 +27,7 @@ export async function setGameLineup(
   await apiRequest<{ message: string }>(`/api/v1/games/${gameId}/lineups`, {
     method: "PUT",
     auth: true,
+    idempotencyKey: true,
     jsonBody: payload,
   });
 }

@@ -3,15 +3,21 @@ import type {
   ApiPlayer,
   ApiSeason,
   ApiTeam,
+  CompetitionFormat,
+  GroupStageConfig,
+  KnockoutStageConfig,
   PlayerPosition,
   SeasonStatus,
 } from "@/api/entities";
+import type { TiebreakerRule } from "@/league/tiebreaker-options";
 
 export type OwnedLeague = {
   id: number;
   name: string;
   logoUrl: string | null;
   countryId: number;
+  startDate?: string | null;
+  endDate?: string | null;
   activeSeason?: {
     id: number;
     name: string;
@@ -28,6 +34,8 @@ export type AdminTeamManaged = {
     id: number;
     name: string;
     logoUrl: string | null;
+    startDate?: string | null;
+    endDate?: string | null;
   };
   activeSeason: {
     id: number;
@@ -48,7 +56,7 @@ export type TeamAdminUser = {
   fullName: string | null;
 };
 
-/** Active team admin row from `GET /api/v1/auth/users/leagues/:leagueId/teams`. */
+/** Active team manager row from `GET /api/v1/auth/users/leagues/:leagueId/teams`. */
 export type TeamAdmin = {
   id: number;
   teamId: number;
@@ -78,6 +86,7 @@ export type CreateGamePayload = {
   awayTeamId: number;
   playedAt: string;
   venueName?: string;
+  venueId?: number;
   status?: ApiGameStatus;
   homeScore?: number | null;
   awayScore?: number | null;
@@ -92,6 +101,29 @@ export type UpdateGamePayload = {
   status?: ApiGameStatus;
   playedAt?: string;
   venueName?: string | null;
+  venueId?: number | null;
+};
+
+export type CreateVenuePayload = {
+  name: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  googlePlaceId?: string | null;
+  capacity?: number | null;
+  city?: string | null;
+  notes?: string | null;
+};
+
+export type UpdateVenuePayload = {
+  name?: string;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  googlePlaceId?: string | null;
+  capacity?: number | null;
+  city?: string | null;
+  notes?: string | null;
 };
 
 export type CreateStatPayload = {
@@ -126,19 +158,51 @@ export type RecordSubstitutionsResult = {
   statIds: number[];
 };
 
-import type { TiebreakerRule } from "@/league/tiebreaker-options";
+export type TrackingEventType = "pass" | "shot";
+
+export type TrackingEventPayload = {
+  clientEventId: string;
+  type: TrackingEventType;
+  teamId: number;
+  playerId: number;
+  minute?: number | null;
+  isStoppageTime?: boolean;
+  completed?: boolean;
+  onTarget?: boolean;
+};
+
+export type RecordTrackingEventsPayload = {
+  events: TrackingEventPayload[];
+};
+
+export type RecordTrackingEventsResult = {
+  message: string;
+  accepted: number;
+  skipped: number;
+};
 
 export type UpdateLeaguePayload = {
   name?: string;
   description?: string | null;
   gender?: string | null;
   tiebreaker?: TiebreakerRule;
+  startDate?: string | null;
+  endDate?: string | null;
 };
 
 export type CreateSeasonPayload = {
   leagueId: number;
   name: string;
   status: SeasonStatus;
+  format?: CompetitionFormat;
+  knockout?: {
+    name?: string;
+    config: KnockoutStageConfig;
+  };
+  group?: {
+    name?: string;
+    config?: GroupStageConfig;
+  };
 };
 
 export type UpdateSeasonPayload = {
@@ -150,6 +214,9 @@ export type CreatedSeason = ApiSeason & {
   leagueId: number;
   createdAt?: string;
   updatedAt?: string;
+  stageId?: number;
+  format?: CompetitionFormat;
+  seeded?: boolean;
 };
 
 export const GameStatus = {
@@ -158,6 +225,7 @@ export const GameStatus = {
   HalfTime: "half_time",
   SecondHalf: "second_half",
   ExtraTime: "extra_time",
+  PenaltyShootout: "penalty_shootout",
   FullTime: "full_time",
   Paused: "paused",
   Postponed: "postponed",

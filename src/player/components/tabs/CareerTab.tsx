@@ -8,9 +8,10 @@ import type {
   ApiPlayerSeason,
   ApiStatType,
 } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { iconForStatType, orderStatTypes } from "@/lib/stat-types";
-import { fonts } from "@/theme/fonts";
 
 import {
   distinctTeams,
@@ -24,22 +25,30 @@ type Props = {
 
 export function PlayerCareerTab({ leagues, statTypes }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const orderedTypes = useMemo(() => orderStatTypes(statTypes), [statTypes]);
   const teams = useMemo(() => distinctTeams(leagues), [leagues]);
 
   if (!leagues.length) {
     return (
-      <View className="items-center gap-3 rounded-[24px] border border-white/10 bg-white/5 px-6 py-10">
-        <Ionicons name="time-outline" size={32} color="rgba(255,255,255,0.6)" />
+      <View
+        className="items-center gap-3 rounded-[24px] border px-6 py-10"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
+        <Ionicons name="time-outline" size={32} color={theme.textMuted} />
         <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-lg text-white"
+          className="text-lg"
+          style={{ color: theme.text }}
         >
           No career history yet
         </Text>
         <Text
-          style={{ fontFamily: fonts.body }}
-          className="text-center text-sm text-white/55"
+          className="text-center text-sm"
+          style={{ color: theme.textSubtle }}
         >
           We&apos;ll show every club and season the player has been part of as
           soon as they appear in a roster.
@@ -57,17 +66,21 @@ export function PlayerCareerTab({ leagues, statTypes }: Props) {
               <Pressable
                 key={team.id}
                 onPress={() => router.push(`/team/${team.id}`)}
-                className="flex-row items-center gap-2 rounded-full border border-white/10 bg-white/6 py-2 pl-2 pr-3 active:bg-white/10"
+                className="flex-row items-center gap-2 rounded-full border py-2 pl-2 pr-3 active:opacity-85"
+                style={{
+                  backgroundColor: theme.card,
+                  borderColor: theme.cardBorder,
+                }}
               >
                 <EntityLogo
                   logoUrl={team.logoUrl}
                   variant="team"
                   size="xs"
-                  tone="dark"
+                  tone={isDark ? "dark" : "light"}
                 />
                 <Text
-                  style={{ fontFamily: fonts.bodySemibold }}
-                  className="text-xs text-white"
+                  className="text-xs"
+                  style={{ color: theme.text }}
                 >
                   {team.name}
                 </Text>
@@ -101,11 +114,16 @@ function LeagueBlock({
   onLeaguePress: () => void;
   onTeamPress: (teamId: number) => void;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <Pressable
         onPress={onLeaguePress}
-        className="flex-row items-center justify-between rounded-[20px] bg-white/6 px-4 py-3 active:bg-white/10"
+        className="flex-row items-center justify-between rounded-[20px] px-4 py-3"
+        style={({ pressed }) => ({
+          backgroundColor: pressed ? theme.cardMuted : theme.card,
+        })}
       >
         <View className="flex-row items-center gap-3">
           <EntityLogo
@@ -116,21 +134,20 @@ function LeagueBlock({
           />
           <View>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-white"
+              style={{ color: theme.text }}
             >
               {league.name}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
-              className="pt-0.5 text-xs text-white/55"
+              className="pt-0.5 text-xs"
+              style={{ color: theme.textSubtle }}
             >
               {league.seasons.length} season
               {league.seasons.length === 1 ? "" : "s"}
             </Text>
           </View>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
+        <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
       </Pressable>
 
       <View className="gap-2">
@@ -156,6 +173,8 @@ function SeasonRow({
   statTypes: ApiStatType[];
   onPress: () => void;
 }) {
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const totals = useMemo(
     () => seasonSummaryTotals(season.stats ?? [], statTypes),
     [season.stats, statTypes],
@@ -165,7 +184,10 @@ function SeasonRow({
   return (
     <Pressable
       onPress={onPress}
-      className="rounded-[18px] bg-white/6 px-4 py-3 active:bg-white/10"
+      className="rounded-[18px] px-4 py-3"
+      style={({ pressed }) => ({
+        backgroundColor: pressed ? theme.cardMuted : theme.card,
+      })}
     >
       <View className="flex-row items-center justify-between gap-3">
         <View className="flex-1 flex-row items-center gap-2">
@@ -173,18 +195,17 @@ function SeasonRow({
             logoUrl={season.team.logoUrl}
             variant="team"
             size="xs"
-            tone="dark"
+            tone={isDark ? "dark" : "light"}
           />
           <View className="flex-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-white"
+              style={{ color: theme.text }}
             >
               {season.name}
             </Text>
             <Text
-              style={{ fontFamily: fonts.body }}
-              className="pt-0.5 text-xs text-white/55"
+              className="pt-0.5 text-xs"
+              style={{ color: theme.textSubtle }}
             >
               {season.team.name} · {season.status} · {gameCount} fixture
               {gameCount === 1 ? "" : "s"}
@@ -198,22 +219,23 @@ function SeasonRow({
           {totals.slice(0, 6).map(({ type, total }) => (
             <View
               key={type.id}
-              className="flex-row items-center gap-1.5 rounded-full bg-white/8 px-2.5 py-1"
+              className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
+              style={{ backgroundColor: theme.cardMuted }}
             >
               <Ionicons
                 name={iconForStatType(type)}
                 size={12}
-                color="#E6A817"
+                color={theme.accent}
               />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-[11px] text-white"
+                className="text-[11px]"
+                style={{ color: theme.text }}
               >
                 {total}
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
-                className="text-[11px] text-white/55"
+                className="text-[11px]"
+                style={{ color: theme.textSubtle }}
               >
                 {type.displayName}
               </Text>
@@ -232,11 +254,13 @@ function Section({
   title: string;
   children: import("react").ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[12px] uppercase tracking-[2px] text-white/55"
+        className="text-[12px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>

@@ -5,10 +5,10 @@ import { Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-nativ
 import Animated, { FadeIn } from "react-native-reanimated";
 
 import { useAuthGate } from "@/auth";
-import { CountryLabel } from "@/components/ui/CountryFlag";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
+import { CountryLabel } from "@/components/ui/CountryFlag";
 import { colors } from "@/constants";
-import { fonts } from "@/theme/fonts";
 
 import { useFavouriteLeague, useUnfavouriteLeague } from "../hooks/useLeaguesByCountry";
 import type { ApiCountryWithLeagues, FetchLeaguesParams } from "../types";
@@ -22,6 +22,7 @@ type Props = {
 
 export function CountryAccordion({ entry, defaultOpen = false, params }: Props) {
   const router = useRouter();
+  const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen);
   const { mutate: favouriteLeague } = useFavouriteLeague(params);
   const { mutate: unfavouriteLeague } = useUnfavouriteLeague(params);
@@ -29,39 +30,62 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
 
   return (
     <View
-      className="overflow-hidden rounded-[24px] border border-neutral-200 bg-white"
-      style={styles.card}
+      className="overflow-hidden rounded-[24px] border"
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+      ]}
     >
       <Pressable
       onPress={() => setOpen((current) => !current)}
         className={[
-          "flex-row items-center justify-between gap-3 bg-white px-4 py-4 active:bg-neutral-50",
-          open ? "border-b border-neutral-200" : "",
+          "flex-row items-center justify-between gap-3 px-4 py-4 active:opacity-85",
+          open ? "border-b" : "",
         ].join(" ")}
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
       >
          <CountryLabel
           code={entry.code}
           name={entry.name}
           className="gap-3"
           flagWidth={26}
-          textClassName="text-[16px] text-neutral-950 font-bold"
+          textClassName="text-[16px] font-bold"
+          textStyle={{ color: theme.text }}
         />
 
        <Pressable onPress={() => setOpen((current) => !current)}>
        <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
-          color="#6B7280"
+          color={theme.textSubtle}
         />
        </Pressable>
       </Pressable>
 
       {open ? (
-        <Animated.View entering={FadeIn.duration(180)} className="bg-white px-3 pb-3 pt-1">
+        <Animated.View
+          entering={FadeIn.duration(180)}
+          className="px-3 pb-3 pt-1"
+          style={{ backgroundColor: theme.card }}
+        >
           {entry.leagues.map((league) => (
-            <View key={league.id} className="mt-2 overflow-hidden rounded-[13px] border border-neutral-200">
+            <View
+              key={league.id}
+              className="mt-2 overflow-hidden rounded-[13px] border"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
+            >
               <View
-                className="flex-row items-center justify-between gap-3 bg-white px-4 py-3 active:bg-neutral-50"
+                className="flex-row items-center justify-between gap-3 px-4 py-3 active:opacity-85"
+                style={{ backgroundColor: theme.card }}
               >
               <EntityLogo
                 logoUrl={league.logoUrl}
@@ -73,8 +97,8 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
               <View className="flex-1">
               <TouchableOpacity onPress={() => router.push(`/league/${league.id}`)}>
                <Text
-                  style={{ fontFamily: fonts.bodyBold }}
-                  className="flex-1 text-[13px] text-neutral-950"
+                  className="flex-1 text-[13px]"
+                  style={{ color: theme.text }}
                   numberOfLines={1}
                 >
                   {league.name}
@@ -85,7 +109,8 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
                   code={entry.code}
                   name={entry.name}
                   flagWidth={14}
-                  textClassName="text-[9px] text-neutral-500"
+                  textClassName="text-[9px]"
+                  textStyle={{ color: theme.textSubtle }}
                 />
                
               </View>
@@ -103,21 +128,18 @@ export function CountryAccordion({ entry, defaultOpen = false, params }: Props) 
                  <Ionicons
                    name={league.isFavourited ? "heart" : "heart-outline"}
                    size={19}
-                   color={league.isFavourited ? colors.brand : "#6B7280"}
+                   color={league.isFavourited ? theme.brand : theme.textSubtle}
                  />
                </Pressable>
               </View>
 
               {(league.games ?? []).length > 0 ? (
-                <View className="border-t border-neutral-200">
+                <View className="border-t" style={{ borderColor: theme.cardBorder }}>
                   {(league.games ?? []).map((game, index) => (
                     <View
                       key={game.id}
-                      className={
-                        index !== (league.games ?? []).length - 1
-                          ? "border-b border-neutral-200"
-                          : ""
-                      }
+                      className={index !== (league.games ?? []).length - 1 ? "border-b" : ""}
+                      style={{ borderColor: theme.cardBorder }}
                     >
                       <MatchRow game={game} />
                     </View>

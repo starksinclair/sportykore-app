@@ -2,20 +2,20 @@
 
 How league owners invite players and how the mobile app must wire signup, profile creation, and roster joining. See [ROUTES.md](../ROUTES.md) for full request/response shapes and [MANAGE_LEAGUE.md](./MANAGE_LEAGUE.md) for the admin Players tab.
 
-**Related:** [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md) — signup/login tokens.
+**Related:** [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md) - signup/login tokens.
 
 ---
 
 ## Core rules
 
 1. A **player profile** cannot exist without a **user account**.
-2. Admins **cannot** manually create players — they generate invite links only.
+2. Admins **cannot** manually create players - they generate invite links only.
 3. The **user** creates their own player profile (display name, optional bio) during invite acceptance.
 4. **`POST /api/v1/auth/signup` does not join a league.** Signup only creates a `users` row and returns a Bearer token. The app must call the invite accept endpoints afterward.
 
 ---
 
-## Flow A — Admin invites a specific user
+## Flow A - Admin invites a specific user
 
 1. Admin searches: `GET /api/v1/auth/users/search?q=&leagueId=`
 2. Admin picks user, season, team → generates link with `invitedUserId`
@@ -30,9 +30,9 @@ Only the user whose `id` matches `invitedUserId` can accept. Anyone else gets `4
 
 ---
 
-## Flow B — General invite link
+## Flow B - General invite link
 
-Same as Flow A, but **omit** `invitedUserId` when generating the link. Anyone authenticated can accept (first successful accept consumes the token — see [Single-use tokens](#single-use-tokens)).
+Same as Flow A, but **omit** `invitedUserId` when generating the link. Anyone authenticated can accept while the invite is still valid.
 
 1. Admin picks season + team → `GET /api/v1/invites/generate?leagueId=&seasonId=&teamId=`
 2. Admin shares link (WhatsApp, SMS, etc.)
@@ -45,10 +45,10 @@ Same as Flow A, but **omit** `invitedUserId` when generating the link. Anyone au
 | Step                      | API                                                       | Creates user? | Creates player? | Joins league?                        |
 | ------------------------- | --------------------------------------------------------- | ------------- | --------------- | ------------------------------------ |
 | Sign up                   | `POST /api/v1/auth/signup`                                | Yes           | No              | No                                   |
-| Log in                    | `POST /api/v1/auth/login`                                 | —             | No              | No                                   |
-| Accept (has profile)      | `GET /api/v1/invites/accept/:token`                       | —             | No              | **Yes**                              |
-| Accept (no profile)       | `GET /api/v1/invites/accept/:token`                       | —             | No              | No — returns `requiresProfile: true` |
-| Complete profile + accept | `POST /api/v1/invites/complete-profile-and-accept/:token` | —             | **Yes**         | **Yes**                              |
+| Log in                    | `POST /api/v1/auth/login`                                 | -             | No              | No                                   |
+| Accept (has profile)      | `GET /api/v1/invites/accept/:token`                       | -             | No              | **Yes**                              |
+| Accept (no profile)       | `GET /api/v1/invites/accept/:token`                       | -             | No              | No - returns `requiresProfile: true` |
+| Complete profile + accept | `POST /api/v1/invites/complete-profile-and-accept/:token` | -             | **Yes**         | **Yes**                              |
 
 **New user path:** signup → accept (profile required) → profile screen → complete-profile-and-accept → navigate to league.
 
@@ -65,11 +65,11 @@ There is no separate “confirm invite” API. Joining is automatic once accept 
 | `token`                             | UUID in the shareable link            |
 | `league_id`, `season_id`, `team_id` | Roster placement on accept            |
 | `invited_user_id`                   | Flow A: required user. Flow B: `null` |
-| `status`                            | `pending` → `accepted` (or `expired`) |
+| `status`                            | `pending` until first accept, then `accepted` while still reusable until expiry |
 | `expires_at`                        | 7 days from generation                |
-| `accepted_at`                       | Set when consumed                     |
+| `accepted_at`                       | Updated when accepted                 |
 
-The `invites` row is **not** a player record. It is a one-time ticket that drives `players` + `league_players` creation on accept.
+The `invites` row is **not** a player record. It is a reusable ticket that drives `players` + `league_players` creation on accept until the invite expires.
 
 ---
 
@@ -103,7 +103,7 @@ flowchart TD
 
 Bearer token on all routes. User must own the league (`leagueOwner` middleware).
 
-### Flow A — invite someone specific
+### Flow A - invite someone specific
 
 1. Load teams: `GET /api/v1/auth/users/leagues/:leagueId/teams`
 2. Search users: `GET /api/v1/auth/users/search?q={query}&leagueId={leagueId}`
@@ -119,7 +119,7 @@ Bearer token on all routes. User must own the league (`leagueOwner` middleware).
 6. Native share sheet (WhatsApp, SMS, etc.)
 7. Refetch roster after invitees accept: `GET /api/v1/leagues/:leagueId/seasons/:seasonId/roster`
 
-### Flow B — general link
+### Flow B - general link
 
 Same as Flow A, but **do not** send `invitedUserId`:
 
@@ -149,7 +149,7 @@ On open:
 
 - Extract `token` from the URL
 - Persist it until accept completes (e.g. AsyncStorage key `pendingInviteToken` **and** in-memory nav state)
-- Do **not** discard the token after signup — signup does not consume the invite
+- Do **not** discard the token after signup - signup does not consume the invite
 
 Prefix for sharing (admin side): use `MOBILE_APP_URL` env on the server when building full URLs for email; the generate API returns only the path `/join/{token}`.
 
@@ -166,7 +166,7 @@ GET /api/v1/invites/accept/:token
 Authorization: Bearer <token>
 ```
 
-Send the Bearer token on every call. The route uses `getUserOrFail()` — unauthenticated requests fail.
+Send the Bearer token on every call. The route uses `getUserOrFail()` - unauthenticated requests fail.
 
 **Responses:**
 
@@ -210,11 +210,11 @@ If the user already logged in but quit mid-flow (e.g. after signup, before profi
 - On app launch, if `pendingInviteToken` exists → resume at step 3
 - There is **no** `GET /invites/mine` endpoint today; token recovery depends on client persistence
 
-For Flow A only, a future `GET /invites/mine` (pending rows where `invited_user_id = auth user`) could recover invites without the token — not implemented yet.
+For Flow A only, a future `GET /invites/mine` (pending rows where `invited_user_id = auth user`) could recover invites without the token - not implemented yet.
 
 ### 6. Optional UX (no extra APIs)
 
-- **Preview before signup:** show league/team context from admin copy or a future preview endpoint — not required for accept to work
+- **Preview before signup:** show league/team context from admin copy or a future preview endpoint - not required for accept to work
 - **Confirmation screen:** “Join Riverside United?” can gate step 3/4; the same accept APIs run on Continue
 
 ---
@@ -234,7 +234,7 @@ For Flow A only, a future `GET /invites/mine` (pending rows where `invited_user_
 
 `invitedUserId` is for Flow A only (omit for Flow B). `teamId` is required when generating from the Players tab.
 
-Auth routes used by invitees: `POST /api/v1/auth/signup`, `POST /api/v1/auth/login` — see [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md).
+Auth routes used by invitees: `POST /api/v1/auth/signup`, `POST /api/v1/auth/login` - see [MOBILE_AUTH_ROUTES.md](../MOBILE_AUTH_ROUTES.md).
 
 ---
 
@@ -260,9 +260,9 @@ Auth routes used by invitees: `POST /api/v1/auth/signup`, `POST /api/v1/auth/log
 
 ---
 
-## Single-use tokens
+## Reusable tokens
 
-Each successful accept sets `status: accepted`. The same link cannot be used again. For Flow B links shared in group chats, only the **first** person to complete accept gets the slot; others need a new link from the admin.
+Each successful accept keeps the invite usable until `expires_at`. The backend still blocks the same player from joining the same season/team twice, but a general Flow B link can add multiple different players before it expires.
 
 ---
 

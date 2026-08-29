@@ -1,6 +1,6 @@
 import { Text, View } from "react-native";
 
-import { fonts } from "@/theme/fonts";
+import { useTheme } from "@/color/use-theme";
 
 type Props = {
   title: string;
@@ -8,17 +8,25 @@ type Props = {
 };
 
 export function EmptyState({ title, body }: Props) {
+  const theme = useTheme();
+
   return (
-    <View className="rounded-[24px] border border-dashed border-neutral-300 bg-neutral-50 px-5 py-7">
+    <View
+      className="rounded-[24px] border border-dashed px-5 py-7"
+      style={{
+        backgroundColor: theme.cardMuted,
+        borderColor: theme.cardBorder,
+      }}
+    >
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-base text-neutral-950"
+        className="text-base"
+        style={{ color: theme.text }}
       >
         {title}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-2 text-sm leading-6 text-slate-600"
+        className="pt-2 text-sm leading-6"
+        style={{ color: theme.textMuted }}
       >
         {body}
       </Text>

@@ -5,6 +5,8 @@ import { Platform } from "react-native";
 const TOKEN_KEY = "auth.token";
 const ONBOARDED_KEY = "auth.onboarded";
 const USER_PROFILE_KEY = "auth.profile.v1";
+const PENDING_OTP_KEY = "auth.pendingOtp.v1";
+const OTP_TTL_MS = 10 * 60 * 1000;
 
 const isWeb = Platform.OS === "web";
 
@@ -14,6 +16,12 @@ export type PersistedUserProfile = {
   email: string;
   /** Maps API `fullName` */
   name: string | null;
+};
+
+export type PendingOtpAttempt = {
+  email: string;
+  requestedAt: number;
+  expiresAt: number;
 };
 
 const tokenBackend = {
@@ -68,6 +76,40 @@ export async function clearSessionCredentials(): Promise<void> {
     clearToken(),
     AsyncStorage.removeItem(USER_PROFILE_KEY),
   ]);
+}
+
+export async function getPendingOtpAttempt(): Promise<PendingOtpAttempt | null> {
+  try {
+    const raw = await AsyncStorage.getItem(PENDING_OTP_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PendingOtpAttempt;
+    if (!parsed.email || !parsed.expiresAt) return null;
+    if (parsed.expiresAt <= Date.now()) {
+      await AsyncStorage.removeItem(PENDING_OTP_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export async function setPendingOtpAttempt(email: string): Promise<void> {
+  const trimmed = email.trim();
+  if (!trimmed) return;
+  const now = Date.now();
+  await AsyncStorage.setItem(
+    PENDING_OTP_KEY,
+    JSON.stringify({
+      email: trimmed,
+      requestedAt: now,
+      expiresAt: now + OTP_TTL_MS,
+    } satisfies PendingOtpAttempt),
+  );
+}
+
+export async function clearPendingOtpAttempt(): Promise<void> {
+  await AsyncStorage.removeItem(PENDING_OTP_KEY);
 }
 
 export async function getOnboarded(): Promise<boolean> {

@@ -5,6 +5,9 @@ import { Pressable, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { OtpScreen } from "@/auth/components";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
+import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { Logo } from "@/components/ui/logo";
 import { colors } from "@/constants";
 
@@ -15,6 +18,8 @@ function readParam(value: string | string[] | undefined): string | undefined {
 }
 
 export default function OtpPage() {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const params = useLocalSearchParams<{
     email?: string | string[];
     recoveryMode?: string | string[];
@@ -36,29 +41,41 @@ export default function OtpPage() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white" edges={["top", "bottom"]}>
-      <StatusBar style="dark" />
-      <View className="relative mb-2 flex-row items-center justify-between px-6 pt-4">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          className="-ml-1 h-10 w-10 items-center justify-center active:opacity-70"
-          onPress={back}
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={26} color="#111827" />
-        </Pressable>
-        <View pointerEvents="none" className="absolute left-0 right-0 items-center pt-1">
-          <Logo variant="full" color={colors.authPurple} fontSize={26} lineHeight={38} />
-        </View>
-        <View className="w-10" />
-      </View>
-
-      <OtpScreen
-        email={email}
-        recoveryMode={recoveryMode}
-        onSuccess={onSuccess}
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <BlackPatternBackground
+        baseColor={theme.patternBase}
+        stripeColor={theme.patternStripe}
       />
-    </SafeAreaView>
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.74)" }}
+      />
+      <SafeAreaView className="relative flex-1" edges={["top", "bottom"]}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <View className="relative mb-2 flex-row items-center justify-between px-6 pt-4">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            className="-ml-1 h-11 w-11 items-center justify-center rounded-2xl active:opacity-80"
+            style={{ backgroundColor: isDark ? "rgba(255,255,255,0.12)" : theme.brandMuted }}
+            onPress={back}
+            hitSlop={12}
+          >
+            <Ionicons name="chevron-back" size={24} color={theme.text} />
+          </Pressable>
+          <View pointerEvents="none" className="absolute left-0 right-0 items-center pt-1">
+            <Logo variant="full" color={colors.accent} fontSize={26} lineHeight={38} />
+          </View>
+          <View className="w-11" />
+        </View>
+
+        <OtpScreen
+          email={email}
+          recoveryMode={recoveryMode}
+          onSuccess={onSuccess}
+        />
+      </SafeAreaView>
+    </View>
   );
 }

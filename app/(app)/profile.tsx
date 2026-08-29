@@ -1,31 +1,40 @@
 import { Ionicons } from "@expo/vector-icons";
-import Constants from "expo-constants";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { openBrowserAsync } from "expo-web-browser";
 import type { ReactNode } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/auth";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
-import { colors, scoreboardPattern } from "@/constants";
-import { showThrownAsToast } from "@/lib/show-error-toast";
-import { useDoesUserHavePlayerProfile } from "@/player";
-import { fonts } from "@/theme/fonts";
-
-const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
+import { useAppearance } from "@/color/appearance-context";
+import type { AppColorScheme, ThemePreference } from "@/color/theme";
+import { useTheme } from "@/color/use-theme";
+import { Button } from "@/components/ui/Button";
+import { colors } from "@/constants";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
+import { posthog } from "@/lib/posthog";
+import { useOwnPlayerProfile } from "@/player";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut, deleteAccount } = useAuth();
+  const { user, signOut } = useAuth();
+  const { isDark, preference, systemColorScheme, colorScheme, setPreference } = useAppearance();
+  const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const deleteAccountUrl = "https://www.sportykore.com/delete-account";
+  const tabletMaxWidth = isWideTablet ? 1040 : 880;
+  const tabletFrameStyle = isTablet
+    ? { alignSelf: "center" as const, width: "100%" as const, maxWidth: tabletMaxWidth }
+    : undefined;
 
   const displayName = user?.name?.trim();
   const email = user?.email ?? "";
 
-  const playerProfileQuery = useDoesUserHavePlayerProfile(Boolean(user));
-  const hasPlayerProfile = playerProfileQuery.data?.hasPlayerProfile === true;
-  const playerId = playerProfileQuery.data?.playerId;
+  const playerProfileQuery = useOwnPlayerProfile(Boolean(user));
+  const playerProfile = playerProfileQuery.data;
+  const hasPlayerProfile = playerProfile?.kind === "profile";
 
   const handleSignOut = () => {
     Alert.alert(
@@ -45,99 +54,89 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      "Delete Account",
-      "This will permanently delete your account, player profile, and all associated data. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete Account",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              router.replace("/login");
-            } catch (err) {
-              showThrownAsToast(err, "Could not delete account");
-            }
-          },
-        },
-      ],
-    );
-  };
-
   const handlePlayerProfile = async () => {
     if (playerProfileQuery.isLoading) return;
 
-    if (hasPlayerProfile && user) {
-      router.push(`/player/${playerId}`);
-      return;
-    }
-
-    Alert.alert(
-      "Complete your player profile",
-      "Player profiles are created when you accept a league invite. Ask your league admin for an invite link, or open one you have already received.",
-    );
+    router.push("/player/me");
   };
 
-  const handleRecoveryEmail = () => {
-    Alert.alert(
-      "Recovery email",
-      "Add a recovery email when you create your account. If you lose access to your primary email, use your recovery email to receive a sign-in code.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Recover account", onPress: () => router.push("/forgot") },
-      ],
-    );
+  const handleAppearancePreferenceChange = (nextPreference: ThemePreference) => {
+    if (nextPreference === preference) return;
+
+    posthog?.capture("appearance_theme_toggled", {
+      preference: nextPreference,
+      previous_preference: preference,
+      resolved_theme: nextPreference === "system" ? systemColorScheme : nextPreference,
+      system_theme: systemColorScheme,
+      source: "profile",
+    });
+    void setPreference(nextPreference);
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      {/* <BlackPatternBackground
+        baseColor={isDark ? scoreboardPattern().baseColor : theme.patternBase}
+        stripeColor={theme.patternStripe}
+      /> */}
+      <View
+        className="absolute inset-0"
+        pointerEvents="none"
+        style={{ backgroundColor: isDark ? theme.overlay : "rgba(255,255,255,0.72)" }}
+      />
 
-      <View className="relative overflow-hidden bg-[#121212] px-5  pt-0">
-        <BlackPatternBackground
-          baseColor={scoreboardPattern().baseColor}
-          stripeColor={scoreboardPattern().stripeColor}
-        />
+      <View className="relative overflow-hidden px-5 pt-0">
         <SafeAreaView edges={["top", "bottom"]}>
-          <View className="flex-row items-center justify-between">
+          <View
+            className="flex-row items-center justify-between"
+            style={tabletFrameStyle}
+          >
             <Pressable
               onPress={() => router.replace("/(app)/(tabs)")}
               accessibilityLabel="Back"
               accessibilityRole="button"
-              className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/20"
+              className="h-11 w-11 items-center justify-center rounded-full active:opacity-80"
+              style={{ backgroundColor: isDark ? "rgba(255,255,255,0.1)" : theme.brandMuted }}
             >
-              <Ionicons name="chevron-back" size={22} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={22} color={theme.text} />
             </Pressable>
             <Text
-              style={{ fontFamily: fonts.displayBold }}
-              className="text-base text-center uppercase tracking-[2px] text-white/85"
+              className="text-base text-center uppercase tracking-[2px]"
+              style={{ color: theme.text }}
             >
               Profile
             </Text>
             <View className="h-11 w-11" />
           </View>
 
-          <View className="gap-5">
-            <View className="bg-white/8 px-4 py-4">
+          <View className="mt-5 gap-5 pb-4" style={tabletFrameStyle}>
+            <View
+              className="rounded-[22px] border px-4 py-3"
+              style={{
+                backgroundColor: theme.card,
+                borderColor: theme.cardBorder,
+              }}
+            >
               {user ? (
                 <View className="flex-row items-center gap-4">
-                  <View className="h-16 w-16 items-center justify-center rounded-[20px] bg-[#4A148C]">
-                    <Text style={{ fontFamily: fonts.bodyBold }} className="text-xl text-white">
+                  <View
+                    className="h-16 w-16 items-center justify-center rounded-[20px]"
+                    style={{ backgroundColor: colors.brand }}
+                  >
+                    <Text className="text-xl" style={{ color: colors.white }}>
                       {displayName?.slice(0, 1).toUpperCase()}
                     </Text>
                   </View>
                   <View className="flex-1 gap-1">
                     <Text
-                      style={{ fontFamily: fonts.bodyBold }}
-                      className="text-lg leading-6 text-white"
+                      className="text-lg leading-6"
+                      style={{ color: theme.text }}
                       numberOfLines={2}
                     >
                       {displayName}
                     </Text>
-                    <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/65">
+                    <Text className="text-sm" style={{ color: theme.textMuted }}>
                       {email}
                     </Text>
                   </View>
@@ -145,12 +144,12 @@ export default function ProfileScreen() {
               ) : (
                 <Pressable
                   onPress={() => router.push("/login")}
-                  className="flex-row items-center justify-center gap-2 rounded-[14px] border-2 border-brand bg-brand-50 py-4 active:opacity-80"
+                  className="flex-row items-center justify-center gap-2 rounded-[14px] border border-accent-400 bg-accent-500 py-4 active:opacity-90"
                   accessibilityRole="button"
                   accessibilityLabel="Sign in"
                 >
-                  <Ionicons name="log-in-outline" size={22} color={colors.brand} />
-                  <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-brand">
+                  <Ionicons name="log-in-outline" size={22} color={colors.darkLabel} />
+                  <Text className="text-base" style={{ color: colors.darkLabel }}>
                     Sign in
                   </Text>
                 </Pressable>
@@ -164,97 +163,345 @@ export default function ProfileScreen() {
         className="flex-1"
         contentContainerClassName="gap-6 px-5 pb-10 pt-5"
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 16,
+          ...(isTablet ? { alignItems: "center" as const } : null),
+        }}
       >
-        {user ? (
-          <>
-              {hasPlayerProfile && (
-                 <Section title="Player profile">
-                <SettingsRowChevron
-                icon="person-outline"
-                title={
-                  playerProfileQuery.isLoading
-                    ? "Loading profile…"
-                    : "View profile"
-                }
-                subtitle={"Your player card and stats"}
-                onPress={handlePlayerProfile}
-              />
-                </Section>
-              )}
-          
-            <Section title="Account">
-              <SettingsRowChevron
-                icon="people-outline"
-                title="Join a league"
-                subtitle="Paste an invite code from your admin"
-                onPress={() => router.push("/join-league")}
-              />
-              <Divider />
-              <SettingsRowChevron
-                icon="trash-outline"
-                title="Delete account"
-                subtitle="Permanently delete your account"
-                onPress={handleDeleteAccount}
-              />
-            </Section>
-          </>
-        ) : null}
+        <View
+          className={isTablet ? "w-full gap-6" : "gap-6"}
+          style={tabletFrameStyle}
+        >
+          {isTablet ? (
+            <View className="flex-row items-start gap-5">
+              <View className="flex-1 gap-6">
+                {user ? (
+                  <>
+                    <PlayerProfileSection
+                      hasPlayerProfile={hasPlayerProfile}
+                      loading={playerProfileQuery.isLoading}
+                      onPress={handlePlayerProfile}
+                    />
+                    <AccountSection
+                      onJoinLeague={() => router.push("/join-league")}
+                      onDeleteAccount={() => openBrowserAsync(deleteAccountUrl)}
+                    />
+                  </>
+                ) : null}
+                <AppearanceSection
+                  colorScheme={colorScheme}
+                  preference={preference}
+                  systemColorScheme={systemColorScheme}
+                  onChange={handleAppearancePreferenceChange}
+                />
+              </View>
+              <View className="flex-1 gap-6">
+                <SupportSection
+                  onTerms={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
+                  onPrivacy={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
+                  onHelpCenter={() => router.push("/help-center")}
+                />
+                {user ? <LogoutButton onPress={handleSignOut} /> : null}
+              </View>
+            </View>
+          ) : (
+            <>
+              {user ? (
+                <>
+                  <PlayerProfileSection
+                    hasPlayerProfile={hasPlayerProfile}
+                    loading={playerProfileQuery.isLoading}
+                    onPress={handlePlayerProfile}
+                  />
+                  <AccountSection
+                    onJoinLeague={() => router.push("/join-league")}
+                    onDeleteAccount={() => openBrowserAsync(deleteAccountUrl)}
+                  />
+                </>
+              ) : null}
 
-        <Section title="Support">
-          <SettingsRowChevron
-            icon="document-text-outline"
-            title="Terms of service"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="shield-checkmark-outline"
-            title="Privacy policy"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
-          />
-          <Divider />
-          <SettingsRowChevron
-            icon="help-circle-outline"
-            title="Help centre"
-            onPress={() => openBrowserAsync("https://waitlist.sportykore.com")}
-          />
-        </Section>
+              <AppearanceSection
+                colorScheme={colorScheme}
+                preference={preference}
+                systemColorScheme={systemColorScheme}
+                onChange={handleAppearancePreferenceChange}
+              />
 
-        {user ? (
-          <Pressable
-            onPress={handleSignOut}
-            className="flex-row items-center justify-center gap-2 rounded-[14px] border border-red-300 bg-red-50 py-4 active:opacity-80"
-            accessibilityRole="button"
-            accessibilityLabel="Log out"
-          >
-            <Ionicons name="log-out-outline" size={22} color="#b91c1c" />
-            <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-red-700">
-              Log out
-            </Text>
-          </Pressable>
-        ) : null}
+              <SupportSection
+                onTerms={() => openBrowserAsync("https://waitlist.sportykore.com/terms")}
+                onPrivacy={() => openBrowserAsync("https://waitlist.sportykore.com/privacy")}
+                onHelpCenter={() => router.push("/help-center")}
+              />
 
-        <Text
-          style={{ fontFamily: fonts.body }}
+              {user ? <LogoutButton onPress={handleSignOut} /> : null}
+            </>
+          )}
+        </View>
+
+        {/* <Text
           className="pb-8 text-center text-xs leading-5 text-slate-500"
         >
-          Sportykore v{APP_VERSION}
-        </Text>
+          SportyKore v{APP_VERSION}
+        </Text> */}
       </ScrollView>
     </View>
   );
 }
 
+function PlayerProfileSection({
+  hasPlayerProfile,
+  loading,
+  onPress,
+}: {
+  hasPlayerProfile: boolean;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Section title="Player profile">
+      {hasPlayerProfile ? (
+        <SettingsRowChevron
+          icon="person-outline"
+          title={loading ? "Loading profile…" : "View profile"}
+          subtitle="Your player card, stats, and highlights"
+          onPress={onPress}
+        />
+      ) : (
+        <View className="gap-3 px-4 py-4">
+          <View className="flex-row gap-3">
+            <View
+              className="h-10 w-10 items-center justify-center rounded-xl"
+              style={{ backgroundColor: theme.accentMuted }}
+            >
+              <Ionicons name="person-add-outline" size={20} color={theme.accent} />
+            </View>
+            <View className="min-w-0 flex-1 gap-1">
+              <Text className="text-[15px]" style={{ color: theme.text }}>
+                Create player profile
+              </Text>
+              <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
+                A permanent profile that follows you across leagues,
+                with your stats and highlights in one place.
+              </Text>
+            </View>
+          </View>
+          <Button
+            variant="signInYellow"
+            label="Create profile"
+            className="h-11 rounded-full"
+            onPress={onPress}
+          />
+        </View>
+      )}
+    </Section>
+  );
+}
+
+function AccountSection({
+  onJoinLeague,
+  onDeleteAccount,
+}: {
+  onJoinLeague: () => void;
+  onDeleteAccount: () => void;
+}) {
+  return (
+    <Section title="Account">
+      <SettingsRowChevron
+        icon="people-outline"
+        title="Join a league"
+        subtitle="Paste an invite code from your league admin"
+        onPress={onJoinLeague}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="trash-outline"
+        title="Delete account"
+        subtitle="Open the account deletion page"
+        onPress={onDeleteAccount}
+      />
+    </Section>
+  );
+}
+
+function SupportSection({
+  onTerms,
+  onPrivacy,
+  onHelpCenter,
+}: {
+  onTerms: () => void;
+  onPrivacy: () => void;
+  onHelpCenter: () => void;
+}) {
+  return (
+    <Section title="Support">
+      <SettingsRowChevron
+        icon="document-text-outline"
+        title="Terms of service"
+        onPress={onTerms}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="shield-checkmark-outline"
+        title="Privacy policy"
+        onPress={onPrivacy}
+      />
+      <Divider />
+      <SettingsRowChevron
+        icon="help-circle-outline"
+        title="Help center"
+        subtitle="FAQs for leagues, roles, invites, and Match Center"
+        onPress={onHelpCenter}
+      />
+    </Section>
+  );
+}
+
+const appearanceOptions: {
+  value: ThemePreference;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { value: "system", label: "Auto", icon: "phone-portrait-outline" },
+  { value: "light", label: "Light", icon: "sunny-outline" },
+  { value: "dark", label: "Dark", icon: "moon-outline" },
+];
+
+function AppearanceSection({
+  colorScheme,
+  preference,
+  systemColorScheme,
+  onChange,
+}: {
+  colorScheme: AppColorScheme;
+  preference: ThemePreference;
+  systemColorScheme: AppColorScheme;
+  onChange: (preference: ThemePreference) => void;
+}) {
+  const theme = useTheme();
+  const activeIcon =
+    preference === "system"
+      ? "phone-portrait-outline"
+      : colorScheme === "dark"
+        ? "moon-outline"
+        : "sunny-outline";
+  const resolvedLabel = preference === "system" ? `Auto, ${systemColorScheme}` : preference;
+
+  return (
+    <Section title="Appearance">
+      <View className="gap-4 px-4 py-4">
+        <View className="flex-row items-center gap-3">
+          <View
+            className="h-10 w-10 items-center justify-center rounded-xl"
+            style={{ backgroundColor: theme.accentMuted }}
+          >
+            <Ionicons
+              name={activeIcon}
+              size={20}
+              color={theme.accent}
+            />
+          </View>
+          <View className="min-w-0 flex-1 gap-0.5">
+            <Text className="text-[15px]" style={{ color: theme.text }}>
+              Theme mode
+            </Text>
+            <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
+              Auto follows your device. Light helps in direct sun.
+            </Text>
+          </View>
+          <Text
+            className="text-xs capitalize"
+            style={{ color: theme.textSubtle }}
+            numberOfLines={1}
+          >
+            {resolvedLabel}
+          </Text>
+        </View>
+        <View
+          className="flex-row rounded-2xl border p-1"
+          style={{
+            backgroundColor: theme.cardMuted,
+            borderColor: theme.cardBorder,
+          }}
+        >
+          {appearanceOptions.map((option) => {
+            const selected = preference === option.value;
+
+            return (
+              <Pressable
+                key={option.value}
+                onPress={() => onChange(option.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Use ${option.label} theme mode`}
+                className="h-10 flex-1 flex-row items-center justify-center gap-1.5 rounded-xl px-2 active:opacity-80"
+                style={{
+                  backgroundColor: selected ? theme.accent : "transparent",
+                }}
+              >
+                <Ionicons
+                  name={option.icon}
+                  size={16}
+                  color={selected ? colors.darkLabel : theme.textMuted}
+                />
+                <Text
+                  className="text-xs"
+                  style={{ color: selected ? colors.darkLabel : theme.text }}
+                  numberOfLines={1}
+                >
+                  {option.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </Section>
+  );
+}
+
+function LogoutButton({ onPress }: { onPress: () => void }) {
+  const theme = useTheme();
+
+  return (
+    <Pressable
+      onPress={onPress}
+      className="flex-row items-center justify-center gap-2 rounded-[14px] border py-4 active:opacity-80"
+      style={{
+        backgroundColor: theme.dangerMuted,
+        borderColor: theme.danger,
+      }}
+      accessibilityRole="button"
+      accessibilityLabel="Log out"
+    >
+      <Ionicons name="log-out-outline" size={22} color={theme.danger} />
+      <Text className="text-base" style={{ color: theme.danger }}>
+        Log out
+      </Text>
+    </Pressable>
+  );
+}
+
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-2">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="px-1 text-[11px] uppercase tracking-[2px] text-slate-500"
+        className="px-1 text-[11px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
-      <View className="overflow-hidden rounded-[16px] border border-neutral-200 bg-white">
+      <View
+        className="overflow-hidden rounded-[18px] border"
+        style={{
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        }}
+      >
         {children}
       </View>
     </View>
@@ -262,7 +509,9 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function Divider() {
-  return <View className="ml-14 h-px bg-neutral-100" />;
+  const theme = useTheme();
+
+  return <View className="ml-14 h-px" style={{ backgroundColor: theme.cardBorder }} />;
 }
 
 function SettingsRowChevron({
@@ -276,27 +525,32 @@ function SettingsRowChevron({
   subtitle?: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center gap-3 px-4 py-3 active:bg-neutral-50"
+      className="flex-row items-center gap-3 px-4 py-3 active:opacity-80"
       accessibilityRole="button"
       accessibilityLabel={title}
     >
-      <View className="h-10 w-10 items-center justify-center rounded-xl bg-neutral-100">
-        <Ionicons name={icon} size={20} color="#374151" />
+      <View
+        className="h-10 w-10 items-center justify-center rounded-xl"
+        style={{ backgroundColor: theme.accentMuted }}
+      >
+        <Ionicons name={icon} size={20} color={theme.accent} />
       </View>
       <View className="flex-1 gap-0.5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-[15px] text-neutral-950">
+        <Text className="text-[15px]" style={{ color: theme.text }}>
           {title}
         </Text>
         {subtitle ? (
-          <Text style={{ fontFamily: fonts.body }} className="text-xs text-slate-500">
+          <Text className="text-xs" style={{ color: theme.textSubtle }}>
             {subtitle}
           </Text>
         ) : null}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+      <Ionicons name="chevron-forward" size={18} color={theme.textSubtle} />
     </Pressable>
   );
 }

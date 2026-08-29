@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
-import { fonts } from "@/theme/fonts";
+import { useTheme } from "@/color/use-theme";
 
 export type PlayerRowAction = {
   key: string;
   icon: keyof typeof Ionicons.glyphMap;
+  label?: string;
   color: string;
   selected?: boolean;
   disabled?: boolean;
@@ -18,52 +19,88 @@ type ActionRowProps = {
   name: string;
   jersey: string | null;
   actions: PlayerRowAction[];
+  density?: "normal" | "compact";
 };
 
 /** Player row with icon action buttons on the right (goal, assist, cards, save). */
-export function PlayerActionRow({ name, jersey, actions }: ActionRowProps) {
+export function PlayerActionRow({
+  name,
+  jersey,
+  actions,
+  density = "normal",
+}: ActionRowProps) {
+  const theme = useTheme();
   const anySelected = actions.some((a) => a.selected);
+  const compact = density === "compact";
 
   return (
     <View
-      className={`mb-2 flex-row items-center justify-between rounded-xl px-3 py-3 ${
-        anySelected ? "bg-brand-500/20" : "bg-white/8"
-      }`}
+      className={`${compact ? "mb-1.5 rounded-lg px-2.5 py-2" : "mb-2 rounded-xl px-3 py-3"} flex-row items-center justify-between`}
+      style={{
+        backgroundColor: anySelected ? theme.brandMuted : theme.cardMuted,
+      }}
     >
-      <View className="mr-2 flex-1 flex-row items-center gap-3">
+      <View className="mr-2 min-w-0 flex-1 flex-row items-center gap-2">
         <Text
-          style={{ fontFamily: fonts.body }}
-          className="w-8 text-xs text-white/45"
+          className={`${compact ? "w-7" : "w-8"} text-xs`}
+          style={{ color: theme.textSubtle }}
         >
-          {jersey ? `#${jersey}` : "—"}
+          {jersey ? `#${jersey}` : "-"}
         </Text>
         <Text
-          style={{ fontFamily: fonts.bodySemibold }}
-          className="flex-1 text-sm text-white"
+          className={`${compact ? "text-[13px]" : "text-sm"} min-w-0 flex-1`}
+          style={{ color: theme.text }}
           numberOfLines={1}
         >
           {name}
         </Text>
       </View>
-      <View className="flex-row items-center gap-1.5">
-        {actions.map((action) => (
-          <Pressable
-            key={action.key}
-            onPress={action.onPress}
-            disabled={action.disabled || action.loading}
-            accessibilityRole="button"
-            accessibilityLabel={action.accessibilityLabel}
-            className={`h-9 w-9 items-center justify-center rounded-lg ${
-              action.selected ? "bg-accent-500/30" : "bg-white/10"
-            } ${action.disabled ? "opacity-35" : ""}`}
-          >
-            {action.loading ? (
-              <ActivityIndicator size="small" color={action.color} />
-            ) : (
-              <Ionicons name={action.icon} size={20} color={action.color} />
-            )}
-          </Pressable>
-        ))}
+      <View className={`flex-row items-center ${compact ? "gap-1" : "gap-1.5"}`}>
+        {actions.map((action) => {
+          const selected = Boolean(action.selected);
+          const disabled = Boolean(action.disabled);
+          return (
+            <Pressable
+              key={action.key}
+              onPress={action.onPress}
+              disabled={disabled || action.loading}
+              accessibilityRole="button"
+              accessibilityLabel={action.accessibilityLabel}
+              className={`flex-row items-center justify-center gap-1 rounded-full ${
+                compact && action.label ? "h-8 min-w-[4rem] px-2" : "h-9 w-9"
+              } ${disabled ? "opacity-35" : ""}`}
+              style={{
+                backgroundColor: selected ? theme.accent : theme.card,
+              }}
+            >
+              {action.loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={selected ? theme.textInverse : action.color}
+                />
+              ) : (
+                <>
+                  <Ionicons
+                    name={action.icon}
+                    size={compact ? 15 : 20}
+                    color={selected ? theme.textInverse : action.color}
+                  />
+                  {action.label ? (
+                    <Text
+                      className="text-[11px]"
+                      style={{
+                        color: selected ? theme.textInverse : theme.textMuted,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {action.label}
+                    </Text>
+                  ) : null}
+                </>
+              )}
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
@@ -89,33 +126,38 @@ export function PlayerPickRow({
   onPress,
   trailingIcon,
 }: LegacyProps) {
+  const theme = useTheme();
+
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
       className={`mb-2 flex-row items-center justify-between rounded-xl px-3 py-3 ${
-        selected ? "bg-brand-500/35" : "bg-white/8"
-      } ${disabled ? "opacity-50" : ""}`}
+        disabled ? "opacity-50" : ""
+      }`}
+      style={{
+        backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+      }}
     >
       <View className="flex-row items-center gap-3">
         <Text
-          style={{ fontFamily: fonts.body }}
-          className="w-8 text-xs text-white/45"
+          className="w-8 text-xs"
+          style={{ color: theme.textSubtle }}
         >
-          {jersey ? `#${jersey}` : "—"}
+          {jersey ? `#${jersey}` : "-"}
         </Text>
-        <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-white">
+        <Text className="text-sm" style={{ color: theme.text }}>
           {name}
         </Text>
       </View>
       {loading ? (
-        <ActivityIndicator size="small" color="#E6A817" />
+        <ActivityIndicator size="small" color={theme.accent} />
       ) : trailingIcon ? (
-        <Ionicons name={trailingIcon} size={20} color="#E6A817" />
+        <Ionicons name={trailingIcon} size={20} color={theme.accent} />
       ) : selected ? (
-        <Ionicons name="checkmark-circle" size={20} color="#E6A817" />
+        <Ionicons name="checkmark-circle" size={20} color={theme.accent} />
       ) : (
-        <Ionicons name="ellipse-outline" size={20} color="rgba(255,255,255,0.25)" />
+        <Ionicons name="ellipse-outline" size={20} color={theme.textSubtle} />
       )}
     </Pressable>
   );

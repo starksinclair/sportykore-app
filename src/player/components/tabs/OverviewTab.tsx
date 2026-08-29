@@ -9,9 +9,10 @@ import type {
   ApiPlayerSeason,
   ApiStatType,
 } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { EntityLogo } from "@/components/ui";
 import { labelForPosition } from "@/lib/positions";
-import { fonts } from "@/theme/fonts";
 
 import { aggregatePlayerStats, collectAllStats, countAllGames } from "../../utils";
 
@@ -25,6 +26,8 @@ type Props = {
 
 export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
   const router = useRouter();
+  const theme = useTheme();
+  const { isDark } = useAppearance();
   const seasonTotals = useMemo(
     () => aggregatePlayerStats(season?.stats ?? []),
     [season?.stats],
@@ -37,27 +40,39 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
 
   return (
     <View className="gap-6">
-      <View className="items-center gap-4 rounded-[28px] bg-white/6 px-5 py-8">
-        <View className="h-28 w-28 items-center justify-center rounded-full bg-[#364156]">
+      <View
+        className="items-center gap-4 rounded-[28px] px-5 py-8"
+        style={{ backgroundColor: theme.card }}
+      >
+        <View
+          className="h-28 w-28 items-center justify-center rounded-full"
+          style={{ backgroundColor: theme.brand }}
+        >
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[34px] text-white"
+            className="text-[34px]"
+            style={{ color: theme.textInverse }}
           >
             {initials(player.name)}
           </Text>
         </View>
         <View className="items-center">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-[28px] text-white"
+            className="text-[28px]"
+            style={{ color: theme.text }}
           >
             {player.name}
           </Text>
           {player.position ? (
-            <View className="mt-2 rounded-full border border-white/10 bg-white/8 px-3 py-1">
+            <View
+              className="mt-2 rounded-full border px-3 py-1"
+              style={{
+                backgroundColor: theme.cardMuted,
+                borderColor: theme.cardBorder,
+              }}
+            >
               <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="text-[11px] uppercase tracking-[1.5px] text-white/80"
+                className="text-[11px] uppercase tracking-[1.5px]"
+                style={{ color: theme.textMuted }}
               >
                 {labelForPosition(player.position)}
               </Text>
@@ -72,20 +87,20 @@ export function PlayerOverviewTab({ player, leagues, league, season }: Props) {
                 logoUrl={season.team.logoUrl}
                 variant="team"
                 size="xs"
-                tone="dark"
+                tone={isDark ? "dark" : "light"}
               />
               <Text
-                style={{ fontFamily: fonts.body }}
-                className="text-[15px] text-[#10E3B1]"
+                className="text-[15px]"
+                style={{ color: theme.success }}
               >
                 {season.team.name}
               </Text>
             </Pressable>
           ) : null}
           {league ? (
-            <Text
-              style={{ fontFamily: fonts.body }}
-              className="pt-1 text-xs text-white/55"
+            <Text 
+              className="pt-1 text-xs"
+              style={{ color: theme.textSubtle }}
             >
               {league.name}
               {season ? ` · ${season.name}` : ""}
@@ -165,11 +180,13 @@ function Section({
   title: string;
   children: import("react").ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-3">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[12px] uppercase tracking-[2px] text-white/55"
+        className="text-[12px] uppercase tracking-[2px]"
+        style={{ color: theme.textSubtle }}
       >
         {title}
       </Text>
@@ -187,18 +204,23 @@ function StatCard({
   value: number;
   label: string;
 }) {
+  const theme = useTheme();
+
   return (
-    <View className="min-w-[140px] flex-1 rounded-[22px] bg-white/6 px-4 py-5">
-      <Ionicons name={icon} size={24} color="#E6A817" />
+    <View
+      className="min-w-[140px] flex-1 rounded-[22px] px-4 py-5"
+      style={{ backgroundColor: theme.card }}
+    >
+      <Ionicons name={icon} size={24} color={theme.accent} />
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="pt-4 text-[28px] text-white"
+        className="pt-4 text-[28px]"
+        style={{ color: theme.text }}
       >
         {value}
       </Text>
       <Text
-        style={{ fontFamily: fonts.body }}
-        className="pt-1 text-sm text-white/55"
+        className="pt-1 text-sm"
+        style={{ color: theme.textSubtle }}
       >
         {label}
       </Text>

@@ -7,6 +7,8 @@ import { DetailTabs, type DetailTab } from "@/components/ui";
 import { DetailScreenShell } from "@/components/ui/detail-screen-shell";
 import { colors } from "@/constants";
 import { useGameLineups } from "@/lineup";
+import { messageForResourceLoad } from "@/lib/show-error-toast";
+import { useTrackView } from "@/lib/use-track-view";
 import { useMatchDetail } from "@/match";
 import { MatchLineupsTab } from "@/match/components/tabs/LineupsTab";
 import { MatchOverviewTab } from "@/match/components/tabs/OverviewTab";
@@ -32,9 +34,26 @@ export default function MatchRoute() {
     isValidId && activeTab === "lineups",
   );
 
+  useTrackView(
+    "match_viewed",
+    query.data ? gameId : null,
+    query.data
+      ? {
+          game_id: query.data.id,
+          league_id: query.data.league?.id,
+          league_name: query.data.league?.name,
+          home_team_id: query.data.homeTeam?.id,
+          home_team_name: query.data.homeTeam?.name,
+          away_team_id: query.data.awayTeam?.id,
+          away_team_name: query.data.awayTeam?.name,
+          status: query.data.status,
+        }
+      : undefined,
+  );
+
   if (!isValidId) {
     return (
-      <DetailScreenShell title="Match">
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
         <NotFound message="Invalid match id" />
       </DetailScreenShell>
     );
@@ -42,7 +61,7 @@ export default function MatchRoute() {
 
   if (query.isLoading && !query.data) {
     return (
-      <DetailScreenShell title="Match">
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
         <View className="items-center py-20">
           <ActivityIndicator color={colors.accent} />
         </View>
@@ -52,8 +71,14 @@ export default function MatchRoute() {
 
   if (query.isError || !query.data) {
     return (
-      <DetailScreenShell title="Match">
-        <NotFound message="Match not found" />
+      <DetailScreenShell title="Match" tabletMaxWidth={1120}>
+        <NotFound
+          message={
+            query.isError
+              ? messageForResourceLoad(query.error, "Match")
+              : "Match not found."
+          }
+        />
       </DetailScreenShell>
     );
   }
@@ -75,6 +100,7 @@ export default function MatchRoute() {
       leagueId={detail.league?.id ?? 0}
       title={title}
       subtitle={matchup}
+      tabletMaxWidth={1120}
       headerContent={
         <DetailTabs
           tabs={TABS}
@@ -101,6 +127,7 @@ export default function MatchRoute() {
       {activeTab === "stats" ? (
         <MatchStatsTab
           stats={detail.stats}
+          tracking={detail.tracking}
           homeTeamId={detail.homeTeam?.id}
           awayTeamId={detail.awayTeam?.id}
         />

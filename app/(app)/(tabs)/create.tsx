@@ -4,29 +4,45 @@ import { StatusBar } from "expo-status-bar";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
   TextInput,
   View
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
+import type { CompetitionFormat } from "@/api/entities";
 import { ApiError } from "@/api/errors";
 import { useAuthGate } from "@/auth";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { CountryLabel } from "@/components/ui/CountryFlag";
 import { AuthTextField } from "@/components/ui/auth-text-field";
-import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { CountryPicker } from "@/components/ui/country-picker";
-import { Logo } from "@/components/ui/logo";
+import { FormFieldLabel } from "@/components/ui/form-field-label";
 import { LogoImageUpload } from "@/components/ui/logo-image-upload";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import { OfflineBanner } from "@/components/ui/offline-banner";
-import { colors, scoreboardPattern } from "@/constants";
-import { useCreateLeague } from "@/league/hooks";
+import {
+  GroupFormatConfigControl,
+  buildDefaultGroupConfig,
+  type GroupFormatFormState,
+} from "@/groups";
+import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
+import {
+  KnockoutTieFormatControl,
+  buildKnockoutConfig,
+  type TieFormatSelection,
+} from "@/knockout";
+import {
+  COMPETITION_FORMAT_COPY,
+  competitionFormatLabel,
+} from "@/league/competition-format-copy";
+import { CompetitionFormatPicker } from "@/league/components/CompetitionFormatPicker";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
+import { useCreateLeague } from "@/league/hooks";
 import {
   DIVISION_OPTIONS,
   type CountryOption,
@@ -36,10 +52,14 @@ import {
   tiebreakerLabel,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import { parseCalendarDate } from "@/lib/datetime";
+import { pickCompetitionLogo } from "@/lib/pick-competition-logo";
 import type { PickedImageFile } from "@/lib/picked-image";
-import { fonts } from "@/theme/fonts";
+import { posthog } from "@/lib/posthog";
 
 const TOTAL_STEPS = 3;
+
+type AppTheme = ReturnType<typeof useTheme>;
 
 type TeamRow = {
   id: string;
@@ -53,15 +73,31 @@ function newTeamRow(): TeamRow {
 
 export default function CreateScreen() {
   const [step, setStep] = useState(1);
-
+  const insets = useSafeAreaInsets();
+  const { isDark } = useAppearance();
+  const theme = useTheme();
+  const { isTablet, isWideTablet } = useAdaptiveLayout();
+  const tabletMaxWidth = isWideTablet ? 1120 : 920;
+  // const bottomInset = Math.max(insets.bottom, 10);
   const [name, setName] = useState("");
-  const [season, setSeason] = useState("");
+  const season = String(new Date().getFullYear());
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [description, setDescription] = useState("");
   const [leagueLogo, setLeagueLogo] = useState<PickedImageFile | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
   const [city, setCity] = useState("");
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
   const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(DEFAULT_TIEBREAKER);
+  const [format, setFormat] = useState<CompetitionFormat>("league");
+  const [knockoutName, setKnockoutName] = useState("Cup");
+  const [tieFormat, setTieFormat] = useState<TieFormatSelection>({ kind: "single" });
+  const [hasThirdPlace, setHasThirdPlace] = useState(false);
+  const [groupForm, setGroupForm] = useState<GroupFormatFormState>({
+    groupCount: 2,
+    doubleRoundRobin: false,
+    perGroup: 2,
+  });
 
   const [teams, setTeams] = useState<TeamRow[]>(() => [
     { id: "t1", name: "", logo: null },
@@ -74,8 +110,14 @@ export default function CreateScreen() {
   const createLeagueMutation = useCreateLeague();
   const { requireAuth } = useAuthGate();
 
+  const durationError = validateLeagueDuration(startDate, endDate);
   const step1Valid =
-    name.trim().length > 0 && season.trim().length > 0 && selectedCountry !== null;
+    name.trim().length > 0 &&
+    selectedCountry !== null &&
+    Boolean(format) &&
+    startDate.trim().length > 0 &&
+    endDate.trim().length > 0 &&
+    durationError === null;
 
   const namedTeams = teams.filter((t) => t.name.trim().length > 0);
   const step2Valid = namedTeams.length >= 2;
@@ -84,7 +126,10 @@ export default function CreateScreen() {
     setStepError(null);
     if (step === 1) {
       if (!step1Valid) {
-        setStepError("Add a league name, season, and country to continue.");
+        setStepError(
+          durationError ??
+            "Add competition name, country, format, and start/end dates to continue.",
+        );
         return;
       }
       setStep(2);
@@ -101,7 +146,12 @@ export default function CreateScreen() {
 
   const handleCreate = async () => {
     setStepError(null);
-    if (!requireAuth({ action: "create a league" })) {
+    if (!requireAuth({ action: "create a competition" })) {
+      return;
+    }
+    const createDurationError = validateLeagueDuration(startDate, endDate);
+    if (createDurationError) {
+      setStepError(createDurationError);
       return;
     }
     try {
@@ -111,20 +161,49 @@ export default function CreateScreen() {
         countryId: selectedCountry!.id,
         description: description.trim() || undefined,
         gender: divisionId !== "open" ? divisionId : undefined,
-        tiebreaker: tiebreakerId,
+        tiebreaker: format === "league" ? tiebreakerId : undefined,
         logo: leagueLogo ?? undefined,
+        startDate: startDate.trim(),
+        endDate: endDate.trim(),
+        format,
+        knockout:
+          format === "knockout"
+            ? {
+                name: knockoutName.trim() || "Cup",
+                seed: true,
+                config: buildKnockoutConfig(tieFormat, hasThirdPlace),
+              }
+            : undefined,
+        group:
+          format === "group"
+            ? {
+                name: "Group Stage",
+                config: buildDefaultGroupConfig({
+                  groupCount: groupForm.groupCount,
+                  doubleRoundRobin: groupForm.doubleRoundRobin,
+                  perGroup: groupForm.perGroup,
+                }),
+              }
+            : undefined,
         teams: namedTeams.map((team) => ({
           name: team.name.trim(),
           logo: team.logo ?? undefined,
         })),
       });
+      posthog?.capture("competition_created", {
+        competition_format: format,
+        team_count: namedTeams.length,
+        has_logo: leagueLogo !== null,
+        has_description: Boolean(description.trim()),
+        division: divisionId,
+      });
       setCreated(true);
     } catch (err) {
-      console.error("Failed to create league", err);
+      console.error("Failed to create competition", err);
       if (err instanceof ApiError && err.status === 401) {
-        setStepError("Please create an account first to create a league.");
+        setStepError("Please create an account first to create a competition.");
       } else {
-        setStepError(err instanceof Error ? err.message : "Failed to create league. Try again.");
+        setStepError(err instanceof Error ? err.message : "Failed to create competition. Try again.");
       }
     }
   };
@@ -157,13 +236,23 @@ export default function CreateScreen() {
   const resetWizard = () => {
     setStep(1);
     setName("");
-    setSeason("");
+    setStartDate("");
+    setEndDate("");
     setDescription("");
     setLeagueLogo(null);
     setSelectedCountry(null);
     setCity("");
     setDivisionId("open");
     setTiebreakerId(DEFAULT_TIEBREAKER);
+    setFormat("league");
+    setKnockoutName("Cup");
+    setTieFormat({ kind: "single" });
+    setHasThirdPlace(false);
+    setGroupForm({
+      groupCount: 2,
+      doubleRoundRobin: false,
+      perGroup: 2,
+    });
     setTeams([
       { id: "t1", name: "", logo: null },
       { id: "t2", name: "", logo: null },
@@ -176,60 +265,62 @@ export default function CreateScreen() {
   const progress = step / TOTAL_STEPS;
 
   return (
-    <View className="flex-1 bg-[#121212]">
-      <StatusBar style="light" />
+    <View className="flex-1" style={{ backgroundColor: theme.background }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <SafeAreaView className="flex-1" edges={["top"]}>
       <OfflineBanner />
-      <BlackPatternBackground
-        baseColor={scoreboardPattern().baseColor}
-        stripeColor={scoreboardPattern().stripeColor}
-      />
+      {/* <BlackPatternBackground
+        baseColor={theme.patternBase}
+        stripeColor={theme.patternStripe}
+      /> */}
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          className="flex-1"
-          contentContainerClassName="px-5 pb-28 pt-4"
+        <KeyboardAwareScrollView
+          bottomOffset={24}
+          style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 16,
+            paddingBottom: insets.bottom + 90,
+          }}
           showsVerticalScrollIndicator={false}
         >
-          <View className="gap-6">
+          <View
+            className="gap-6"
+            style={isTablet ? { alignSelf: "center", width: "100%", maxWidth: tabletMaxWidth } : undefined}
+          >
             <View className="gap-2">
-              <Logo variant="full" color={colors.accent} fontSize={28} lineHeight={38} />
               <Text
-                style={{ fontFamily: fonts.bodyBold }}
-                className="text-[26px] leading-8 text-white"
+                className="text-[26px] leading-8"
+                style={{ color: theme.text }}
               >
-                Create a league
+                Create a competition
               </Text>
               <Text
-                style={{ fontFamily: fonts.body }}
-                className="text-sm leading-6 text-white/70"
+                className="text-sm leading-6"
+                style={{ color: theme.textMuted }}
               >
-                Three quick steps — you can adjust details later from Manage once the league
-                goes live.
+                Three quick steps to choose the season structure, add teams,
+                and review before it goes live.
               </Text>
             </View>
 
             <View className="gap-2">
-              <View className="h-2 overflow-hidden rounded-full bg-white/15">
+              <View
+                className="h-2 overflow-hidden rounded-full"
+                style={{ backgroundColor: theme.cardMuted }}
+              >
                 <View
                   className="h-2 rounded-full"
-                  style={{ width: `${progress * 100}%`, backgroundColor: colors.accent }}
+                  style={{ width: `${progress * 100}%`, backgroundColor: theme.accent }}
                 />
               </View>
               <View className="flex-row justify-between">
                 {["Basics", "Teams", "Review"].map((label, i) => (
                   <Text
                     key={label}
-                    style={{
-                      fontFamily: i + 1 === step ? fonts.bodyBold : fonts.bodySemibold,
-                    }}
-                    className={
-                      i + 1 === step ? "text-xs text-[#E6A817]" : "text-xs text-white/45"
-                    }
+                    className="text-xs"
+                    style={{ color: i + 1 === step ? theme.accent : theme.textSubtle }}
                   >
                     {i + 1}. {label}
                   </Text>
@@ -238,20 +329,30 @@ export default function CreateScreen() {
             </View>
 
             {stepError ? (
-              <View className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-                <Text style={{ fontFamily: fonts.bodySemibold }} className="text-sm text-red-900">
+              <View
+                className="rounded-2xl border px-4 py-3"
+                style={{ backgroundColor: theme.dangerMuted, borderColor: theme.danger }}
+              >
+                <Text className="text-sm" style={{ color: theme.danger }}>
                   {stepError}
                 </Text>
               </View>
             ) : null}
 
-            <View className="rounded-[28px] bg-white px-5 py-6">
+            <View
+              className="rounded-[28px] border px-5 py-6"
+              style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+            >
               {step === 1 ? (
                 <StepBasics
+                  isDark={isDark}
+                  theme={theme}
                   name={name}
                   setName={setName}
-                  season={season}
-                  setSeason={setSeason}
+                  startDate={startDate}
+                  setStartDate={setStartDate}
+                  endDate={endDate}
+                  setEndDate={setEndDate}
                   description={description}
                   setDescription={setDescription}
                   leagueLogo={leagueLogo}
@@ -262,6 +363,16 @@ export default function CreateScreen() {
                   setDivisionId={setDivisionId}
                   tiebreakerId={tiebreakerId}
                   setTiebreakerId={setTiebreakerId}
+                  format={format}
+                  setFormat={setFormat}
+                  knockoutName={knockoutName}
+                  setKnockoutName={setKnockoutName}
+                  tieFormat={tieFormat}
+                  setTieFormat={setTieFormat}
+                  hasThirdPlace={hasThirdPlace}
+                  setHasThirdPlace={setHasThirdPlace}
+                  groupForm={groupForm}
+                  setGroupForm={setGroupForm}
                   selectedCountry={selectedCountry}
                   onSelectCountry={setSelectedCountry}
                 />
@@ -269,7 +380,9 @@ export default function CreateScreen() {
 
               {step === 2 ? (
                 <StepTeams
+                  theme={theme}
                   teams={teams}
+                  format={format}
                   onChangeName={updateTeamName}
                   onChangeLogo={updateTeamLogo}
                   onAdd={addTeam}
@@ -279,14 +392,23 @@ export default function CreateScreen() {
 
               {step === 3 ? (
                 <StepReview
+                  isDark={isDark}
+                  theme={theme}
                   name={name}
                   season={season}
+                  startDate={startDate}
+                  endDate={endDate}
                   description={description}
                   leagueLogo={leagueLogo}
                   country={selectedCountry ?? undefined}
                   city={city}
                   divisionId={divisionId}
                   tiebreakerId={tiebreakerId}
+                  format={format}
+                  knockoutName={knockoutName}
+                  tieFormat={tieFormat}
+                  hasThirdPlace={hasThirdPlace}
+                  groupForm={groupForm}
                   teams={namedTeams}
                   created={created}
                 />
@@ -300,14 +422,14 @@ export default function CreateScreen() {
                     <Button
                       variant="secondary"
                       label="Back"
-                      className="flex-1"
+                      className="w-[112px]"
                       onPress={goBack}
                       disabled={createLeagueMutation.isPending}
                     />
                   ) : null}
                   <Button
                     variant="primary"
-                    label={step === 3 ? "Create League" : "Continue"}
+                    label={step === 3 ? "Create" : "Continue"}
                     className="flex-1"
                     onPress={step === 3 ? handleCreate : goNext}
                     loading={createLeagueMutation.isPending}
@@ -318,18 +440,21 @@ export default function CreateScreen() {
               )}
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </View>
   );
 }
 
 function StepBasics({
+  isDark,
+  theme,
   name,
   setName,
-  season,
-  setSeason,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   description,
   setDescription,
   leagueLogo,
@@ -340,13 +465,27 @@ function StepBasics({
   setDivisionId,
   tiebreakerId,
   setTiebreakerId,
+  format,
+  setFormat,
+  knockoutName,
+  setKnockoutName,
+  tieFormat,
+  setTieFormat,
+  hasThirdPlace,
+  setHasThirdPlace,
+  groupForm,
+  setGroupForm,
   selectedCountry,
   onSelectCountry,
 }: {
+  isDark: boolean;
+  theme: AppTheme;
   name: string;
   setName: (v: string) => void;
-  season: string;
-  setSeason: (v: string) => void;
+  startDate: string;
+  setStartDate: (v: string) => void;
+  endDate: string;
+  setEndDate: (v: string) => void;
   description: string;
   setDescription: (v: string) => void;
   leagueLogo: PickedImageFile | null;
@@ -357,54 +496,93 @@ function StepBasics({
   setDivisionId: (v: (typeof DIVISION_OPTIONS)[number]["id"]) => void;
   tiebreakerId: TiebreakerRule;
   setTiebreakerId: (v: TiebreakerRule) => void;
+  format: CompetitionFormat;
+  setFormat: (v: CompetitionFormat) => void;
+  knockoutName: string;
+  setKnockoutName: (v: string) => void;
+  tieFormat: TieFormatSelection;
+  setTieFormat: (v: TieFormatSelection) => void;
+  hasThirdPlace: boolean;
+  setHasThirdPlace: (v: boolean) => void;
+  groupForm: GroupFormatFormState;
+  setGroupForm: (v: GroupFormatFormState) => void;
   selectedCountry: CountryOption | null;
   onSelectCountry: (country: CountryOption) => void;
 }) {
-  return (
-    <View className="gap-4">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 1 — League basics
-      </Text>
+  const { isTablet } = useAdaptiveLayout();
 
-      <LogoImageUpload
-        label="League logo (optional)"
-        value={leagueLogo}
-        onChange={onLeagueLogoChange}
-        size="lg"
-        accessibilityLabel="League logo"
+  const formatFields = (
+    <>
+      <CompetitionFormatPicker
+        value={format}
+        onChange={setFormat}
+        required
       />
+      <FormatHelpCard format={format} theme={theme} />
+    </>
+  );
 
+  const identityFields = (
+    <>
       <AuthTextField
-        label="League name"
+        label="Competition name"
+        required
         placeholder="e.g. Surulere Sunday League"
         value={name}
         onChangeText={setName}
         autoCapitalize="words"
       />
 
-      <AuthTextField
-        label="Season"
-        placeholder="e.g. 2025/26"
-        value={season}
-        onChangeText={setSeason}
-        autoCapitalize="none"
+      <View className="gap-2">
+        <FormFieldLabel label="Competition duration" required />
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <NativeDatePickerField
+              label="Start date"
+              placeholder="Pick start date"
+              value={startDate}
+              onChange={(value) => setStartDate(value ?? "")}
+              maximumDate={parseCalendarDate(endDate) ?? undefined}
+              variant={isDark ? "dark" : "light"}
+            />
+          </View>
+          <View className="flex-1">
+            <NativeDatePickerField
+              label="End date"
+              placeholder="Pick end date"
+              value={endDate}
+              onChange={(value) => setEndDate(value ?? "")}
+              minimumDate={parseCalendarDate(startDate) ?? undefined}
+              variant={isDark ? "dark" : "light"}
+            />
+          </View>
+        </View>
+      </View>
+
+      <CountryPicker
+        value={selectedCountry}
+        onChange={onSelectCountry}
+        required
       />
 
-      <CountryPicker value={selectedCountry} onChange={onSelectCountry} />
-
       <AuthTextField
-        label="City / area (optional)"
+        label="City / area"
         placeholder="e.g. Lagos Mainland"
         value={city}
         onChangeText={setCity}
         autoCapitalize="words"
       />
+    </>
+  );
 
-      <LabelBlock label="Division / band (optional)">
+  const rulesFields = (
+    <>
+      <LabelBlock label="Division / band">
         <View className="flex-row flex-wrap gap-2">
           {DIVISION_OPTIONS.map((opt) => (
             <Chip
               key={opt.id}
+              theme={theme}
               selected={divisionId === opt.id}
               label={opt.label}
               onPress={() => setDivisionId(opt.id)}
@@ -413,38 +591,101 @@ function StepBasics({
         </View>
       </LabelBlock>
 
-      <TiebreakerPicker
-        value={tiebreakerId}
-        onChange={setTiebreakerId}
-        variant="light"
-      />
+      {format === "league" ? (
+        <TiebreakerPicker
+          value={tiebreakerId}
+          onChange={setTiebreakerId}
+          variant={isDark ? "dark" : "light"}
+        />
+      ) : format === "knockout" ? (
+        <View className="gap-3">
+          <AuthTextField
+            label="Knockout stage name"
+            value={knockoutName}
+            onChangeText={setKnockoutName}
+            placeholder="Cup"
+          />
+          <KnockoutTieFormatControl
+            value={tieFormat}
+            onChange={setTieFormat}
+            hasThirdPlace={hasThirdPlace}
+            onHasThirdPlaceChange={setHasThirdPlace}
+            tone={isDark ? "dark" : "light"}
+          />
+        </View>
+      ) : (
+        <GroupFormatConfigControl
+          value={groupForm}
+          onChange={setGroupForm}
+          tone={isDark ? "dark" : "light"}
+        />
+      )}
+    </>
+  );
 
+  const descriptionAndLogo = (
+    <>
       <View className="gap-1.5">
-        <Text
-          style={{ fontFamily: fonts.bodyBold }}
-          className="text-[11px] uppercase tracking-wider text-slate-500"
-        >
-          Description (optional)
-        </Text>
+        <FormFieldLabel label="Description" />
         <TextInput
           value={description}
           onChangeText={setDescription}
           placeholder="Rules, venues, contacts…"
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={theme.textSubtle}
           multiline
           numberOfLines={4}
           textAlignVertical="top"
           style={{
-            fontFamily: fonts.body,
             minHeight: 100,
             paddingHorizontal: 16,
             paddingVertical: 12,
             borderRadius: 16,
-            backgroundColor: "#F5F5F5",
+            backgroundColor: theme.inputBackground,
+            borderColor: theme.inputBorder,
+            color: theme.text,
           }}
-          className="border border-transparent text-base text-neutral-950"
+          className="border text-base"
         />
       </View>
+
+      <LogoImageUpload
+        label="Logo"
+        value={leagueLogo}
+        onChange={onLeagueLogoChange}
+        size="lg"
+        layout="centered"
+        onPick={pickCompetitionLogo}
+        hint="Recommend image: 150x150 px, JPG, PNG, or WebP, max 5 MB, keep logo centered"
+        accessibilityLabel="Competition logo"
+      />
+    </>
+  );
+
+  return (
+    <View className="gap-4">
+      <Text className="text-base" style={{ color: theme.text }}>
+        Step 1 - Competition basics
+      </Text>
+
+      {isTablet ? (
+        <View className="flex-row items-start gap-6">
+          <View className="min-w-0 flex-1 gap-4">
+            {formatFields}
+            {identityFields}
+          </View>
+          <View className="min-w-0 flex-1 gap-4">
+            {rulesFields}
+            {descriptionAndLogo}
+          </View>
+        </View>
+      ) : (
+        <>
+          {formatFields}
+          {identityFields}
+          {rulesFields}
+          {descriptionAndLogo}
+        </>
+      )}
     </View>
   );
 }
@@ -452,12 +693,7 @@ function StepBasics({
 function LabelBlock({ label, children }: { label: string; children: ReactNode }) {
   return (
     <View className="gap-2">
-      <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-[11px] uppercase tracking-wider text-slate-500"
-      >
-        {label}
-      </Text>
+      <FormFieldLabel label={label} />
       {children}
     </View>
   );
@@ -467,22 +703,25 @@ function Chip({
   label,
   selected,
   onPress,
+  theme,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  theme: AppTheme;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className={[
-        "rounded-full border px-3 py-2",
-        selected ? "border-[#4A148C] bg-[#F3E8FF]" : "border-neutral-200 bg-neutral-50",
-      ].join(" ")}
+      className="rounded-full border px-3 py-2 active:opacity-85"
+      style={{
+        backgroundColor: selected ? theme.brandMuted : theme.cardMuted,
+        borderColor: selected ? theme.brand : theme.cardBorder,
+      }}
     >
       <Text
-        style={{ fontFamily: selected ? fonts.bodyBold : fonts.bodySemibold }}
-        className={selected ? "text-xs text-[#4A148C]" : "text-xs text-neutral-800"}
+        className="text-xs"
+        style={{ color: selected ? theme.brand : theme.textMuted }}
         numberOfLines={2}
       >
         {label}
@@ -491,31 +730,78 @@ function Chip({
   );
 }
 
+function FormatHelpCard({
+  format,
+  theme,
+}: {
+  format: CompetitionFormat;
+  theme: AppTheme;
+}) {
+  const copy = COMPETITION_FORMAT_COPY[format];
+  return (
+    <View
+      className="gap-2 rounded-2xl border px-4 py-3"
+      style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+    >
+      <View className="flex-row items-start gap-2">
+        <Ionicons
+          name="information-circle-outline"
+          size={18}
+          color={theme.accent}
+          style={{ marginTop: 2 }}
+        />
+        <View className="min-w-0 flex-1 gap-1">
+          <Text className="text-sm" style={{ color: theme.text }}>
+            {copy.label}
+          </Text>
+          <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
+            {copy.description} {copy.lockedHint}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function StepTeams({
+  theme,
   teams,
+  format,
   onChangeName,
   onChangeLogo,
   onAdd,
   onRemove,
 }: {
+  theme: AppTheme;
   teams: TeamRow[];
+  format: CompetitionFormat;
   onChangeName: (id: string, name: string) => void;
   onChangeLogo: (id: string, logo: PickedImageFile | null) => void;
   onAdd: () => void;
   onRemove: (id: string) => void;
 }) {
+  const { isTablet } = useAdaptiveLayout();
+
   return (
     <View className="gap-4">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 2 — Teams
+      <Text className="text-base" style={{ color: theme.text }}>
+        Step 2 - Teams
       </Text>
-      <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-slate-600">
-        Add at least two teams. You can add logos now or update them later from Manage.
+      <Text className="text-sm leading-6" style={{ color: theme.textMuted }}>
+        {format === "knockout"
+          ? "Add at least two teams. List order becomes cup seeding, so the first team is seed 1."
+          : format === "group"
+            ? "Add enrolled teams. You will assign them to groups from Manage after the competition is created."
+            : "Add at least two teams. You can add logos now or update them later from Manage."}
       </Text>
 
-      <View className="gap-3">
+      <View className={isTablet ? "flex-row flex-wrap gap-3" : "gap-3"}>
         {teams.map((row, index) => (
-          <View key={row.id} className="flex-row items-center gap-2">
+          <View
+            key={row.id}
+            className="flex-row items-center gap-2"
+            style={isTablet ? { width: "48%" } : undefined}
+          >
             <View className="mt-7">
               <LogoImageUpload
                 value={row.logo}
@@ -538,9 +824,10 @@ function StepTeams({
               <Pressable
                 accessibilityLabel={`Remove team ${index + 1}`}
                 onPress={() => onRemove(row.id)}
-                className="mt-8 h-11 w-11 items-center justify-center rounded-2xl bg-neutral-100 active:bg-neutral-200"
+                className="mt-8 h-11 w-11 items-center justify-center rounded-2xl active:opacity-85"
+                style={{ backgroundColor: theme.dangerMuted }}
               >
-                <Ionicons name="trash-outline" size={20} color="#6B7280" />
+                <Ionicons name="trash-outline" size={20} color={theme.danger} />
               </Pressable>
             ) : (
               <View className="mt-8 w-11" />
@@ -551,10 +838,11 @@ function StepTeams({
 
       <Pressable
         onPress={onAdd}
-        className="flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-[#4A148C] bg-[#FAF5FF] py-3 active:opacity-80"
+        className="flex-row items-center justify-center gap-2 rounded-2xl border border-dashed py-3 active:opacity-80"
+        style={{ backgroundColor: theme.brandMuted, borderColor: theme.brand }}
       >
-        <Ionicons name="add-circle-outline" size={22} color={colors.brand} />
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-sm text-[#4A148C]">
+        <Ionicons name="add-circle-outline" size={22} color={theme.brand} />
+        <Text className="text-sm" style={{ color: theme.brand }}>
           Add another team
         </Text>
       </Pressable>
@@ -563,40 +851,75 @@ function StepTeams({
 }
 
 function StepReview({
+  isDark,
+  theme,
   name,
   season,
+  startDate,
+  endDate,
   description,
   leagueLogo,
   country,
   city,
   divisionId,
   tiebreakerId,
+  format,
+  knockoutName,
+  tieFormat,
+  hasThirdPlace,
+  groupForm,
   teams,
   created,
 }: {
+  isDark: boolean;
+  theme: AppTheme;
   name: string;
   season: string;
+  startDate: string;
+  endDate: string;
   description: string;
   leagueLogo: PickedImageFile | null;
   country: CountryOption | undefined;
   city: string;
   divisionId: string;
   tiebreakerId: TiebreakerRule;
+  format: CompetitionFormat;
+  knockoutName: string;
+  tieFormat: TieFormatSelection;
+  hasThirdPlace: boolean;
+  groupForm: GroupFormatFormState;
   teams: TeamRow[];
   created: boolean;
 }) {
+  const { isTablet } = useAdaptiveLayout();
   const divisionLabel =
     DIVISION_OPTIONS.find((d) => d.id === divisionId)?.label ?? divisionId;
 
+  const durationLabel = formatDurationSummary(startDate, endDate);
+  const formatLabel =
+    format === "knockout"
+      ? competitionFormatLabel("knockout")
+      : format === "group"
+        ? competitionFormatLabel("group")
+        : competitionFormatLabel("league");
+  const tieFormatLabel =
+    tieFormat.kind === "single"
+      ? "Single match"
+      : tieFormat.kind === "two_legged"
+        ? "Two-legged tie"
+        : `Best of ${tieFormat.bestOf}`;
 
   return (
     <View className="gap-5">
-      <Text style={{ fontFamily: fonts.bodyBold }} className="text-base text-neutral-950">
-        Step 3 — Review
+      <Text className="text-base" style={{ color: theme.text }}>
+        Step 3 - Review
       </Text>
 
-      <View className="gap-3 rounded-2xl bg-neutral-50 px-4 py-4">
-        <SummaryLine label="League">
+      <View
+        className="gap-3 rounded-2xl border px-4 py-4"
+        style={{ backgroundColor: theme.cardMuted, borderColor: theme.cardBorder }}
+      >
+        <SummaryLine label="Competition">
           <View className="flex-row items-center gap-3">
             {leagueLogo ? (
               <Image
@@ -605,82 +928,124 @@ function StepReview({
                 contentFit="cover"
               />
             ) : null}
-            <Text style={{ fontFamily: fonts.bodySemibold }} className="text-base text-neutral-950">
+            <Text className="text-base" style={{ color: theme.text }}>
               {name}
             </Text>
           </View>
         </SummaryLine>
         <SummaryLine label="Season" value={season} />
+        <SummaryLine label="Format" value={formatLabel} />
+        {format === "knockout" ? (
+          <>
+            <SummaryLine label="Knockout stage" value={knockoutName.trim() || "Cup"} />
+            <SummaryLine label="Tie format" value={tieFormatLabel} />
+            <SummaryLine
+              label="Third place"
+              value={hasThirdPlace ? "Yes" : "No"}
+            />
+          </>
+        ) : format === "group" ? (
+          <>
+            <SummaryLine label="Groups" value={String(groupForm.groupCount)} />
+            <SummaryLine
+              label="Round robin"
+              value={groupForm.doubleRoundRobin ? "Double round-robin" : "Single"}
+            />
+            <SummaryLine
+              label="Advance per group"
+              value={String(groupForm.perGroup)}
+            />
+          </>
+        ) : (
+          <SummaryLine label="Tiebreaker" value={tiebreakerLabel(tiebreakerId)} />
+        )}
+        <SummaryLine label="Duration" value={durationLabel} />
         {country ? (
           <SummaryLine label="Country">
             <CountryLabel
               code={country.code}
               name={country.name}
               flagWidth={18}
-              textClassName="text-base text-neutral-950"
-              textStyle={{ fontFamily: fonts.bodySemibold }}
+              textClassName={isDark ? "text-base text-white" : "text-base text-neutral-950"}
             />
           </SummaryLine>
         ) : null}
         {city.trim() ? <SummaryLine label="City / area" value={city.trim()} /> : null}
         <SummaryLine label="Division" value={divisionLabel} />
-        <SummaryLine label="Tiebreaker" value={tiebreakerLabel(tiebreakerId)} />
         {description.trim() ? (
           <View className="gap-1 pt-1">
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-xs uppercase tracking-wide text-slate-500"
+              className="text-xs uppercase tracking-wide"
+              style={{ color: theme.textMuted }}
             >
               Description
             </Text>
-            <Text style={{ fontFamily: fonts.body }} className="text-sm text-neutral-800">
+            <Text className="text-sm" style={{ color: theme.text }}>
               {description.trim()}
             </Text>
           </View>
         ) : null}
-        <View className="mt-1 border-t border-neutral-200 pt-3">
+        <View
+          className="mt-1 border-t pt-3"
+          style={{ borderColor: theme.cardBorder }}
+        >
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="mb-2 text-xs uppercase tracking-wide text-slate-500"
+            className="mb-2 text-xs uppercase tracking-wide"
+            style={{ color: theme.textMuted }}
           >
             Teams ({teams.length})
           </Text>
-          {teams.map((team) => (
-            <View key={team.id} className="flex-row items-center gap-2 py-0.5">
-              {team.logo ? (
-                <Image
-                  source={{ uri: team.logo.uri }}
-                  style={{ width: 24, height: 24, borderRadius: 8 }}
-                  contentFit="cover"
-                />
-              ) : (
-                <View className="h-6 w-6 rounded-lg bg-neutral-200" />
-              )}
-              <Text
-                style={{ fontFamily: fonts.bodySemibold }}
-                className="text-sm text-neutral-900"
+          <View className={isTablet ? "flex-row flex-wrap gap-2" : ""}>
+            {teams.map((team) => (
+              <View
+                key={team.id}
+                className="flex-row items-center gap-2 py-0.5"
+                style={isTablet ? { width: "48%" } : undefined}
               >
-                {team.name.trim()}
-              </Text>
-            </View>
-          ))}
+                {team.logo ? (
+                  <Image
+                    source={{ uri: team.logo.uri }}
+                    style={{ width: 24, height: 24, borderRadius: 8 }}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View
+                    className="h-6 w-6 rounded-lg"
+                    style={{ backgroundColor: theme.brandMuted }}
+                  />
+                )}
+                <Text
+                  className="min-w-0 flex-1 text-sm"
+                  style={{ color: theme.text }}
+                  numberOfLines={1}
+                >
+                  {team.name.trim()}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
       {created ? (
-        <View className="flex-row gap-3 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
-          <Ionicons name="checkmark-circle-outline" size={22} color="#15803d" style={{ marginTop: 2 }} />
-          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-green-950">
-            Your league is live. Head to the Manage tab to schedule games, invite players, and
-            generate team invite links.
+        <View
+          className="flex-row gap-3 rounded-2xl border px-4 py-3"
+          style={{ backgroundColor: theme.successMuted, borderColor: theme.success }}
+        >
+          <Ionicons name="checkmark-circle-outline" size={22} color={theme.success} style={{ marginTop: 2 }} />
+          <Text className="flex-1 text-sm leading-5" style={{ color: theme.text }}>
+            Your competition is live. Open Manage to schedule games, seed a cup bracket, or
+            invite players.
           </Text>
         </View>
       ) : (
-        <View className="flex-row gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <Ionicons name="information-circle-outline" size={22} color={colors.brand} style={{ marginTop: 2 }} />
-          <Text style={{ fontFamily: fonts.body }} className="flex-1 text-sm leading-5 text-amber-950">
-            After creating your league, open Manage to generate invite links per team and add
-            players to the roster.
+        <View
+          className="flex-row gap-3 rounded-2xl border px-4 py-3"
+          style={{ backgroundColor: theme.accentMuted, borderColor: theme.accent }}
+        >
+          <Ionicons name="information-circle-outline" size={22} color={theme.accent} style={{ marginTop: 2 }} />
+          <Text className="flex-1 text-sm leading-5" style={{ color: theme.text }}>
+            After creating, open Manage to invite players or finish knockout seeding if needed.
           </Text>
         </View>
       )}
@@ -697,16 +1062,18 @@ function SummaryLine({
   value?: string;
   children?: ReactNode;
 }) {
+  const theme = useTheme();
+
   return (
     <View className="gap-0.5">
       <Text
-        style={{ fontFamily: fonts.bodyBold }}
-        className="text-xs uppercase tracking-wide text-slate-500"
+        className="text-xs uppercase tracking-wide"
+        style={{ color: theme.textMuted }}
       >
         {label}
       </Text>
       {children ?? (
-        <Text style={{ fontFamily: fonts.bodySemibold }} className="text-base text-neutral-950">
+        <Text className="text-base" style={{ color: theme.text }}>
           {value}
         </Text>
       )}
@@ -714,4 +1081,31 @@ function SummaryLine({
   );
 }
 
+function validateLeagueDuration(startDate: string, endDate: string): string | null {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start || !end) {
+    return "Enter start and end dates for the competition.";
+  }
+  if (!parseCalendarDate(start)) {
+    return "Start date must be YYYY-MM-DD.";
+  }
+  if (!parseCalendarDate(end)) {
+    return "End date must be YYYY-MM-DD.";
+  }
+  const startParsed = parseCalendarDate(start)!;
+  const endParsed = parseCalendarDate(end)!;
+  if (endParsed.getTime() < startParsed.getTime()) {
+    return "End date must be on or after the start date.";
+  }
+  return null;
+}
 
+function formatDurationSummary(startDate: string, endDate: string): string {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start && !end) return "-";
+  if (start && end) return `${start} → ${end}`;
+  if (start) return `From ${start}`;
+  return `Until ${end}`;
+}

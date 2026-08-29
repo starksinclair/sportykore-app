@@ -10,7 +10,6 @@ import type {
 } from "./types";
 
 export async function acceptInvite(token: string): Promise<AcceptInviteResult> {
-  console.log("acceptInvite", token);
   return apiRequest<AcceptInviteResult>(
     `/api/v1/invites/accept/${encodeURIComponent(token)}`,
     { auth: true, muteGlobalUnauthorized: true },
@@ -40,6 +39,7 @@ export async function completeProfileAndAccept(
       method: "POST",
       auth: true,
       muteGlobalUnauthorized: true,
+      idempotencyKey: true,
       jsonBody: form,
     });
   }
@@ -48,6 +48,7 @@ export async function completeProfileAndAccept(
     method: "POST",
     auth: true,
     muteGlobalUnauthorized: true,
+    idempotencyKey: true,
     jsonBody: {
       name: payload.name,
       countryId: payload.countryId,

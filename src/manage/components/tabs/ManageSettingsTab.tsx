@@ -3,16 +3,33 @@ import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import type { ApiLeague, ApiSeason, SeasonStatus } from "@/api/entities";
+import { useAppearance } from "@/color/appearance-context";
+import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
+import {
+  GroupFormatConfigControl,
+  buildDefaultGroupConfig,
+  type GroupFormatFormState,
+} from "@/groups";
+import {
+  KnockoutTieFormatControl,
+  buildKnockoutConfig,
+  type TieFormatSelection,
+} from "@/knockout";
 import { TiebreakerPicker } from "@/league/components/TiebreakerPicker";
 import { DIVISION_OPTIONS } from "@/league/league-create-constants";
 import {
   DEFAULT_TIEBREAKER,
   type TiebreakerRule,
 } from "@/league/tiebreaker-options";
+import {
+  leagueDurationProgress,
+  parseCalendarDate,
+  toCalendarDateString,
+} from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
-import { fonts } from "@/theme/fonts";
 
 import { useCreateSeason, useUpdateLeague } from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
@@ -34,11 +51,15 @@ export function ManageSettingsTab({
   activeSeasonId,
   onSeasonCreated,
 }: Props) {
+  const { isDark } = useAppearance();
+  const theme = useTheme();
   const updateLeagueMutation = useUpdateLeague(leagueId, activeSeasonId);
   const createSeasonMutation = useCreateSeason(leagueId, activeSeasonId);
 
   const [name, setName] = useState(league.name);
   const [description, setDescription] = useState(league.description ?? "");
+  const [startDate, setStartDate] = useState(toCalendarDateString(league.startDate));
+  const [endDate, setEndDate] = useState(toCalendarDateString(league.endDate));
   const [divisionId, setDivisionId] = useState<(typeof DIVISION_OPTIONS)[number]["id"]>("open");
   const [tiebreakerId, setTiebreakerId] = useState<TiebreakerRule>(
     league.tiebreaker ?? DEFAULT_TIEBREAKER,
@@ -49,17 +70,44 @@ export function ManageSettingsTab({
   const [newSeasonStatus, setNewSeasonStatus] = useState<SeasonStatus>(
     SeasonStatusEnum.Inactive,
   );
+  const [newSeasonFormat, setNewSeasonFormat] = useState<
+    "league" | "knockout" | "group"
+  >("league");
+  const [newSeasonTieFormat, setNewSeasonTieFormat] = useState<TieFormatSelection>({
+    kind: "single",
+  });
+  const [newSeasonThirdPlace, setNewSeasonThirdPlace] = useState(false);
+  const [newSeasonGroupForm, setNewSeasonGroupForm] =
+    useState<GroupFormatFormState>({
+      groupCount: 2,
+      doubleRoundRobin: false,
+      perGroup: 2,
+    });
 
   useEffect(() => {
     setName(league.name);
     setDescription(league.description ?? "");
+    setStartDate(toCalendarDateString(league.startDate));
+    setEndDate(toCalendarDateString(league.endDate));
     setTiebreakerId(league.tiebreaker ?? DEFAULT_TIEBREAKER);
-  }, [league.id, league.name, league.description, league.tiebreaker]);
+  }, [
+    league.id,
+    league.name,
+    league.description,
+    league.startDate,
+    league.endDate,
+    league.tiebreaker,
+  ]);
 
   const handleSaveLeague = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       showInfoToast("Name required", "Enter a league name.");
+      return;
+    }
+    const durationError = validateLeagueDuration(startDate, endDate);
+    if (durationError) {
+      showInfoToast("Invalid duration", durationError);
       return;
     }
     try {
@@ -68,6 +116,8 @@ export function ManageSettingsTab({
         description: description.trim() || null,
         gender: divisionId === "open" ? null : divisionId,
         tiebreaker: tiebreakerId,
+        startDate: toCalendarDateString(startDate) || null,
+        endDate: toCalendarDateString(endDate) || null,
       });
       showInfoToast("League updated", "Your changes were saved.");
     } catch (err) {
@@ -78,16 +128,46 @@ export function ManageSettingsTab({
   const handleAddSeason = async () => {
     const trimmed = newSeasonName.trim();
     if (!trimmed) {
-      showInfoToast("Season name required", "e.g. 2027 — Spring");
+      showInfoToast("Season name required", "e.g. 2027 - Spring");
       return;
     }
     try {
       const created = await createSeasonMutation.mutateAsync({
         name: trimmed,
         status: newSeasonStatus,
+        format: newSeasonFormat,
+        knockout:
+          newSeasonFormat === "knockout"
+            ? {
+                name: "Cup",
+                config: buildKnockoutConfig(
+                  newSeasonTieFormat,
+                  newSeasonThirdPlace,
+                ),
+              }
+            : undefined,
+        group:
+          newSeasonFormat === "group"
+            ? {
+                name: "Group Stage",
+                config: buildDefaultGroupConfig({
+                  groupCount: newSeasonGroupForm.groupCount,
+                  doubleRoundRobin: newSeasonGroupForm.doubleRoundRobin,
+                  perGroup: newSeasonGroupForm.perGroup,
+                }),
+              }
+            : undefined,
       });
       setNewSeasonName("");
       setNewSeasonStatus(SeasonStatusEnum.Inactive);
+      setNewSeasonFormat("league");
+      setNewSeasonTieFormat({ kind: "single" });
+      setNewSeasonThirdPlace(false);
+      setNewSeasonGroupForm({
+        groupCount: 2,
+        doubleRoundRobin: false,
+        perGroup: 2,
+      });
       onSeasonCreated(created.id);
       showInfoToast("Season created", `"${created.name}" is now available in the picker.`);
     } catch (err) {
@@ -97,11 +177,14 @@ export function ManageSettingsTab({
 
   return (
     <View className="gap-8 pb-10">
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-5"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-lg" style={{ color: theme.text }}>
           Edit league
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm text-white/55">
+        <Text className="text-sm" style={{ color: theme.textSubtle }}>
           Updates apply to the whole league, not just the selected season.
         </Text>
 
@@ -109,7 +192,6 @@ export function ManageSettingsTab({
           label="League name"
           value={name}
           onChangeText={setName}
-          containerClassName="[&_input]:text-neutral-900"
         />
         <AuthTextField
           label="Description"
@@ -117,13 +199,44 @@ export function ManageSettingsTab({
           onChangeText={setDescription}
           multiline
           numberOfLines={3}
-          containerClassName="[&_input]:text-neutral-900"
         />
 
         <View className="gap-2">
           <Text
-            style={{ fontFamily: fonts.bodyBold }}
-            className="text-xs uppercase tracking-wide text-white/45"
+            className="text-xs uppercase tracking-wide"
+            style={{ color: theme.textSubtle }}
+          >
+            League duration
+          </Text>
+          <LeagueDurationProgress startDate={startDate} endDate={endDate} />
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <NativeDatePickerField
+                label="Start date"
+                value={startDate}
+                onChange={(value) => setStartDate(value ?? "")}
+                placeholder="Pick start date"
+                maximumDate={parseCalendarDate(endDate) ?? undefined}
+                variant={isDark ? "dark" : "light"}
+              />
+            </View>
+            <View className="flex-1">
+              <NativeDatePickerField
+                label="End date"
+                value={endDate}
+                onChange={(value) => setEndDate(value ?? "")}
+                placeholder="Pick end date"
+                minimumDate={parseCalendarDate(startDate) ?? undefined}
+                variant={isDark ? "dark" : "light"}
+              />
+            </View>
+          </View>
+        </View>
+
+        <View className="gap-2">
+          <Text
+            className="text-xs uppercase tracking-wide"
+            style={{ color: theme.textSubtle }}
           >
             Division
           </Text>
@@ -134,13 +247,14 @@ export function ManageSettingsTab({
                 <Pressable
                   key={opt.id}
                   onPress={() => setDivisionId(opt.id)}
-                  className={`rounded-xl border px-3 py-2 ${
-                    active ? "border-brand-400 bg-brand-500/30" : "border-white/15 bg-white/5"
-                  }`}
+                  className="rounded-xl border px-3 py-2 active:opacity-85"
+                  style={{
+                    backgroundColor: active ? theme.brandMuted : theme.cardMuted,
+                    borderColor: active ? theme.brand : theme.cardBorder,
+                  }}
                 >
                   <Text
-                    style={{ fontFamily: fonts.bodySemibold }}
-                    className={active ? "text-white" : "text-white/70"}
+                    style={{ color: active ? theme.brand : theme.textMuted }}
                   >
                     {opt.label}
                   </Text>
@@ -151,13 +265,13 @@ export function ManageSettingsTab({
         </View>
 
         <View className="gap-2">
-          <Text style={{ fontFamily: fonts.body }} className="text-xs leading-5 text-white/45">
+          <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
             Changing the tiebreaker re-sorts the active season table immediately.
           </Text>
           <TiebreakerPicker
             value={tiebreakerId}
             onChange={setTiebreakerId}
-            variant="dark"
+            variant={isDark ? "dark" : "light"}
           />
         </View>
 
@@ -169,38 +283,41 @@ export function ManageSettingsTab({
         />
       </View>
 
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-5"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-lg" style={{ color: theme.text }}>
           Seasons
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+        <Text className="text-sm leading-6" style={{ color: theme.textSubtle }}>
           Each season has its own fixtures, roster, and standings. Mark a season as{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          <Text style={{ color: theme.text }}>
             Active
           </Text>{" "}
-          to run it now — any other active season in this league is marked{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          to run it now - any other active season in this league is marked{" "}
+          <Text style={{ color: theme.text }}>
             Completed
           </Text>{" "}
           automatically. Tap the edit icon to rename a season or change its status.
         </Text>
 
         {seasons.length > 0 ? (
-          <View className="gap-1 rounded-xl bg-white/5 px-3 py-3">
+          <View className="gap-1 rounded-xl px-3 py-3" style={{ backgroundColor: theme.cardMuted }}>
             <Text
-              style={{ fontFamily: fonts.bodyBold }}
-              className="text-xs uppercase tracking-wide text-white/40"
+              className="text-xs uppercase tracking-wide"
+              style={{ color: theme.textSubtle }}
             >
               All seasons
             </Text>
             {seasons.map((season) => (
               <View key={season.id} className="flex-row items-center gap-2 py-1">
                 <Text
-                  style={{ fontFamily: fonts.body }}
                   numberOfLines={1}
-                  className={`flex-1 text-sm ${
-                    season.id === activeSeasonId ? "text-accent-300" : "text-white/75"
-                  }`}
+                  className="flex-1 text-sm"
+                  style={{
+                    color: season.id === activeSeasonId ? theme.accent : theme.textMuted,
+                  }}
                 >
                   {season.name} · {season.status}
                   {season.id === activeSeasonId ? " · selected" : ""}
@@ -209,9 +326,10 @@ export function ManageSettingsTab({
                   onPress={() => setEditingSeason(season)}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit ${season.name}`}
-                  className="h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 active:bg-white/15"
+                  className="h-9 w-9 shrink-0 items-center justify-center rounded-xl active:opacity-85"
+                  style={{ backgroundColor: theme.card }}
                 >
-                  <Ionicons name="create-outline" size={17} color="#FFFFFF" />
+                  <Ionicons name="create-outline" size={17} color={theme.textMuted} />
                 </Pressable>
               </View>
             ))}
@@ -219,17 +337,20 @@ export function ManageSettingsTab({
         ) : null}
       </View>
 
-      <View className="gap-4 rounded-[24px] border border-white/10 bg-white/5 px-4 py-5">
-        <Text style={{ fontFamily: fonts.bodyBold }} className="text-lg text-white">
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-5"
+        style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      >
+        <Text className="text-lg" style={{ color: theme.text }}>
           Add season
         </Text>
-        <Text style={{ fontFamily: fonts.body }} className="text-sm leading-6 text-white/55">
+        <Text className="text-sm leading-6" style={{ color: theme.textSubtle }}>
           Start a new campaign when you begin a fresh table. Use{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+          <Text style={{ color: theme.text }}>
             Inactive
           </Text>{" "}
           for upcoming seasons, or{" "}
-          <Text style={{ fontFamily: fonts.bodySemibold }} className="text-white/75">
+            <Text style={{ color: theme.text }}>
             Active
           </Text>{" "}
           to switch straight into the new season.
@@ -239,8 +360,7 @@ export function ManageSettingsTab({
           label="Season name"
           value={newSeasonName}
           onChangeText={setNewSeasonName}
-          placeholder="2027 — Spring"
-          containerClassName="[&_input]:text-neutral-900"
+          placeholder="2027 - Spring"
         />
 
         <SeasonStatusPicker
@@ -248,6 +368,59 @@ export function ManageSettingsTab({
           value={newSeasonStatus}
           onChange={setNewSeasonStatus}
         />
+
+        <View className="gap-2">
+          <Text
+            className="text-xs uppercase tracking-wide"
+            style={{ color: theme.textMuted }}
+          >
+            Format
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {(
+              [
+                { id: "league" as const, label: "League (round-robin)" },
+                { id: "knockout" as const, label: "Knockouts" },
+                { id: "group" as const, label: "Groups" },
+              ] as const
+            ).map((opt) => {
+              const active = newSeasonFormat === opt.id;
+              return (
+                <Pressable
+                  key={opt.id}
+                  onPress={() => setNewSeasonFormat(opt.id)}
+                  className="rounded-xl border px-3 py-2"
+                  style={{
+                    backgroundColor: active ? theme.brandMuted : theme.cardMuted,
+                    borderColor: active ? theme.brand : theme.cardBorder,
+                  }}
+                >
+                  <Text
+                    style={{ color: active ? theme.brand : theme.textSubtle }}
+                  >
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {newSeasonFormat === "knockout" ? (
+            <KnockoutTieFormatControl
+              value={newSeasonTieFormat}
+              onChange={setNewSeasonTieFormat}
+              hasThirdPlace={newSeasonThirdPlace}
+              onHasThirdPlaceChange={setNewSeasonThirdPlace}
+              tone={isDark ? "dark" : "light"}
+            />
+          ) : null}
+          {newSeasonFormat === "group" ? (
+            <GroupFormatConfigControl
+              value={newSeasonGroupForm}
+              onChange={setNewSeasonGroupForm}
+              tone={isDark ? "dark" : "light"}
+            />
+          ) : null}
+        </View>
 
         <Button
           variant="accent"
@@ -266,4 +439,79 @@ export function ManageSettingsTab({
       />
     </View>
   );
+}
+
+function LeagueDurationProgress({
+  startDate,
+  endDate,
+}: {
+  startDate: string;
+  endDate: string;
+}) {
+  const theme = useTheme();
+  const progress = leagueDurationProgress(startDate, endDate);
+  if (progress == null) {
+    return (
+      <Text className="text-xs leading-5" style={{ color: theme.textSubtle }}>
+        Set start and end dates to track league progress.
+      </Text>
+    );
+  }
+
+  const pct = Math.round(progress * 100);
+  const statusLabel =
+    progress <= 0 ? "Not started" : progress >= 1 ? "Complete" : `${pct}% through`;
+
+  return (
+    <View className="gap-2 rounded-xl px-3 py-3" style={{ backgroundColor: theme.cardMuted }}>
+      <View className="flex-row items-center justify-between gap-2">
+        <Text
+          className="text-xs"
+          style={{ color: theme.textSubtle }}
+          numberOfLines={1}
+        >
+          {startDate.trim()}
+        </Text>
+        <Text
+          className="text-xs"
+          style={{ color: theme.accent }}
+        >
+          {statusLabel}
+        </Text>
+        <Text
+          className="text-right text-xs"
+          style={{ color: theme.textSubtle }}
+          numberOfLines={1}
+        >
+          {endDate.trim()}
+        </Text>
+      </View>
+      <View className="h-2 overflow-hidden rounded-full" style={{ backgroundColor: theme.cardBorder }}>
+        <View
+          className="h-full rounded-full"
+          style={{ width: `${pct}%`, backgroundColor: theme.accent }}
+        />
+      </View>
+    </View>
+  );
+}
+
+function validateLeagueDuration(startDate: string, endDate: string): string | null {
+  const start = startDate.trim();
+  const end = endDate.trim();
+  if (!start && !end) return null;
+  if (start && !parseCalendarDate(start)) {
+    return "Start date must be YYYY-MM-DD.";
+  }
+  if (end && !parseCalendarDate(end)) {
+    return "End date must be YYYY-MM-DD.";
+  }
+  if (start && end) {
+    const startParsed = parseCalendarDate(start)!;
+    const endParsed = parseCalendarDate(end)!;
+    if (endParsed.getTime() < startParsed.getTime()) {
+      return "End date must be on or after the start date.";
+    }
+  }
+  return null;
 }
