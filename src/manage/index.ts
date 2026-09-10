@@ -82,6 +82,7 @@ export {
   useUpdateGame,
   useUpdateLeague,
   useUpdateSeason,
+  useUpdateStat,
   useUpdateTeam,
   useUpdateVenue,
 } from "./hooks";
@@ -109,6 +110,7 @@ export type {
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateStatPayload,
   UpdateVenuePayload,
 } from "./types";
 export {

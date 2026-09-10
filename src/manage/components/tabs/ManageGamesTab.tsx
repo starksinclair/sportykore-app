@@ -57,10 +57,10 @@ export function ManageGamesTab({
 
   const emptyMessage =
     activeFilter === "live"
-      ? "No live matches right now."
+      ? "No live matches right now. Create a game, then open it to kick off."
       : activeFilter === "upcoming"
         ? canScheduleRoundRobin
-          ? "No scheduled fixtures. Tap Add game to create one."
+          ? "To kick off a game, create one."
           : "Knockout fixtures appear after you seed the bracket."
         : "Completed and cancelled games appear here.";
 
@@ -87,7 +87,7 @@ export function ManageGamesTab({
               numberOfLines={2}
             >
               {canScheduleRoundRobin
-                ? "Schedule fixtures and run live scoring for this season."
+                ? "Create fixtures, then open a game to kick off and run live scoring."
                 : "Knockout games are created by seeding. Open Knockout to manage the bracket."}
             </Text>
           </View>

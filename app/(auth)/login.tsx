@@ -173,9 +173,10 @@ function LoginCard() {
             label="Recovery email address (optional)"
             placeholder="recovery@sportykore.com"
             autoCapitalize="none"
-            autoComplete="email"
+            autoComplete="off"
+            importantForAutofill="no"
             keyboardType="email-address"
-            textContentType="emailAddress"
+            textContentType="none"
             value={recoveryEmail}
             onChangeText={setRecoveryEmail}
             leftIcon={<Ionicons name="mail-outline" size={20} color={colors.authPurple} />}

@@ -3,7 +3,7 @@ import { setPendingInviteToken } from "./storage";
 
 export type AcceptInviteFlowResult =
   | { kind: "requires_profile" }
-  | { kind: "joined" }
+  | { kind: "joined"; leagueId: number }
   | { kind: "error"; message: string; status?: number };
 
 export async function runAcceptInviteFlow(
@@ -15,7 +15,7 @@ export async function runAcceptInviteFlow(
       await setPendingInviteToken(token);
       return { kind: "requires_profile" };
     case "joined":
-      return { kind: "joined" };
+      return { kind: "joined", leagueId: outcome.leagueId };
     case "auth_required":
       return {
         kind: "error",

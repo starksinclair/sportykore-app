@@ -28,7 +28,10 @@
       "softwareKeyboardLayoutMode": "pan",
       "usesCleartextTraffic": true,
       "package": "com.nzenwata.sportykoreapp",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -83,6 +86,12 @@
       "eas": {
         "projectId": "f090dca7-d4ea-44c1-95da-a0c54f62e3cb"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f090dca7-d4ea-44c1-95da-a0c54f62e3cb"
     }
   }
 }

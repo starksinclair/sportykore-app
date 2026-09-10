@@ -120,7 +120,7 @@ export default function JoinLeagueScreen() {
           has_prefilled_invite: Boolean(params.token),
         });
         showSuccessToast("You're in!", "Welcome to the league.");
-        router.replace("/profile");
+        router.replace(`/league/${result.leagueId}`);
         return;
       }
 

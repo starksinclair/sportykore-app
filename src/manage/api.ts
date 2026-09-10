@@ -21,6 +21,7 @@ import type {
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateStatPayload,
   UpdateVenuePayload,
 } from "./types";
 
@@ -285,6 +286,18 @@ export async function deleteVenue(venueId: number): Promise<void> {
 export async function createStat(payload: CreateStatPayload): Promise<void> {
   await apiRequest<{ message: string }>("/api/v1/leagues/stats", {
     method: "POST",
+    auth: true,
+    idempotencyKey: true,
+    jsonBody: payload,
+  });
+}
+
+export async function updateStat(
+  statId: number,
+  payload: UpdateStatPayload,
+): Promise<void> {
+  await apiRequest<{ message: string }>(`/api/v1/leagues/stats/${statId}`, {
+    method: "PUT",
     auth: true,
     idempotencyKey: true,
     jsonBody: payload,

@@ -58,7 +58,7 @@ export default function CreatePlayerProfileRoute() {
 
     if (result.kind === "joined") {
       showSuccessToast("You're in!", "Your player profile is ready.");
-      router.replace("/profile");
+      router.replace(`/league/${result.leagueId}`);
       return;
     }
 

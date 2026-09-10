@@ -85,9 +85,10 @@ export default function RecoverAccountScreen() {
             label="Recovery email"
             placeholder="recovery@pitch.com"
             autoCapitalize="none"
-            autoComplete="email"
+            autoComplete="off"
+            importantForAutofill="no"
             keyboardType="email-address"
-            textContentType="emailAddress"
+            textContentType="none"
             value={recoveryEmail}
             onChangeText={setRecoveryEmail}
             leftIcon={<Ionicons name="mail-outline" size={20} color={colors.authPurple} />}

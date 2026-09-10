@@ -270,7 +270,7 @@ export function ManageGameRow({ game, leagueId, seasonId, variant }: Props) {
         {variant === "upcoming" ? (
           <>
             <ActionChip
-              label="Start"
+              label="Kick off"
               icon="play"
               onPress={() => void handleStart()}
               accent

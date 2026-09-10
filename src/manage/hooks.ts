@@ -43,6 +43,7 @@ import {
   updateLeague,
   updateLeaguePlayer,
   updateSeason,
+  updateStat,
   updateTeam,
   updateVenue,
 } from "./api";
@@ -67,6 +68,7 @@ import type {
   UpdateGamePayload,
   UpdateLeaguePayload,
   UpdateSeasonPayload,
+  UpdateStatPayload,
   UpdateVenuePayload,
 } from "./types";
 
@@ -577,6 +579,24 @@ export function useDeleteStat(leagueId: number, _seasonId: number) {
   return useMutation({
     mutationFn: ({ statId, gameId }: { statId: number; gameId: number }) =>
       deleteStat(statId),
+    onSuccess: (_data, variables) => {
+      invalidateGameDetail(queryClient, variables.gameId, leagueId);
+    },
+  });
+}
+
+export function useUpdateStat(leagueId: number, _seasonId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      statId,
+      gameId,
+      payload,
+    }: {
+      statId: number;
+      gameId: number;
+      payload: UpdateStatPayload;
+    }) => updateStat(statId, payload),
     onSuccess: (_data, variables) => {
       invalidateGameDetail(queryClient, variables.gameId, leagueId);
     },

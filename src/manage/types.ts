@@ -138,6 +138,15 @@ export type CreateStatPayload = {
   isStoppageTime?: boolean;
 };
 
+export type UpdateStatPayload = {
+  relatedPlayerId?: number | null;
+  minute?: number | null;
+  isStoppageTime?: boolean;
+  isPenalty?: boolean;
+  value?: string | null;
+  numericValue?: number;
+};
+
 export type RecordSubstitutionItem = {
   playerOffId: number;
   playerOnId: number;

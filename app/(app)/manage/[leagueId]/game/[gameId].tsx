@@ -48,6 +48,7 @@ import {
   useManageLeagueDetail,
   useSeasonRoster,
   useUpdateGameScore,
+  useUpdateStat,
 } from "@/manage/hooks";
 import type { LeagueRosterRow, MatchEventKey } from "@/manage/types";
 import { resolveStatTypeId } from "@/manage/utils/games";
@@ -104,6 +105,7 @@ export default function ManageMatchCenterPage() {
   const [ssePatch, setSsePatch] = useState<Partial<ApiGameDetail>>({});
   const [statMinute, setStatMinute] = useState("0");
   const [flowGuideOpen, setFlowGuideOpen] = useState(false);
+  const [savingCardStatId, setSavingCardStatId] = useState<number | null>(null);
   const [recording, setRecording] = useState<{
     eventKey: MatchEventKey;
     playerId: number;
@@ -115,6 +117,7 @@ export default function ManageMatchCenterPage() {
   const accreditMutation = useAccreditStat(gameId, leagueId, seasonId);
   const createStatMutation = useCreateStat(leagueId, seasonId);
   const deleteStatMutation = useDeleteStat(leagueId, seasonId);
+  const updateStatMutation = useUpdateStat(leagueId, seasonId);
 
   const resetAccredit = useCallback(() => {
     setPendingTeam(null);
@@ -545,6 +548,52 @@ export default function ManageMatchCenterPage() {
               showThrownAsToast(err);
             }
           }}
+          onUpdateCard={async ({
+            stat,
+            playerId,
+            teamId,
+            statTypeId,
+            minute,
+            isStoppageTime,
+          }) => {
+            const playerChanged =
+              stat.player?.id !== playerId || stat.team?.id !== teamId;
+
+            setSavingCardStatId(stat.id);
+            try {
+              if (playerChanged) {
+                await createStatMutation.mutateAsync({
+                  gameId,
+                  leagueId,
+                  seasonId,
+                  teamId,
+                  playerId,
+                  statTypeId,
+                  ...(minute != null ? { minute } : {}),
+                  isStoppageTime,
+                });
+                await deleteStatMutation.mutateAsync({ statId: stat.id, gameId });
+                return;
+              }
+
+              await updateStatMutation.mutateAsync({
+                statId: stat.id,
+                gameId,
+                payload: {
+                  minute,
+                  isStoppageTime,
+                },
+              });
+            } finally {
+              setSavingCardStatId(null);
+            }
+          }}
+          updatingStatId={
+            savingCardStatId ??
+            (updateStatMutation.isPending
+              ? (updateStatMutation.variables?.statId ?? null)
+              : null)
+          }
         />
       ) : null}
 

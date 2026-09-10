@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
   FlatList,
-  Image,
   Pressable,
   Text,
   View,
@@ -16,7 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/auth";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
-import { Button, Logo } from "@/components/ui";
+import { Button, Logo, RemoteImage } from "@/components/ui";
 import { BlackPatternBackground } from "@/components/ui/black-pattern-background";
 import { PulsingDot } from "@/components/ui/pulsing-dot";
 import { colors } from "@/constants";
@@ -332,14 +331,17 @@ function MatchCard({ match }: { match: SlideMatch }) {
 
       <View className="flex-row items-center justify-between">
         <View className="items-center gap-1 flex-1">
-         {match.home.image ? (
-          <Image source={{ uri: match.home.image }} className="w-12 h-12 rounded-full" resizeMode="cover" />
-         ) : (
-          <View
-            className="w-12 h-12 rounded-full"
-            style={{ backgroundColor: match.home.color }}
-          />
-         )}
+          {match.home.image ? (
+            <RemoteImage
+              uri={match.home.image}
+              className="h-12 w-12 rounded-full"
+            />
+          ) : (
+            <View
+              className="h-12 w-12 rounded-full"
+              style={{ backgroundColor: match.home.color }}
+            />
+          )}
           <Text
             className="text-sm font-semibold"
             style={{ color: theme.text }}
@@ -352,10 +354,13 @@ function MatchCard({ match }: { match: SlideMatch }) {
         </Text>
         <View className="items-center gap-1 flex-1">
           {match.away.image ? (
-            <Image source={{ uri: match.away.image }} className="w-12 h-12 rounded-full" resizeMode="cover" />
+            <RemoteImage
+              uri={match.away.image}
+              className="h-12 w-12 rounded-full"
+            />
           ) : (
             <View
-              className="w-12 h-12 rounded-full"
+              className="h-12 w-12 rounded-full"
               style={{ backgroundColor: match.away.color }}
             />
           )}
