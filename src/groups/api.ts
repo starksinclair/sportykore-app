@@ -45,10 +45,11 @@ export type CreateGroupStageResult = {
 
 export type QualifierEntry = {
   teamId: number;
-  team?: { id: number; name: string; logoUrl?: string | null };
-  source?: string | null;
-  groupName?: string | null;
-  position?: number | null;
+  teamName: string;
+  stageGroupId: number;
+  stageGroupName: string;
+  position: number;
+  tier: "automatic" | "third";
 };
 
 export type QualifierBracketOption = {

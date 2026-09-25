@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 // App.tsx
 import { AuthGateProvider, AuthProvider, useAuth } from "@/auth";
 import { AppearanceProvider, useAppearance } from "@/color/appearance-context";
+import { ImagePreviewProvider } from "@/components/ui";
 import { sportyToastConfig } from "@/components/ui/toast-config";
 import { InviteLinkCapture } from "@/invite/components/InviteLinkCapture";
 import { persister, queryClient } from "@/lib/query-client";
@@ -144,12 +145,14 @@ function RootLayout() {
                   <AuthGateProvider>
                     <AppearanceProvider>
                       <AppThemeBoundary>
-                        <NotificationBridge />
-                        <RootStack />
-                        <InviteLinkCapture />
-                        <View pointerEvents="box-none" style={styles.toastOverlay}>
-                          <Toast config={sportyToastConfig} topOffset={58} />
-                        </View>
+                        <ImagePreviewProvider>
+                          <NotificationBridge />
+                          <RootStack />
+                          <InviteLinkCapture />
+                          <View pointerEvents="box-none" style={styles.toastOverlay}>
+                            <Toast config={sportyToastConfig} topOffset={58} />
+                          </View>
+                        </ImagePreviewProvider>
                       </AppThemeBoundary>
                     </AppearanceProvider>
                   </AuthGateProvider>

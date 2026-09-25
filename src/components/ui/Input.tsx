@@ -11,7 +11,7 @@ export type InputProps = TextInputProps & {
 };
 
 export const Input = forwardRef<TextInput, InputProps>(function Input(
-  { label, error, containerClassName, className, ...rest },
+  { label, error, containerClassName, className, multiline, ...rest },
   ref
 ) {
   const theme = useTheme();
@@ -25,9 +25,10 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
       ) : null}
       <TextInput
         ref={ref}
+        multiline={multiline}
         placeholderTextColor={theme.textSubtle}
         className={[
-          "h-12 rounded-xl border px-4 text-base",
+          multiline ? "rounded-xl border px-4 text-base" : "h-12 rounded-xl border px-4 text-base",
           error ? "border-red-500" : "",
           className ?? "",
         ]

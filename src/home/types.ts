@@ -49,7 +49,7 @@ export type ApiMatch = {
   away: TeamRef;
 };
 
-export type SearchEntityType = "player" | "country" | "league" | "team";
+export type SearchEntityType = "player" | "coach" | "country" | "league" | "team";
 
 export type SearchResult = {
   id: string;

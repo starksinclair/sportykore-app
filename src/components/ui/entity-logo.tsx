@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
+import { Pressable, View } from "react-native";
 
 import { colors } from "@/constants";
+import { useImagePreview } from "./image-preview";
 
 export type EntityLogoVariant = "league" | "team" | "player";
 export type EntityLogoSize = "xs" | "sm" | "md" | "lg";
@@ -52,6 +53,7 @@ type Props = {
   size?: EntityLogoSize;
   tone?: EntityLogoTone;
   accessibilityLabel?: string;
+  previewEnabled?: boolean;
 };
 
 export function EntityLogo({
@@ -60,8 +62,10 @@ export function EntityLogo({
   size = "md",
   tone = "brand",
   accessibilityLabel,
+  previewEnabled = false,
 }: Props) {
   const [imageFailed, setImageFailed] = useState(false);
+  const { openImagePreview } = useImagePreview();
   const dimension = SIZE_PX[size];
   const radius = RADIUS[size];
   const toneStyle = TONE_STYLES[tone];
@@ -72,6 +76,47 @@ export function EntityLogo({
     setImageFailed(false);
   }, [trimmedUrl]);
 
+  if (showImage) {
+    const image = (
+      <Image
+        source={{ uri: trimmedUrl }}
+        style={{ width: "100%", height: "100%" }}
+        contentFit="cover"
+        onError={() => setImageFailed(true)}
+      />
+    );
+    const imageBoxStyle = {
+      width: dimension,
+      height: dimension,
+      borderRadius: radius,
+      backgroundColor: "#FFFFFF",
+    };
+
+    if (!previewEnabled) {
+      return (
+        <View
+          accessibilityLabel={accessibilityLabel}
+          className="items-center justify-center overflow-hidden"
+          style={imageBoxStyle}
+        >
+          {image}
+        </View>
+      );
+    }
+
+    return (
+      <Pressable
+        onPress={() => openImagePreview(trimmedUrl, accessibilityLabel)}
+        accessibilityRole="imagebutton"
+        accessibilityLabel={accessibilityLabel ?? "Open image preview"}
+        className="items-center justify-center overflow-hidden active:opacity-85"
+        style={imageBoxStyle}
+      >
+        {image}
+      </Pressable>
+    );
+  }
+
   return (
     <View
       accessibilityLabel={accessibilityLabel}
@@ -80,23 +125,14 @@ export function EntityLogo({
         width: dimension,
         height: dimension,
         borderRadius: radius,
-        backgroundColor: showImage ? "#FFFFFF" : toneStyle.backgroundColor,
+        backgroundColor: toneStyle.backgroundColor,
       }}
     >
-      {showImage ? (
-        <Image
-          source={{ uri: trimmedUrl }}
-          style={{ width: "100%", height: "100%" }}
-          contentFit="cover"
-          onError={() => setImageFailed(true)}
-        />
-      ) : (
-        <Ionicons
-          name={FALLBACK_ICON[variant]}
-          size={ICON_SIZE[size]}
-          color={toneStyle.iconColor}
-        />
-      )}
+      <Ionicons
+        name={FALLBACK_ICON[variant]}
+        size={ICON_SIZE[size]}
+        color={toneStyle.iconColor}
+      />
     </View>
   );
 }

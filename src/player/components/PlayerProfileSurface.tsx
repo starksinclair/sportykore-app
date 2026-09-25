@@ -30,6 +30,8 @@ import {
   CountryPicker,
   EntityLogo,
   NativeDatePickerField,
+  ShareIconButton,
+  useImagePreview,
   type CountryPickerOption,
 } from "@/components/ui";
 import { AuthTextField } from "@/components/ui/auth-text-field";
@@ -40,6 +42,7 @@ import { pickProfileImage } from "@/lib/pick-profile-image";
 import type { PickedImageFile } from "@/lib/picked-image";
 import { labelForPosition } from "@/lib/positions";
 import { posthog } from "@/lib/posthog";
+import { sharePlayerProfile } from "@/lib/profile-share";
 import {
   messageFromThrown,
   showInfoToast,
@@ -274,13 +277,38 @@ export function PlayerProfileView({
   const gamesPlayed = useMemo(() => countAllGames(leagues), [leagues]);
   const activeSeason = leagues[0]?.seasons[0] ?? null;
   const primaryPosition = player.primaryPosition ?? player.position ?? null;
+  const primaryPositionLabel = primaryPosition ? labelForPosition(primaryPosition) : null;
   const showCompleteness =
     isOwner &&
     !nudgeDismissed &&
     typeof completeness === "number" &&
     completeness < 80;
+  const handleShare = async () => {
+    try {
+      posthog?.capture("player_profile_shared", {
+        player_id: player.id,
+        is_owner: isOwner,
+        games_played: gamesPlayed,
+        goals: stats.goals,
+        assists: stats.assists,
+        highlights_count: highlights.length,
+        awards_count: player.awards?.length ?? 0,
+      });
+      await sharePlayerProfile({
+        player,
+        stats,
+        gamesPlayed,
+        highlightsCount: highlights.length,
+        awardsCount: player.awards?.length ?? 0,
+        positionLabel: primaryPositionLabel,
+        teamName: activeSeason?.team?.name ?? null,
+      });
+    } catch (error) {
+      showThrownAsToast(error);
+    }
+  };
 
-  if (player.visibility === "private") {
+  if (player.visibility === "private" && !isOwner) {
     return <PrivateProfileState />;
   }
 
@@ -308,7 +336,7 @@ export function PlayerProfileView({
               style={{ color: theme.textMuted }}
               numberOfLines={2}
             >
-              {[player.age != null ? `${player.age} yrs` : null, primaryPosition ? labelForPosition(primaryPosition) : null]
+              {[player.age != null ? `${player.age} yrs` : null, primaryPositionLabel]
                 .filter(Boolean)
                 .join(" · ") || "Player profile"}
             </Text>
@@ -329,6 +357,10 @@ export function PlayerProfileView({
               </Text>
             )}
           </View>
+          <ShareIconButton
+            accessibilityLabel={`Share ${player.name} profile`}
+            onPress={() => void handleShare()}
+          />
         </View>
 
         {player.bio ? (
@@ -556,14 +588,23 @@ export function PlayerProfileCreateState({
 
 function PlayerAvatar({ player, size }: { player: ApiPlayer; size: number }) {
   const theme = useTheme();
+  const { openImagePreview } = useImagePreview();
   const initials = playerInitials(player.name);
   if (player.avatarUrl) {
     return (
-      <Image
-        source={{ uri: player.avatarUrl }}
+      <Pressable
+        onPress={() => openImagePreview(player.avatarUrl!, player.name)}
+        accessibilityRole="imagebutton"
+        accessibilityLabel={`Open ${player.name} photo`}
         style={{ width: size, height: size, borderRadius: size / 3 }}
-        contentFit="cover"
-      />
+        className="overflow-hidden active:opacity-85"
+      >
+        <Image
+          source={{ uri: player.avatarUrl }}
+          style={{ width: "100%", height: "100%" }}
+          contentFit="cover"
+        />
+      </Pressable>
     );
   }
   return (
@@ -811,6 +852,7 @@ function HighlightCard({
   deletePending: boolean;
 }) {
   const theme = useTheme();
+  const { openImagePreview } = useImagePreview();
   const thumbnail =
     item.thumbnailUrl ?? `https://img.youtube.com/vi/${item.videoId}/hqdefault.jpg`;
   return (
@@ -828,18 +870,29 @@ function HighlightCard({
         accessibilityLabel={playing ? "Hide highlight video" : "Play highlight video"}
       >
         <View className="w-[42%] overflow-hidden rounded-[14px]">
-            <Image
-              source={{ uri: thumbnail }}
-              style={{ width: "100%", aspectRatio: 16 / 9 }}
-              contentFit="cover"
-            />
-            <View className="absolute inset-0 items-center justify-center bg-black/20">
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-black/55">
-                <Ionicons name="play" size={20} color="#FFFFFF" />
-              </View>
+          <Image
+            source={{ uri: thumbnail }}
+            style={{ width: "100%", aspectRatio: 16 / 9 }}
+            contentFit="cover"
+          />
+          <View className="absolute inset-0 items-center justify-center bg-black/20">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-black/55">
+              <Ionicons name="play" size={20} color="#FFFFFF" />
             </View>
           </View>
-          <View className="min-w-0 flex-1 justify-center gap-2">
+          <Pressable
+            onPress={(event) => {
+              event.stopPropagation();
+              openImagePreview(thumbnail, item.title?.trim() || "Highlight");
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Open highlight thumbnail"
+            className="absolute right-1.5 top-1.5 h-8 w-8 items-center justify-center rounded-full bg-black/65 active:opacity-85"
+          >
+            <Ionicons name="expand-outline" size={16} color="#FFFFFF" />
+          </Pressable>
+        </View>
+        <View className="min-w-0 flex-1 justify-center gap-2">
           <Text
             className="text-sm"
             style={{ color: theme.text }}

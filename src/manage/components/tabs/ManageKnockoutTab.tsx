@@ -232,11 +232,12 @@ function KnockoutStagePanel({
     if (!readyRound) return;
     Alert.alert(
       "Generate next round",
-      `Confirm pairings from ${readyRound}?`,
+      `Confirm pairings from ${readyRound}? This is a one-time action. Once the next round is generated, these pairings cannot be automatically undone from here.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Generate",
+          style: "destructive",
           onPress: async () => {
             try {
               await nextRoundMutation.mutateAsync({
@@ -510,16 +511,31 @@ function SeedKnockoutSheet({
   };
 
   const handleGenerate = async () => {
-    try {
-      await seedMutation.mutateAsync({
-        stageId: stage.id,
-        seededTeams: order.map((t) => t.id),
-      });
-      showInfoToast("Bracket seeded", "Ties and fixtures are ready.");
-      onClose();
-    } catch {
-      /* toasted */
-    }
+    Alert.alert(
+      "Generate bracket?",
+      "This is a one-time action. Once the bracket is generated, the seed order, ties, and fixtures cannot be reversed or edited from this seeding flow.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Generate",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                await seedMutation.mutateAsync({
+                  stageId: stage.id,
+                  seededTeams: order.map((t) => t.id),
+                });
+                showInfoToast("Bracket seeded", "Ties and fixtures are ready.");
+                onClose();
+              } catch {
+                /* toasted */
+              }
+            })();
+          },
+        },
+      ],
+    );
   };
 
   return (

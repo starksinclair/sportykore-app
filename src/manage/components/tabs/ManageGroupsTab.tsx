@@ -28,6 +28,7 @@ import {
   buildKnockoutConfig,
   seedSourceFromTeamIds,
   type TieFormatSelection,
+  useSeasonStages,
 } from "@/knockout";
 import { showInfoToast } from "@/lib/show-error-toast";
 
@@ -50,7 +51,16 @@ export function ManageGroupsTab({
 }: Props) {
   const { isDark } = useAppearance();
   const theme = useTheme();
-  const groups = groupStages(stages);
+  const initialGroups = groupStages(stages);
+  const initialStage = initialGroups[0] ?? null;
+  const needsFreshGroups =
+    Boolean(initialStage) && (initialStage?.groups ?? []).length === 0;
+  const freshStagesQuery = useSeasonStages(seasonId, needsFreshGroups);
+  const effectiveStages =
+    needsFreshGroups && freshStagesQuery.data?.length
+      ? freshStagesQuery.data
+      : stages;
+  const groups = groupStages(effectiveStages);
   const stage = groups[0] ?? null;
   const config = stage ? readGroupConfig(stage) : null;
   const stageGroups = stage?.groups ?? [];
@@ -84,6 +94,10 @@ export function ManageGroupsTab({
     stage?.status === "completed";
 
   const openManualDraw = () => {
+    if (needsFreshGroups && freshStagesQuery.isFetching) {
+      showInfoToast("Loading groups", "Fetching the latest group rows.");
+      return;
+    }
     if (!stage || !stageGroups.length) {
       showInfoToast("No groups", "Group rows are missing on this stage.");
       return;
@@ -115,6 +129,21 @@ export function ManageGroupsTab({
     }
   };
 
+  const confirmAutoDraw = (shuffle: boolean) => {
+    Alert.alert(
+      "Auto-draw groups?",
+      "This is a one-time action. Once teams are assigned to groups, the draw cannot be reversed or edited. Continue only if you are ready to lock these groups.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Auto-draw",
+          style: "destructive",
+          onPress: () => void handleAutoDraw(shuffle),
+        },
+      ],
+    );
+  };
+
   const handleConfirmManual = async () => {
     if (!stage) return;
     const assignments = Object.entries(manualBuckets).flatMap(
@@ -128,27 +157,32 @@ export function ManageGroupsTab({
       showInfoToast("Assign every team", "Every enrolled team must be in a group.");
       return;
     }
-    Alert.alert("Confirm draw", "Save these group assignments?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Confirm",
-        onPress: () => {
-          void (async () => {
-            try {
-              await assignMutation.mutateAsync({
-                stageId: stage.id,
-                payload: { mode: "manual", assignments },
-              });
-              setLocallyAssigned(true);
-              setDrawOpen(false);
-              showInfoToast("Draw saved", "Group assignments were stored.");
-            } catch {
-              /* toasted */
-            }
-          })();
+    Alert.alert(
+      "Confirm manual draw?",
+      "This is a one-time action. Once these assignments are saved, the draw cannot be reversed or edited. Continue only if every team is in the correct group.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Save draw",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                await assignMutation.mutateAsync({
+                  stageId: stage.id,
+                  payload: { mode: "manual", assignments },
+                });
+                setLocallyAssigned(true);
+                setDrawOpen(false);
+                showInfoToast("Draw saved", "Group assignments were stored.");
+              } catch {
+                /* toasted */
+              }
+            })();
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   const moveTeam = (teamId: number, toGroupId: number) => {
@@ -171,7 +205,7 @@ export function ManageGroupsTab({
     );
     Alert.alert(
       "Generate fixtures",
-      `About ${gamesEach} games per group (~${gamesEach * config.format.group_count} total). Continue?`,
+      `About ${gamesEach} games per group (~${gamesEach * config.format.group_count} total) will be created. This is a one-time action. Once fixtures are generated, the schedule cannot be automatically undone from here. Continue?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -234,13 +268,14 @@ export function ManageGroupsTab({
         ) : (
           <View className="gap-2">
             <Text className="text-sm" style={{ color: theme.textSubtle }}>
-              Uneven groups are allowed. Confirm before saving.
+              Uneven groups are allowed. The draw is one-time and cannot be
+              reversed or edited after saving.
             </Text>
             <Button
               variant="authPurple"
               label="Auto-draw"
               loading={assignMutation.isPending}
-              onPress={() => void handleAutoDraw(true)}
+              onPress={() => confirmAutoDraw(true)}
             />
             <Button
               variant="secondary"
@@ -440,26 +475,44 @@ function GenerateKnockoutWizard({
 
   const handleConfirm = async () => {
     const seed = seedSourceFromTeamIds(ordered);
-    try {
-      await generateMutation.mutateAsync({
-        stageId,
-        payload: {
-          targetRound,
-          thirdsMode: thirdsNeeded > 0 ? thirdsMode : undefined,
-          selectedThirds:
-            thirdsMode === "manual" ? selectedThirds : undefined,
-          qualifiers: seed.orderedTeamIds,
-          force: (preview?.outstandingGames ?? 0) > 0,
-          name: "Knockout",
-          config: buildKnockoutConfig(tieFormat, hasThirdPlace),
+    Alert.alert(
+      "Generate knockout?",
+      "This is a one-time action. Once the knockout stage is created, the selected qualifiers and seeding cannot be edited from this wizard.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Generate",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                await generateMutation.mutateAsync({
+                  stageId,
+                  payload: {
+                    targetRound,
+                    thirdsMode: thirdsNeeded > 0 ? thirdsMode : undefined,
+                    selectedThirds:
+                      thirdsMode === "manual" ? selectedThirds : undefined,
+                    qualifiers: seed.orderedTeamIds,
+                    force: (preview?.outstandingGames ?? 0) > 0,
+                    name: "Knockout",
+                    config: buildKnockoutConfig(tieFormat, hasThirdPlace),
+                  },
+                });
+                showInfoToast(
+                  "Knockout created",
+                  "Bracket is ready on the Knockout tab.",
+                );
+                handleClose();
+                onDone();
+              } catch {
+                /* toasted */
+              }
+            })();
+          },
         },
-      });
-      showInfoToast("Knockout created", "Bracket is ready on the Knockout tab.");
-      handleClose();
-      onDone();
-    } catch {
-      /* toasted */
-    }
+      ],
+    );
   };
 
   return (
@@ -602,8 +655,8 @@ function GenerateKnockoutWizard({
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
-                      {c.team?.name ?? `Team ${c.teamId}`}
-                      {c.groupName ? ` · ${c.groupName}` : ""}
+                      {c.teamName}
+                      {c.stageGroupName ? ` · ${c.stageGroupName}` : ""}
                     </Text>
                   </Pressable>
                 );
@@ -784,8 +837,8 @@ function QualifierListEditor({
               numberOfLines={1}
               ellipsizeMode="tail"
             >
-              {index + 1}. {entry?.team?.name ?? `Team ${id}`}
-              {entry?.source ? ` · ${entry.source}` : ""}
+              {index + 1}. {entry?.teamName ?? `Team ${id}`}
+              {entry?.stageGroupName ? ` · ${entry.stageGroupName}` : ""}
             </Text>
           </Pressable>
         );

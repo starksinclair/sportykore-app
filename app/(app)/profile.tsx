@@ -12,6 +12,7 @@ import type { AppColorScheme, ThemePreference } from "@/color/theme";
 import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { colors } from "@/constants";
+import { useOwnCoachProfile } from "@/coach";
 import { useAdaptiveLayout } from "@/hooks/useAdaptiveLayout";
 import { posthog } from "@/lib/posthog";
 import { useOwnPlayerProfile } from "@/player";
@@ -35,6 +36,9 @@ export default function ProfileScreen() {
   const playerProfileQuery = useOwnPlayerProfile(Boolean(user));
   const playerProfile = playerProfileQuery.data;
   const hasPlayerProfile = playerProfile?.kind === "profile";
+  const coachProfileQuery = useOwnCoachProfile(Boolean(user));
+  const coachProfile = coachProfileQuery.data;
+  const hasCoachProfile = coachProfile?.kind === "profile";
 
   const handleSignOut = () => {
     Alert.alert(
@@ -58,6 +62,12 @@ export default function ProfileScreen() {
     if (playerProfileQuery.isLoading) return;
 
     router.push("/player/me");
+  };
+
+  const handleCoachProfile = async () => {
+    if (coachProfileQuery.isLoading) return;
+
+    router.push("/coach/me");
   };
 
   const handleAppearancePreferenceChange = (nextPreference: ThemePreference) => {
@@ -183,6 +193,11 @@ export default function ProfileScreen() {
                       loading={playerProfileQuery.isLoading}
                       onPress={handlePlayerProfile}
                     />
+                    <CoachProfileSection
+                      hasCoachProfile={hasCoachProfile}
+                      loading={coachProfileQuery.isLoading}
+                      onPress={handleCoachProfile}
+                    />
                     <AccountSection
                       onJoinLeague={() => router.push("/join-league")}
                       onDeleteAccount={() => openBrowserAsync(deleteAccountUrl)}
@@ -213,6 +228,11 @@ export default function ProfileScreen() {
                     hasPlayerProfile={hasPlayerProfile}
                     loading={playerProfileQuery.isLoading}
                     onPress={handlePlayerProfile}
+                  />
+                  <CoachProfileSection
+                    hasCoachProfile={hasCoachProfile}
+                    loading={coachProfileQuery.isLoading}
+                    onPress={handleCoachProfile}
                   />
                   <AccountSection
                     onJoinLeague={() => router.push("/join-league")}
@@ -291,6 +311,56 @@ function PlayerProfileSection({
           <Button
             variant="signInYellow"
             label="Create profile"
+            className="h-11 rounded-full"
+            onPress={onPress}
+          />
+        </View>
+      )}
+    </Section>
+  );
+}
+
+function CoachProfileSection({
+  hasCoachProfile,
+  loading,
+  onPress,
+}: {
+  hasCoachProfile: boolean;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Section title="Coach profile">
+      {hasCoachProfile ? (
+        <SettingsRowChevron
+          icon="school-outline"
+          title={loading ? "Loading profile…" : "View coach profile"}
+          subtitle="Experience, qualifications, availability, and links"
+          onPress={onPress}
+        />
+      ) : (
+        <View className="gap-3 px-4 py-4">
+          <View className="flex-row gap-3">
+            <View
+              className="h-10 w-10 items-center justify-center rounded-xl"
+              style={{ backgroundColor: theme.accentMuted }}
+            >
+              <Ionicons name="school-outline" size={20} color={theme.accent} />
+            </View>
+            <View className="min-w-0 flex-1 gap-1">
+              <Text className="text-[15px]" style={{ color: theme.text }}>
+                Create coach profile
+              </Text>
+              <Text className="text-xs leading-5" style={{ color: theme.textMuted }}>
+                Share your coaching experience, philosophy, and availability.
+              </Text>
+            </View>
+          </View>
+          <Button
+            variant="signInYellow"
+            label="Create coach profile"
             className="h-11 rounded-full"
             onPress={onPress}
           />

@@ -27,7 +27,10 @@ export function useCreateLeague() {
   return useMutation({
     mutationFn: createLeague,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: manageKeys.managed() }),
+        queryClient.invalidateQueries({ queryKey: manageKeys.leagues() }),
+      ]);
     },
   });
 }

@@ -27,18 +27,20 @@ import {
 import type { SearchEntityType, SearchResult } from "@/home/types";
 import { posthog } from "@/lib/posthog";
 import { messageFromThrown } from "@/lib/show-error-toast";
-const ENTITY_ORDER: SearchEntityType[] = ["country", "league", "team", "player"];
+const ENTITY_ORDER: SearchEntityType[] = ["country", "league", "team", "player", "coach"];
 const ENTITY_LABELS: Record<SearchEntityType, string> = {
   country: "Countries",
   league: "Leagues",
   team: "Teams",
   player: "Players",
+  coach: "Coaches",
 };
 const ENTITY_ICONS: Record<SearchEntityType, keyof typeof Ionicons.glyphMap> = {
   country: "flag-outline",
   league: "trophy-outline",
   team: "shield-outline",
   player: "person-outline",
+  coach: "school-outline",
 };
 
 export default function SearchScreen() {
@@ -89,6 +91,7 @@ export default function SearchScreen() {
       league_count: results.filter((r) => r.type === "league").length,
       team_count: results.filter((r) => r.type === "team").length,
       player_count: results.filter((r) => r.type === "player").length,
+      coach_count: results.filter((r) => r.type === "coach").length,
     });
   }, [
     searchQuery.data,
@@ -158,7 +161,7 @@ export default function SearchScreen() {
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={handleSubmit}
-              placeholder="Players, countries, leagues, teams"
+              placeholder="Players, coaches, countries, leagues, teams"
               placeholderTextColor={theme.textSubtle}
               returnKeyType="search"
               className="flex-1 p-0 text-sm"
@@ -233,6 +236,7 @@ function groupResults(results: SearchResult[]) {
     league: [],
     team: [],
     player: [],
+    coach: [],
   };
   for (const result of results) buckets[result.type].push(result);
   return buckets;
@@ -328,7 +332,7 @@ function RecentsBlock({
             className="text-center text-sm leading-6"
             style={{ color: theme.textSubtle }}
           >
-            Search by player, country, league, or team. Recent searches will show up here.
+            Search by player, coach, country, league, or team. Recent searches will show up here.
           </Text>
         </View>
       </View>

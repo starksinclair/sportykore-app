@@ -90,6 +90,39 @@ export type ApiPlayerSocialLink = {
   handle?: string | null;
 };
 
+export type CoachAvailability = "open" | "not_open" | "consulting";
+
+export type ApiCoachProfile = {
+  id: number;
+  displayName: string;
+  photoUrl?: string | null;
+  bio?: string | null;
+  experience?: string | null;
+  qualifications?: string | null;
+  philosophy?: string | null;
+  city?: string | null;
+  state?: string | null;
+  availability?: CoachAvailability;
+  visibility?: "public" | "private";
+  country?: ApiCountry | null;
+  socialLinks?: ApiPlayerSocialLink[];
+  leagues?: ApiCoachLeagueHistory[];
+};
+
+export type ApiCoachLeagueHistory = {
+  id: number;
+  role: "team_admin";
+  active: boolean;
+  assignedAt?: string | null;
+  removedAt?: string | null;
+  league: {
+    id: number;
+    name: string;
+    logoUrl?: string | null;
+  };
+  team: ApiTeam;
+};
+
 export type ApiPlayerHighlight = {
   id: number;
   videoId: string;
