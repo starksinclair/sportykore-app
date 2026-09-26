@@ -353,6 +353,40 @@ export async function updateLeague(
   });
 }
 
+export async function deleteLeague(
+  leagueId: number,
+  confirmationName: string,
+): Promise<void> {
+  await apiRequest<{ message: string }>(`/api/v1/leagues/${leagueId}`, {
+    method: "DELETE",
+    auth: true,
+    idempotencyKey: true,
+    jsonBody: { confirmationName },
+  });
+}
+
+export async function softDeleteLeague(leagueId: number): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/soft-delete`,
+    {
+      method: "PATCH",
+      auth: true,
+      idempotencyKey: true,
+    },
+  );
+}
+
+export async function reactivateLeague(leagueId: number): Promise<void> {
+  await apiRequest<{ message: string }>(
+    `/api/v1/leagues/${leagueId}/reactivate`,
+    {
+      method: "PATCH",
+      auth: true,
+      idempotencyKey: true,
+    },
+  );
+}
+
 export async function createSeason(
   leagueId: number,
   payload: Omit<CreateSeasonPayload, "leagueId">,

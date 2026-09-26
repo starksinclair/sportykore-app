@@ -17,6 +17,7 @@ export type ApiLeague = {
   id: number;
   name: string;
   logoUrl: string | null;
+  status?: "active" | "inactive";
   games?: ApiGame[];
   description: string;
   tiebreaker?: TiebreakerRule | null;

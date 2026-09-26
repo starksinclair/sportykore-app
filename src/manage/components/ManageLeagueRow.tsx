@@ -15,8 +15,10 @@ type Props = {
 export function ManageLeagueRow({ league, onPress, onShare }: Props) {
   const theme = useTheme();
   const seasonLabel = league.activeSeason?.name ?? "No active season";
+  const inactive = league.status === "inactive";
   const handleShare = (event: GestureResponderEvent) => {
     event.stopPropagation();
+    if (inactive) return;
     onShare?.();
   };
 
@@ -24,7 +26,11 @@ export function ManageLeagueRow({ league, onPress, onShare }: Props) {
     <Pressable
       onPress={onPress}
       className="flex-row items-center gap-4 rounded-[22px] border px-4 py-4 active:opacity-85"
-      style={{ backgroundColor: theme.card, borderColor: theme.cardBorder }}
+      style={{
+        backgroundColor: theme.card,
+        borderColor: inactive ? theme.danger : theme.cardBorder,
+        opacity: inactive ? 0.82 : 1,
+      }}
     >
       <EntityLogo
         logoUrl={league.logoUrl}
@@ -48,16 +54,28 @@ export function ManageLeagueRow({ league, onPress, onShare }: Props) {
         >
           {seasonLabel}
         </Text>
-        <View className="self-start rounded-full px-2.5 py-1" style={{ backgroundColor: theme.accentMuted }}>
-          <Text
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: theme.accent }}
-          >
-            League admin
-          </Text>
+        <View className="flex-row flex-wrap gap-2">
+          <View className="self-start rounded-full px-2.5 py-1" style={{ backgroundColor: theme.accentMuted }}>
+            <Text
+              className="text-[10px] uppercase tracking-wide"
+              style={{ color: theme.accent }}
+            >
+              League admin
+            </Text>
+          </View>
+          {inactive ? (
+            <View className="self-start rounded-full px-2.5 py-1" style={{ backgroundColor: theme.dangerMuted }}>
+              <Text
+                className="text-[10px] uppercase tracking-wide"
+                style={{ color: theme.danger }}
+              >
+                Archived
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
-      {onShare ? (
+      {onShare && !inactive ? (
         <Pressable
           onPress={handleShare}
           accessibilityRole="button"
@@ -70,7 +88,7 @@ export function ManageLeagueRow({ league, onPress, onShare }: Props) {
         </Pressable>
       ) : null}
       <View className="h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: theme.cardMuted }}>
-        <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
+        <Ionicons name={inactive ? "archive-outline" : "chevron-forward"} size={18} color={theme.textMuted} />
       </View>
     </Pressable>
   );

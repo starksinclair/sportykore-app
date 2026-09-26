@@ -12,14 +12,18 @@ import type { LeagueDetail } from "./types";
 export async function fetchLeagueDetail(
   leagueId: number,
   seasonId?: number,
+  options?: { auth?: boolean; includeInactive?: boolean },
 ): Promise<LeagueDetail> {
   const query = new URLSearchParams();
   if (seasonId != null) query.set("seasonId", String(seasonId));
+  if (options?.includeInactive) query.set("includeInactive", "true");
 
   const path = `/api/v1/leagues/${leagueId}${
     query.toString() ? `?${query}` : ""
   }`;
-  const res = await apiRequest<{ data: LeagueDetail }>(path);
+  const res = await apiRequest<{ data: LeagueDetail }>(path, {
+    auth: options?.auth,
+  });
   return res.data;
 }
 

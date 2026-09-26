@@ -11,10 +11,13 @@ import type {
 } from "@/api/entities";
 import type { TiebreakerRule } from "@/league/tiebreaker-options";
 
+export type LeagueStatus = "active" | "inactive";
+
 export type OwnedLeague = {
   id: number;
   name: string;
   logoUrl: string | null;
+  status?: LeagueStatus;
   countryId: number;
   startDate?: string | null;
   endDate?: string | null;
@@ -34,6 +37,7 @@ export type AdminTeamManaged = {
     id: number;
     name: string;
     logoUrl: string | null;
+    status?: LeagueStatus;
     startDate?: string | null;
     endDate?: string | null;
   };

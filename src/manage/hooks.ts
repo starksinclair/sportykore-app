@@ -18,6 +18,8 @@ import {
   createTeam,
   createVenue,
   deleteGame,
+  deleteLeague,
+  softDeleteLeague,
   deleteStat,
   deleteTeam,
   deleteVenue,
@@ -31,6 +33,7 @@ import {
   removeTeamAdmin,
   pauseGame,
   recordTrackingEvents,
+  reactivateLeague,
   recordSubstitutions,
   resumeGame,
   setMotmAward,
@@ -150,7 +153,11 @@ export function useManageLeagueDetail(
   const { isOnline } = useNetworkStatus();
   return useQuery({
     queryKey: manageKeys.league(leagueId, seasonId ?? null),
-    queryFn: () => fetchLeagueDetail(leagueId, seasonId ?? undefined),
+    queryFn: () =>
+      fetchLeagueDetail(leagueId, seasonId ?? undefined, {
+        auth: true,
+        includeInactive: true,
+      }),
     enabled: leagueId > 0,
     staleTime: 30 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -610,6 +617,47 @@ export function useUpdateLeague(leagueId: number, _seasonId: number) {
       updateLeague(leagueId, payload),
     onSuccess: () => {
       invalidateManageLeagueData(queryClient, leagueId);
+    },
+  });
+}
+
+export function useDeleteLeague(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (confirmationName: string) =>
+      deleteLeague(leagueId, confirmationName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: manageKeys.managed() });
+      queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
+      queryClient.invalidateQueries({ queryKey: ["home"] });
+    },
+  });
+}
+
+export function useSoftDeleteLeague(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => softDeleteLeague(leagueId),
+    onSuccess: () => {
+      invalidateManageLeagueData(queryClient, leagueId);
+      queryClient.invalidateQueries({ queryKey: manageKeys.managed() });
+      queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
+      queryClient.invalidateQueries({ queryKey: ["league", leagueId] });
+      queryClient.invalidateQueries({ queryKey: ["home"] });
+    },
+  });
+}
+
+export function useReactivateLeague(leagueId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => reactivateLeague(leagueId),
+    onSuccess: () => {
+      invalidateManageLeagueData(queryClient, leagueId);
+      queryClient.invalidateQueries({ queryKey: manageKeys.managed() });
+      queryClient.invalidateQueries({ queryKey: manageKeys.leagues() });
+      queryClient.invalidateQueries({ queryKey: ["league", leagueId] });
+      queryClient.invalidateQueries({ queryKey: ["home"] });
     },
   });
 }

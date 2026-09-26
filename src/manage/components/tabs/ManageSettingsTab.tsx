@@ -1,12 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import type { ApiLeague, ApiSeason, SeasonStatus } from "@/api/entities";
 import { useAppearance } from "@/color/appearance-context";
 import { useTheme } from "@/color/use-theme";
 import { Button } from "@/components/ui/Button";
 import { AuthTextField } from "@/components/ui/auth-text-field";
+import { BottomSheetModal } from "@/components/ui/bottom-sheet-modal";
 import { NativeDatePickerField } from "@/components/ui/native-date-picker-field";
 import {
   GroupFormatConfigControl,
@@ -31,7 +33,13 @@ import {
 } from "@/lib/datetime";
 import { showInfoToast, showThrownAsToast } from "@/lib/show-error-toast";
 
-import { useCreateSeason, useUpdateLeague } from "../../hooks";
+import {
+  useCreateSeason,
+  useDeleteLeague,
+  useReactivateLeague,
+  useSoftDeleteLeague,
+  useUpdateLeague,
+} from "../../hooks";
 import { SeasonStatusEnum } from "../../types";
 import { EditSeasonSheet } from "../seasons/EditSeasonSheet";
 import { SeasonStatusPicker } from "../seasons/SeasonStatusPicker";
@@ -52,9 +60,14 @@ export function ManageSettingsTab({
   onSeasonCreated,
 }: Props) {
   const { isDark } = useAppearance();
+  const router = useRouter();
   const theme = useTheme();
   const updateLeagueMutation = useUpdateLeague(leagueId, activeSeasonId);
   const createSeasonMutation = useCreateSeason(leagueId, activeSeasonId);
+  const deleteLeagueMutation = useDeleteLeague(leagueId);
+  const reactivateLeagueMutation = useReactivateLeague(leagueId);
+  const softDeleteLeagueMutation = useSoftDeleteLeague(leagueId);
+  const isArchived = league.status === "inactive";
 
   const [name, setName] = useState(league.name);
   const [description, setDescription] = useState(league.description ?? "");
@@ -66,6 +79,9 @@ export function ManageSettingsTab({
   );
 
   const [editingSeason, setEditingSeason] = useState<ApiSeason | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<"soft" | "hard">("soft");
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [newSeasonName, setNewSeasonName] = useState("");
   const [newSeasonStatus, setNewSeasonStatus] = useState<SeasonStatus>(
     SeasonStatusEnum.Inactive,
@@ -172,6 +188,49 @@ export function ManageSettingsTab({
       showInfoToast("Season created", `"${created.name}" is now available in the picker.`);
     } catch (err) {
       showThrownAsToast(err, "Could not create season");
+    }
+  };
+
+  const handleDeleteLeague = async () => {
+    if (deleteConfirmation.trim() !== league.name) {
+      showInfoToast("Name does not match", "Type the league name exactly to continue.");
+      return;
+    }
+
+    try {
+      if (deleteMode === "soft") {
+        await softDeleteLeagueMutation.mutateAsync();
+      } else {
+        await deleteLeagueMutation.mutateAsync(deleteConfirmation.trim());
+      }
+      setDeleteOpen(false);
+      setDeleteConfirmation("");
+      showInfoToast(
+        deleteMode === "soft" ? "League archived" : "League removed",
+        deleteMode === "soft"
+          ? `"${league.name}" is hidden from public pages. Records are preserved.`
+          : `"${league.name}" was removed from your Manage list. Records are retained.`,
+      );
+      if (deleteMode === "hard") {
+        router.replace("/(app)/(tabs)/manage");
+      }
+    } catch (err) {
+      showThrownAsToast(
+        err,
+        deleteMode === "soft" ? "Could not archive league" : "Could not remove league",
+      );
+    }
+  };
+
+  const handleReactivateLeague = async () => {
+    try {
+      await reactivateLeagueMutation.mutateAsync();
+      showInfoToast(
+        "League reactivated",
+        `"${league.name}" is public again and can receive invites.`,
+      );
+    } catch (err) {
+      showThrownAsToast(err, "Could not reactivate league");
     }
   };
 
@@ -437,7 +496,246 @@ export function ManageSettingsTab({
         season={editingSeason}
         onUpdated={onSeasonCreated}
       />
+
+      <View
+        className="gap-4 rounded-[24px] border px-4 py-5"
+        style={{ backgroundColor: theme.card, borderColor: theme.danger }}
+      >
+        <View className="flex-row items-start gap-3">
+          <View
+            className="h-11 w-11 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: theme.dangerMuted }}
+          >
+            <Ionicons name="trash-outline" size={21} color={theme.danger} />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-lg" style={{ color: theme.text }}>
+              League visibility
+            </Text>
+            <Text className="text-sm leading-6" style={{ color: theme.textSubtle }}>
+              {isArchived
+                ? "This league is archived. Reactivate it to make it public again, or remove it from your Manage list."
+                : "Archive to hide the league while keeping records, or remove it from your Manage list."}
+            </Text>
+          </View>
+        </View>
+        {isArchived ? (
+          <Pressable
+            onPress={() => void handleReactivateLeague()}
+            disabled={reactivateLeagueMutation.isPending}
+            accessibilityRole="button"
+            className={`h-12 flex-row items-center justify-center gap-2 rounded-[14px] border ${
+              reactivateLeagueMutation.isPending ? "opacity-60" : "active:opacity-85"
+            }`}
+            style={{
+              backgroundColor: theme.accent,
+              borderColor: theme.accent,
+            }}
+          >
+            {reactivateLeagueMutation.isPending ? (
+              <ActivityIndicator color={theme.textInverse} />
+            ) : (
+              <>
+                <Ionicons name="refresh-outline" size={17} color={theme.textInverse} />
+                <Text className="text-sm" style={{ color: theme.textInverse }}>
+                  Reactivate league
+                </Text>
+              </>
+            )}
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={() => {
+              setDeleteMode("soft");
+              setDeleteOpen(true);
+            }}
+            accessibilityRole="button"
+            className="h-12 flex-row items-center justify-center gap-2 rounded-[14px] border active:opacity-85"
+            style={{
+              backgroundColor: theme.cardMuted,
+              borderColor: theme.cardBorder,
+            }}
+          >
+            <Ionicons name="archive-outline" size={17} color={theme.text} />
+            <Text className="text-sm" style={{ color: theme.text }}>
+              Archive league
+            </Text>
+          </Pressable>
+        )}
+        <Pressable
+          onPress={() => {
+            setDeleteMode("hard");
+            setDeleteOpen(true);
+          }}
+          accessibilityRole="button"
+          className="h-12 flex-row items-center justify-center gap-2 rounded-[14px] border active:opacity-85"
+          style={{
+            backgroundColor: theme.dangerMuted,
+            borderColor: theme.danger,
+          }}
+        >
+          <Ionicons name="trash-outline" size={17} color={theme.danger} />
+          <Text className="text-sm" style={{ color: theme.danger }}>
+            Remove league
+          </Text>
+        </Pressable>
+      </View>
+
+      <DeleteLeagueSheet
+        visible={deleteOpen}
+        mode={deleteMode}
+        leagueName={league.name}
+        confirmation={deleteConfirmation}
+        onConfirmationChange={setDeleteConfirmation}
+        pending={
+          deleteLeagueMutation.isPending ||
+          softDeleteLeagueMutation.isPending ||
+          reactivateLeagueMutation.isPending
+        }
+        isDark={isDark}
+        onClose={() => {
+          if (
+            deleteLeagueMutation.isPending ||
+            softDeleteLeagueMutation.isPending ||
+            reactivateLeagueMutation.isPending
+          ) return;
+          setDeleteOpen(false);
+          setDeleteConfirmation("");
+        }}
+        onDelete={() => void handleDeleteLeague()}
+      />
     </View>
+  );
+}
+
+function DeleteLeagueSheet({
+  visible,
+  mode,
+  leagueName,
+  confirmation,
+  pending,
+  isDark,
+  onConfirmationChange,
+  onClose,
+  onDelete,
+}: {
+  visible: boolean;
+  mode: "soft" | "hard";
+  leagueName: string;
+  confirmation: string;
+  pending: boolean;
+  isDark: boolean;
+  onConfirmationChange: (value: string) => void;
+  onClose: () => void;
+  onDelete: () => void;
+}) {
+  const theme = useTheme();
+  const canDelete = confirmation.trim() === leagueName && !pending;
+  const isHard = mode === "hard";
+  const title = isHard ? "Remove league" : "Archive league";
+  const subtitle = isHard
+    ? "This hides the league from public pages and removes it from your Manage list."
+    : "This hides the league from public pages while preserving records.";
+  const actionColor = isHard ? theme.danger : theme.accent;
+  const actionMuted = isHard ? theme.dangerMuted : theme.accentMuted;
+  const details = isHard
+    ? [
+        "Teams, fixtures, standings, stages, invites, lineups, venues, stats, and awards stay in the database.",
+        "The league disappears from public pages and your normal Manage list.",
+        "Support can recover the retained records later if needed.",
+      ]
+    : [
+        "The league stops appearing on public league, country, search, and match feed pages.",
+        "Teams, fixtures, standings, stats, awards, cards, and player or coach history stay in the database.",
+        "Players and coaches keep their records from this league. Nothing is wiped.",
+      ];
+
+  return (
+    <BottomSheetModal
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      subtitle={subtitle}
+      variant={isDark ? "dark" : "light"}
+    >
+      <View className="gap-4">
+        <View
+          className="gap-3 rounded-[20px] border px-4 py-4"
+          style={{ backgroundColor: actionMuted, borderColor: actionColor }}
+        >
+          <View className="flex-row items-center gap-3">
+            <View
+              className="h-10 w-10 items-center justify-center rounded-2xl"
+              style={{ backgroundColor: theme.card }}
+            >
+              <Ionicons
+                name={isHard ? "warning-outline" : "archive-outline"}
+                size={20}
+                color={actionColor}
+              />
+            </View>
+            <Text className="min-w-0 flex-1" style={{ color: theme.text }}>
+              {isHard
+                ? "Remove hides this league without wiping its records."
+                : "Archive keeps the league records but hides it from users."}
+            </Text>
+          </View>
+          {details.map((detail) => (
+            <View key={detail} className="flex-row items-start gap-2">
+              <View
+                className="mt-2 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: actionColor }}
+              />
+              <Text
+                className="min-w-0 flex-1 text-sm leading-6"
+                style={{ color: theme.textMuted }}
+              >
+                {detail}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View className="gap-2">
+          <Text className="text-sm" style={{ color: theme.text }}>
+            Type {leagueName} to confirm.
+          </Text>
+          <AuthTextField
+            label="League name"
+            value={confirmation}
+            onChangeText={onConfirmationChange}
+            placeholder={leagueName}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+
+        <Pressable
+          onPress={onDelete}
+          disabled={!canDelete}
+          accessibilityRole="button"
+          className={`h-12 flex-row items-center justify-center gap-2 rounded-[14px] border ${
+            canDelete ? "active:opacity-85" : "opacity-50"
+          }`}
+          style={{ backgroundColor: actionColor, borderColor: actionColor }}
+        >
+          {pending ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <>
+              <Ionicons
+                name={isHard ? "trash-outline" : "archive-outline"}
+                size={17}
+                color="#FFFFFF"
+              />
+              <Text className="text-sm text-white">
+                {isHard ? "Remove league" : "Archive league"}
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+    </BottomSheetModal>
   );
 }
 

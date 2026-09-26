@@ -94,11 +94,18 @@ export function ManageGroupsTab({
     stage?.status === "completed";
 
   const openManualDraw = () => {
-    if (needsFreshGroups && freshStagesQuery.isFetching) {
-      showInfoToast("Loading groups", "Fetching the latest group rows.");
-      return;
-    }
     if (!stage || !stageGroups.length) {
+      if (needsFreshGroups && freshStagesQuery.isFetching) {
+        showInfoToast("Loading groups", "Fetching the latest group rows.");
+        return;
+      }
+      if (freshStagesQuery.isError) {
+        showInfoToast(
+          "Could not load groups",
+          "Refresh this league and try the draw again.",
+        );
+        return;
+      }
       showInfoToast("No groups", "Group rows are missing on this stage.");
       return;
     }
