@@ -92,6 +92,19 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="canter"
+        options={{
+          title: "Canter",
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons
+              name={focused ? "football" : "football-outline"}
+              size={size}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

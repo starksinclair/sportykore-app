@@ -1,0 +1,8 @@
+What's New in SportyKore 1.0.1
+
+• Coach profiles — view and manage coach profiles in the app
+• Player sharing — share player profiles with a link
+• Delete league — remove a league you no longer need from Manage
+• Stability — fixed a bug with manual group draws
+
+Thanks for using SportyKore. Keep the feedback coming!
